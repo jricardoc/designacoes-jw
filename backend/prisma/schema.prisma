@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Quadro de Designacoes Mensal (um por mes/ano)
+model Quadro {
+  id           Int           @id @default(autoincrement())
+  mes          Int           // 1-12
+  ano          Int           // 2026
+  titulo       String        // "Quadro de Designacoes JANEIRO 2026"
+  status       String        @default("rascunho") // rascunho, publicado, arquivado
+  designacoes  Designacao[]
+  historicos   Historico[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  @@unique([mes, ano])
+}
+
+// Designacoes pertencem a um Quadro especifico
+model Designacao {
+  id        Int      @id @default(autoincrement())
+  quadroId  Int
+  quadro    Quadro   @relation(fields: [quadroId], references: [id], onDelete: Cascade)
+  data      String
+  dia       String
+  funcao    String
+  irmao1    String
+  irmao2    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Historico de todas as modificacoes
+model Historico {
+  id          Int      @id @default(autoincrement())
+  quadroId    Int
+  quadro      Quadro   @relation(fields: [quadroId], references: [id], onDelete: Cascade)
+  usuarioId   Int
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  acao        String   // "criou", "editou", "excluiu", "publicou", "arquivou"
+  descricao   String   // Descricao legivel
+  campo       String?  // Campo modificado (irmao1, irmao2, data, dia)
+  valorAntigo String?  // Valor anterior
+  valorNovo   String?  // Novo valor
+  designacaoInfo String? // Info da designacao (data + funcao)
+  createdAt   DateTime @default(now())
+}
+
+// Configuracoes gerais do sistema
+model Config {
+  id        Int      @id @default(autoincrement())
+  titulo    String
+  subtitulo String
+  mes       String
+  updatedAt DateTime @updatedAt
+}
+
+// Usuario para autenticacao (login por nickname)
+model Usuario {
+  id         Int         @id @default(autoincrement())
+  nickname   String      @unique
+  senha      String
+  nome       String
+  isAdmin    Boolean     @default(false)
+  historicos Historico[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+// Cadastro de irmaos com suas funcoes
+model Irmao {
+  id                 Int                @id @default(autoincrement())
+  nome               String             @unique
+  funcoes            String[]
+  nivelAudioVideo    String             @default("experiente") // "experiente" ou "treinando"
+  ativo              Boolean            @default(true)
+  indisponibilidades Indisponibilidade[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+}
+
+// Datas em que o irmao nao esta disponivel
+model Indisponibilidade {
+  id        Int      @id @default(autoincrement())
+  irmaoId   Int
+  irmao     Irmao    @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  data      String
+  motivo    String?
+  createdAt DateTime @default(now())
+  
+  @@unique([irmaoId, data])
+}

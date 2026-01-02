@@ -1,0 +1,449 @@
+/* TabelaPagina Component Styles */
+
+.tabela-pagina-container {
+  background: white;
+  width: 100%;
+  max-width: 1100px;
+  box-sizing: border-box;
+  margin: 0 auto;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Header */
+.tabela-pagina-header {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  padding: 15px 20px;
+  border-radius: 0;
+  text-align: center;
+}
+
+.tabela-pagina-titulo {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.tabela-pagina-titulo:hover {
+  opacity: 0.9;
+}
+
+.tabela-pagina-subtitulo {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+  margin: 5px 0 0 0;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.tabela-pagina-subtitulo:hover {
+  opacity: 0.8;
+}
+
+/* Table header */
+.tabela-pagina-thead {
+  display: grid;
+  grid-template-columns: 80px 100px 1fr 1fr 1fr;
+  background: #1f2937;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.th-cell {
+  padding: 12px 8px;
+  text-align: center;
+}
+
+/* Table rows */
+.tabela-pagina-row {
+  display: grid;
+  grid-template-columns: 80px 100px 1fr;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.row-even {
+  background: #f3f4f6;
+}
+
+.row-odd {
+  background: white;
+}
+
+/* Data cell */
+.td-data-cell {
+  background: #2563eb;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  border-right: 3px solid #7c3aed;
+}
+
+.data-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.data-numero {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.data-mes {
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* Badge do dia dentro da data - oculto no desktop */
+.dia-badge-mobile {
+  display: none;
+}
+
+/* Dia cell */
+.td-dia-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.dia-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.dia-badge.domingo {
+  background: #f59e0b;
+  color: #78350f;
+}
+
+.dia-badge.quinta {
+  background: #10b981;
+  color: #064e3b;
+}
+
+/* Funcoes cell */
+.td-funcoes-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.funcao-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 8px;
+  align-items: center;
+}
+
+.funcao-row.with-border {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.funcao-cell {
+  text-align: center;
+}
+
+.funcao-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+.irmao-cell {
+  text-align: center;
+}
+
+.irmao-nome {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.irmao-nome.editable {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+
+.irmao-nome.editable:hover {
+  background: rgba(37, 99, 235, 0.1);
+}
+
+/* Botao Excluir Dia */
+.btn-delete-dia {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4px; /* Espaco abaixo do mes */
+  opacity: 0;
+  transition: all 0.2s;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.tabela-pagina-row:hover .btn-delete-dia {
+  opacity: 1;
+}
+
+.btn-delete-dia:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* Edit inputs */
+.edit-input {
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  outline: none;
+  width: 80%;
+}
+
+.titulo-input {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subtitulo-input {
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+/* Edit select */
+.edit-select {
+  padding: 6px 10px;
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  outline: none;
+  max-width: 100%;
+}
+
+.edit-select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+}
+
+/* ============================================
+   RESPONSIVIDADE - TABLETS
+   ============================================ */
+@media (max-width: 1024px) {
+  .tabela-pagina-header {
+    padding: 12px 15px;
+  }
+  
+  .tabela-pagina-titulo {
+    font-size: 1.25rem;
+  }
+  
+  .tabela-pagina-thead {
+    grid-template-columns: 60px 80px 1fr 1fr 1fr;
+    font-size: 0.75rem;
+  }
+  
+  .tabela-pagina-row {
+    grid-template-columns: 60px 80px 1fr;
+  }
+  
+  .data-numero {
+    font-size: 1.5rem;
+  }
+  
+  .funcao-badge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+  
+  .irmao-nome {
+    font-size: 0.85rem;
+  }
+}
+
+/* ============================================
+   RESPONSIVIDADE - MOBILE
+   Data e Dia ficam em coluna vertical
+   ============================================ */
+@media (max-width: 768px) {
+  .tabela-pagina-container {
+    margin: 0 auto 1rem auto;
+    border-radius: 6px;
+  }
+  
+  .tabela-pagina-header {
+    padding: 10px 12px;
+  }
+  
+  .tabela-pagina-titulo {
+    font-size: 1rem;
+  }
+  
+  .tabela-pagina-subtitulo {
+    font-size: 0.75rem;
+  }
+  
+  /* Esconder thead no mobile - layout de cards */
+  .tabela-pagina-thead {
+    display: none;
+  }
+  
+  /* Layout de cards para mobile */
+  .tabela-pagina-row {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 2px solid #e5e7eb;
+  }
+  
+  /* Data e Dia lado a lado no topo */
+  .td-data-cell {
+    padding: 10px 12px;
+    border-right: none;
+    border-bottom: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 15px;
+  }
+  
+  .data-info {
+    flex-direction: row;
+    gap: 8px;
+    align-items: baseline;
+  }
+  
+  .data-numero {
+    font-size: 1.5rem;
+  }
+  
+  .data-mes {
+    font-size: 0.8rem;
+  }
+  
+  /* Mostrar badge do dia no mobile */
+  .dia-badge-mobile {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  
+  .dia-badge-mobile.domingo {
+    background: #f59e0b;
+    color: #78350f;
+  }
+  
+  .dia-badge-mobile.quinta {
+    background: #10b981;
+    color: #064e3b;
+  }
+  
+  /* Esconder célula de dia separada */
+  .td-dia-cell {
+    display: none;
+  }
+  
+  .td-funcoes-cell {
+    width: 100%;
+  }
+  
+  .funcao-row {
+    padding: 8px;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  
+  .funcao-badge {
+    font-size: 0.65rem;
+    padding: 4px 6px;
+  }
+  
+  .irmao-nome {
+    font-size: 0.8rem;
+  }
+  
+  .edit-select {
+    font-size: 0.75rem;
+    padding: 4px 6px;
+  }
+  
+  .edit-input {
+    width: 95%;
+    padding: 6px 8px;
+  }
+  
+  .titulo-input {
+    font-size: 1rem;
+  }
+}
+
+/* ============================================
+   RESPONSIVIDADE - MOBILE PEQUENO
+   ============================================ */
+@media (max-width: 480px) {
+  .tabela-pagina-header {
+    padding: 8px 10px;
+  }
+  
+  .tabela-pagina-titulo {
+    font-size: 0.9rem;
+  }
+  
+  .tabela-pagina-subtitulo {
+    font-size: 0.65rem;
+  }
+  
+  .td-data-cell {
+    padding: 6px;
+  }
+  
+  .data-numero {
+    font-size: 1.25rem;
+  }
+  
+  .funcao-row {
+    padding: 6px;
+  }
+  
+  .funcao-badge {
+    font-size: 0.55rem;
+    padding: 3px 5px;
+  }
+  
+  .irmao-nome {
+    font-size: 0.7rem;
+  }
+}

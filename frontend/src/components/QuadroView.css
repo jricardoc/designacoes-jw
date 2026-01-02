@@ -1,0 +1,222 @@
+/* Layout Desktop (Padrão) */
+.quadro-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.quadro-main {
+  flex: 1;
+  margin-left: 70px;
+  background: #f8fafc;
+  min-height: 100vh;
+  transition: margin-left 0.3s ease;
+}
+
+.quadro-header {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f2744 100%);
+  padding: 1.5rem 2rem;
+  color: white;
+}
+
+.quadro-content {
+  padding: 1.5rem 2rem;
+}
+
+/* Header Styles */
+.header-actions-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.header-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.header-info-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.header-subtitle {
+  margin: 0.25rem 0 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.quadro-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.quadro-tabelas {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.quadro-sidebar-direita {
+  position: sticky;
+  top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tabela-wrapper {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+/* Estatisticas */
+.estatisticas-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.estatisticas-title {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.estatisticas-list {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.estatistica-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.25rem;
+}
+
+.estatistica-item.top-rank {
+  background: #f0fdf4;
+}
+
+.estatistica-nome {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.estatistica-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 30px;
+  text-align: center;
+}
+
+.badge-zero {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.badge-normal {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.estatistica-footer {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+  .quadro-main {
+    margin-left: 0;
+    padding-bottom: 80px; /* Espaço para sidebar inferior */
+  }
+
+  .quadro-header {
+    padding: 1rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  /* Header Mobile */
+  .header-title-group {
+    align-items: center;
+  }
+
+  .header-title {
+    font-size: 1.2rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .quadro-grid {
+    grid-template-columns: 1fr; /* Coluna unica */
+    gap: 2rem;
+  }
+
+  /* Mover estatisticas e historico para baixo */
+  .quadro-sidebar-direita {
+    position: static; /* Remove sticky */
+    order: 2; /* Joga para o final se flex ou grid permitir ordem */
+  }
+
+  .quadro-tabelas {
+    order: 1;
+  }
+}

@@ -1,0 +1,270 @@
+/* Conta.css - Estilos para página de conta */
+
+/* Layout Responsivo */
+.conta-container {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.conta-content {
+  padding: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 80px; /* Margem extra para mobile navbar */
+}
+
+.conta-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .conta-grid.admin-view {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.conta-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.conta-title {
+  margin: 0 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1e293b;
+}
+
+/* Info Box */
+.conta-info-box {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 10px;
+}
+
+.conta-info-nome {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #1e293b;
+}
+
+.conta-info-nick {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.conta-badge-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #fef3c7;
+  color: #b45309;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Forms */
+.conta-form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.conta-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.conta-input {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  width: 100%;
+}
+
+.conta-input-block {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  margin-bottom: 0.5rem;
+}
+
+/* Botões com hover */
+.conta-btn {
+  transition: all 0.2s ease;
+}
+
+.conta-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.conta-btn-purple {
+  background: #8b5cf6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.conta-btn-purple:hover {
+  background: #7c3aed;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.conta-btn-blue {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.conta-btn-blue:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.conta-btn-green {
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.75rem;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.conta-btn-green:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.conta-btn-red {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.875rem 2rem;
+  transition: all 0.2s ease;
+}
+
+.conta-btn-red:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Botões de ícone na tabela de usuários */
+.icon-btn {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.icon-btn-shield {
+  background: #f1f5f9;
+}
+
+.icon-btn-shield:hover {
+  background: #fef3c7;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.icon-btn-shield-active {
+  background: #fef3c7;
+}
+
+.icon-btn-shield-active:hover {
+  background: #fde68a;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+}
+
+.icon-btn-key {
+  background: #f1f5f9;
+}
+
+.icon-btn-key:hover {
+  background: #e0e7ff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.icon-btn-delete {
+  background: #fee2e2;
+}
+
+.icon-btn-delete:hover {
+  background: #fecaca;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* Novo usuário toggle button */
+.novo-usuario-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 1rem;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.novo-usuario-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Layout Mobile */
+@media (max-width: 768px) {
+  .conta-content {
+      padding: 1rem;
+      padding-bottom: 80px;
+  }
+  
+  .conta-grid {
+      grid-template-columns: 1fr !important; /* Forcar coluna unica */
+  }
+
+  .conta-input-group {
+      flex-direction: column; /* Input e botao empilhados no mobile */
+  }
+
+  .conta-btn-purple, .conta-btn-blue {
+      width: 100%; /* Botoes full width */
+  }
+}

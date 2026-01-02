@@ -1,0 +1,176 @@
+/* Configuracoes.css - Responsividade e Estilos */
+
+.config-container {
+  padding: 0 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+
+.config-menu {
+  width: 240px;
+  flex-shrink: 0;
+  background: white;
+  border-radius: 16px;
+  padding: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 1rem;
+}
+
+.config-menu-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  margin-bottom: 0.35rem;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.config-menu-btn.active {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.config-menu-btn:hover:not(.active) {
+  background: #fff7ed;
+  transform: translateX(4px);
+}
+
+.config-menu-icon {
+    display: flex;
+}
+
+.config-menu-text {
+    flex: 1;
+}
+
+.config-menu-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.config-menu-desc {
+    font-size: 0.7rem;
+    margin-top: 1px;
+}
+
+.config-content {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 2rem;
+}
+
+/* Sistema Panel */
+.sistema-panel {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.sistema-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sistema-danger-zone {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.sistema-danger-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0 0 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sistema-danger-text {
+  color: #991b1b;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.sistema-btn-danger {
+  padding: 0.65rem 1.25rem;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sistema-btn-danger:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.sistema-btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .config-container {
+    padding: 1rem;
+    padding-bottom: 80px; /* Navbar space */
+    flex-direction: column; /* Menu em cima */
+    gap: 1rem;
+  }
+
+  .config-menu {
+    width: 100%;
+    position: static; 
+    display: flex;
+    overflow-x: auto; /* Scroll horizontal se precisar */
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+
+  .config-menu-btn {
+    flex: 1;
+    margin-bottom: 0;
+    justify-content: center;
+    text-align: center;
+    white-space: nowrap;
+    min-width: 140px; 
+    flex-direction: column; /* Icone em cima do texto */
+    gap: 0.25rem;
+  }
+  
+  .config-menu-desc {
+      display: none; /* Simplificar no mobile */
+  }
+
+  .config-menu-btn:hover:not(.active) {
+    transform: none;
+  }
+
+  .config-content {
+    width: 100%;
+    padding-bottom: 1rem;
+  }
+}

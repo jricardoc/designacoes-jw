@@ -1,0 +1,27 @@
+
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 70px;
+  background-color: #f8fafc;
+  width: calc(100% - 70px);
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .layout-container {
+    flex-direction: column;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    margin-bottom: 70px; /* Espaço para a Bottom Bar */
+    padding-bottom: 20px;
+  }
+}

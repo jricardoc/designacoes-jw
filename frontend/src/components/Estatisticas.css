@@ -1,0 +1,133 @@
+/* Estatísticas Component Styles */
+
+.estatisticas-container {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.estatisticas-titulo {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.estatisticas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.estatistica-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #2563eb;
+}
+
+.card-titulo {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.contagem-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contagem-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0.5rem;
+  background: #f9fafb;
+  border-radius: 4px;
+}
+
+.contagem-item .nome {
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.contagem-item .count {
+  background: #2563eb;
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.nao-incluidos {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+}
+
+.nao-incluidos strong {
+  color: #92400e;
+  font-size: 0.85rem;
+}
+
+.nao-incluidos p {
+  color: #78350f;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.resumo-geral {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border-radius: 8px;
+  padding: 1.5rem;
+  color: white;
+}
+
+.resumo-geral h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+.resumo-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.resumo-item {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.resumo-item strong {
+  color: #fbbf24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .estatisticas-container {
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .estatisticas-grid {
+    grid-template-columns: 1fr;
+  }
+}
