@@ -1,2 +1,5 @@
 [phases.setup]
-nixPkgs = ["nodejs_20", "npm-10_x"]
+nixPkgs = ["nodejs_20", "npm-10_x", "caddy"]
+
+[start]
+cmd = "caddy run --config Caddyfile --adapter caddyfile"
