@@ -1,0 +1,23 @@
+# Ignorar tudo por padrão
+*
+
+# Manter arquivos essenciais
+!README.md
+!seed.sql
+!.gitignore
+
+# Manter pastas backend e frontend
+!backend/
+!backend/**
+!frontend/
+!frontend/**
+
+# Ignorar node_modules e builds dentro das pastas
+backend/node_modules/
+backend/dist/
+frontend/node_modules/
+frontend/dist/
+
+# Ignorar arquivos de ambiente
+.env
+.DS_Store
