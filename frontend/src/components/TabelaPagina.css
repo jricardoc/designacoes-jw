@@ -146,7 +146,7 @@
 .funcao-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  padding: 8px;
+  padding: 6px;
   align-items: center;
 }
 
@@ -160,11 +160,12 @@
 
 .funcao-badge {
   display: inline-block;
-  padding: 5px 10px;
-  border-radius: 6px;
+  padding: 0 10px;
   font-size: 0.8rem;
-  font-weight: 600;
-  color: white;
+  font-weight: 800;
+  color: #000;
+  font-family: "Roboto", sans-serif;
+  text-transform: uppercase;
 }
 
 .irmao-cell {
@@ -183,7 +184,6 @@
   border-radius: 4px;
   transition: background 0.2s;
 }
-
 
 .irmao-nome.editable:hover {
   background: rgba(37, 99, 235, 0.1);
@@ -266,29 +266,29 @@
   .tabela-pagina-header {
     padding: 12px 15px;
   }
-  
+
   .tabela-pagina-titulo {
     font-size: 1.25rem;
   }
-  
+
   .tabela-pagina-thead {
     grid-template-columns: 60px 80px 1fr 1fr 1fr;
     font-size: 0.75rem;
   }
-  
+
   .tabela-pagina-row {
     grid-template-columns: 60px 80px 1fr;
   }
-  
+
   .data-numero {
     font-size: 1.5rem;
   }
-  
+
   .funcao-badge {
     font-size: 0.7rem;
-    padding: 4px 8px;
+    padding: 0 8px;
   }
-  
+
   .irmao-nome {
     font-size: 0.85rem;
   }
@@ -303,31 +303,31 @@
     margin: 0 auto 1rem auto;
     border-radius: 6px;
   }
-  
+
   .tabela-pagina-header {
     padding: 10px 12px;
   }
-  
+
   .tabela-pagina-titulo {
     font-size: 1rem;
   }
-  
+
   .tabela-pagina-subtitulo {
     font-size: 0.75rem;
   }
-  
+
   /* Esconder thead no mobile - layout de cards */
   .tabela-pagina-thead {
     display: none;
   }
-  
+
   /* Layout de cards para mobile */
   .tabela-pagina-row {
     display: flex;
     flex-direction: column;
     border-bottom: 2px solid #e5e7eb;
   }
-  
+
   /* Data e Dia lado a lado no topo */
   .td-data-cell {
     padding: 10px 12px;
@@ -337,21 +337,21 @@
     justify-content: flex-start;
     gap: 15px;
   }
-  
+
   .data-info {
     flex-direction: row;
     gap: 8px;
     align-items: baseline;
   }
-  
+
   .data-numero {
     font-size: 1.5rem;
   }
-  
+
   .data-mes {
     font-size: 0.8rem;
   }
-  
+
   /* Mostrar badge do dia no mobile */
   .dia-badge-mobile {
     display: inline-block;
@@ -361,50 +361,50 @@
     font-weight: 700;
     text-transform: uppercase;
   }
-  
+
   .dia-badge-mobile.domingo {
     background: #f59e0b;
     color: #78350f;
   }
-  
+
   .dia-badge-mobile.quinta {
     background: #10b981;
     color: #064e3b;
   }
-  
+
   /* Esconder célula de dia separada */
   .td-dia-cell {
     display: none;
   }
-  
+
   .td-funcoes-cell {
     width: 100%;
   }
-  
+
   .funcao-row {
     padding: 8px;
     grid-template-columns: 1fr 1fr 1fr;
   }
-  
+
   .funcao-badge {
     font-size: 0.65rem;
-    padding: 4px 6px;
+    padding: 0 6px;
   }
-  
+
   .irmao-nome {
     font-size: 0.8rem;
   }
-  
+
   .edit-select {
     font-size: 0.75rem;
     padding: 4px 6px;
   }
-  
+
   .edit-input {
     width: 95%;
     padding: 6px 8px;
   }
-  
+
   .titulo-input {
     font-size: 1rem;
   }
@@ -417,32 +417,32 @@
   .tabela-pagina-header {
     padding: 8px 10px;
   }
-  
+
   .tabela-pagina-titulo {
     font-size: 0.9rem;
   }
-  
+
   .tabela-pagina-subtitulo {
     font-size: 0.65rem;
   }
-  
+
   .td-data-cell {
     padding: 6px;
   }
-  
+
   .data-numero {
     font-size: 1.25rem;
   }
-  
+
   .funcao-row {
     padding: 6px;
   }
-  
+
   .funcao-badge {
     font-size: 0.55rem;
-    padding: 3px 5px;
+    padding: 0 5px;
   }
-  
+
   .irmao-nome {
     font-size: 0.7rem;
   }

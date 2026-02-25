@@ -40,7 +40,8 @@ class AutoDesignacaoService {
         const irmaosPorFuncao = {
             microfone: irmaos.filter(i => i.funcoes.includes('microfone')),
             indicador: irmaos.filter(i => i.funcoes.includes('indicador')),
-            audioVideo: irmaos.filter(i => i.funcoes.includes('audioVideo'))
+            audioVideo: irmaos.filter(i => i.funcoes.includes('audioVideo')),
+            estacionamento: irmaos.filter(i => i.funcoes.includes('estacionamento'))
         };
 
         // 3. Buscar designacoes existentes do quadro (template vazio)
@@ -69,7 +70,8 @@ class AutoDesignacaoService {
         const irmaosNaoDesignados = {
             microfone: new Set(irmaosPorFuncao.microfone.map(i => i.nome)),
             indicador: new Set(irmaosPorFuncao.indicador.map(i => i.nome)),
-            audioVideo: new Set(irmaosPorFuncao.audioVideo.map(i => i.nome))
+            audioVideo: new Set(irmaosPorFuncao.audioVideo.map(i => i.nome)),
+            estacionamento: new Set(irmaosPorFuncao.estacionamento.map(i => i.nome))
         };
 
         // 8. Processar cada data em ordem
@@ -82,7 +84,8 @@ class AutoDesignacaoService {
         const funcaoMap = {
             'Microfone Volante': 'microfone',
             'Indicador': 'indicador',
-            'Audio e Video': 'audioVideo'
+            'Audio e Video': 'audioVideo',
+            'Estacionamento': 'estacionamento'
         };
 
         for (const data of datas) {

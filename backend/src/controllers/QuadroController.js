@@ -32,6 +32,17 @@ function gerarTemplate(mes, ano) {
                     irmao2: ''
                 });
             });
+
+            // Adiciona Estacionamento apenas aos Domingos
+            if (diaSemana === 0) {
+                designacoes.push({
+                    data: dataFormatada,
+                    dia: diaNome,
+                    funcao: 'Estacionamento',
+                    irmao1: '',
+                    irmao2: ''
+                });
+            }
         }
     }
 
