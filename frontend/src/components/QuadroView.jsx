@@ -49,6 +49,7 @@ export default function QuadroView() {
   const { toasts, addToast, removeToast } = useToast();
 
   const [quadro, setQuadro] = useState(null);
+  const [irmaos, setIrmaos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [modalConfig, setModalConfig] = useState({ isOpen: false });
@@ -59,10 +60,16 @@ export default function QuadroView() {
 
   const carregarQuadro = async () => {
     try {
-      const response = await authFetch(`/quadros/${id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setQuadro(data);
+      const [responseQuadro, responseIrmaos] = await Promise.all([
+        authFetch(`/quadros/${id}`),
+        authFetch("/irmaos"),
+      ]);
+
+      if (responseQuadro.ok && responseIrmaos.ok) {
+        const dataQuadro = await responseQuadro.json();
+        const dataIrmaos = await responseIrmaos.json();
+        setQuadro(dataQuadro);
+        setIrmaos(dataIrmaos);
       } else {
         navigate("/designacoes");
       }
@@ -543,6 +550,15 @@ export default function QuadroView() {
                     ...ordenado.map(([_, v]) => v),
                   );
 
+                  // Calcular irmaos ativos que nao foram designados
+                  const irmaosAtivos = irmaos
+                    .filter((i) => i.ativo)
+                    .map((i) => i.nome);
+                  const nomesDesignados = Object.keys(contagem);
+                  const naoDesignados = irmaosAtivos.filter(
+                    (nome) => !nomesDesignados.includes(nome),
+                  );
+
                   return (
                     <div className="estatisticas-list">
                       {ordenado.map(([nome, count]) => (
@@ -558,9 +574,55 @@ export default function QuadroView() {
                           </div>
                         </div>
                       ))}
-                      <div className="estatistica-footer">
-                        Total: {ordenado.length} irmãos designados
-                      </div>
+
+                      {naoDesignados.length === 0 ? (
+                        <div
+                          className="estatistica-footer"
+                          style={{
+                            color: "#10b981",
+                            fontWeight: "600",
+                            borderTop: "1px solid #e5e7eb",
+                            paddingTop: "0.75rem",
+                            marginTop: "0.5rem",
+                          }}
+                        >
+                          ✅ Todos os {irmaosAtivos.length} irmãos ativos foram
+                          designados neste mês!
+                        </div>
+                      ) : (
+                        <div
+                          className="estatistica-footer"
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px",
+                            alignItems: "flex-start",
+                            textAlign: "left",
+                            borderTop: "1px solid #e5e7eb",
+                            paddingTop: "0.75rem",
+                            marginTop: "0.5rem",
+                          }}
+                        >
+                          <div>
+                            <strong>
+                              Total: {nomesDesignados.length} irmãos designados
+                            </strong>
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.85rem",
+                              color: "#64748b",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            <strong>
+                              Ainda não designados ({naoDesignados.length}):
+                            </strong>
+                            <br />
+                            {naoDesignados.join(", ")}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}

@@ -8,6 +8,9 @@ const SeedService = require('./services/SeedService');
 require('dotenv').config();
 
 const app = express();
+// Confiar no reverse proxy (ex: Easypanel/Traefik) para o express-rate-limit obter os IPs corretos
+app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 3001;
 
 // CORS configurado - DEVE vir ANTES do helmet para permitir preflight
@@ -41,10 +44,10 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Seguranca: Rate limiting (100 requests por 15 minutos por IP)
+// Seguranca: Rate limiting (1000 requests por 15 minutos por IP)
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
+    max: 1000,
     message: { error: 'Muitas requisicoes, tente novamente mais tarde' }
 });
 app.use(limiter);
