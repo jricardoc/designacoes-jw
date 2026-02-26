@@ -1,0 +1,299 @@
+/* Sidebar Container */
+.sidebar {
+  width: 70px;
+  height: 100vh;
+  background-color: #1e3a8a; /* Azul JW */
+  color: white;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+@media (min-width: 1050px) {
+  .sidebar:hover {
+    width: 260px;
+  }
+}
+
+/* Logo Area */
+.logo-container {
+  padding: 1.5rem 0.8rem;
+  display: flex;
+  align-items: center;
+  height: 60px;
+  overflow: hidden;
+}
+
+.logo-box {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  background: white;
+  color: #1e3a8a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.logo-text {
+  margin-left: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s;
+  transition-delay: 0s;
+}
+
+@media (min-width: 1050px) {
+  .sidebar:hover .logo-text {
+    opacity: 1;
+    transition-delay: 0.1s;
+  }
+}
+
+/* Navigation Links */
+.nav-menu {
+  flex: 1;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 0.8rem;
+  color: #cbd5e1;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 1050px) {
+  .nav-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: translateX(4px);
+  }
+}
+
+.nav-item.active {
+  background-color: #3b82f6; /* Azul highlight */
+  color: white;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.nav-icon {
+  min-width: 24px; /* Ajustado para alinhar com o padding */
+  display: flex;
+  justify-content: center;
+}
+
+.nav-text {
+  margin-left: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+@media (min-width: 1050px) {
+  .sidebar:hover .nav-text {
+    opacity: 1;
+  }
+}
+
+/* Footer com versão */
+.sidebar-footer {
+  padding: 0.75rem;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+@media (min-width: 1050px) {
+  .sidebar:hover .sidebar-footer {
+    opacity: 1;
+  }
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.footer-text {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.footer-version {
+  font-size: 0.65rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Logout Button */
+.logout-container {
+  padding: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn {
+  width: 100%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  padding: 0.8rem; /* Igual ao nav-item */
+  display: flex;
+  align-items: center;
+  color: #cbd5e1;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+@media (min-width: 1050px) {
+  .logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.2); /* Vermelho suave */
+    color: #fca5a5;
+  }
+}
+
+/* Mobile Responsiveness (Bottom Navigation) */
+@media (max-width: 768px) {
+  .sidebar {
+    width: calc(100% - 32px);
+    height: 65px;
+    margin: 0 16px;
+
+    /* Floating Dock - Desgruda do chão, considera Safe-Area + Folga */
+    bottom: calc(env(safe-area-inset-bottom, 16px) + 16px);
+    top: auto;
+    left: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    border-radius: 20px; /* Bordas arredondadas Super Premium */
+    padding-bottom: 0;
+
+    transition:
+      transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 0.4s;
+
+    /* Estilo Ultra Premium iOS-like Glassmorphism */
+    background: rgba(15, 23, 42, 0.85); /* Tom dark-slate para contraste */
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 20px 40px -8px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Controlado via React VisualViewport Hook */
+  .sidebar.keyboard-open {
+    transform: translateY(150px);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (min-width: 1050px) {
+    .sidebar:hover {
+      width: 100%;
+    }
+  }
+
+  .logo-container {
+    display: none;
+  }
+
+  /* Ocultar footer no mobile */
+  .sidebar-footer {
+    display: none;
+  }
+
+  .logout-container {
+    display: none; /* Esconder sair no mobile para simplificar menu centralizado */
+  }
+
+  .nav-menu {
+    flex-direction: row;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    max-width: 100%;
+  }
+
+  .nav-indicator {
+    position: absolute;
+    top: 10%;
+    left: 0;
+    height: 80%;
+    width: 20%;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    z-index: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .nav-item {
+    flex-direction: column;
+    padding: 0.5rem 0;
+    justify-content: center;
+    border-radius: 12px;
+    flex: 1; /* Força flexível de expansão */
+    z-index: 1; /* Fica acima da pílula */
+    height: 100%;
+    gap: 4px;
+    background: transparent;
+  }
+
+  @media (min-width: 1050px) {
+    .nav-item:hover {
+      transform: none;
+      background-color: transparent; /* Hover já estará morto via CSS, mas reforçamos zero-flicker */
+    }
+  }
+
+  .nav-item.active {
+    box-shadow: none;
+    background: transparent; /* O nav-indicator atrás já dá a cor */
+  }
+
+  .nav-icon {
+    min-width: auto;
+  }
+
+  /* Mostrar icones e texto pequenos */
+  .nav-text {
+    opacity: 1;
+    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 500;
+  }
+}

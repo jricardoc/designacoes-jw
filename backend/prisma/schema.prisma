@@ -96,3 +96,94 @@ model Indisponibilidade {
   
   @@unique([irmaoId, data])
 }
+
+// NOVO: Modelos para Reuniões Importadas via Excel
+model Reuniao {
+  id        Int      @id @default(autoincrement())
+  mes       Int      // 1-12
+  ano       Int      // 2026
+  semanas   SemanaReuniao[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mes, ano])
+}
+
+model SemanaReuniao {
+  id             Int      @id @default(autoincrement())
+  reuniaoId      Int
+  reuniao        Reuniao  @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  
+  // Dados Gerais da Semana
+  faixaData      String   // Ex: "Março 02 - 08"
+  dataReuniao    String?  // Ex: "05/03/2026"
+  leituraSemanal String?  // Ex: "Ísaias 41 - 42"
+  
+  // Cabeçalho / Presidente
+  presidente     String?
+  conselheiroB   String?
+  oracaoInicial  String?
+  oracaoFinal    String?
+  
+  // Canticos e Tempos
+  canticoInicial String?
+  canticoMeio    String?
+  canticoFinal   String?
+  
+  // Partes da Reunião (JSON ou campos específicos - usaremos campos para facilitar)
+  // Tesouros
+  tesouro1_titulo   String?
+  tesouro1_irmao    String?
+  tesouro2_titulo   String?
+  tesouro2_irmao    String?
+  tesouro3_titulo   String?
+  tesouro3_salaB    String?
+  tesouro3_principal String?
+  
+  // Ministério
+  ministerio1_titulo String?
+  ministerio1_salaB  String?
+  ministerio1_principal String?
+  ministerio2_titulo String?
+  ministerio2_salaB  String?
+  ministerio2_principal String?
+  ministerio3_titulo String?
+  ministerio3_salaB  String?
+  ministerio3_principal String?
+  ministerio4_titulo String?
+  ministerio4_salaB  String?
+  ministerio4_principal String?
+
+  // Vida Cristã
+  vidaCrista1_titulo String?
+  vidaCrista1_irmao  String?
+  vidaCrista2_titulo String?
+  vidaCrista2_irmao  String?
+  
+  // Estudo Bíblico
+  estudoBiblico_dirigente String?
+  estudoBiblico_leitor    String?
+  
+  // Final de Semana
+  fds_presidente String?
+  fds_tema       String?
+  fds_orador     String?
+  fds_congregacao String?
+  fds_leitor     String?
+  
+  // Designações Mecânicas (Meio de Semana)
+  mecanica_audioVideo String?
+  mecanica_indicadores String?
+  mecanica_microfone  String?
+  
+  // Designações Mecânicas (Final de Semana)
+  fds_mecanica_audioVideo String?
+  fds_mecanica_indicadores String?
+  fds_mecanica_microfone  String?
+  fds_mecanica_portao     String?
+  
+  // Limpeza
+  limpeza                 String?
+  
+  createdAt      DateTime @default(now())
+}

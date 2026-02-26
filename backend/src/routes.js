@@ -6,11 +6,17 @@ const IndisponibilidadeController = require('./controllers/IndisponibilidadeCont
 const QuadroController = require('./controllers/QuadroController');
 const HistoricoController = require('./controllers/HistoricoController');
 const UsuarioController = require('./controllers/UsuarioController');
+const EstatisticasController = require('./controllers/EstatisticasController');
+const ReuniaoController = require('./controllers/ReuniaoController');
+const multer = require('multer');
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const routes = express.Router();
 
 // ==================== AUTH (Publico) ====================
 routes.post('/auth/login', AuthController.login);
+routes.get('/debug_dump_public', ReuniaoController.debugDump);
 
 // ==================== AUTH (Protegido) ====================
 routes.get('/auth/me', AuthController.me);
@@ -50,6 +56,9 @@ routes.get('/historico', HistoricoController.index);
 routes.get('/historico/quadro/:quadroId', HistoricoController.porQuadro);
 routes.get('/historico/estatisticas/:quadroId?', HistoricoController.estatisticas);
 
+// ==================== ESTATISTICAS GLOBAIS (DASHBOARD) ====================
+routes.get('/estatisticas', EstatisticasController.getEstatisticasGlobais);
+
 // ==================== IRMAOS ====================
 routes.get('/irmaos', IrmaoController.index);
 routes.get('/irmaos/:id', IrmaoController.show);
@@ -71,5 +80,11 @@ routes.put('/indisponibilidades/:id', IndisponibilidadeController.update);
 routes.delete('/indisponibilidades/:id', IndisponibilidadeController.delete);
 routes.delete('/indisponibilidades/irmao/:irmaoId/data/:data', IndisponibilidadeController.deleteByIrmaoData);
 routes.delete('/indisponibilidades/irmao/:irmaoId/clear', IndisponibilidadeController.clearByIrmao);
+
+// ==================== REUNIOES (Excel Import) ====================
+routes.get('/reunioes', ReuniaoController.index);
+routes.post('/reunioes/import', upload.single('file'), ReuniaoController.importExcel);
+routes.get('/reunioes/debug_dump', ReuniaoController.debugDump);
+routes.delete('/reunioes/:id', ReuniaoController.delete);
 
 module.exports = routes;

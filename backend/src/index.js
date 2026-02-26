@@ -54,6 +54,9 @@ app.use(limiter);
 
 app.use(express.json());
 
+// Rota publica de dump
+app.get('/debug_dump_public', require('./controllers/ReuniaoController').debugDump);
+
 // Middleware de autenticacao
 app.use(authMiddleware);
 

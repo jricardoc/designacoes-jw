@@ -1,0 +1,48 @@
+.carrinho-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.carrinho-header {
+  margin-bottom: 2rem;
+}
+
+.carrinho-header h1 {
+  font-size: 1.8rem;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.carrinho-header p {
+  color: var(--gray-500);
+  font-size: 1rem;
+}
+
+.carrinho-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.carrinho-icon-wrapper {
+  color: var(--gray-300);
+  margin-bottom: 1.5rem;
+}
+
+.carrinho-empty-state h2 {
+  font-size: 1.25rem;
+  color: var(--gray-700);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.carrinho-empty-state p {
+  color: var(--gray-500);
+}

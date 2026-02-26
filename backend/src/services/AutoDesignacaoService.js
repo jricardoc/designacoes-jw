@@ -7,7 +7,16 @@ const prisma = require('../prisma');
  * - Evitar repeticoes seguidas
  * - Distribuicao igualitaria
  * - Garantir que todos sejam designados
+ * - Considerar histórico do mês anterior (inclusive virada de ano)
  */
+
+// Função auxiliar iterativa para cálculo de Data real
+const parseDataParaDate = (dataString, anoRelativo) => {
+    // Exemplo "31/01" -> (2026, 0, 31) => Mes no Javascript é index 0
+    const [dia, mes] = dataString.split('/').map(Number);
+    return new Date(anoRelativo, mes - 1, dia);
+};
+
 class AutoDesignacaoService {
 
     /**
@@ -64,7 +73,38 @@ class AutoDesignacaoService {
         irmaos.forEach(i => { contadorDesignacoes[i.nome] = 0; });
 
         // 6. Rastrear ultima designacao de cada irmao (para evitar repeticoes)
+        // Agira armazenara um Objeto { data: '31/01', ano: 2026, dataObj: Date() }
         const ultimaDesignacao = {};
+
+        // 6.b BUCAR QUADRO ANTERIOR E POPULAR O HISTORICO
+        let prevMes = mes - 1;
+        let prevAno = ano;
+        if (prevMes === 0) {
+            prevMes = 12;
+            prevAno = ano - 1;
+        }
+
+        const quadroAnterior = await prisma.quadro.findUnique({
+            where: { mes_ano: { mes: prevMes, ano: prevAno } },
+            include: { designacoes: true }
+        });
+
+        if (quadroAnterior && quadroAnterior.designacoes) {
+            quadroAnterior.designacoes.forEach(d => {
+                const dDate = parseDataParaDate(d.data, prevAno);
+
+                const atualizarSeMaisRecente = (irmao) => {
+                    if (irmao) {
+                        if (!ultimaDesignacao[irmao] || ultimaDesignacao[irmao].dataObj < dDate) {
+                            ultimaDesignacao[irmao] = { data: d.data, ano: prevAno, dataObj: dDate };
+                        }
+                    }
+                };
+
+                atualizarSeMaisRecente(d.irmao1);
+                atualizarSeMaisRecente(d.irmao2);
+            });
+        }
 
         // 7. Irmaos que ainda nao foram designados (para garantir todos)
         const irmaosNaoDesignados = {
@@ -102,42 +142,39 @@ class AutoDesignacaoService {
                 // REGRA ESPECIAL PARA AUDIO E VIDEO (se habilitada)
                 if (regraAudioVideo && designacao.funcao === 'Audio e Video') {
                     if (designacao.dia === 'Quinta') {
-                        // Quinta: 2 irmaos treinando
                         const treinandos = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'treinando');
                         irmao1 = this.selecionarIrmao(
                             treinandos.length > 0 ? treinandos : irmaosDisponiveis,
                             data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, null
+                            irmaosNaoDesignados[funcaoId], regras, null, ano
                         );
                         irmao2 = this.selecionarIrmao(
                             treinandos.length > 0 ? treinandos : irmaosDisponiveis,
                             data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, irmao1
+                            irmaosNaoDesignados[funcaoId], regras, irmao1, ano
                         );
                     } else if (designacao.dia === 'Domingo') {
-                        // Domingo: 1 experiente + 1 treinando
                         const experientes = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'experiente');
                         const treinandos = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'treinando');
 
                         irmao1 = this.selecionarIrmao(
                             experientes.length > 0 ? experientes : irmaosDisponiveis,
                             data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, null
+                            irmaosNaoDesignados[funcaoId], regras, null, ano
                         );
                         irmao2 = this.selecionarIrmao(
                             treinandos.length > 0 ? treinandos : irmaosDisponiveis,
                             data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, irmao1
+                            irmaosNaoDesignados[funcaoId], regras, irmao1, ano
                         );
                     } else {
-                        // Outro dia: comportamento padrao
-                        irmao1 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, null);
-                        irmao2 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, irmao1);
+                        irmao1 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, null, ano);
+                        irmao2 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, irmao1, ano);
                     }
                 } else {
-                    // Outras funcoes: comportamento padrao
-                    irmao1 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, null);
-                    irmao2 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, irmao1);
+                    // Outras funcoes padrao
+                    irmao1 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, null, ano);
+                    irmao2 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, irmao1, ano);
                 }
 
                 // Atualizar designacao
@@ -153,12 +190,12 @@ class AutoDesignacaoService {
                     // Atualizar contadores e rastreadores
                     if (irmao1) {
                         contadorDesignacoes[irmao1]++;
-                        ultimaDesignacao[irmao1] = data;
+                        ultimaDesignacao[irmao1] = { data: data, ano: ano, dataObj: parseDataParaDate(data, ano) };
                         irmaosNaoDesignados[funcaoId].delete(irmao1);
                     }
                     if (irmao2) {
                         contadorDesignacoes[irmao2]++;
-                        ultimaDesignacao[irmao2] = data;
+                        ultimaDesignacao[irmao2] = { data: data, ano: ano, dataObj: parseDataParaDate(data, ano) };
                         irmaosNaoDesignados[funcaoId].delete(irmao2);
                     }
                 }
@@ -179,7 +216,8 @@ class AutoDesignacaoService {
         contadorDesignacoes,
         irmaosNaoDesignados,
         regras,
-        excluir
+        excluir,
+        anoAtual // Injectando o Ano para compor a Data Absoluta
     ) {
         const {
             respeitarIndisponibilidades = true,
@@ -208,10 +246,10 @@ class AutoDesignacaoService {
         if (evitarRepeticoes) {
             const candidatosSemRepeticao = candidatos.filter(i => {
                 const ultima = ultimaDesignacao[i.nome];
-                if (!ultima) return true;
+                if (!ultima) return true; // Nunca foi designado ou não temos histórico = livre
 
-                // Verificar se a ultima designacao foi em uma data proxima
-                return !this.saoDatasSeguidas(ultima, data);
+                // Aqui comparamos a estrutura obj (com Date) vs a String original
+                return !this.saoDatasSeguidasObjToStr(ultima, data, anoAtual);
             });
 
             // RIGOROSO: Só usar candidatos sem repetição (não fazer fallback)
@@ -243,18 +281,23 @@ class AutoDesignacaoService {
     }
 
     /**
-     * Verifica se duas datas sao seguidas (considerando apenas dia/mes)
+     * Verifica se duas datas sao seguidas processando uma Object (historico anterior e Data) contra uma Data String e Ano do loop do algoritmo
      */
-    saoDatasSeguidas(data1, data2) {
-        const [dia1, mes1] = data1.split('/').map(Number);
-        const [dia2, mes2] = data2.split('/').map(Number);
+    saoDatasSeguidasObjToStr(ultimaDesignacaoObj, dataAtualStr, anoAtual) {
+        if (!ultimaDesignacaoObj) return false;
 
-        // Converter para valor numerico para comparar
-        const valor1 = mes1 * 100 + dia1;
-        const valor2 = mes2 * 100 + dia2;
+        // ultimaDesignacaoObj possui: { data: '31/01', ano: 2026, dataObj: Date Obj }
+        const data1Date = ultimaDesignacaoObj.dataObj;
 
-        // Considerar "seguidas" se diferenca for pequena (ate 4 dias)
-        return Math.abs(valor2 - valor1) <= 4;
+        // Monta a data equivalente ao turno de teste atual
+        const data2Date = parseDataParaDate(dataAtualStr, anoAtual);
+
+        // Calcula diferenca absoluta usando Timestamp (Milisegundos) garantindo contabilidade real entre meses e anos bissextos
+        const diffNoTempo = Math.abs(data2Date - data1Date);
+        const diffNosDiasCravados = Math.ceil(diffNoTempo / (1000 * 60 * 60 * 24));
+
+        // Para nós até 4 dias seguidos é considerado perto d+ (já que a congregacao tem reuniao as Quintas e Domingos, 3 ou 4 dias variam se ele pega fds e asseguir no meio de semana) 
+        return diffNosDiasCravados <= 4;
     }
 }
 

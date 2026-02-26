@@ -42,7 +42,7 @@ class IrmaoController {
     // Criar novo irmao
     async create(req, res) {
         try {
-            const { nome, funcoes } = req.body;
+            const { nome, funcoes, nivelAudioVideo } = req.body;
 
             if (!nome) {
                 return res.status(400).json({ error: 'Nome e obrigatorio' });
@@ -51,7 +51,8 @@ class IrmaoController {
             const irmao = await prisma.irmao.create({
                 data: {
                     nome,
-                    funcoes: funcoes || []
+                    funcoes: funcoes || [],
+                    nivelAudioVideo: nivelAudioVideo || 'experiente'
                 }
             });
 
@@ -65,16 +66,17 @@ class IrmaoController {
         }
     }
 
-    // Atualizar irmao (renomear, funcoes, status)
+    // Atualizar irmao (renomear, funcoes, status, niveis)
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { nome, funcoes, ativo } = req.body;
+            const { nome, funcoes, ativo, nivelAudioVideo } = req.body;
 
             const updateData = {};
             if (nome !== undefined) updateData.nome = nome;
             if (funcoes !== undefined) updateData.funcoes = funcoes;
             if (ativo !== undefined) updateData.ativo = ativo;
+            if (nivelAudioVideo !== undefined) updateData.nivelAudioVideo = nivelAudioVideo;
 
             const irmao = await prisma.irmao.update({
                 where: { id: parseInt(id) },

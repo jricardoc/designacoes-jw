@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
   --primary: #2563eb;
@@ -7,7 +7,7 @@
   --secondary: #7c3aed;
   --success: #10b981;
   --warning: #f59e0b;
-  
+
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -18,7 +18,7 @@
   --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
-  
+
   --radius: 12px;
   --radius-sm: 8px;
   --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -31,14 +31,22 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   width: 100%;
   min-height: 100vh;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  background-color: #f8fafc;
   min-height: 100vh;
   color: var(--gray-800);
   line-height: 1.6;
@@ -98,10 +106,14 @@ body {
   box-shadow: var(--shadow-lg);
 }
 
-.btn-download:hover:not(:disabled) {
+@media (min-width: 1050px) {
+  .btn-download:hover:not(:disabled) {
+
   transform: translateY(-2px);
   box-shadow: 0 15px 20px -5px rgba(0, 0, 0, 0.2);
   background: var(--gray-50);
+
+  }
 }
 
 .btn-download:active:not(:disabled) {
@@ -123,7 +135,9 @@ body {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Tabelas Section */
@@ -170,7 +184,7 @@ body {
   .app {
     padding: 1.5rem;
   }
-  
+
   .site-titulo {
     font-size: 2rem;
   }
@@ -181,23 +195,23 @@ body {
   .app {
     padding: 1rem;
   }
-  
+
   .site-titulo {
     font-size: 1.5rem;
   }
-  
+
   .site-descricao {
     font-size: 0.85rem;
     padding: 0 0.5rem;
   }
-  
+
   .btn-download {
     width: 100%;
     justify-content: center;
     padding: 0.875rem 1.5rem;
     font-size: 1rem;
   }
-  
+
   .page-divider {
     padding: 1rem;
   }
@@ -208,11 +222,11 @@ body {
   .app {
     padding: 0.5rem;
   }
-  
+
   .site-titulo {
     font-size: 1.25rem;
   }
-  
+
   .site-descricao {
     font-size: 0.75rem;
   }
@@ -223,12 +237,16 @@ body {
   body {
     background: white;
   }
-  
+
   .app {
     padding: 0;
   }
-  
-  .site-header, .footer, .btn-download, .estatisticas-container, .page-divider {
+
+  .site-header,
+  .footer,
+  .btn-download,
+  .estatisticas-container,
+  .page-divider {
     display: none;
   }
 }
