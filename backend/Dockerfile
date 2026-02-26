@@ -10,6 +10,5 @@ COPY . .
 
 EXPOSE 3001
 
-# Prisma generate será rodado no start ou build, mas aqui garantimos dependências
-# O comando final será sobrescrito pelo docker-compose ou definido aqui
-CMD ["npm", "run", "dev"]
+# O comando final roda a atualização automática do banco e inicia a API
+CMD ["sh", "-c", "npx prisma generate && npx prisma db push && npm run start"]
