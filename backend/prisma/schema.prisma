@@ -81,6 +81,7 @@ model Irmao {
   nivelAudioVideo    String             @default("experiente") // "experiente" ou "treinando"
   ativo              Boolean            @default(true)
   indisponibilidades Indisponibilidade[]
+  dirigenteSaidas    DirigenteSaidaCampo[]
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 }
@@ -186,4 +187,60 @@ model SemanaReuniao {
   limpeza                 String?
   
   createdAt      DateTime @default(now())
+}
+
+// Configuração das Saídas de Campo (locais/horários por dia da semana)
+model SaidaCampo {
+  id        Int      @id @default(autoincrement())
+  diaSemana String   // "segunda", "terca", "quarta", "quinta", "sexta", "sabado"
+  turno     Int      @default(1) // 1 para dias normais, 1-4 para sábado
+  local     String   // "Ex-Combatentes - Casa dos irmãos Walney e Olga"
+  horario   String   // "08:45"
+  ativo     Boolean  @default(true)
+  dirigentesDisponiveis DirigenteSaidaCampo[]
+  escalas   EscalaDirigente[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Relação N:N - Quais irmãos podem dirigir em cada saída de campo
+model DirigenteSaidaCampo {
+  id          Int       @id @default(autoincrement())
+  irmaoId     Int
+  irmao       Irmao     @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  saidaCampoId Int
+  saidaCampo  SaidaCampo @relation(fields: [saidaCampoId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  
+  @@unique([irmaoId, saidaCampoId])
+}
+
+// Quadro mensal da Escala de Dirigentes
+model QuadroDirigente {
+  id        Int                @id @default(autoincrement())
+  mes       Int                // 1-12
+  ano       Int                // 2026
+  titulo    String
+  status    String             @default("rascunho")
+  escalas   EscalaDirigente[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  
+  @@unique([mes, ano])
+}
+
+// Escala: cada dia/saída com dirigente principal e substituto
+model EscalaDirigente {
+  id              Int             @id @default(autoincrement())
+  quadroId        Int
+  quadro          QuadroDirigente @relation(fields: [quadroId], references: [id], onDelete: Cascade)
+  saidaCampoId    Int
+  saidaCampo      SaidaCampo      @relation(fields: [saidaCampoId], references: [id], onDelete: Cascade)
+  data            String          // "02/06" (dia/mês)
+  dia             String          // "Segunda", "Terça", etc.
+  principal       String          @default("") // Nome do dirigente principal
+  substituto      String          @default("") // Nome do substituto
+  removido        Boolean         @default(false) // Para remover dias
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 }

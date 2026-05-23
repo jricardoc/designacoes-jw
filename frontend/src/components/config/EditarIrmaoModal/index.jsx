@@ -16,6 +16,7 @@ const FUNCOES = [
   { id: "indicador", label: "Indicador", color: "#10b981" },
   { id: "audioVideo", label: "Áudio e Vídeo", color: "#8b5cf6" },
   { id: "estacionamento", label: "Estacionamento", color: "#f59e0b" },
+  { id: "dirigente", label: "Dirigente", color: "#ef4444" },
 ];
 
 const MESES = [
@@ -44,15 +45,22 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
   const [indisponibilidades, setIndisponibilidades] = useState([]);
   const [salvando, setSalvando] = useState(false);
 
+  // Estados para Dirigente
+  const [saidasCampo, setSaidasCampo] = useState([]);
+  const [disponibilidadeDirigente, setDisponibilidadeDirigente] = useState([]);
+
   // Estado do calendario
   const hoje = new Date();
   const [mesAtual, setMesAtual] = useState(hoje.getMonth());
   const [anoAtual, setAnoAtual] = useState(hoje.getFullYear());
 
-  // Carregar indisponibilidades se editando
+  // Carregar indisponibilidades e configurações de dirigente
   useEffect(() => {
+    carregarSaidasCampo();
+    
     if (irmao?.id) {
       carregarIndisponibilidades();
+      carregarDisponibilidadeDirigente();
     }
   }, [irmao?.id]);
 
@@ -64,6 +72,34 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
     } catch (error) {
       console.error("Erro ao carregar indisponibilidades:", error);
     }
+  };
+
+  const carregarSaidasCampo = async () => {
+    try {
+      const response = await authFetch("/saidas-campo");
+      const data = await response.json();
+      setSaidasCampo(data);
+    } catch (error) {
+      console.error("Erro ao carregar saídas de campo:", error);
+    }
+  };
+
+  const carregarDisponibilidadeDirigente = async () => {
+    try {
+      const response = await authFetch(`/dirigentes/disponibilidade/${irmao.id}`);
+      const data = await response.json();
+      setDisponibilidadeDirigente(data.map(d => d.saidaCampoId));
+    } catch (error) {
+      console.error("Erro ao carregar disponibilidade de dirigente:", error);
+    }
+  };
+
+  const toggleSaidaCampo = (saidaId) => {
+    setDisponibilidadeDirigente(prev => 
+      prev.includes(saidaId) 
+        ? prev.filter(id => id !== saidaId)
+        : [...prev, saidaId]
+    );
   };
 
   // Gerar dias do mes corretamente
@@ -178,6 +214,8 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
     setSalvando(true);
 
     try {
+      let irmaoId = irmao?.id;
+
       if (irmao?.id) {
         // Atualizar
         await authFetch(`/irmaos/${irmao.id}`, {
@@ -186,11 +224,25 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
         });
       } else {
         // Criar novo
-        await authFetch("/irmaos", {
+        const res = await authFetch("/irmaos", {
           method: "POST",
           body: JSON.stringify({ nome, funcoes, nivelAudioVideo }),
         });
+        const novoIrmao = await res.json();
+        irmaoId = novoIrmao.id;
       }
+
+      // Salvar disponibilidade de dirigente se a funcao foi selecionada
+      if (funcoes.includes('dirigente') && irmaoId) {
+        await authFetch('/dirigentes/disponibilidade', {
+          method: 'PUT',
+          body: JSON.stringify({
+            irmaoId: irmaoId,
+            saidasCampoIds: disponibilidadeDirigente
+          })
+        });
+      }
+
       onClose(true);
     } catch (error) {
       console.error("Erro ao salvar:", error);
@@ -454,6 +506,68 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 >
                   ⏳ Treinando
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Seção de Disponibilidade para Dirigente */}
+          {funcoes.includes("dirigente") && (
+            <div
+              style={{
+                marginBottom: "1.25rem",
+                padding: "1rem",
+                background: "#fef2f2",
+                borderRadius: "12px",
+                border: "1px solid #fecaca",
+              }}
+            >
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "0.75rem",
+                  fontWeight: "600",
+                  fontSize: "0.9rem",
+                  color: "#991b1b",
+                }}
+              >
+                Disponibilidade para Saídas de Campo
+              </label>
+              <p style={{ fontSize: "0.8rem", color: "#b91c1c", marginBottom: "1rem" }}>
+                Selecione em quais saídas este irmão pode atuar como dirigente:
+              </p>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "0.5rem" }}>
+                {saidasCampo.map((saida) => (
+                  <label
+                    key={saida.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      padding: "0.75rem",
+                      background: "white",
+                      borderRadius: "8px",
+                      border: "1px solid #fca5a5",
+                      cursor: "pointer",
+                      transition: "all 0.2s"
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={disponibilidadeDirigente.includes(saida.id)}
+                      onChange={() => toggleSaidaCampo(saida.id)}
+                      style={{ transform: "scale(1.2)" }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: "600", color: "#7f1d1d", textTransform: "capitalize" }}>
+                        {saida.diaSemana} - {saida.horario}
+                      </div>
+                      <div style={{ fontSize: "0.8rem", color: "#991b1b" }}>
+                        {saida.local}
+                      </div>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
           )}

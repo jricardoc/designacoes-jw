@@ -8,6 +8,8 @@ const HistoricoController = require('./controllers/HistoricoController');
 const UsuarioController = require('./controllers/UsuarioController');
 const EstatisticasController = require('./controllers/EstatisticasController');
 const ReuniaoController = require('./controllers/ReuniaoController');
+const SaidaCampoController = require('./controllers/SaidaCampoController');
+const DirigentesController = require('./controllers/DirigentesController');
 const multer = require('multer');
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -86,5 +88,24 @@ routes.get('/reunioes', ReuniaoController.index);
 routes.post('/reunioes/import', upload.single('file'), ReuniaoController.importExcel);
 routes.get('/reunioes/debug_dump', ReuniaoController.debugDump);
 routes.delete('/reunioes/:id', ReuniaoController.delete);
+
+// ==================== SAÍDAS DE CAMPO ====================
+routes.get('/saidas-campo', SaidaCampoController.index);
+routes.post('/saidas-campo', SaidaCampoController.create);
+routes.put('/saidas-campo/:id', SaidaCampoController.update);
+routes.delete('/saidas-campo/:id', SaidaCampoController.delete);
+
+// ==================== ESCALA DE DIRIGENTES ====================
+routes.get('/dirigentes/quadros', DirigentesController.indexQuadros);
+routes.post('/dirigentes/quadros', DirigentesController.createQuadro);
+routes.get('/dirigentes/quadros/:id', DirigentesController.showQuadro);
+routes.delete('/dirigentes/quadros/:id', DirigentesController.deleteQuadro);
+routes.put('/dirigentes/quadros/:id/status', DirigentesController.updateStatus);
+
+routes.put('/dirigentes/escala', DirigentesController.updateEscala);
+routes.delete('/dirigentes/escala/dia', DirigentesController.deleteDia);
+
+routes.get('/dirigentes/disponibilidade/:irmaoId', DirigentesController.getDisponibilidade);
+routes.put('/dirigentes/disponibilidade', DirigentesController.updateDisponibilidade);
 
 module.exports = routes;

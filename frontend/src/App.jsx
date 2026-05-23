@@ -9,6 +9,8 @@ import Configuracoes from "./pages/Configuracoes";
 import Reuniao from "./pages/Reuniao";
 import ReuniaoV2 from "./pages/ReuniaoV2";
 import Carrinho from "./pages/Carrinho";
+import Dirigentes from "./pages/Dirigentes";
+import DirigentesQuadroView from "./pages/DirigentesQuadroView";
 
 // Componente de loading
 function LoadingScreen() {
@@ -133,6 +135,24 @@ function App() {
             element={
               <RotaProtegida>
                 <Carrinho />
+              </RotaProtegida>
+            }
+          />
+
+          <Route
+            path="/dirigentes"
+            element={
+              <RotaProtegida>
+                <Dirigentes />
+              </RotaProtegida>
+            }
+          />
+
+          <Route
+            path="/dirigentes/quadro/:id"
+            element={
+              <RotaProtegida usarLayout={false}>
+                <DirigentesQuadroView />
               </RotaProtegida>
             }
           />

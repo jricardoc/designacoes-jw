@@ -1,0 +1,26 @@
+/* Aproveitando estilos do QuadroView, já que a estrutura HTML foi feita bem similar */
+/* Importamos o do QuadroView para não duplicar muito código, e ajustamos se necessário */
+@import '../QuadroView/styles.css';
+
+/* Customizações específicas se necessário */
+.header-icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.link-voltar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+}
+
+.link-voltar:hover {
+    color: white;
+}

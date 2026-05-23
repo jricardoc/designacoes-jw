@@ -1,0 +1,141 @@
+.tabela-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.tabela-dirigentes {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  background-color: white;
+}
+
+.tabela-dirigentes th {
+  background-color: #f8fafc;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.tabela-dirigentes td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  border-right: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+
+.tabela-dirigentes td:last-child {
+  border-right: none;
+}
+
+.border-bottom-thick td {
+  border-bottom: 2px solid #cbd5e1;
+}
+
+/* Separador visual entre semanas - borda grossa dupla */
+.border-bottom-semana td {
+  border-bottom: 4px double #94a3b8;
+}
+
+.cell-data {
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  font-size: 1.1rem;
+  background-color: #f8fafc;
+}
+
+.semana-title-row {
+  background-color: #e2e8f0;
+  color: #334155;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.75rem !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+.cell-dia {
+  font-weight: 600;
+  color: #475569;
+  background-color: #f8fafc;
+}
+
+.cell-local {
+  color: #334155;
+  font-weight: 500;
+}
+
+.badge-horario {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.select-irmao {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background-color: white;
+  transition: all 0.2s;
+}
+
+.select-irmao:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.select-irmao.empty {
+  border-color: #fecdd3;
+  background-color: #fff1f2;
+}
+
+.view-only-name {
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.btn-remover-dia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background-color: transparent;
+  color: #ef4444;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btn-remover-dia:hover {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+.col-data { width: 8%; text-align: center; }
+.col-dia { width: 12%; }
+.col-local { width: 25%; }
+.col-horario { width: 10%; }
+.col-principal { width: 20%; }
+.col-substituto { width: 20%; }
+.col-acoes { width: 5%; text-align: center; }

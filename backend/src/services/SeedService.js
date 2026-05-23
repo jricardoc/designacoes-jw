@@ -136,7 +136,63 @@ class SeedService {
                 }
             }
 
-            // Nota: Quadros agora são criados via interface com geração automática de designações
+            // 5. Saídas de Campo e Dirigentes (Seed)
+            const saidaCount = await prisma.saidaCampo.count();
+            if (saidaCount === 0) {
+                console.log('Seeding Saídas de Campo...');
+                const saidasData = [
+                    { diaSemana: 'segunda', turno: 1, local: 'Ex-Combatentes - Casa dos irmãos Walney e Olga', horario: '08:45', dirigentes: ['Walney', 'Harison', 'Kaique', 'Ricardo', 'André', 'Miguel'] },
+                    { diaSemana: 'terca', turno: 1, local: 'Tokaia - Casa do Irmão Edilson', horario: '08:45', dirigentes: ['José', 'Ricardo', 'Aloísio', 'Edgar'] },
+                    { diaSemana: 'quarta', turno: 1, local: 'Ex-Combatentes - Casa da irmã Fátima Lopes', horario: '08:45', dirigentes: ['Manoel', 'José', 'Edgar', 'Neto', 'André'] },
+                    { diaSemana: 'quinta', turno: 1, local: 'KM 17 - Casa da irmã Jucélia', horario: '08:45', dirigentes: ['Edgar', 'Breno', 'José', 'Cosmírio', 'Kaique'] },
+                    { diaSemana: 'sexta', turno: 1, local: 'Tokaia - Casa do Irmão Edilson', horario: '08:45', dirigentes: ['José', 'Edgar', 'Aloísio', 'Breno'] },
+                    { diaSemana: 'sabado', turno: 1, local: 'Ex-Combatentes - Casa dos irmãos Walney e Olga', horario: '08:45', dirigentes: ['Matheus Lino', 'Kaique', 'Elesbão', 'André', 'Cristian', 'Cristiandley'] },
+                    { diaSemana: 'sabado', turno: 2, local: 'KM 17 - Casa da irmã Jucélia', horario: '16:00', dirigentes: ['João', 'Matheus Lino', 'Kaique', 'Elvandy', 'Cosmírio', 'Cristiandley'] },
+                    { diaSemana: 'sabado', turno: 3, local: 'Tokaia - Casa do Irmão Edilson', horario: '08:45', dirigentes: ['José', 'Edgar', 'Aloísio', 'Ricardo'] },
+                    { diaSemana: 'sabado', turno: 4, local: 'Tokaia - Casa do Irmão Edilson', horario: '16:00', dirigentes: ['Marcelo', 'Ricardo', 'Everton', 'Manoel', 'Miguel', 'Aloísio'] },
+                ];
+
+                for (const s of saidasData) {
+                    const novaSaida = await prisma.saidaCampo.create({
+                        data: {
+                            diaSemana: s.diaSemana,
+                            turno: s.turno,
+                            local: s.local,
+                            horario: s.horario,
+                            ativo: true
+                        }
+                    });
+
+                    // Garantir que os irmãos existam e associar
+                    for (const nomeIrmao of s.dirigentes) {
+                        let irmaoObj = await prisma.irmao.findUnique({ where: { nome: nomeIrmao } });
+                        if (!irmaoObj) {
+                            irmaoObj = await prisma.irmao.create({
+                                data: {
+                                    nome: nomeIrmao,
+                                    funcoes: ['dirigente']
+                                }
+                            });
+                        } else {
+                            if (!irmaoObj.funcoes.includes('dirigente')) {
+                                await prisma.irmao.update({
+                                    where: { id: irmaoObj.id },
+                                    data: { funcoes: [...irmaoObj.funcoes, 'dirigente'] }
+                                });
+                            }
+                        }
+
+                        // Criar associação
+                        await prisma.dirigenteSaidaCampo.create({
+                            data: {
+                                irmaoId: irmaoObj.id,
+                                saidaCampoId: novaSaida.id
+                            }
+                        });
+                    }
+                }
+                console.log('Saídas de Campo e Dirigentes configurados com sucesso.');
+            }
 
             console.log('Seed verified.');
         } catch (error) {

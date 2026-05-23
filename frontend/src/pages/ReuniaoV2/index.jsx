@@ -19,6 +19,7 @@ import "./styles.css";
 import { useAuth } from "../../context/AuthContext";
 import PageHeader from "../../components/PageHeader";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import Swal from "sweetalert2";
 
 export default function ReuniaoV2() {
@@ -58,6 +59,14 @@ export default function ReuniaoV2() {
   };
 
   const exportAsImage = async (weekId) => {
+    // Temporarily open the accordion to capture content if collapsed (similar to PDF fix)
+    const isTemporarilyOpened = !expandedWeeks[weekId];
+    if (isTemporarilyOpened) {
+      setExpandedWeeks((prev) => ({ ...prev, [weekId]: true }));
+      // Wait for React to render the expanded DOM
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
     const element = document.getElementById(`v2-week-content-${weekId}`);
     if (!element) return;
 
@@ -66,7 +75,7 @@ export default function ReuniaoV2() {
       element.style.transform = "none";
 
       const canvas = await html2canvas(element, {
-        scale: 2,
+        scale: 4, // Quadruplica a resolução nativa da tela para hiper qualidade
         useCORS: true,
         backgroundColor: "#f4f7f6",
       });
@@ -78,6 +87,84 @@ export default function ReuniaoV2() {
       element.style.transform = originalTransform;
     } catch (error) {
       console.error("Erro ao exportar imagem:", error);
+    } finally {
+      // Revert Accordion state if we forced it open
+      if (isTemporarilyOpened) {
+        setExpandedWeeks((prev) => ({ ...prev, [weekId]: false }));
+      }
+    }
+  };
+
+  const exportAsPdf = async (weekId) => {
+    const element = document.getElementById(`v2-week-content-${weekId}`);
+    if (!element) return;
+
+    try {
+      const originalTransform = element.style.transform;
+      const originalPadding = element.style.padding;
+
+      // Remove os "espaços brancos" extras (padding) do container antes do clique do documento
+      element.style.transform = "none";
+      element.style.padding = "0px";
+
+      const canvas = await html2canvas(element, {
+        scale: 1.5, // Reduzido para evitar lentidão e megabytes massivos
+        useCORS: true,
+        backgroundColor: "#f4f7f6",
+      });
+
+      // Restaura o estilo depois que a foto for batida
+      element.style.transform = originalTransform;
+      element.style.padding = originalPadding;
+
+      // Usa JPEG para comprimir drasticamente o PDF
+      const imgData = canvas.toDataURL("image/jpeg", 0.7);
+      const pdf = new jsPDF("p", "mm", "a4"); // "p" para portrait (vertical)
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      const marginX = 5;
+      const marginY = 5; // Encostado no topo
+
+      const availableWidth = pdfWidth - marginX * 2;
+      const availableHeight = pdfHeight - marginY * 2;
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgRatio = imgProps.width / imgProps.height;
+      const pdfRatio = availableWidth / availableHeight;
+
+      let finalWidth, finalHeight;
+      if (imgRatio > pdfRatio) {
+        finalWidth = availableWidth;
+        finalHeight = availableWidth / imgRatio;
+      } else {
+        finalHeight = availableHeight;
+        finalWidth = availableHeight * imgRatio;
+      }
+
+      // No X (A4 vertical) preenche as laterais, e no Y trava no Topo!
+      const x = marginX + (availableWidth - finalWidth) / 2;
+      const y = marginY; // Não centraliza verticalmente, cola no topo
+
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        x,
+        y,
+        finalWidth,
+        finalHeight,
+        undefined,
+        "FAST",
+      );
+      pdf.save(`programacao-v2-${weekId}.pdf`);
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      Swal.fire(
+        "Erro",
+        "Não foi possível gerar o PDF da programação.",
+        "error",
+      );
     }
   };
 
@@ -159,16 +246,30 @@ export default function ReuniaoV2() {
                         Semana: <strong>{semana.faixaData}</strong>
                       </div>
                       <div className="v2-controls">
-                        <button
-                          className="v2-btn-export"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            exportAsImage(semana.id);
-                          }}
-                          title="Fazer Download (Poster)"
-                        >
-                          <Download size={16} /> Exportar Poster
-                        </button>
+                        {expandedWeeks[semana.id] && (
+                          <>
+                            <button
+                              className="v2-btn-pdf"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                exportAsPdf(semana.id);
+                              }}
+                              title="Fazer Download (PDF)"
+                            >
+                              <FileText size={16} /> Exportar PDF
+                            </button>
+                            <button
+                              className="v2-btn-export"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                exportAsImage(semana.id);
+                              }}
+                              title="Fazer Download (Poster)"
+                            >
+                              <Download size={16} /> Exportar Imagem
+                            </button>
+                          </>
+                        )}
                         {expandedWeeks[semana.id] ? (
                           <ChevronUp size={24} />
                         ) : (

@@ -8,7 +8,8 @@ import {
   FileText,
   Heart,
   Users,
-  ShoppingCart,
+  BookOpen,
+  Compass,
 } from "lucide-react";
 import "./styles.css";
 
@@ -52,8 +53,9 @@ export default function Sidebar() {
 
   const menuItems = [
     { name: "Designações", icon: FileText, path: "/designacoes" },
+    { name: "Dirigentes", icon: Compass, path: "/dirigentes" },
     { name: "Reunião", icon: Users, path: "/reuniao" },
-    { name: "Carrinho", icon: ShoppingCart, path: "/carrinho" },
+    { name: "Carrinho", icon: BookOpen, path: "/carrinho" },
     { name: "Conta", icon: User, path: "/conta" },
     { name: "Configurações", icon: Settings, path: "/config" },
   ];
