@@ -88,6 +88,7 @@ routes.get('/reunioes', ReuniaoController.index);
 routes.post('/reunioes/import', upload.single('file'), ReuniaoController.importExcel);
 routes.get('/reunioes/debug_dump', ReuniaoController.debugDump);
 routes.delete('/reunioes/:id', ReuniaoController.delete);
+routes.put('/reunioes/semanas/:id', ReuniaoController.updateSemana);
 
 // ==================== SAÍDAS DE CAMPO ====================
 routes.get('/saidas-campo', SaidaCampoController.index);

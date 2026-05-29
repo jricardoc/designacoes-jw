@@ -141,36 +141,22 @@ class AutoDesignacaoService {
 
                 // REGRA ESPECIAL PARA AUDIO E VIDEO (se habilitada)
                 if (regraAudioVideo && designacao.funcao === 'Audio e Video') {
-                    if (designacao.dia === 'Quinta') {
-                        const treinandos = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'treinando');
-                        irmao1 = this.selecionarIrmao(
-                            treinandos.length > 0 ? treinandos : irmaosDisponiveis,
-                            data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, null, ano
-                        );
-                        irmao2 = this.selecionarIrmao(
-                            treinandos.length > 0 ? treinandos : irmaosDisponiveis,
-                            data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, irmao1, ano
-                        );
-                    } else if (designacao.dia === 'Domingo') {
-                        const experientes = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'experiente');
-                        const treinandos = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'treinando');
+                    const experientes = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'experiente');
+                    const treinandos = irmaosDisponiveis.filter(i => i.nivelAudioVideo === 'treinando');
 
-                        irmao1 = this.selecionarIrmao(
-                            experientes.length > 0 ? experientes : irmaosDisponiveis,
-                            data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, null, ano
-                        );
-                        irmao2 = this.selecionarIrmao(
-                            treinandos.length > 0 ? treinandos : irmaosDisponiveis,
-                            data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
-                            irmaosNaoDesignados[funcaoId], regras, irmao1, ano
-                        );
-                    } else {
-                        irmao1 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, null, ano);
-                        irmao2 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, irmao1, ano);
-                    }
+                    // Irmão 1 SEMPRE Experiente (se houver, senao qualquer um)
+                    irmao1 = this.selecionarIrmao(
+                        experientes.length > 0 ? experientes : irmaosDisponiveis,
+                        data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
+                        irmaosNaoDesignados[funcaoId], regras, null, ano
+                    );
+                    
+                    // Irmão 2 SEMPRE Treinando (se houver, senao qualquer um)
+                    irmao2 = this.selecionarIrmao(
+                        treinandos.length > 0 ? treinandos : irmaosDisponiveis,
+                        data, designacao.funcao, ultimaDesignacao, contadorDesignacoes,
+                        irmaosNaoDesignados[funcaoId], regras, irmao1, ano
+                    );
                 } else {
                     // Outras funcoes padrao
                     irmao1 = this.selecionarIrmao(irmaosDisponiveis, data, designacao.funcao, ultimaDesignacao, contadorDesignacoes, irmaosNaoDesignados[funcaoId], regras, null, ano);

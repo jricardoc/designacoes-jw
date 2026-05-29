@@ -611,3 +611,8 @@
     font-size: 1.2rem;
   }
 }
+
+.group-row { position: relative; }
+.btn-delete-row { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); opacity: 0; transition: opacity 0.2s; background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; border-radius: 4px; }
+.btn-delete-row:hover { background: rgba(239, 68, 68, 0.1); }
+.group-row:hover .btn-delete-row { opacity: 1; }

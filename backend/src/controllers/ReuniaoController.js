@@ -451,6 +451,29 @@ class ReuniaoController {
             return res.status(500).json({ error: 'Erro ao excluir reunião' });
         }
     }
+
+    async updateSemana(req, res) {
+        try {
+            const { id } = req.params;
+            const { campo, valor } = req.body;
+
+            if (!campo) {
+                return res.status(400).json({ error: 'Campo não informado' });
+            }
+
+            const semanaAtualizada = await prisma.semanaReuniao.update({
+                where: { id: parseInt(id) },
+                data: {
+                    [campo]: valor
+                }
+            });
+
+            return res.json({ success: true, semana: semanaAtualizada });
+        } catch (error) {
+            console.error('Erro ao atualizar semana:', error);
+            return res.status(500).json({ error: 'Erro ao atualizar campo da semana' });
+        }
+    }
 }
 
 module.exports = new ReuniaoController();

@@ -21,6 +21,7 @@ import PageHeader from "../../components/PageHeader";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Swal from "sweetalert2";
+import EditableField from "../../components/EditableField";
 
 export default function ReuniaoV2() {
   const { authFetch } = useAuth();
@@ -56,6 +57,30 @@ export default function ReuniaoV2() {
       ...prev,
       [weekId]: !prev[weekId],
     }));
+  };
+
+  const handleFieldUpdate = async (semanaId, campo, valor) => {
+    try {
+      const res = await authFetch(`/reunioes/semanas/${semanaId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ campo, valor }),
+      });
+      if (res.ok) {
+        setReunioes((prev) =>
+          prev.map((r) => ({
+            ...r,
+            semanas: r.semanas.map((s) =>
+              s.id === semanaId ? { ...s, [campo]: valor } : s
+            ),
+          }))
+        );
+      } else {
+        console.error("Falha ao atualizar campo");
+      }
+    } catch (error) {
+      console.error("Erro:", error);
+    }
   };
 
   const exportAsImage = async (weekId) => {
@@ -383,7 +408,7 @@ export default function ReuniaoV2() {
                                         <div className="v2-desc">{p.text}</div>
                                         <div className="v2-assign">
                                           <span className="v2-principal">
-                                            {semana.tesouro1_irmao || "-"}
+                                            <EditableField value={semana.tesouro1_irmao} fieldName="tesouro1_irmao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                           </span>
                                         </div>
                                       </>
@@ -404,7 +429,7 @@ export default function ReuniaoV2() {
                                         <div className="v2-desc">{p.text}</div>
                                         <div className="v2-assign">
                                           <span className="v2-principal">
-                                            {semana.tesouro2_irmao || "-"}
+                                            <EditableField value={semana.tesouro2_irmao} fieldName="tesouro2_irmao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                           </span>
                                         </div>
                                       </>
@@ -431,7 +456,7 @@ export default function ReuniaoV2() {
                                               </span>
                                             )}
                                           <span className="v2-principal">
-                                            {semana.tesouro3_principal || "-"}
+                                            <EditableField value={semana.tesouro3_principal} fieldName="tesouro3_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                           </span>
                                         </div>
                                       </>
@@ -469,8 +494,7 @@ export default function ReuniaoV2() {
                                               </span>
                                             )}
                                           <span className="v2-principal">
-                                            {semana.ministerio1_principal ||
-                                              "-"}
+                                            <EditableField value={semana.ministerio1_principal} fieldName="ministerio1_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                           </span>
                                         </div>
                                       </>
@@ -502,8 +526,7 @@ export default function ReuniaoV2() {
                                                 </span>
                                               )}
                                             <span className="v2-principal">
-                                              {semana.ministerio2_principal ||
-                                                "-"}
+                                              <EditableField value={semana.ministerio2_principal} fieldName="ministerio2_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                             </span>
                                           </div>
                                         </>
@@ -536,8 +559,7 @@ export default function ReuniaoV2() {
                                                 </span>
                                               )}
                                             <span className="v2-principal">
-                                              {semana.ministerio3_principal ||
-                                                "-"}
+                                              <EditableField value={semana.ministerio3_principal} fieldName="ministerio3_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                             </span>
                                           </div>
                                         </>
@@ -570,8 +592,7 @@ export default function ReuniaoV2() {
                                                 </span>
                                               )}
                                             <span className="v2-principal">
-                                              {semana.ministerio4_principal ||
-                                                "-"}
+                                              <EditableField value={semana.ministerio4_principal} fieldName="ministerio4_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                             </span>
                                           </div>
                                         </>
@@ -619,7 +640,7 @@ export default function ReuniaoV2() {
                                         <div className="v2-desc">{p.text}</div>
                                         <div className="v2-assign">
                                           <span className="v2-principal">
-                                            {semana.vidaCrista1_irmao || "-"}
+                                            <EditableField value={semana.vidaCrista1_irmao} fieldName="vidaCrista1_irmao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                           </span>
                                         </div>
                                       </>
@@ -644,7 +665,7 @@ export default function ReuniaoV2() {
                                           </div>
                                           <div className="v2-assign">
                                             <span className="v2-principal">
-                                              {semana.vidaCrista2_irmao || "-"}
+                                              <EditableField value={semana.vidaCrista2_irmao} fieldName="vidaCrista2_irmao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                             </span>
                                           </div>
                                         </>
@@ -654,22 +675,27 @@ export default function ReuniaoV2() {
                                 )}
 
                                 {/* ESTUDO BIBLICO */}
-                                <div className="v2-part-row">
-                                  <div className="v2-time">20:35</div>
-                                  <div className="v2-desc">
-                                    Estudo Bíblico de Congregação (30 min)
+                                {semana.estudoBiblico_dirigente !== "__DELETADO__" && (
+                                  <div className="v2-part-row group-row">
+                                    <div className="v2-time">20:35</div>
+                                    <div className="v2-desc">
+                                      Estudo Bíblico de Congregação (30 min)
+                                    </div>
+                                    <div className="v2-assign v2-estudo">
+                                      <span className="v2-dir">
+                                        Dirigente:{" "}
+                                        <EditableField value={semana.estudoBiblico_dirigente} fieldName="estudoBiblico_dirigente" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                      </span>
+                                      <span className="v2-lei">
+                                        Leitor:{" "}
+                                        <EditableField value={semana.estudoBiblico_leitor} fieldName="estudoBiblico_leitor" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                      </span>
+                                    </div>
+                                    <button className="btn-delete-row" title="Excluir linha" onClick={() => handleFieldUpdate(semana.id, 'estudoBiblico_dirigente', '__DELETADO__')}>
+                                      <Trash2 size={14} />
+                                    </button>
                                   </div>
-                                  <div className="v2-assign v2-estudo">
-                                    <span className="v2-dir">
-                                      Dirigente:{" "}
-                                      {semana.estudoBiblico_dirigente || "-"}
-                                    </span>
-                                    <span className="v2-lei">
-                                      Leitor:{" "}
-                                      {semana.estudoBiblico_leitor || "-"}
-                                    </span>
-                                  </div>
-                                </div>
+                                )}
 
                                 <div className="v2-part-row">
                                   <div className="v2-time">21:05</div>
@@ -693,7 +719,7 @@ export default function ReuniaoV2() {
                                         Cântico {cf.num}{" "}
                                         <strong>
                                           | Oração:{" "}
-                                          {semana.oracaoFinal || "A definir"}
+                                          <EditableField value={semana.oracaoFinal} fieldName="oracaoFinal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
                                         </strong>
                                       </>
                                     );
@@ -715,7 +741,7 @@ export default function ReuniaoV2() {
                               <div className="v2-fim-card">
                                 <div className="v2-f-label">Presidente</div>
                                 <div className="v2-f-value">
-                                  {semana.fds_presidente || "-"}
+                                  <EditableField value={semana.fds_presidente} fieldName="fds_presidente" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                 </div>
                               </div>
                               <div className="v2-fim-card theme">
@@ -723,17 +749,17 @@ export default function ReuniaoV2() {
                                   Tema do Discurso
                                 </div>
                                 <div className="v2-f-value">
-                                  {semana.fds_tema || "A definir"}
+                                  <EditableField value={semana.fds_tema} fieldName="fds_tema" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
                                 </div>
                               </div>
                               <div className="v2-fim-card orador">
                                 <div className="v2-f-label">Orador</div>
                                 <div className="v2-f-value highlight">
-                                  {semana.fds_orador || "-"}
+                                  <EditableField value={semana.fds_orador} fieldName="fds_orador" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                 </div>
                                 <div className="v2-f-sub">
                                   Congregação:{" "}
-                                  {semana.fds_congregacao || "Norte de Itapuã"}
+                                  <EditableField value={semana.fds_congregacao} fieldName="fds_congregacao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="Norte de Itapuã" />
                                 </div>
                               </div>
                               <div className="v2-fim-card">
@@ -741,7 +767,7 @@ export default function ReuniaoV2() {
                                   Leitor da Sentinela
                                 </div>
                                 <div className="v2-f-value">
-                                  {semana.fds_leitor || "-"}
+                                  <EditableField value={semana.fds_leitor} fieldName="fds_leitor" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                 </div>
                               </div>
                             </div>

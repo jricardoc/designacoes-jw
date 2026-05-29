@@ -1,0 +1,36 @@
+.editable-text {
+  cursor: pointer;
+  border-bottom: 1px dashed transparent;
+  transition: border-color 0.2s, background-color 0.2s;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 20px;
+  min-height: 20px;
+}
+
+.editable-text:hover {
+  border-bottom: 1px dashed #64748b;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.editable-input {
+  width: 100%;
+  min-width: 60px;
+  padding: 2px 4px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #1e293b !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.v2-exportable-poster .editable-input {
+    background-color: white;
+    color: #1e293b !important;
+    font-weight: inherit;
+}
