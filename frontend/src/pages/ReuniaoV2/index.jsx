@@ -312,7 +312,7 @@ export default function ReuniaoV2() {
                         <div className="v2-poster-header">
                           <div className="v2-poster-brand">
                             <Globe size={24} />
-                            <span>JW.ORG</span>
+                            <span>{nomesMeses[reuniao.mes].toUpperCase()} / {reuniao.ano}</span>
                           </div>
                           <div className="v2-poster-title">
                             <h2>Programação da Congregação</h2>
@@ -785,10 +785,12 @@ export default function ReuniaoV2() {
                           </div>
                           {/* MARCA D'ÁGUA DA DATA (Posicionada ABSOLUTA no Grid) */}
                           <div className="v2-watermark">
-                            {/* <div className="v2-wm-month">
+                            <div className="v2-wm-month">
                               {nomesMeses[reuniao.mes]}
-                            </div> */}
-                            <div className="v2-wm-days">{semana.faixaData}</div>
+                            </div>
+                            <div className="v2-wm-days">
+                              {semana.faixaData.replace(new RegExp(nomesMeses[reuniao.mes], 'i'), '').trim()}
+                            </div>
                           </div>
                         </div>
                       </div>
