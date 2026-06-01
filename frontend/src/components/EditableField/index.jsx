@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./styles.css";
 
-export default function EditableField({ value, onSave, fallback = "-", fieldName, className = "" }) {
+export default function EditableField({ value, onSave, fallback = "-", fieldName, className = "", options = null }) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState(value || "");
   const inputRef = useRef(null);
@@ -37,6 +37,23 @@ export default function EditableField({ value, onSave, fallback = "-", fieldName
   };
 
   if (isEditing) {
+    if (options) {
+      return (
+        <select
+          ref={inputRef}
+          className={`editable-input ${className}`}
+          value={tempValue}
+          onChange={(e) => setTempValue(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+        >
+          <option value="">Selecione...</option>
+          {options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      );
+    }
     return (
       <input
         ref={inputRef}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
+import EditableField from '../EditableField';
 import './styles.css';
 
 /**
@@ -105,7 +106,15 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
                           ))}
                         </select>
                       ) : (
-                        <div className="view-only-name">{escala.principal || '-'}</div>
+                        <div className="view-only-name">
+                          <EditableField 
+                            value={escala.principal} 
+                            fieldName="principal" 
+                            onSave={(f, v) => handleChange(escala.id, f, v)} 
+                            fallback="-" 
+                            options={diaGrupo.candidatosDisponiveis}
+                          />
+                        </div>
                       )}
                     </td>
 
@@ -122,7 +131,15 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
                           ))}
                         </select>
                       ) : (
-                        <div className="view-only-name">{escala.substituto || '-'}</div>
+                        <div className="view-only-name">
+                          <EditableField 
+                            value={escala.substituto} 
+                            fieldName="substituto" 
+                            onSave={(f, v) => handleChange(escala.id, f, v)} 
+                            fallback="-" 
+                            options={diaGrupo.candidatosDisponiveis}
+                          />
+                        </div>
                       )}
                     </td>
 
