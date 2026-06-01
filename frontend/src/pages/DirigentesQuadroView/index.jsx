@@ -265,22 +265,27 @@ export default function DirigentesQuadroView() {
   }
 
   // Agrupar escalas por data
-  // Para isso, criamos um array de dias.
   const grupos = Object.values(
     quadro.escalas.reduce((acc, d) => {
       if (!acc[d.data]) {
         acc[d.data] = { 
           data: d.data, 
           dia: d.dia, 
-          escalas: [],
-          // Só pegamos todos os dirigentes para o dropdown.
-          // O ideal seria filtrar por dirigentes disponíveis naquela saída, mas para simplificar
-          // aqui e permitir que se coloque qualquer dirigente caso precisem, vamos mandar todos os dirigentes ativos
-          // ou se tiver a lógica pronta, extrair.
-          candidatosDisponiveis: irmaosDirigentes.map(i => i.nome)
+          escalas: []
         };
       }
-      acc[d.data].escalas.push(d);
+
+      const candidatos = irmaosDirigentes.filter(irmao => {
+        const isIndisponivel = irmao.indisponibilidades?.some(ind => ind.data === d.data);
+        if (isIndisponivel) return false;
+        return irmao.dirigenteSaidas?.some(ds => ds.saidaCampoId === d.saidaCampoId);
+      }).map(irmao => irmao.nome);
+
+      acc[d.data].escalas.push({
+        ...d,
+        candidatosDisponiveis: candidatos
+      });
+
       return acc;
     }, {})
   ).sort((a, b) => {

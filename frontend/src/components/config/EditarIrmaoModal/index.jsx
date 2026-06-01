@@ -77,7 +77,29 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
   const carregarSaidasCampo = async () => {
     try {
       const response = await authFetch("/saidas-campo");
-      const data = await response.json();
+      let data = await response.json();
+      
+      const ordemDias = {
+        "segunda": 1, "segunda-feira": 1,
+        "terca": 2, "terça": 2, "terça-feira": 2,
+        "quarta": 3, "quarta-feira": 3,
+        "quinta": 4, "quinta-feira": 4,
+        "sexta": 5, "sexta-feira": 5,
+        "sabado": 6, "sábado": 6,
+        "domingo": 7
+      };
+
+      data.sort((a, b) => {
+        const diaA = (a.diaSemana || "").toLowerCase();
+        const diaB = (b.diaSemana || "").toLowerCase();
+        const dif = (ordemDias[diaA] || 99) - (ordemDias[diaB] || 99);
+        if (dif === 0) {
+          // Se mesmo dia, ordena pelo id ou horário
+          return a.id - b.id;
+        }
+        return dif;
+      });
+
       setSaidasCampo(data);
     } catch (error) {
       console.error("Erro ao carregar saídas de campo:", error);

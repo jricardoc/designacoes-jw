@@ -6,7 +6,10 @@ class IrmaoController {
         try {
             const irmaos = await prisma.irmao.findMany({
                 include: {
-                    indisponibilidades: true
+                    indisponibilidades: true,
+                    dirigenteSaidas: {
+                        include: { saidaCampo: true }
+                    }
                 },
                 orderBy: { nome: 'asc' }
             });
@@ -191,7 +194,10 @@ class IrmaoController {
                     }
                 },
                 include: {
-                    indisponibilidades: true
+                    indisponibilidades: true,
+                    dirigenteSaidas: {
+                        include: { saidaCampo: true }
+                    }
                 },
                 orderBy: { nome: 'asc' }
             });

@@ -101,7 +101,7 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
                           className={`select-irmao ${escala.principal ? 'filled' : 'empty'}`}
                         >
                           <option value="">Selecione...</option>
-                          {diaGrupo.candidatosDisponiveis.map(nome => (
+                          {escala.candidatosDisponiveis?.map(nome => (
                             <option key={nome} value={nome}>{nome}</option>
                           ))}
                         </select>
@@ -112,7 +112,7 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
                             fieldName="principal" 
                             onSave={(f, v) => handleChange(escala.id, f, v)} 
                             fallback="-" 
-                            options={diaGrupo.candidatosDisponiveis}
+                            options={escala.candidatosDisponiveis}
                           />
                         </div>
                       )}
@@ -126,7 +126,7 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
                           className={`select-irmao ${escala.substituto ? 'filled' : 'empty'}`}
                         >
                           <option value="">Selecione...</option>
-                          {diaGrupo.candidatosDisponiveis.map(nome => (
+                          {escala.candidatosDisponiveis?.map(nome => (
                             <option key={nome} value={nome}>{nome}</option>
                           ))}
                         </select>
@@ -137,7 +137,7 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
                             fieldName="substituto" 
                             onSave={(f, v) => handleChange(escala.id, f, v)} 
                             fallback="-" 
-                            options={diaGrupo.candidatosDisponiveis}
+                            options={escala.candidatosDisponiveis}
                           />
                         </div>
                       )}
