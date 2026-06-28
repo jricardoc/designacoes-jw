@@ -4,9 +4,9 @@ import './styles.css';
 
 // Cores das funcoes (tons de azul)
 const CORES_FUNCAO = {
-  'Microfone Volante': '#1e40af',
-  'Indicador': '#3b82f6',
-  'Audio e Video': '#60a5fa'
+  'Microfone Volante': '#566239',
+  'Indicador': '#6E7B57',
+  'Audio e Video': '#8B9A6F'
 };
 
 // Mapeamento de nomes de funcao para IDs
@@ -188,7 +188,7 @@ export default function TabelaPagina({ dados, id }) {
                 <div className="funcao-cell">
                   <span 
                     className="funcao-badge"
-                    style={{ background: CORES_FUNCAO[funcao.funcao] || '#3b82f6' }}
+                    style={{ background: CORES_FUNCAO[funcao.funcao] || '#6E7B57' }}
                   >
                     {funcao.funcao}
                   </span>
@@ -216,9 +216,9 @@ export default function TabelaPagina({ dados, id }) {
                             key={irmao} 
                             value={irmao}
                             style={{ 
-                              color: indisponivel ? '#ef4444' : 'inherit', 
+                              color: indisponivel ? '#A8503B' : 'inherit', 
                               fontWeight: indisponivel ? 'bold' : 'normal',
-                              background: indisponivel ? '#fef2f2' : 'white'
+                              background: indisponivel ? '#F8EDE8' : 'white'
                             }}
                           >
                             {irmao}{indisponivel ? ' (Indisponivel)' : ''}
@@ -231,7 +231,7 @@ export default function TabelaPagina({ dados, id }) {
                       className={`irmao-nome editable ${verificarIndisponivel(funcao.irmao1, diaData.data) ? 'irmao-indisponivel' : ''}`}
                       onClick={() => setEditingCell({ data: diaData.data, funcao: funcao.funcao, campo: 'irmao1' })}
                       title={verificarIndisponivel(funcao.irmao1, diaData.data) ? 'Irmao indisponivel nesta data!' : 'Clique para editar'}
-                      style={verificarIndisponivel(funcao.irmao1, diaData.data) ? { color: '#ef4444', textDecoration: 'line-through' } : {}}
+                      style={verificarIndisponivel(funcao.irmao1, diaData.data) ? { color: '#A8503B', textDecoration: 'line-through' } : {}}
                     >
                       {funcao.irmao1}
                     </span>
@@ -260,9 +260,9 @@ export default function TabelaPagina({ dados, id }) {
                             key={irmao} 
                             value={irmao}
                             style={{ 
-                              color: indisponivel ? '#ef4444' : 'inherit', 
+                              color: indisponivel ? '#A8503B' : 'inherit', 
                               fontWeight: indisponivel ? 'bold' : 'normal',
-                              background: indisponivel ? '#fef2f2' : 'white'
+                              background: indisponivel ? '#F8EDE8' : 'white'
                             }}
                           >
                             {irmao}{indisponivel ? ' (Indisponivel)' : ''}
@@ -275,7 +275,7 @@ export default function TabelaPagina({ dados, id }) {
                       className={`irmao-nome editable ${verificarIndisponivel(funcao.irmao2, diaData.data) ? 'irmao-indisponivel' : ''}`}
                       onClick={() => setEditingCell({ data: diaData.data, funcao: funcao.funcao, campo: 'irmao2' })}
                       title={verificarIndisponivel(funcao.irmao2, diaData.data) ? 'Irmao indisponivel nesta data!' : 'Clique para editar'}
-                      style={verificarIndisponivel(funcao.irmao2, diaData.data) ? { color: '#ef4444', textDecoration: 'line-through' } : {}}
+                      style={verificarIndisponivel(funcao.irmao2, diaData.data) ? { color: '#A8503B', textDecoration: 'line-through' } : {}}
                     >
                       {funcao.irmao2}
                     </span>

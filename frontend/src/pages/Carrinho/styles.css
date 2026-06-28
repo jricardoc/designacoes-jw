@@ -22,7 +22,7 @@
 }
 
 .kpi-card {
-  background: white;
+  background: #FBF7EF;
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -31,7 +31,7 @@
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ECE3D3;
   transition:
     transform 0.2s,
     box-shadow 0.2s;
@@ -54,13 +54,13 @@
 }
 
 .kpi-icon-wrapper.blue {
-  background-color: #eff6ff;
-  color: #3b82f6;
+  background-color: #EEF0E3;
+  color: #6E7B57;
 }
 
 .kpi-icon-wrapper.green {
-  background-color: #f0fdf4;
-  color: #22c55e;
+  background-color: #E9EFDC;
+  color: #6E7B57;
 }
 
 .kpi-icon-wrapper.purple {
@@ -75,20 +75,20 @@
 
 .kpi-label {
   font-size: 0.875rem;
-  color: #64748b;
+  color: #8A8071;
   font-weight: 500;
 }
 
 .kpi-value {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #2B2620;
 }
 
 /* INFO BANNER */
 .carrinho-info-banner {
-  background-color: #fffbeb;
-  border-left: 4px solid #f59e0b;
+  background-color: #FBF4E6;
+  border-left: 4px solid #B06A43;
   padding: 16px;
   border-radius: 8px;
   display: flex;
@@ -101,7 +101,7 @@
 .info-icon {
   flex-shrink: 0;
   margin-top: 2px;
-  color: #f59e0b;
+  color: #B06A43;
 }
 
 .carrinho-info-banner p {
@@ -118,17 +118,17 @@
 .dia-titulo {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #2B2620;
   margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 10px;
   padding-bottom: 8px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #ECE3D3;
 }
 
 .dia-icon {
-  color: #3b82f6;
+  color: #6E7B57;
 }
 
 .turnos-grid {
@@ -138,16 +138,16 @@
 }
 
 .turno-card {
-  background: white;
+  background: #FBF7EF;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ECE3D3;
   transition: all 0.2s ease;
 }
 
 .turno-card:hover {
-  border-color: #cbd5e1;
+  border-color: #C6BAA0;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
 }
 
@@ -163,12 +163,12 @@
   align-items: center;
   gap: 6px;
   font-weight: 600;
-  color: #334155;
+  color: #3A352D;
   font-size: 0.95rem;
 }
 
 .turno-local svg {
-  color: #64748b;
+  color: #8A8071;
 }
 
 .turno-status {
@@ -181,8 +181,8 @@
 }
 
 .status-success {
-  background-color: #dcfce7;
-  color: #166534;
+  background-color: #E2E7D2;
+  color: #54622F;
 }
 
 .status-warning {
@@ -194,16 +194,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #f8fafc;
+  background-color: #F3EDE2;
   padding: 10px 12px;
   border-radius: 8px;
-  color: #0f172a;
+  color: #2B2620;
   margin-bottom: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ECE3D3;
 }
 
 .turno-horario svg {
-  color: #3b82f6;
+  color: #6E7B57;
 }
 
 .turno-participantes {
@@ -223,17 +223,17 @@
 }
 
 .participante.responsavel svg {
-  color: #f59e0b;
+  color: #B06A43;
 }
 
 .participante.companheiros svg {
-  color: #8b5cf6;
+  color: #6E7B57;
 }
 
 .p-badge {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
+  color: #8A8071;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 600;
@@ -242,6 +242,6 @@
 
 .p-nome {
   font-size: 0.95rem;
-  color: #1e293b;
+  color: #2B2620;
   font-weight: 500;
 }

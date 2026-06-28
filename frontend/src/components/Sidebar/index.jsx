@@ -11,6 +11,7 @@ import {
   BookOpen,
   Compass,
 } from "lucide-react";
+import { LogoMark } from "../Logo";
 import "./styles.css";
 
 export default function Sidebar() {
@@ -28,7 +29,7 @@ export default function Sidebar() {
       }
     };
 
-    const handleFocusOut = (e) => {
+    const handleFocusOut = () => {
       // Pequeno timer para o caso do usuário logo focar em outro input seguido
       setTimeout(() => {
         if (
@@ -69,8 +70,8 @@ export default function Sidebar() {
     <div className={`sidebar ${isKeyboardOpen ? "keyboard-open" : ""}`}>
       {/* Topo / Logo (Oculto no mobile) */}
       <div className="logo-container">
-        <div className="logo-box">JW</div>
-        <span className="logo-text">Designações</span>
+        <LogoMark size={40} />
+        <span className="logo-text">Servir Mais</span>
       </div>
 
       {/* Menu Navigation */}
@@ -99,7 +100,7 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <div className="footer-content">
           <span className="footer-text">
-            <Heart size={12} style={{ color: "#ef4444" }} /> Feito com amor
+            <Heart size={12} style={{ color: "#A8503B" }} /> Feito com amor
           </span>
           <span className="footer-version">v1.4.0</span>
         </div>

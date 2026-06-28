@@ -22,7 +22,7 @@ function LoadingScreen() {
         alignItems: "center",
         justifyContent: "center",
         background:
-          "linear-gradient(135deg, #1e3a5f 0%, #0f2744 50%, #0a1929 100%)",
+          "linear-gradient(135deg, #3A382C 0%, #29281D 50%, #1E1D14 100%)",
       }}
     >
       <div style={{ textAlign: "center" }}>

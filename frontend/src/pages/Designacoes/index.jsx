@@ -10,7 +10,7 @@ export default function Designacoes() {
         title="Designações"
         description="Gerencie os quadros de designações mensais"
         icon={FileText}
-        color="blue"
+        color="olive"
       />
 
       <div style={{ padding: "1.5rem 2rem" }}>

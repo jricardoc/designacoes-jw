@@ -20,14 +20,16 @@ import PageHeader from "../../components/PageHeader";
 import html2canvas from "html2canvas";
 import Swal from "sweetalert2";
 import EditableField from "../../components/EditableField";
+import ImportarIndisponibilidadeModal from "../../components/reuniao/ImportarIndisponibilidadeModal";
 
 export default function Reuniao() {
   const { authFetch } = useAuth();
   const [reunioes, setReunioes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandedWeeks, setExpandedWeeks] = useState({});
+  const [previewIndisp, setPreviewIndisp] = useState(null);
   const fileInputRef = useRef(null);
-  const contentRef = useRef(null);
+  const pdfInputRef = useRef(null);
 
   useEffect(() => {
     loadReunioes();
@@ -56,6 +58,10 @@ export default function Reuniao() {
     fileInputRef.current?.click();
   };
 
+  const handleImportPdfClick = () => {
+    pdfInputRef.current?.click();
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -71,13 +77,25 @@ export default function Reuniao() {
       });
 
       if (res.ok) {
+        const data = await res.json();
         await loadReunioes();
-        Swal.fire({
-          title: "Importado com Sucesso!",
-          text: "Os dados da reunião foram salvos.",
-          icon: "success",
-          confirmButtonColor: "#538d35",
-        });
+
+        const indisp = data.indisponibilidades;
+        const temMatches =
+          indisp &&
+          (indisp.confirmados?.length || 0) + (indisp.ambiguos?.length || 0) > 0;
+
+        if (temMatches) {
+          // Abre a revisão de indisponibilidades (substitui a marcação silenciosa).
+          setPreviewIndisp(indisp);
+        } else {
+          Swal.fire({
+            title: "Importado com Sucesso!",
+            text: data.message || "Os dados da reunião foram salvos.",
+            icon: "success",
+            confirmButtonColor: "#538d35",
+          });
+        }
       } else {
         const errorData = await res.json();
         console.error("Payload de erro recebido do backend:", errorData);
@@ -122,7 +140,7 @@ export default function Reuniao() {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#ffffff",
+        backgroundColor: "#FBF7EF",
       });
       const link = document.createElement("a");
       link.download = `programacao-semana-${weekId}.png`;
@@ -161,7 +179,7 @@ export default function Reuniao() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      cancelButtonColor: "#64748b",
+      cancelButtonColor: "#8A8071",
       confirmButtonText: "Sim, excluir",
       cancelButtonText: "Cancelar",
     });
@@ -265,6 +283,13 @@ export default function Reuniao() {
           >
             <Upload size={18} /> {loading ? "Processando..." : "Importar Excel"}
           </button>
+          <button
+            className="btn-import btn-import-pdf"
+            onClick={handleImportPdfClick}
+            disabled={loading}
+          >
+            <FileText size={18} /> {loading ? "Processando..." : "Importar PDF"}
+          </button>
           <input
             type="file"
             ref={fileInputRef}
@@ -272,7 +297,21 @@ export default function Reuniao() {
             accept=".xlsx, .xls"
             style={{ display: "none" }}
           />
+          <input
+            type="file"
+            ref={pdfInputRef}
+            onChange={handleFileChange}
+            accept="application/pdf,.pdf"
+            style={{ display: "none" }}
+          />
         </div>
+
+        {previewIndisp && (
+          <ImportarIndisponibilidadeModal
+            preview={previewIndisp}
+            onClose={() => setPreviewIndisp(null)}
+          />
+        )}
 
         <div className="reunioes-container">
           {reunioes.length === 0 && !loading && (

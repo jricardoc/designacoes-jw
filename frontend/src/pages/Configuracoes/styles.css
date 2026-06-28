@@ -12,7 +12,7 @@
 .config-menu {
   width: 240px;
   flex-shrink: 0;
-  background: white;
+  background: #FBF7EF;
   border-radius: 16px;
   padding: 0.75rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -29,7 +29,7 @@
   border: none;
   border-radius: 10px;
   background: transparent;
-  color: #374151;
+  color: #3A352D;
   cursor: pointer;
   margin-bottom: 0.35rem;
   transition: all 0.2s;
@@ -37,7 +37,7 @@
 }
 
 .config-menu-btn.active {
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  background: linear-gradient(135deg, #B06A43 0%, #9A5A38 100%);
   color: white;
   box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
@@ -45,7 +45,7 @@
 @media (min-width: 1050px) {
   .config-menu-btn:hover:not(.active) {
 
-  background: #fff7ed;
+  background: #FBF1E8;
   transform: translateX(4px);
 
   }
@@ -77,7 +77,7 @@
 
 /* Sistema Panel */
 .sistema-panel {
-  background: white;
+  background: #FBF7EF;
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -94,8 +94,8 @@
 }
 
 .sistema-danger-zone {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
+  background: #F8EDE8;
+  border: 1px solid #F0DED3;
   border-radius: 12px;
   padding: 1.25rem;
 }
@@ -103,7 +103,7 @@
 .sistema-danger-title {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #dc2626;
+  color: #9A4632;
   margin: 0 0 0.5rem;
   display: flex;
   align-items: center;
@@ -111,14 +111,14 @@
 }
 
 .sistema-danger-text {
-  color: #991b1b;
+  color: #7A3D2C;
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }
 
 .sistema-btn-danger {
   padding: 0.65rem 1.25rem;
-  background: #dc2626;
+  background: #9A4632;
   color: white;
   border: none;
   border-radius: 8px;
@@ -135,7 +135,7 @@
 @media (min-width: 1050px) {
   .sistema-btn-danger:hover:not(:disabled) {
 
-  background: #b91c1c;
+  background: #9A4632;
 
   }
 }

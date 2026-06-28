@@ -8,9 +8,9 @@ const MESES = ['', 'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 const STATUS_CONFIG = {
-  rascunho: { label: 'Rascunho', color: '#f59e0b', bg: '#fef3c7' },
-  publicado: { label: 'Publicado', color: '#10b981', bg: '#d1fae5' },
-  arquivado: { label: 'Arquivado', color: '#64748b', bg: '#f1f5f9' }
+  rascunho: { label: 'Rascunho', color: '#B06A43', bg: '#F1E1D2' },
+  publicado: { label: 'Publicado', color: '#5E6B48', bg: '#E2E7D2' },
+  arquivado: { label: 'Arquivado', color: '#8A8071', bg: '#F6F0E4' }
 };
 
 export default function ListaQuadros() {
@@ -48,7 +48,7 @@ export default function ListaQuadros() {
 
   if (loading) {
     return (
-      <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+      <div style={{ padding: '3rem', textAlign: 'center', color: '#8A8071' }}>
         Carregando quadros...
       </div>
     );
@@ -69,7 +69,7 @@ export default function ListaQuadros() {
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
             Quadros de Designações
           </h2>
-          <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>
+          <p style={{ margin: '0.25rem 0 0', color: '#8A8071', fontSize: '0.9rem' }}>
             {quadros.length} quadros criados
           </p>
         </div>
@@ -81,22 +81,22 @@ export default function ListaQuadros() {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.75rem 1.5rem',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+            background: 'linear-gradient(135deg, #6E7B57 0%, #566239 100%)',
             color: 'white',
             border: 'none',
             borderRadius: '12px',
             fontWeight: '600',
             cursor: 'pointer',
-            boxShadow: '0 4px 14px -3px rgba(59, 130, 246, 0.4)',
+            boxShadow: '0 4px 14px -3px rgba(94, 107, 72, 0.4)',
             transition: 'transform 0.2s, box-shadow 0.2s'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px -3px rgba(59, 130, 246, 0.5)';
+            e.currentTarget.style.boxShadow = '0 6px 20px -3px rgba(94, 107, 72, 0.5)';
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 4px 14px -3px rgba(59, 130, 246, 0.4)';
+            e.currentTarget.style.boxShadow = '0 4px 14px -3px rgba(94, 107, 72, 0.4)';
           }}
         >
           <Plus size={20} />
@@ -107,22 +107,22 @@ export default function ListaQuadros() {
       {/* Grid de Quadros */}
       {quadros.length === 0 ? (
         <div style={{
-          background: 'white',
+          background: '#FBF7EF',
           borderRadius: '16px',
           padding: '4rem 2rem',
           textAlign: 'center',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
         }}>
-          <Calendar size={48} color="#cbd5e1" style={{ marginBottom: '1rem' }} />
-          <h3 style={{ margin: '0 0 0.5rem', color: '#374151' }}>Nenhum quadro criado</h3>
-          <p style={{ color: '#64748b', marginBottom: '1.5rem' }}>
+          <Calendar size={48} color="#C6BAA0" style={{ marginBottom: '1rem' }} />
+          <h3 style={{ margin: '0 0 0.5rem', color: '#3A352D' }}>Nenhum quadro criado</h3>
+          <p style={{ color: '#8A8071', marginBottom: '1.5rem' }}>
             Clique em "Novo Quadro" para criar seu primeiro
           </p>
           <button
             onClick={() => setModalAberto(true)}
             style={{
               padding: '0.75rem 1.5rem',
-              background: '#3b82f6',
+              background: '#6E7B57',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
@@ -148,7 +148,7 @@ export default function ListaQuadros() {
                 key={quadro.id}
                 onClick={() => abrirQuadro(quadro)}
                 style={{
-                  background: 'white',
+                  background: '#FBF7EF',
                   borderRadius: '16px',
                   padding: '1.25rem',
                   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
@@ -159,9 +159,9 @@ export default function ListaQuadros() {
                   overflow: 'hidden'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#3b82f6';
+                  e.currentTarget.style.borderColor = '#6E7B57';
                   e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.15)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(94, 107, 72, 0.15)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.borderColor = 'transparent';
@@ -185,7 +185,7 @@ export default function ListaQuadros() {
                     width: '48px',
                     height: '48px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                    background: 'linear-gradient(135deg, #6E7B57 0%, #566239 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -211,7 +211,7 @@ export default function ListaQuadros() {
                 </h3>
 
                 {/* Info */}
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', color: '#64748b', fontSize: '0.8rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem', color: '#8A8071', fontSize: '0.8rem' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Calendar size={14} />
                     {quadro._count?.designacoes || 0} designações
@@ -229,12 +229,12 @@ export default function ListaQuadros() {
                   alignItems: 'center',
                   marginTop: '1rem',
                   paddingTop: '0.75rem',
-                  borderTop: '1px solid #f1f5f9'
+                  borderTop: '1px solid #F6F0E4'
                 }}>
-                  <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+                  <span style={{ color: '#A2977F', fontSize: '0.75rem' }}>
                     Criado em {dataFormatada}
                   </span>
-                  <ChevronRight size={18} color="#94a3b8" />
+                  <ChevronRight size={18} color="#A2977F" />
                 </div>
               </div>
             );

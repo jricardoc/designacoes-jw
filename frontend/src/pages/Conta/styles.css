@@ -3,7 +3,7 @@
 /* Layout Responsivo */
 .conta-container {
   min-height: 100vh;
-  background: #f8fafc;
+  background: #F3EDE2;
 }
 
 .conta-content {
@@ -26,7 +26,7 @@
 }
 
 .conta-card {
-  background: white;
+  background: #FBF7EF;
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -37,25 +37,25 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #1e293b;
+  color: #2B2620;
 }
 
 /* Info Box */
 .conta-info-box {
   margin-bottom: 1.5rem;
   padding: 1rem;
-  background: #f8fafc;
+  background: #F3EDE2;
   border-radius: 10px;
 }
 
 .conta-info-nome {
   font-weight: 600;
   font-size: 1.1rem;
-  color: #1e293b;
+  color: #2B2620;
 }
 
 .conta-info-nick {
-  color: #64748b;
+  color: #8A8071;
   font-size: 0.9rem;
 }
 
@@ -65,8 +65,8 @@
   gap: 0.25rem;
   margin-top: 0.5rem;
   padding: 0.25rem 0.5rem;
-  background: #fef3c7;
-  color: #b45309;
+  background: #F1E1D2;
+  color: #78532A;
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -77,7 +77,7 @@
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: #374151;
+  color: #3A352D;
 }
 
 .conta-input-group {
@@ -89,7 +89,7 @@
   flex: 1;
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #DCD0B9;
   width: 100%;
 }
 
@@ -97,7 +97,7 @@
   width: 100%;
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #DCD0B9;
   margin-bottom: 0.5rem;
 }
 
@@ -116,7 +116,7 @@
 }
 
 .conta-btn-purple {
-  background: #8b5cf6;
+  background: #6E7B57;
   color: white;
   border: none;
   border-radius: 8px;
@@ -129,15 +129,15 @@
 @media (min-width: 1050px) {
   .conta-btn-purple:hover {
 
-  background: #7c3aed;
+  background: #566239;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(110, 123, 87, 0.4);
 
   }
 }
 
 .conta-btn-blue {
-  background: #3b82f6;
+  background: #6E7B57;
   color: white;
   border: none;
   border-radius: 8px;
@@ -150,15 +150,15 @@
 @media (min-width: 1050px) {
   .conta-btn-blue:hover {
 
-  background: #2563eb;
+  background: #5E6B48;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(94, 107, 72, 0.4);
 
   }
 }
 
 .conta-btn-green {
-  background: #10b981;
+  background: #5E6B48;
   color: white;
   border: none;
   border-radius: 8px;
@@ -172,7 +172,7 @@
 @media (min-width: 1050px) {
   .conta-btn-green:hover {
 
-  background: #059669;
+  background: #566239;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 
@@ -180,7 +180,7 @@
 }
 
 .conta-btn-red {
-  background: #ef4444;
+  background: #A8503B;
   color: white;
   border: none;
   border-radius: 10px;
@@ -193,7 +193,7 @@
 @media (min-width: 1050px) {
   .conta-btn-red:hover {
 
-  background: #dc2626;
+  background: #9A4632;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 
@@ -218,52 +218,52 @@
 }
 
 .icon-btn-shield {
-  background: #f1f5f9;
+  background: #F6F0E4;
 }
 
 @media (min-width: 1050px) {
   .icon-btn-shield:hover {
 
-  background: #fef3c7;
+  background: #F1E1D2;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 
   }
 }
 
 .icon-btn-shield-active {
-  background: #fef3c7;
+  background: #F1E1D2;
 }
 
 @media (min-width: 1050px) {
   .icon-btn-shield-active:hover {
 
-  background: #fde68a;
+  background: #E7CDA8;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
 
   }
 }
 
 .icon-btn-key {
-  background: #f1f5f9;
+  background: #F6F0E4;
 }
 
 @media (min-width: 1050px) {
   .icon-btn-key:hover {
 
-  background: #e0e7ff;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  background: #EAEFDC;
+  box-shadow: 0 2px 8px rgba(110, 123, 87, 0.3);
 
   }
 }
 
 .icon-btn-delete {
-  background: #fee2e2;
+  background: #F6E7E0;
 }
 
 @media (min-width: 1050px) {
   .icon-btn-delete:hover {
 
-  background: #fecaca;
+  background: #F0DED3;
   box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
 
   }

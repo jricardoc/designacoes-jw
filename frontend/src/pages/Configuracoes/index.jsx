@@ -1,112 +1,73 @@
 import { useState } from 'react';
-import { Settings, Users, RefreshCw, ChevronRight } from 'lucide-react';
+import { Settings, Users, Wrench } from 'lucide-react';
 import PageHeader from '../../components/PageHeader';
 import GerenciarIrmaos from '../../components/config/GerenciarIrmaos';
-import ConfirmModal from '../../components/ConfirmModal';
-import { useDesignacoes } from '../../context/DesignacoesContext';
-import { useAuth } from '../../context/AuthContext';
+import SistemaPanel from '../../components/config/SistemaPanel';
 import './styles.css';
 
 export default function Configuracoes() {
   const [secaoAtiva, setSecaoAtiva] = useState('irmaos');
-  const [showResetModal, setShowResetModal] = useState(false);
-  const [resetting, setResetting] = useState(false);
-  const { authFetch } = useAuth();
 
-  const handleResetConfirm = async () => {
-    setResetting(true);
-    try {
-      const response = await authFetch('/config/reset', { method: 'POST' });
-      if (response.ok) {
-        setShowResetModal(false);
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Erro ao resetar:', error);
-    }
-    setResetting(false);
-  };
-
-  const secoes = [
-    { id: 'irmaos', label: 'Gerenciar Irmãos', icon: Users, desc: 'Adicionar, editar e configurar' },
-    { id: 'sistema', label: 'Sistema', icon: Settings, desc: 'Backup e reset' }
+  const tabs = [
+    { id: 'irmaos', label: 'Irmãos', icon: Users },
+    { id: 'sistema', label: 'Sistema', icon: Wrench },
   ];
 
   return (
     <>
-      <PageHeader 
-        title="Configurações" 
-        description="Gerencie irmãos, funções e sistema"
+      <PageHeader
+        title="Configurações"
+        description="Irmãos, funções e sistema"
         icon={Settings}
         color="orange"
       />
 
-      <div className="config-container">
-        {/* Menu Lateral */}
-        <div className="config-menu">
-          {secoes.map(secao => {
-            const isActive = secaoAtiva === secao.id;
+      <div style={{ padding: '0 2.5rem 2.5rem' }}>
+        {/* Segmented tabs (terroso) */}
+        <div
+          style={{
+            display: 'flex',
+            gap: '5px',
+            background: '#EBE1CF',
+            borderRadius: '14px',
+            padding: '5px',
+            maxWidth: '360px',
+            marginBottom: '22px',
+          }}
+        >
+          {tabs.map((t) => {
+            const active = secaoAtiva === t.id;
             return (
               <button
-                key={secao.id}
-                onClick={() => setSecaoAtiva(secao.id)}
-                className={`config-menu-btn ${isActive ? 'active' : ''}`}
+                key={t.id}
+                onClick={() => setSecaoAtiva(t.id)}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '7px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '14.5px',
+                  background: active ? '#FBF7EF' : 'transparent',
+                  color: active ? '#566239' : '#8A8071',
+                  boxShadow: active ? '0 1px 2px rgba(43,38,32,0.06)' : 'none',
+                }}
               >
-                <secao.icon size={18} />
-                <div className="config-menu-text">
-                  <div className="config-menu-label">{secao.label}</div>
-                  <div className="config-menu-desc" style={{ opacity: isActive ? 0.9 : 0.6 }}>
-                    {secao.desc}
-                  </div>
-                </div>
-                {window.innerWidth > 768 && <ChevronRight size={16} style={{ opacity: 0.5 }} />}
+                <t.icon size={16} />
+                {t.label}
               </button>
             );
           })}
         </div>
 
-        {/* Conteúdo Principal */}
-        <div className="config-content">
-          {secaoAtiva === 'irmaos' && <GerenciarIrmaos />}
-
-          {secaoAtiva === 'sistema' && (
-            <div className="sistema-panel">
-              <h2 className="sistema-title">
-                <Settings size={22} color="#f97316" />
-                Sistema
-              </h2>
-
-              <div className="sistema-danger-zone">
-                <h3 className="sistema-danger-title">
-                  <RefreshCw size={18} />
-                  Resetar Banco de Dados
-                </h3>
-                <p className="sistema-danger-text">
-                  Apaga TODAS as designações e restaura dados padrão.
-                </p>
-                <button
-                  onClick={() => setShowResetModal(true)}
-                  disabled={resetting}
-                  className="sistema-btn-danger"
-                >
-                  {resetting ? 'Resetando...' : 'Resetar Tudo'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        {secaoAtiva === 'irmaos' && <GerenciarIrmaos />}
+        {secaoAtiva === 'sistema' && <SistemaPanel />}
       </div>
-
-      <ConfirmModal
-        isOpen={showResetModal}
-        onClose={() => setShowResetModal(false)}
-        onConfirm={handleResetConfirm}
-        title="Resetar Banco de Dados"
-        message="Tem certeza? Isso apagará TODAS as designações, quadros e restaurará os dados para o padrão inicial. Esta ação não pode ser desfeita."
-        type="danger"
-        confirmText="Resetar Tudo"
-        cancelText="Cancelar"
-      />
     </>
   );
 }

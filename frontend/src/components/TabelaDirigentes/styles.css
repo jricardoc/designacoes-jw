@@ -1,5 +1,5 @@
 .tabela-container {
-  background: white;
+  background: #FBF7EF;
   border-radius: 12px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow: hidden;
@@ -10,16 +10,16 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
-  background-color: white;
+  background-color: #FBF7EF;
 }
 
 .tabela-dirigentes th {
-  background-color: #f8fafc;
+  background-color: #F3EDE2;
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: #475569;
-  border-bottom: 2px solid #e2e8f0;
+  color: #5C5446;
+  border-bottom: 2px solid #ECE3D3;
   text-transform: uppercase;
   font-size: 0.75rem;
   letter-spacing: 0.05em;
@@ -27,8 +27,8 @@
 
 .tabela-dirigentes td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  border-right: 1px solid #f1f5f9;
+  border-bottom: 1px solid #ECE3D3;
+  border-right: 1px solid #F6F0E4;
   vertical-align: middle;
 }
 
@@ -37,42 +37,42 @@
 }
 
 .border-bottom-thick td {
-  border-bottom: 2px solid #cbd5e1;
+  border-bottom: 2px solid #C6BAA0;
 }
 
 /* Separador visual entre semanas - borda grossa dupla */
 .border-bottom-semana td {
-  border-bottom: 4px double #94a3b8;
+  border-bottom: 4px double #A2977F;
 }
 
 .cell-data {
   font-weight: 700;
-  color: #1e293b;
+  color: #2B2620;
   text-align: center;
   font-size: 1.1rem;
-  background-color: #f8fafc;
+  background-color: #F3EDE2;
 }
 
 .semana-title-row {
-  background-color: #e2e8f0;
-  color: #334155;
+  background-color: #ECE3D3;
+  color: #3A352D;
   font-weight: 700;
   text-align: center;
   padding: 0.75rem !important;
   font-size: 0.85rem !important;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  border-bottom: 2px solid #cbd5e1 !important;
+  border-bottom: 2px solid #C6BAA0 !important;
 }
 
 .cell-dia {
   font-weight: 600;
-  color: #475569;
-  background-color: #f8fafc;
+  color: #5C5446;
+  background-color: #F3EDE2;
 }
 
 .cell-local {
-  color: #334155;
+  color: #3A352D;
   font-weight: 500;
 }
 
@@ -89,18 +89,18 @@
 .select-irmao {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #C6BAA0;
   border-radius: 6px;
   font-size: 0.9rem;
-  color: #1e293b;
-  background-color: white;
+  color: #2B2620;
+  background-color: #FBF7EF;
   transition: all 0.2s;
 }
 
 .select-irmao:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: #6E7B57;
+  box-shadow: 0 0 0 2px rgba(94, 107, 72, 0.2);
 }
 
 .select-irmao.empty {
@@ -110,7 +110,7 @@
 
 .view-only-name {
   font-weight: 500;
-  color: #1e293b;
+  color: #2B2620;
 }
 
 .btn-remover-dia {
@@ -119,7 +119,7 @@
   justify-content: center;
   padding: 0.5rem;
   background-color: transparent;
-  color: #ef4444;
+  color: #A8503B;
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
@@ -128,8 +128,8 @@
 }
 
 .btn-remover-dia:hover {
-  background-color: #fef2f2;
-  border-color: #fecaca;
+  background-color: #F8EDE8;
+  border-color: #F0DED3;
 }
 
 .col-data { width: 8%; text-align: center; }

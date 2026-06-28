@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "725991519226",
+    "project_id": "servir-mais",
+    "storage_bucket": "servir-mais.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:725991519226:android:da8ec7e5a0a22088bcaa43",
+        "android_client_info": {
+          "package_name": "com.norteitapua.designacoesjw"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD885r3PbIQJURbz7cGYxxhCHy3nQj5OJs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

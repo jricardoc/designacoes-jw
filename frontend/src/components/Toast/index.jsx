@@ -46,15 +46,15 @@ export function ToastContainer({ toasts, removeToast }) {
 function Toast({ toast, onClose }) {
   const configs = {
     success: {
-      bg: '#10b981',
+      bg: '#5E6B48',
       icon: CheckCircle
     },
     error: {
-      bg: '#ef4444',
+      bg: '#A8503B',
       icon: XCircle
     },
     warning: {
-      bg: '#f59e0b',
+      bg: '#B06A43',
       icon: AlertTriangle
     }
   };

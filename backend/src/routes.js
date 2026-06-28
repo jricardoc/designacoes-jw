@@ -83,9 +83,10 @@ routes.delete('/indisponibilidades/:id', IndisponibilidadeController.delete);
 routes.delete('/indisponibilidades/irmao/:irmaoId/data/:data', IndisponibilidadeController.deleteByIrmaoData);
 routes.delete('/indisponibilidades/irmao/:irmaoId/clear', IndisponibilidadeController.clearByIrmao);
 
-// ==================== REUNIOES (Excel Import) ====================
+// ==================== REUNIOES (Import Excel/PDF) ====================
 routes.get('/reunioes', ReuniaoController.index);
-routes.post('/reunioes/import', upload.single('file'), ReuniaoController.importExcel);
+routes.post('/reunioes/import', upload.single('file'), ReuniaoController.import);
+routes.post('/reunioes/indisponibilidades', ReuniaoController.aplicarIndisponibilidades);
 routes.get('/reunioes/debug_dump', ReuniaoController.debugDump);
 routes.delete('/reunioes/:id', ReuniaoController.delete);
 routes.put('/reunioes/semanas/:id', ReuniaoController.updateSemana);

@@ -132,7 +132,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
       padding: '1rem'
     }}>
       <div style={{
-        background: 'white',
+        background: '#FBF7EF',
         borderRadius: '20px',
         width: '100%',
         maxWidth: '700px',
@@ -143,13 +143,13 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
         {/* Header */}
         <div style={{
           padding: '1.5rem 2rem',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid #E6DCC9',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           position: 'sticky',
           top: 0,
-          background: 'white',
+          background: '#FBF7EF',
           zIndex: 10
         }}>
           <div>
@@ -160,24 +160,24 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <Calendar size={24} color="#f97316" />
+              <Calendar size={24} color="#B06A43" />
               Agenda de {irmao.nome}
             </h2>
-            <p style={{ margin: '0.25rem 0 0', color: '#64748b', fontSize: '0.9rem' }}>
+            <p style={{ margin: '0.25rem 0 0', color: '#8A8071', fontSize: '0.9rem' }}>
               Clique nos dias para marcar/desmarcar indisponibilidade
             </p>
           </div>
           <button
             onClick={onClose}
             style={{
-              background: '#f1f5f9',
+              background: '#F6F0E4',
               border: 'none',
               borderRadius: '10px',
               padding: '0.5rem',
               cursor: 'pointer'
             }}
           >
-            <X size={24} color="#64748b" />
+            <X size={24} color="#8A8071" />
           </button>
         </div>
 
@@ -188,7 +188,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
               display: 'block', 
               marginBottom: '0.5rem', 
               fontWeight: '500',
-              color: '#374151'
+              color: '#3A352D'
             }}>
               Mes
             </label>
@@ -198,7 +198,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
               style={{
                 padding: '0.75rem 1rem',
                 borderRadius: '8px',
-                border: '2px solid #e5e7eb',
+                border: '2px solid #E6DCC9',
                 fontSize: '1rem',
                 width: '200px'
               }}
@@ -220,7 +220,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
 
           {/* Calendario Visual */}
           <div style={{
-            background: '#f8fafc',
+            background: '#F3EDE2',
             borderRadius: '12px',
             padding: '1.5rem',
             marginBottom: '1.5rem'
@@ -235,7 +235,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                 <div key={i} style={{
                   textAlign: 'center',
                   fontWeight: '600',
-                  color: '#64748b',
+                  color: '#8A8071',
                   fontSize: '0.8rem',
                   padding: '0.5rem'
                 }}>
@@ -255,9 +255,9 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                       borderRadius: '8px',
                       border: 'none',
                       background: indisponivel 
-                        ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
+                        ? 'linear-gradient(135deg, #A8503B 0%, #9A4632 100%)' 
                         : 'white',
-                      color: indisponivel ? 'white' : '#374151',
+                      color: indisponivel ? 'white' : '#3A352D',
                       fontWeight: '600',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
@@ -285,25 +285,25 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                 width: '24px',
                 height: '24px',
                 borderRadius: '6px',
-                background: 'white',
-                border: '1px solid #e5e7eb'
+                background: '#FBF7EF',
+                border: '1px solid #E6DCC9'
               }} />
-              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Disponivel</span>
+              <span style={{ color: '#8A8071', fontSize: '0.9rem' }}>Disponivel</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <div style={{
                 width: '24px',
                 height: '24px',
                 borderRadius: '6px',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                background: 'linear-gradient(135deg, #A8503B 0%, #9A4632 100%)'
               }} />
-              <span style={{ color: '#64748b', fontSize: '0.9rem' }}>Indisponivel</span>
+              <span style={{ color: '#8A8071', fontSize: '0.9rem' }}>Indisponivel</span>
             </div>
           </div>
 
           {/* Lista de Indisponibilidades */}
           <div style={{
-            background: '#fef2f2',
+            background: '#F8EDE8',
             borderRadius: '12px',
             padding: '1rem'
           }}>
@@ -318,7 +318,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '0.5rem',
-                color: '#991b1b'
+                color: '#7A3D2C'
               }}>
                 <AlertCircle size={18} />
                 Dias Indisponiveis ({indisponibilidades.length})
@@ -328,7 +328,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                   onClick={limparTodas}
                   style={{
                     padding: '0.5rem 1rem',
-                    background: '#dc2626',
+                    background: '#9A4632',
                     color: 'white',
                     border: 'none',
                     borderRadius: '6px',
@@ -343,7 +343,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
             </div>
 
             {indisponibilidades.length === 0 ? (
-              <p style={{ color: '#991b1b', margin: 0, fontSize: '0.9rem' }}>
+              <p style={{ color: '#7A3D2C', margin: 0, fontSize: '0.9rem' }}>
                 Nenhuma indisponibilidade marcada
               </p>
             ) : (
@@ -365,17 +365,17 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem',
-                      background: 'white',
+                      background: '#FBF7EF',
                       padding: '0.5rem 0.75rem',
                       borderRadius: '8px',
-                      border: '1px solid #fecaca'
+                      border: '1px solid #F0DED3'
                     }}
                   >
-                    <span style={{ fontWeight: '500', color: '#dc2626' }}>
+                    <span style={{ fontWeight: '500', color: '#9A4632' }}>
                       {indisp.data}
                     </span>
                     {indisp.motivo && (
-                      <span style={{ color: '#64748b', fontSize: '0.8rem' }}>
+                      <span style={{ color: '#8A8071', fontSize: '0.8rem' }}>
                         ({indisp.motivo})
                       </span>
                     )}
@@ -388,7 +388,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                         padding: '2px'
                       }}
                     >
-                      <X size={14} color="#dc2626" />
+                      <X size={14} color="#9A4632" />
                     </button>
                   </div>
                 ))}
@@ -400,7 +400,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
           <div style={{
             marginTop: '1.5rem',
             padding: '1rem',
-            background: '#f8fafc',
+            background: '#F3EDE2',
             borderRadius: '12px'
           }}>
             <h4 style={{ margin: '0 0 1rem', fontSize: '0.95rem' }}>
@@ -415,7 +415,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                 style={{
                   padding: '0.75rem 1rem',
                   borderRadius: '8px',
-                  border: '2px solid #e5e7eb',
+                  border: '2px solid #E6DCC9',
                   width: '150px'
                 }}
               />
@@ -427,7 +427,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                 style={{
                   padding: '0.75rem 1rem',
                   borderRadius: '8px',
-                  border: '2px solid #e5e7eb',
+                  border: '2px solid #E6DCC9',
                   flex: 1,
                   minWidth: '150px'
                 }}
@@ -439,7 +439,7 @@ export default function IndisponibilidadeModal({ irmao, onClose }) {
                   alignItems: 'center',
                   gap: '0.5rem',
                   padding: '0.75rem 1.5rem',
-                  background: '#f97316',
+                  background: '#B06A43',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',

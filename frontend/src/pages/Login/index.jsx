@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { LogoMark } from '../../components/Logo';
 
 export default function Login() {
   const [nickname, setNickname] = useState('');
@@ -34,7 +35,7 @@ export default function Login() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1e3a5f 0%, #0f2744 50%, #0a1929 100%)',
+      background: 'linear-gradient(135deg, #3A382C 0%, #29281D 50%, #1E1D14 100%)',
       padding: '1rem'
     }}>
       <div style={{
@@ -49,27 +50,24 @@ export default function Login() {
         {/* Logo/Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <div style={{
-            width: '80px',
-            height: '80px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
-            borderRadius: '20px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.5rem',
-            boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.5)'
+            margin: '0 auto 1.25rem',
+            width: '84px',
+            height: '84px',
+            borderRadius: '22px',
+            boxShadow: '0 12px 26px -6px rgba(64, 73, 48, 0.5)'
           }}>
-            <Lock size={36} color="white" />
+            <LogoMark size={84} radius={22} />
           </div>
-          <h1 style={{ 
-            fontSize: '1.75rem', 
-            fontWeight: '700', 
-            color: '#1e293b',
-            marginBottom: '0.5rem'
+          <h1 style={{
+            fontSize: '1.9rem',
+            fontWeight: '700',
+            color: '#2B2620',
+            marginBottom: '0.4rem',
+            letterSpacing: '-0.02em'
           }}>
-            Quadro de Designações
+            Servir Mais
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+          <p style={{ color: '#8A8071', fontSize: '0.95rem' }}>
             Acesse sua conta para continuar
           </p>
         </div>
@@ -82,7 +80,7 @@ export default function Login() {
               display: 'block', 
               marginBottom: '0.5rem',
               fontWeight: '500',
-              color: '#374151',
+              color: '#3A352D',
               fontSize: '0.9rem'
             }}>
               Nickname
@@ -90,7 +88,7 @@ export default function Login() {
             <div style={{ position: 'relative' }}>
               <User 
                 size={20} 
-                color="#9ca3af" 
+                color="#A2977F" 
                 style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <input
@@ -104,14 +102,14 @@ export default function Login() {
                   width: '100%',
                   padding: '0.875rem 1rem 0.875rem 2.75rem',
                   borderRadius: '12px',
-                  border: '2px solid #e5e7eb',
+                  border: '2px solid #E6DCC9',
                   fontSize: '1rem',
                   transition: 'all 0.2s',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                onFocus={(e) => e.target.style.borderColor = '#6E7B57'}
+                onBlur={(e) => e.target.style.borderColor = '#E6DCC9'}
               />
             </div>
           </div>
@@ -122,7 +120,7 @@ export default function Login() {
               display: 'block', 
               marginBottom: '0.5rem',
               fontWeight: '500',
-              color: '#374151',
+              color: '#3A352D',
               fontSize: '0.9rem'
             }}>
               Senha
@@ -130,7 +128,7 @@ export default function Login() {
             <div style={{ position: 'relative' }}>
               <Lock 
                 size={20} 
-                color="#9ca3af" 
+                color="#A2977F" 
                 style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <input
@@ -144,14 +142,14 @@ export default function Login() {
                   width: '100%',
                   padding: '0.875rem 3rem 0.875rem 2.75rem',
                   borderRadius: '12px',
-                  border: '2px solid #e5e7eb',
+                  border: '2px solid #E6DCC9',
                   fontSize: '1rem',
                   transition: 'all 0.2s',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                onFocus={(e) => e.target.style.borderColor = '#6E7B57'}
+                onBlur={(e) => e.target.style.borderColor = '#E6DCC9'}
               />
               <button
                 type="button"
@@ -167,7 +165,7 @@ export default function Login() {
                   padding: '4px'
                 }}
               >
-                {mostrarSenha ? <EyeOff size={20} color="#9ca3af" /> : <Eye size={20} color="#9ca3af" />}
+                {mostrarSenha ? <EyeOff size={20} color="#A2977F" /> : <Eye size={20} color="#A2977F" />}
               </button>
             </div>
           </div>
@@ -179,13 +177,13 @@ export default function Login() {
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.875rem',
-              background: '#fef2f2',
+              background: '#F8EDE8',
               borderRadius: '10px',
               marginBottom: '1.25rem',
-              border: '1px solid #fecaca'
+              border: '1px solid #F0DED3'
             }}>
-              <AlertCircle size={20} color="#ef4444" />
-              <span style={{ color: '#dc2626', fontSize: '0.9rem' }}>{erro}</span>
+              <AlertCircle size={20} color="#A8503B" />
+              <span style={{ color: '#9A4632', fontSize: '0.9rem' }}>{erro}</span>
             </div>
           )}
 
@@ -197,8 +195,8 @@ export default function Login() {
               width: '100%',
               padding: '1rem',
               background: carregando 
-                ? '#94a3b8' 
-                : 'linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)',
+                ? '#A2977F' 
+                : 'linear-gradient(135deg, #6E7B57 0%, #566239 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '12px',
@@ -206,7 +204,7 @@ export default function Login() {
               fontWeight: '600',
               cursor: carregando ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
-              boxShadow: carregando ? 'none' : '0 4px 14px -3px rgba(59, 130, 246, 0.5)'
+              boxShadow: carregando ? 'none' : '0 4px 14px -3px rgba(94, 107, 72, 0.5)'
             }}
           >
             {carregando ? 'Entrando...' : 'Entrar'}
@@ -217,7 +215,7 @@ export default function Login() {
         <p style={{ 
           textAlign: 'center', 
           marginTop: '2rem',
-          color: '#94a3b8',
+          color: '#A2977F',
           fontSize: '0.85rem'
         }}>
           Congregação Norte de Itapuã

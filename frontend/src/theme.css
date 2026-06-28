@@ -1,0 +1,281 @@
+/* ============================================================
+   Tema "Terroso" — design system do app levado para o web.
+   Paleta quente (creme / oliva / terracota), cartões suaves,
+   tipografia limpa. Classes utilitárias reaproveitáveis (.t-*).
+   ============================================================ */
+:root {
+  --t-bg: #f3ede2;
+  --t-surface: #fbf7ef;
+  --t-surface-muted: #f6f0e4;
+  --t-border: #ece3d3;
+  --t-border-strong: #e6dcc9;
+  --t-text: #2b2620;
+  --t-text-2: #8a8071;
+  --t-muted: #a2977f;
+  --t-primary: #5e6b48;
+  --t-primary-dark: #566239;
+  --t-olive: #6e7b57;
+  --t-sand: #ede6d5;
+  --t-brown: #9a7e55;
+  --t-terra: #a8503b;
+  --t-shadow: 0 1px 2px rgba(43, 38, 32, 0.04);
+  --t-shadow-lg: 0 12px 28px rgba(43, 38, 32, 0.1);
+}
+
+/* ---------- Layout helpers ---------- */
+.t-page {
+  padding: 0 2.5rem 3rem;
+}
+.t-section-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0.5rem 2px 1.25rem;
+  flex-wrap: wrap;
+}
+.t-section-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--t-text);
+  margin: 0;
+}
+.t-section-sub {
+  font-size: 0.85rem;
+  color: var(--t-muted);
+  margin: 0.2rem 0 0;
+}
+
+/* ---------- Grid of cards ---------- */
+.t-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.1rem;
+}
+
+/* ---------- Card ---------- */
+.t-card {
+  background: var(--t-surface);
+  border: 1px solid var(--t-border);
+  border-radius: 20px;
+  padding: 1.1rem 1.1rem 0.9rem;
+  box-shadow: var(--t-shadow);
+}
+.t-card-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.t-card-btn:hover {
+  transform: translateY(-2px);
+  border-color: #dcd0b9;
+  box-shadow: var(--t-shadow-lg);
+}
+.t-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.t-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--t-sand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.t-card-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--t-text);
+  line-height: 1.05;
+  margin-top: 0.8rem;
+}
+.t-card-meta {
+  font-size: 0.8rem;
+  color: #9a8f7d;
+  margin-top: 0.35rem;
+}
+.t-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #aea28c;
+  border-top: 1px solid #efe7d7;
+  margin-top: 0.85rem;
+  padding-top: 0.7rem;
+}
+
+/* ---------- Chip / badge ---------- */
+.t-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* ---------- Buttons ---------- */
+.t-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 13px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s ease, background 0.15s ease, transform 0.12s ease;
+  white-space: nowrap;
+}
+.t-btn:active {
+  transform: translateY(1px);
+}
+.t-btn-primary {
+  background: var(--t-primary);
+  color: var(--t-surface);
+  box-shadow: 0 6px 14px rgba(94, 107, 72, 0.22);
+}
+.t-btn-primary:hover {
+  filter: brightness(1.07);
+}
+.t-btn-secondary {
+  background: var(--t-surface);
+  color: #5c5446;
+  border-color: var(--t-border-strong);
+}
+.t-btn-secondary:hover {
+  background: #f3ecdd;
+}
+.t-btn-danger {
+  background: #f6eae4;
+  color: #9a4632;
+  border-color: #e3c9c0;
+}
+.t-btn-danger:hover {
+  background: #f1ddd4;
+}
+.t-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ---------- Forms ---------- */
+.t-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--t-muted);
+}
+.t-input {
+  width: 100%;
+  height: 48px;
+  border: 1px solid var(--t-border-strong);
+  background: var(--t-surface-muted);
+  border-radius: 14px;
+  padding: 0 15px;
+  font-size: 0.95rem;
+  color: var(--t-text);
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.t-input:focus {
+  border-color: var(--t-olive);
+  background: var(--t-surface);
+}
+
+/* ---------- States ---------- */
+.t-loading,
+.t-empty {
+  text-align: center;
+  color: var(--t-muted);
+  padding: 3rem 1rem;
+}
+.t-empty {
+  background: var(--t-surface);
+  border: 1px solid var(--t-border);
+  border-radius: 20px;
+  padding: 3.2rem 1.5rem;
+}
+.t-empty h3 {
+  color: var(--t-text);
+  margin: 0.9rem 0 0.3rem;
+}
+.t-empty p {
+  margin: 0;
+}
+
+/* ---------- Section card (settings-style) ---------- */
+.t-panel {
+  background: var(--t-surface);
+  border: 1px solid var(--t-border);
+  border-radius: 20px;
+  padding: 1.2rem;
+  box-shadow: var(--t-shadow);
+}
+.t-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--t-text);
+}
+
+/* ---------- Two-column layout (settings/account) ---------- */
+.t-two-col {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 1.2rem;
+  align-items: start;
+}
+.t-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+.t-field {
+  position: relative;
+  margin-top: 8px;
+}
+.t-field-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.t-field .t-input {
+  padding-left: 42px;
+}
+.t-divider {
+  height: 1px;
+  background: #efe7d7;
+  margin: 1.1rem 0 1rem;
+}
+
+@media (max-width: 980px) {
+  .t-two-col {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .t-page {
+    padding: 0 1.1rem 2.5rem;
+  }
+}

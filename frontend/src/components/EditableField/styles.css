@@ -10,7 +10,7 @@
 }
 
 .editable-text:hover {
-  border-bottom: 1px dashed #64748b;
+  border-bottom: 1px dashed #8A8071;
   background-color: rgba(255, 255, 255, 0.1);
 }
 
@@ -18,19 +18,19 @@
   width: 100%;
   min-width: 60px;
   padding: 2px 4px;
-  border: 1px solid #3b82f6;
+  border: 1px solid #6E7B57;
   border-radius: 4px;
   font-family: inherit;
   font-size: inherit;
   color: inherit;
   background-color: rgba(255, 255, 255, 0.9);
-  color: #1e293b !important;
+  color: #2B2620 !important;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 2px rgba(94, 107, 72, 0.2);
 }
 
 .v2-exportable-poster .editable-input {
-    background-color: white;
-    color: #1e293b !important;
+    background-color: #FBF7EF;
+    color: #2B2620 !important;
     font-weight: inherit;
 }

@@ -12,11 +12,11 @@ import {
 import { useAuth } from '../../../context/AuthContext';
 
 const FUNCOES = [
-  { id: "microfone", label: "Microfone", color: "#3b82f6" },
-  { id: "indicador", label: "Indicador", color: "#10b981" },
-  { id: "audioVideo", label: "Áudio e Vídeo", color: "#8b5cf6" },
-  { id: "estacionamento", label: "Estacionamento", color: "#f59e0b" },
-  { id: "dirigente", label: "Dirigente", color: "#ef4444" },
+  { id: "microfone", label: "Microfone", color: "#6E7B57" },
+  { id: "indicador", label: "Indicador", color: "#5E6B48" },
+  { id: "audioVideo", label: "Áudio e Vídeo", color: "#6E7B57" },
+  { id: "estacionamento", label: "Estacionamento", color: "#B06A43" },
+  { id: "dirigente", label: "Dirigente", color: "#A8503B" },
 ];
 
 const MESES = [
@@ -305,7 +305,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
     >
       <div
         style={{
-          background: "white",
+          background: "#FBF7EF",
           borderRadius: "20px",
           width: "100%",
           maxWidth: "600px",
@@ -318,13 +318,13 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
         <div
           style={{
             padding: "1.5rem",
-            borderBottom: "1px solid #e5e7eb",
+            borderBottom: "1px solid #E6DCC9",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             position: "sticky",
             top: 0,
-            background: "white",
+            background: "#FBF7EF",
             zIndex: 10,
             borderRadius: "20px 20px 0 0",
           }}
@@ -337,7 +337,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 width: "44px",
                 height: "44px",
                 borderRadius: "12px",
-                background: "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                background: "linear-gradient(135deg, #B06A43 0%, #9A5A38 100%)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -350,7 +350,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 {irmao ? "Editar Irmão" : "Novo Irmão"}
               </h2>
               {irmao && (
-                <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748b" }}>
+                <p style={{ margin: 0, fontSize: "0.8rem", color: "#8A8071" }}>
                   {indisponibilidades.length} indisponibilidades
                 </p>
               )}
@@ -359,17 +359,17 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
           <button
             onClick={() => onClose(false)}
             style={{
-              background: "#f1f5f9",
+              background: "#F6F0E4",
               border: "none",
               borderRadius: "10px",
               padding: "0.5rem",
               cursor: "pointer",
               transition: "background 0.2s",
             }}
-            onMouseEnter={(e) => (e.target.style.background = "#e2e8f0")}
-            onMouseLeave={(e) => (e.target.style.background = "#f1f5f9")}
+            onMouseEnter={(e) => (e.target.style.background = "#ECE3D3")}
+            onMouseLeave={(e) => (e.target.style.background = "#F6F0E4")}
           >
-            <X size={22} color="#64748b" />
+            <X size={22} color="#8A8071" />
           </button>
         </div>
 
@@ -382,7 +382,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 marginBottom: "0.5rem",
                 fontWeight: "600",
                 fontSize: "0.9rem",
-                color: "#374151",
+                color: "#3A352D",
               }}
             >
               Nome
@@ -396,13 +396,13 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 width: "100%",
                 padding: "0.75rem 1rem",
                 borderRadius: "10px",
-                border: "2px solid #e5e7eb",
+                border: "2px solid #E6DCC9",
                 fontSize: "1rem",
                 boxSizing: "border-box",
                 transition: "border-color 0.2s",
               }}
-              onFocus={(e) => (e.target.style.borderColor = "#f97316")}
-              onBlur={(e) => (e.target.style.borderColor = "#e5e7eb")}
+              onFocus={(e) => (e.target.style.borderColor = "#B06A43")}
+              onBlur={(e) => (e.target.style.borderColor = "#E6DCC9")}
             />
           </div>
 
@@ -414,7 +414,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 marginBottom: "0.5rem",
                 fontWeight: "600",
                 fontSize: "0.9rem",
-                color: "#374151",
+                color: "#3A352D",
               }}
             >
               Funções
@@ -466,9 +466,9 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
               style={{
                 marginBottom: "1.25rem",
                 padding: "1rem",
-                background: "#f8fafc",
+                background: "#F3EDE2",
                 borderRadius: "12px",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #ECE3D3",
               }}
             >
               <label
@@ -477,7 +477,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   marginBottom: "0.75rem",
                   fontWeight: "600",
                   fontSize: "0.9rem",
-                  color: "#374151",
+                  color: "#3A352D",
                 }}
               >
                 Nível em Áudio e Vídeo
@@ -492,12 +492,12 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     borderRadius: "10px",
                     border:
                       nivelAudioVideo === "experiente"
-                        ? "2px solid #8b5cf6"
+                        ? "2px solid #6E7B57"
                         : "2px solid transparent",
                     background:
-                      nivelAudioVideo === "experiente" ? "#ede9fe" : "white",
+                      nivelAudioVideo === "experiente" ? "#EAEFDC" : "white",
                     color:
-                      nivelAudioVideo === "experiente" ? "#6d28d9" : "#64748b",
+                      nivelAudioVideo === "experiente" ? "#6d28d9" : "#8A8071",
                     fontWeight: "600",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -514,12 +514,12 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     borderRadius: "10px",
                     border:
                       nivelAudioVideo === "treinando"
-                        ? "2px solid #f59e0b"
+                        ? "2px solid #B06A43"
                         : "2px solid transparent",
                     background:
-                      nivelAudioVideo === "treinando" ? "#fef3c7" : "white",
+                      nivelAudioVideo === "treinando" ? "#F1E1D2" : "white",
                     color:
-                      nivelAudioVideo === "treinando" ? "#b45309" : "#64748b",
+                      nivelAudioVideo === "treinando" ? "#78532A" : "#8A8071",
                     fontWeight: "600",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -538,9 +538,9 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
               style={{
                 marginBottom: "1.25rem",
                 padding: "1rem",
-                background: "#fef2f2",
+                background: "#F8EDE8",
                 borderRadius: "12px",
-                border: "1px solid #fecaca",
+                border: "1px solid #F0DED3",
               }}
             >
               <label
@@ -549,12 +549,12 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   marginBottom: "0.75rem",
                   fontWeight: "600",
                   fontSize: "0.9rem",
-                  color: "#991b1b",
+                  color: "#7A3D2C",
                 }}
               >
                 Disponibilidade para Saídas de Campo
               </label>
-              <p style={{ fontSize: "0.8rem", color: "#b91c1c", marginBottom: "1rem" }}>
+              <p style={{ fontSize: "0.8rem", color: "#9A4632", marginBottom: "1rem" }}>
                 Selecione em quais saídas este irmão pode atuar como dirigente:
               </p>
 
@@ -567,9 +567,9 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       alignItems: "center",
                       gap: "0.75rem",
                       padding: "0.75rem",
-                      background: "white",
+                      background: "#FBF7EF",
                       borderRadius: "8px",
-                      border: "1px solid #fca5a5",
+                      border: "1px solid #E3C9C0",
                       cursor: "pointer",
                       transition: "all 0.2s"
                     }}
@@ -581,10 +581,10 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       style={{ transform: "scale(1.2)" }}
                     />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: "600", color: "#7f1d1d", textTransform: "capitalize" }}>
+                      <div style={{ fontWeight: "600", color: "#7A3D2C", textTransform: "capitalize" }}>
                         {saida.diaSemana} - {saida.horario}
                       </div>
-                      <div style={{ fontSize: "0.8rem", color: "#991b1b" }}>
+                      <div style={{ fontSize: "0.8rem", color: "#7A3D2C" }}>
                         {saida.local}
                       </div>
                     </div>
@@ -611,7 +611,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     width: "48px",
                     height: "26px",
                     borderRadius: "13px",
-                    background: ativo ? "#10b981" : "#cbd5e1",
+                    background: ativo ? "#5E6B48" : "#C6BAA0",
                     position: "relative",
                     transition: "background 0.2s",
                     cursor: "pointer",
@@ -622,7 +622,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       width: "22px",
                       height: "22px",
                       borderRadius: "11px",
-                      background: "white",
+                      background: "#FBF7EF",
                       position: "absolute",
                       top: "2px",
                       left: ativo ? "24px" : "2px",
@@ -631,7 +631,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     }}
                   />
                 </div>
-                <span style={{ fontWeight: "500", color: "#374151" }}>
+                <span style={{ fontWeight: "500", color: "#3A352D" }}>
                   {ativo ? "Ativo" : "Inativo"}
                 </span>
               </label>
@@ -642,7 +642,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
           {irmao && (
             <div
               style={{
-                background: "#f8fafc",
+                background: "#F3EDE2",
                 borderRadius: "12px",
                 padding: "1rem",
                 marginBottom: "1.25rem",
@@ -663,10 +663,10 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     alignItems: "center",
                     gap: "0.5rem",
                     fontSize: "0.9rem",
-                    color: "#374151",
+                    color: "#3A352D",
                   }}
                 >
-                  <Calendar size={18} color="#f97316" />
+                  <Calendar size={18} color="#B06A43" />
                   Indisponibilidades
                 </h4>
 
@@ -682,8 +682,8 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   <button
                     onClick={mesAnterior}
                     style={{
-                      background: "white",
-                      border: "1px solid #e5e7eb",
+                      background: "#FBF7EF",
+                      border: "1px solid #E6DCC9",
                       borderRadius: "6px",
                       padding: "4px",
                       cursor: "pointer",
@@ -707,8 +707,8 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   <button
                     onClick={proximoMes}
                     style={{
-                      background: "white",
-                      border: "1px solid #e5e7eb",
+                      background: "#FBF7EF",
+                      border: "1px solid #E6DCC9",
                       borderRadius: "6px",
                       padding: "4px",
                       cursor: "pointer",
@@ -735,7 +735,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     style={{
                       textAlign: "center",
                       fontWeight: "600",
-                      color: "#94a3b8",
+                      color: "#A2977F",
                       fontSize: "0.7rem",
                       padding: "4px",
                     }}
@@ -757,9 +757,9 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       background: !dia
                         ? "transparent"
                         : isDiaIndisponivel(dia)
-                          ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+                          ? "linear-gradient(135deg, #A8503B 0%, #9A4632 100%)"
                           : "white",
-                      color: isDiaIndisponivel(dia) ? "white" : "#374151",
+                      color: isDiaIndisponivel(dia) ? "white" : "#3A352D",
                       fontWeight: "600",
                       fontSize: "0.8rem",
                       cursor: dia ? "pointer" : "default",
@@ -778,8 +778,8 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                           ? "0 4px 12px rgba(239, 68, 68, 0.5)"
                           : "0 4px 12px rgba(249, 115, 22, 0.3)";
                         if (!isDiaIndisponivel(dia)) {
-                          e.currentTarget.style.borderColor = "#f97316";
-                          e.currentTarget.style.border = "2px solid #f97316";
+                          e.currentTarget.style.borderColor = "#B06A43";
+                          e.currentTarget.style.border = "2px solid #B06A43";
                         }
                       }
                     }}
@@ -804,7 +804,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   gap: "1rem",
                   marginTop: "0.75rem",
                   fontSize: "0.75rem",
-                  color: "#64748b",
+                  color: "#8A8071",
                 }}
               >
                 <div
@@ -815,8 +815,8 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       width: "12px",
                       height: "12px",
                       borderRadius: "3px",
-                      background: "white",
-                      border: "1px solid #e5e7eb",
+                      background: "#FBF7EF",
+                      border: "1px solid #E6DCC9",
                     }}
                   />
                   Disponível
@@ -829,7 +829,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       width: "12px",
                       height: "12px",
                       borderRadius: "3px",
-                      background: "#ef4444",
+                      background: "#A8503B",
                     }}
                   />
                   Indisponível
@@ -858,16 +858,16 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   alignItems: "center",
                   gap: "0.5rem",
                   padding: "0.75rem 1rem",
-                  background: "#fee2e2",
-                  color: "#dc2626",
+                  background: "#F6E7E0",
+                  color: "#9A4632",
                   border: "none",
                   borderRadius: "10px",
                   fontWeight: "600",
                   cursor: "pointer",
                   transition: "background 0.2s",
                 }}
-                onMouseEnter={(e) => (e.target.style.background = "#fecaca")}
-                onMouseLeave={(e) => (e.target.style.background = "#fee2e2")}
+                onMouseEnter={(e) => (e.target.style.background = "#F0DED3")}
+                onMouseLeave={(e) => (e.target.style.background = "#F6E7E0")}
               >
                 <Trash2 size={18} />
                 Excluir
@@ -886,16 +886,16 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 onClick={() => onClose(false)}
                 style={{
                   padding: "0.75rem 1.5rem",
-                  background: "#f1f5f9",
-                  color: "#64748b",
+                  background: "#F6F0E4",
+                  color: "#8A8071",
                   border: "none",
                   borderRadius: "10px",
                   fontWeight: "600",
                   cursor: "pointer",
                   transition: "background 0.2s",
                 }}
-                onMouseEnter={(e) => (e.target.style.background = "#e2e8f0")}
-                onMouseLeave={(e) => (e.target.style.background = "#f1f5f9")}
+                onMouseEnter={(e) => (e.target.style.background = "#ECE3D3")}
+                onMouseLeave={(e) => (e.target.style.background = "#F6F0E4")}
               >
                 Cancelar
               </button>
@@ -908,8 +908,8 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   gap: "0.5rem",
                   padding: "0.75rem 1.5rem",
                   background: salvando
-                    ? "#94a3b8"
-                    : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                    ? "#A2977F"
+                    : "linear-gradient(135deg, #5E6B48 0%, #566239 100%)",
                   color: "white",
                   border: "none",
                   borderRadius: "10px",

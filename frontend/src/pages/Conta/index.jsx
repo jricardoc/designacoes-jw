@@ -1,393 +1,286 @@
 import { useState, useEffect } from 'react';
-import { User, Shield, Users, Plus, Trash2, Key, Crown, X } from 'lucide-react';
+import {
+  User,
+  Shield,
+  Users,
+  Plus,
+  Lock,
+  KeyRound,
+  LogOut,
+  MoreVertical,
+  Eye,
+  EyeOff,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/PageHeader';
 import { useToast, ToastContainer } from '../../components/Toast';
-import './styles.css';
+
+function initials(name) {
+  if (!name) return '?';
+  const p = name.trim().split(/\s+/);
+  return ((p[0]?.[0] || '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase() || '?';
+}
+
+const adminBadge = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '5px',
+  padding: '5px 11px',
+  borderRadius: '999px',
+  background: '#E2E7D2',
+  color: '#54622F',
+  fontSize: '0.72rem',
+  fontWeight: 700,
+  flexShrink: 0,
+};
+const menuItem = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  width: '100%',
+  padding: '11px 14px',
+  background: 'transparent',
+  border: 'none',
+  borderBottom: '1px solid #F1EAD9',
+  cursor: 'pointer',
+  fontSize: '0.9rem',
+  color: '#2B2620',
+  textAlign: 'left',
+};
 
 export default function Conta() {
   const { usuario, authFetch, logout } = useAuth();
   const { toasts, addToast, removeToast } = useToast();
-  
-  const [nickname, setNickname] = useState(usuario?.nickname || '');
+
   const [nome, setNome] = useState(usuario?.nome || '');
+  const [nickname, setNickname] = useState(usuario?.nickname || '');
   const [senhaAtual, setSenhaAtual] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
+  const [showCur, setShowCur] = useState(false);
+  const [showNew, setShowNew] = useState(false);
   const [usuarios, setUsuarios] = useState([]);
-  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
-  const [showNovoUsuario, setShowNovoUsuario] = useState(false);
+  const [showNovo, setShowNovo] = useState(false);
   const [novoNome, setNovoNome] = useState('');
   const [novoNickname, setNovoNickname] = useState('');
+  const [menuId, setMenuId] = useState(null);
 
-  // Carregar usuarios se for admin
   useEffect(() => {
-    if (usuario?.isAdmin) {
-      carregarUsuarios();
-    }
-  }, [usuario?.isAdmin]);
+    setNome(usuario?.nome || '');
+    setNickname(usuario?.nickname || '');
+  }, [usuario]);
 
   const carregarUsuarios = async () => {
-    setLoadingUsuarios(true);
     try {
-      const response = await authFetch('/usuarios');
-      if (response.ok) {
-        const data = await response.json();
-        setUsuarios(data);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar usuarios:', error);
-    }
-    setLoadingUsuarios(false);
-  };
-
-  const handleAlterarNickname = async (e) => {
-    e.preventDefault();
-    if (!nickname.trim()) return;
-
-    try {
-      const response = await authFetch('/usuarios/nickname', {
-        method: 'PUT',
-        body: JSON.stringify({ nickname: nickname.trim() })
-      });
-
-      if (response.ok) {
-        addToast('Nickname alterado com sucesso!', 'success');
-      } else {
-        const data = await response.json();
-        addToast(data.error || 'Erro ao alterar nickname', 'error');
-      }
-    } catch (error) {
-      addToast('Erro de conexão', 'error');
+      const res = await authFetch('/usuarios');
+      if (res.ok) setUsuarios(await res.json());
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const handleAlterarNome = async (e) => {
-    e.preventDefault();
-    if (!nome.trim()) return;
+  useEffect(() => {
+    if (usuario?.isAdmin) carregarUsuarios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuario?.isAdmin]);
 
+  const profileDirty =
+    nome.trim() !== (usuario?.nome || '') || nickname.trim() !== (usuario?.nickname || '');
+
+  const salvarPerfil = async () => {
     try {
-      const response = await authFetch('/auth/nome', {
-        method: 'PUT',
-        body: JSON.stringify({ nome: nome.trim() })
-      });
-
-      if (response.ok) {
-        addToast('Nome alterado com sucesso!', 'success');
-        // Atualizar o contexto do usuário
+      let changed = false;
+      if (nome.trim() !== (usuario?.nome || '')) {
+        const r = await authFetch('/auth/nome', { method: 'PUT', body: JSON.stringify({ nome: nome.trim() }) });
+        if (!r.ok) throw new Error();
+        changed = true;
+      }
+      if (nickname.trim() !== (usuario?.nickname || '')) {
+        const r = await authFetch('/usuarios/nickname', { method: 'PUT', body: JSON.stringify({ nickname: nickname.trim() }) });
+        if (!r.ok) throw new Error();
+        changed = true;
+      }
+      if (changed) {
+        addToast('Perfil atualizado!', 'success');
         window.location.reload();
-      } else {
-        const data = await response.json();
-        addToast(data.error || 'Erro ao alterar nome', 'error');
       }
-    } catch (error) {
-      addToast('Erro de conexão', 'error');
+    } catch {
+      addToast('Erro ao salvar perfil', 'error');
     }
   };
 
-  const handleAlterarSenha = async (e) => {
-    e.preventDefault();
+  const handleAlterarSenha = async () => {
     if (!senhaAtual || !novaSenha) return;
-
     try {
-      const response = await authFetch('/auth/senha', {
-        method: 'PUT',
-        body: JSON.stringify({ senhaAtual, novaSenha })
-      });
-
-      if (response.ok) {
+      const res = await authFetch('/auth/senha', { method: 'PUT', body: JSON.stringify({ senhaAtual, novaSenha }) });
+      if (res.ok) {
         addToast('Senha alterada com sucesso!', 'success');
         setSenhaAtual('');
         setNovaSenha('');
       } else {
-        const data = await response.json();
-        addToast(data.error || 'Erro ao alterar senha', 'error');
+        const d = await res.json();
+        addToast(d.error || 'Erro ao alterar senha', 'error');
       }
-    } catch (error) {
+    } catch {
       addToast('Erro de conexão', 'error');
     }
   };
 
-  const handleCriarUsuario = async (e) => {
-    e.preventDefault();
+  const handleCriarUsuario = async () => {
     if (!novoNome.trim() || !novoNickname.trim()) return;
-
     try {
-      const response = await authFetch('/usuarios', {
-        method: 'POST',
-        body: JSON.stringify({ nome: novoNome.trim(), nickname: novoNickname.trim() })
-      });
-
-      if (response.ok) {
+      const res = await authFetch('/usuarios', { method: 'POST', body: JSON.stringify({ nome: novoNome.trim(), nickname: novoNickname.trim() }) });
+      if (res.ok) {
         addToast(`Usuário ${novoNome} criado! Senha: jw1010`, 'success');
         setNovoNome('');
         setNovoNickname('');
-        setShowNovoUsuario(false);
+        setShowNovo(false);
         carregarUsuarios();
       } else {
-        const data = await response.json();
-        addToast(data.error || 'Erro ao criar usuário', 'error');
+        const d = await res.json();
+        addToast(d.error || 'Erro ao criar usuário', 'error');
       }
-    } catch (error) {
+    } catch {
       addToast('Erro de conexão', 'error');
     }
   };
 
   const handleToggleAdmin = async (id) => {
-    try {
-      const response = await authFetch(`/usuarios/${id}/admin`, { method: 'PUT' });
-      
-      if (response.ok) {
-        addToast('Permissões alteradas!', 'success');
-        carregarUsuarios();
-      } else {
-        const data = await response.json();
-        addToast(data.error || 'Erro ao alterar permissões', 'error');
-      }
-    } catch (error) {
-      addToast('Erro de conexão', 'error');
+    setMenuId(null);
+    const res = await authFetch(`/usuarios/${id}/admin`, { method: 'PUT' });
+    if (res.ok) {
+      addToast('Permissões alteradas!', 'success');
+      carregarUsuarios();
     }
   };
-
-  const handleResetSenha = async (id, nome) => {
-    if (!confirm(`Resetar senha de ${nome} para "jw1010"?`)) return;
-
-    try {
-      const response = await authFetch(`/usuarios/${id}/reset-senha`, { method: 'PUT' });
-      
-      if (response.ok) {
-        addToast(`Senha de ${nome} resetada para jw1010`, 'success');
-      } else {
-        const data = await response.json();
-        addToast(data.error || 'Erro ao resetar senha', 'error');
-      }
-    } catch (error) {
-      addToast('Erro de conexão', 'error');
-    }
+  const handleResetSenha = async (id, nm) => {
+    setMenuId(null);
+    if (!confirm(`Redefinir senha de ${nm} para "jw1010"?`)) return;
+    const res = await authFetch(`/usuarios/${id}/reset-senha`, { method: 'PUT' });
+    if (res.ok) addToast(`Senha de ${nm} redefinida para jw1010`, 'success');
   };
-
-  const handleDeletarUsuario = async (id, nome) => {
-    if (!confirm(`Tem certeza que deseja excluir ${nome}?`)) return;
-
-    try {
-      const response = await authFetch(`/usuarios/${id}`, { method: 'DELETE' });
-      
-      if (response.ok) {
-        addToast(`Usuário ${nome} excluído`, 'success');
-        carregarUsuarios();
-      } else {
-        const data = await response.json();
-        addToast(data.error || 'Erro ao excluir usuário', 'error');
-      }
-    } catch (error) {
-      addToast('Erro de conexão', 'error');
+  const handleDeletar = async (id, nm) => {
+    setMenuId(null);
+    if (!confirm(`Excluir ${nm}?`)) return;
+    const res = await authFetch(`/usuarios/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      addToast(`Usuário ${nm} excluído`, 'success');
+      carregarUsuarios();
     }
   };
 
   return (
-    <div className="conta-container">
+    <div>
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-      <PageHeader
-        title="Minha Conta"
-        description="Gerencie suas informações"
-        icon={User}
-        color="purple"
-      />
+      <PageHeader title="Conta" description="Perfil e usuários" icon={User} color="olive">
+        <button onClick={logout} className="t-btn t-btn-danger"><LogOut size={17} /> Sair</button>
+      </PageHeader>
 
-      <div className="conta-content">
-        <div className={`conta-grid ${usuario?.isAdmin ? 'admin-view' : ''}`}>
-          
-          {/* Card de Perfil */}
-          <div className="conta-card">
-            <h3 className="conta-title">
-              <User size={20} /> Perfil
-            </h3>
+      <div className="t-page">
+        <div className="t-two-col">
+          {/* Coluna esquerda: perfil + senha */}
+          <div className="t-stack">
+            <div className="t-card" style={{ padding: '1.4rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '999px', background: '#6E7B57', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 700, color: '#FBF7EF', flexShrink: 0 }}>{initials(usuario?.nome)}</div>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 600, color: '#2B2620' }}>{usuario?.nome}</div>
+                  <div style={{ fontSize: '0.85rem', color: '#A2977F', marginTop: '2px' }}>@{usuario?.nickname}</div>
+                </div>
+                {usuario?.isAdmin && <span style={adminBadge}><Shield size={12} fill="#54622F" /> Admin</span>}
+              </div>
 
-            {/* Info */}
-            <div className="conta-info-box">
-              <div className="conta-info-nome">{usuario?.nome}</div>
-              <div className="conta-info-nick">@{usuario?.nickname}</div>
-              {usuario?.isAdmin && (
-                <span className="conta-badge-admin">
-                  <Crown size={12} /> Admin
-                </span>
+              <div className="t-divider" />
+
+              <label className="t-label">Nome</label>
+              <div className="t-field">
+                <User size={17} className="t-field-icon" color="#B0A488" />
+                <input value={nome} onChange={(e) => setNome(e.target.value)} className="t-input" />
+              </div>
+
+              <label className="t-label" style={{ marginTop: '1rem' }}>Nickname</label>
+              <div className="t-field">
+                <span className="t-field-icon" style={{ fontSize: '1rem', fontWeight: 600, color: '#9DA882' }}>@</span>
+                <input value={nickname} onChange={(e) => setNickname(e.target.value)} className="t-input" style={{ paddingLeft: '40px' }} />
+              </div>
+
+              {profileDirty && (
+                <div style={{ display: 'flex', gap: '10px', marginTop: '1.1rem' }}>
+                  <button onClick={() => { setNome(usuario?.nome || ''); setNickname(usuario?.nickname || ''); }} className="t-btn t-btn-secondary" style={{ flex: 1 }}>Cancelar</button>
+                  <button onClick={salvarPerfil} className="t-btn t-btn-primary" style={{ flex: 1.4 }}>Salvar alterações</button>
+                </div>
               )}
             </div>
 
-            {/* Alterar Nome */}
-            <form onSubmit={handleAlterarNome} style={{ marginBottom: '1.5rem' }}>
-              <label className="conta-form-label">
-                Alterar Nome
-              </label>
-              <div className="conta-input-group">
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  placeholder="Seu nome completo"
-                  className="conta-input"
-                />
-                <button type="submit" className="conta-btn-purple">
-                  Salvar
-                </button>
+            <div className="t-card" style={{ padding: '1.4rem' }}>
+              <div className="t-panel-title" style={{ marginBottom: '1rem' }}><Lock size={18} color="#6E7B57" /> Alterar Senha</div>
+              <label className="t-label">Senha atual</label>
+              <div className="t-field">
+                <Lock size={16} className="t-field-icon" color="#B0A488" />
+                <input type={showCur ? 'text' : 'password'} value={senhaAtual} onChange={(e) => setSenhaAtual(e.target.value)} placeholder="••••••••" className="t-input" style={{ paddingRight: '46px' }} />
+                <button onClick={() => setShowCur((s) => !s)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}>{showCur ? <EyeOff size={18} color="#9C927E" /> : <Eye size={18} color="#9C927E" />}</button>
               </div>
-            </form>
-
-            {/* Alterar Nome de usuário */}
-            <form onSubmit={handleAlterarNickname} style={{ marginBottom: '1.5rem' }}>
-              <label className="conta-form-label">
-                Alterar Nome de usuário
-              </label>
-              <div className="conta-input-group">
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder="Nome para login"
-                  className="conta-input"
-                />
-                <button type="submit" className="conta-btn-blue">
-                  Salvar
-                </button>
+              <label className="t-label" style={{ marginTop: '1rem' }}>Nova senha</label>
+              <div className="t-field">
+                <KeyRound size={16} className="t-field-icon" color="#B0A488" />
+                <input type={showNew ? 'text' : 'password'} value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} placeholder="Mínimo de 6 caracteres" className="t-input" style={{ paddingRight: '46px' }} />
+                <button onClick={() => setShowNew((s) => !s)} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}>{showNew ? <EyeOff size={18} color="#9C927E" /> : <Eye size={18} color="#9C927E" />}</button>
               </div>
-            </form>
-
-            {/* Alterar Senha */}
-            <form onSubmit={handleAlterarSenha}>
-              <label className="conta-form-label">
-                Alterar Senha
-              </label>
-              <input
-                type="password"
-                placeholder="Senha atual"
-                value={senhaAtual}
-                onChange={(e) => setSenhaAtual(e.target.value)}
-                className="conta-input-block"
-              />
-              <input
-                type="password"
-                placeholder="Nova senha"
-                value={novaSenha}
-                onChange={(e) => setNovaSenha(e.target.value)}
-                className="conta-input-block"
-                style={{ marginBottom: '0.75rem' }}
-              />
-              <button type="submit" className="conta-btn-green">
-                Alterar Senha
-              </button>
-            </form>
+              <button onClick={handleAlterarSenha} className="t-btn t-btn-primary" style={{ width: '100%', height: '50px', marginTop: '1.1rem' }}>Alterar Senha</button>
+            </div>
           </div>
 
-            {/* Card de Gerenciamento de Usuários (Admin) */}
-          {usuario?.isAdmin && (
-            <div className="conta-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 className="conta-title" style={{ margin: 0 }}>
-                  <Users size={20} /> Usuários
-                </h3>
-                <button
-                  onClick={() => setShowNovoUsuario(!showNovoUsuario)}
-                  className="novo-usuario-btn"
-                  style={{ background: showNovoUsuario ? '#ef4444' : '#3b82f6' }}
-                >
-                  {showNovoUsuario ? <X size={16} /> : <Plus size={16} />}
-                  {showNovoUsuario ? 'Cancelar' : 'Novo'}
+          {/* Coluna direita: usuários */}
+          {usuario?.isAdmin ? (
+            <div className="t-card" style={{ padding: '1.4rem 1.2rem 0.6rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="t-panel-title"><Users size={19} color="#6E7B57" /> Usuários</div>
+                <button onClick={() => setShowNovo((s) => !s)} className="t-btn t-btn-primary" style={{ height: '36px', padding: '0 14px', fontSize: '0.82rem' }}>
+                  {showNovo ? <X size={14} /> : <Plus size={14} />} {showNovo ? 'Fechar' : 'Novo'}
                 </button>
               </div>
+              <div style={{ fontSize: '0.8rem', color: '#A2977F', marginTop: '5px' }}>{usuarios.length} usuário(s)</div>
 
-              {/* Form novo usuario */}
-              {showNovoUsuario && (
-                <form onSubmit={handleCriarUsuario} style={{
-                  padding: '1rem',
-                  background: '#f0fdf4',
-                  borderRadius: '10px',
-                  marginBottom: '1rem'
-                }}>
-                  <input
-                    type="text"
-                    placeholder="Nome completo"
-                    value={novoNome}
-                    onChange={(e) => setNovoNome(e.target.value)}
-                    className="conta-input-block"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Nome de usuário (para login)"
-                    value={novoNickname}
-                    onChange={(e) => setNovoNickname(e.target.value)}
-                    className="conta-input-block"
-                    style={{ marginBottom: '0.75rem' }}
-                  />
-                  <button type="submit" className="conta-btn-green">
-                    Criar (senha: jw1010)
-                  </button>
-                </form>
+              {showNovo && (
+                <div style={{ background: '#F6F0E4', borderRadius: '14px', padding: '14px', marginTop: '12px' }}>
+                  <input placeholder="Nome completo" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} className="t-input" style={{ marginBottom: '10px' }} />
+                  <input placeholder="Nickname (para login)" value={novoNickname} onChange={(e) => setNovoNickname(e.target.value)} className="t-input" />
+                  <button onClick={handleCriarUsuario} className="t-btn t-btn-primary" style={{ width: '100%', marginTop: '12px' }}>Criar Usuário</button>
+                </div>
               )}
 
-              {/* Lista de usuarios */}
-              <div style={{ maxHeight: '350px', overflow: 'auto' }}>
-                {loadingUsuarios ? (
-                  <div style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>Carregando...</div>
-                ) : (
-                  usuarios.map(u => (
-                    <div key={u.id} style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '0.75rem',
-                      borderBottom: '1px solid #f1f5f9'
-                    }}>
-                      <div>
-                        <div style={{ fontWeight: '500', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                          {u.nome}
-                          {u.isAdmin && <Crown size={14} color="#f59e0b" />}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>@{u.nickname}</div>
-                      </div>
-                      
-                      {u.id !== usuario?.id && (
-                        <div style={{ display: 'flex', gap: '0.25rem' }}>
-                          <button
-                            onClick={() => handleToggleAdmin(u.id)}
-                            title={u.isAdmin ? 'Remover admin' : 'Promover a admin'}
-                            className={u.isAdmin ? 'icon-btn icon-btn-shield-active' : 'icon-btn icon-btn-shield'}
-                          >
-                            <Shield size={16} color={u.isAdmin ? '#f59e0b' : '#64748b'} />
-                          </button>
-                          <button
-                            onClick={() => handleResetSenha(u.id, u.nome)}
-                            title="Resetar senha"
-                            className="icon-btn icon-btn-key"
-                          >
-                            <Key size={16} color="#64748b" />
-                          </button>
-                          <button
-                            onClick={() => handleDeletarUsuario(u.id, u.nome)}
-                            title="Excluir usuário"
-                            className="icon-btn icon-btn-delete"
-                          >
-                            <Trash2 size={16} color="#dc2626" />
-                          </button>
-                        </div>
-                      )}
+              <div style={{ marginTop: '6px' }}>
+                {usuarios.map((u) => (
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 2px', borderTop: '1px solid #F1EAD9' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '999px', background: '#EDE6D5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: '#9A7E55', flexShrink: 0 }}>{initials(u.nome)}</div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: '0.93rem', fontWeight: 600, color: '#2B2620', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.nome}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#A2977F' }}>@{u.nickname}</div>
                     </div>
-                  ))
-                )}
+                    {u.isAdmin && <span style={{ ...adminBadge, padding: '4px 9px', fontSize: '0.66rem' }}><Shield size={10} fill="#54622F" /> Admin</span>}
+                    {u.id === usuario?.id ? (
+                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#B0A488', paddingRight: '2px' }}>Você</span>
+                    ) : (
+                      <div style={{ position: 'relative' }}>
+                        <button onClick={() => setMenuId(menuId === u.id ? null : u.id)} style={{ width: '34px', height: '34px', borderRadius: '11px', border: '1px solid #ECE3D3', background: '#FBF7EF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                          <MoreVertical size={16} color="#9A8F7D" />
+                        </button>
+                        {menuId === u.id && (
+                          <div style={{ position: 'absolute', right: 0, top: '40px', background: '#FBF7EF', border: '1px solid #ECE3D3', borderRadius: '12px', boxShadow: '0 10px 24px rgba(43,38,32,0.12)', zIndex: 20, overflow: 'hidden', minWidth: '170px' }}>
+                            <button onClick={() => handleToggleAdmin(u.id)} style={menuItem}><Shield size={15} /> {u.isAdmin ? 'Remover admin' : 'Tornar admin'}</button>
+                            <button onClick={() => handleResetSenha(u.id, u.nome)} style={menuItem}><KeyRound size={15} /> Redefinir senha</button>
+                            <button onClick={() => handleDeletar(u.id, u.nome)} style={{ ...menuItem, color: '#9A4632', borderBottom: 'none' }}><X size={15} /> Excluir</button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Botao Logout */}
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <button
-            onClick={logout}
-            className="conta-btn-red"
-          >
-            Sair da Conta
-          </button>
+          ) : null}
         </div>
       </div>
     </div>
   );
 }
-

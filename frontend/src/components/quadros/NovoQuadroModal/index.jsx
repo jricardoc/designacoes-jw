@@ -102,7 +102,7 @@ export default function NovoQuadroModal({
     >
       <div
         style={{
-          background: "white",
+          background: "#FBF7EF",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "480px",
@@ -114,7 +114,7 @@ export default function NovoQuadroModal({
         <div
           style={{
             padding: "1.25rem 1.5rem",
-            borderBottom: "1px solid #e5e7eb",
+            borderBottom: "1px solid #E6DCC9",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -125,7 +125,7 @@ export default function NovoQuadroModal({
               margin: 0,
               fontSize: "1.25rem",
               fontWeight: "600",
-              color: "#1e293b",
+              color: "#2B2620",
             }}
           >
             Novo Quadro de Designações
@@ -140,7 +140,7 @@ export default function NovoQuadroModal({
               borderRadius: "8px",
             }}
           >
-            <X size={20} color="#64748b" />
+            <X size={20} color="#8A8071" />
           </button>
         </div>
 
@@ -161,7 +161,7 @@ export default function NovoQuadroModal({
                   display: "block",
                   marginBottom: "0.5rem",
                   fontWeight: "500",
-                  color: "#374151",
+                  color: "#3A352D",
                 }}
               >
                 Mês
@@ -173,7 +173,7 @@ export default function NovoQuadroModal({
                   width: "100%",
                   padding: "0.75rem",
                   borderRadius: "8px",
-                  border: "1px solid #d1d5db",
+                  border: "1px solid #DCD0B9",
                   fontSize: "1rem",
                 }}
               >
@@ -190,7 +190,7 @@ export default function NovoQuadroModal({
                   display: "block",
                   marginBottom: "0.5rem",
                   fontWeight: "500",
-                  color: "#374151",
+                  color: "#3A352D",
                 }}
               >
                 Ano
@@ -205,7 +205,7 @@ export default function NovoQuadroModal({
                   width: "100%",
                   padding: "0.75rem",
                   borderRadius: "8px",
-                  border: "1px solid #d1d5db",
+                  border: "1px solid #DCD0B9",
                   fontSize: "1rem",
                 }}
               />
@@ -216,7 +216,7 @@ export default function NovoQuadroModal({
             <div
               style={{
                 padding: "0.75rem",
-                background: "#fef3c7",
+                background: "#F1E1D2",
                 borderRadius: "8px",
                 marginBottom: "1rem",
                 color: "#92400e",
@@ -231,7 +231,7 @@ export default function NovoQuadroModal({
           <div
             style={{
               padding: "1rem",
-              background: autoPreenchimento ? "#f0fdf4" : "#f8fafc",
+              background: autoPreenchimento ? "#E9EFDC" : "#F3EDE2",
               borderRadius: "12px",
               marginBottom: "1rem",
             }}
@@ -249,7 +249,7 @@ export default function NovoQuadroModal({
                   width: "48px",
                   height: "28px",
                   borderRadius: "14px",
-                  background: autoPreenchimento ? "#10b981" : "#d1d5db",
+                  background: autoPreenchimento ? "#5E6B48" : "#DCD0B9",
                   position: "relative",
                   transition: "background 0.2s",
                 }}
@@ -259,7 +259,7 @@ export default function NovoQuadroModal({
                     width: "24px",
                     height: "24px",
                     borderRadius: "12px",
-                    background: "white",
+                    background: "#FBF7EF",
                     position: "absolute",
                     top: "2px",
                     left: autoPreenchimento ? "22px" : "2px",
@@ -278,7 +278,7 @@ export default function NovoQuadroModal({
                 <div
                   style={{
                     fontWeight: "600",
-                    color: "#1e293b",
+                    color: "#2B2620",
                     display: "flex",
                     alignItems: "center",
                     gap: "0.5rem",
@@ -286,11 +286,11 @@ export default function NovoQuadroModal({
                 >
                   <Wand2
                     size={18}
-                    color={autoPreenchimento ? "#10b981" : "#64748b"}
+                    color={autoPreenchimento ? "#5E6B48" : "#8A8071"}
                   />
                   Preenchimento Automático
                 </div>
-                <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                <div style={{ fontSize: "0.85rem", color: "#8A8071" }}>
                   Designar irmãos automaticamente usando regras inteligentes
                 </div>
               </div>
@@ -302,7 +302,7 @@ export default function NovoQuadroModal({
             <div
               style={{
                 padding: "1rem",
-                background: "#f8fafc",
+                background: "#F3EDE2",
                 borderRadius: "12px",
                 marginBottom: "1.5rem",
               }}
@@ -311,7 +311,7 @@ export default function NovoQuadroModal({
                 style={{
                   margin: "0 0 1rem",
                   fontSize: "0.9rem",
-                  color: "#64748b",
+                  color: "#8A8071",
                   fontWeight: "600",
                 }}
               >
@@ -350,7 +350,7 @@ export default function NovoQuadroModal({
                     cursor: "pointer",
                     borderRadius: "8px",
                     marginBottom: "0.5rem",
-                    background: regras[regra.key] ? "#f0fdf4" : "white",
+                    background: regras[regra.key] ? "#E9EFDC" : "white",
                   }}
                 >
                   <div
@@ -359,9 +359,9 @@ export default function NovoQuadroModal({
                       height: "20px",
                       borderRadius: "4px",
                       border: regras[regra.key]
-                        ? "2px solid #10b981"
-                        : "2px solid #d1d5db",
-                      background: regras[regra.key] ? "#10b981" : "white",
+                        ? "2px solid #5E6B48"
+                        : "2px solid #DCD0B9",
+                      background: regras[regra.key] ? "#5E6B48" : "white",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -378,10 +378,10 @@ export default function NovoQuadroModal({
                     style={{ display: "none" }}
                   />
                   <div>
-                    <div style={{ fontWeight: "500", color: "#1e293b" }}>
+                    <div style={{ fontWeight: "500", color: "#2B2620" }}>
                       {regra.label}
                     </div>
-                    <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                    <div style={{ fontSize: "0.8rem", color: "#8A8071" }}>
                       {regra.desc}
                     </div>
                   </div>
@@ -398,7 +398,7 @@ export default function NovoQuadroModal({
                   cursor: "pointer",
                   borderRadius: "8px",
                   marginTop: "0.5rem",
-                  background: regras.regraAudioVideo ? "#eff6ff" : "white",
+                  background: regras.regraAudioVideo ? "#EEF0E3" : "white",
                   border: "1px solid #bfdbfe",
                 }}
               >
@@ -408,9 +408,9 @@ export default function NovoQuadroModal({
                     height: "20px",
                     borderRadius: "4px",
                     border: regras.regraAudioVideo
-                      ? "2px solid #3b82f6"
-                      : "2px solid #d1d5db",
-                    background: regras.regraAudioVideo ? "#3b82f6" : "white",
+                      ? "2px solid #6E7B57"
+                      : "2px solid #DCD0B9",
+                    background: regras.regraAudioVideo ? "#6E7B57" : "white",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -430,7 +430,7 @@ export default function NovoQuadroModal({
                   <div
                     style={{
                       fontWeight: "500",
-                      color: "#1e40af",
+                      color: "#566239",
                       display: "flex",
                       alignItems: "center",
                       gap: "0.5rem",
@@ -441,7 +441,7 @@ export default function NovoQuadroModal({
                   <div
                     style={{
                       fontSize: "0.8rem",
-                      color: "#3b82f6",
+                      color: "#6E7B57",
                       lineHeight: "1.4",
                     }}
                   >
@@ -456,10 +456,10 @@ export default function NovoQuadroModal({
             <div
               style={{
                 padding: "0.75rem",
-                background: "#fee2e2",
+                background: "#F6E7E0",
                 borderRadius: "8px",
                 marginBottom: "1rem",
-                color: "#dc2626",
+                color: "#9A4632",
                 fontSize: "0.9rem",
               }}
             >
@@ -476,11 +476,11 @@ export default function NovoQuadroModal({
                 flex: 1,
                 padding: "0.875rem",
                 borderRadius: "10px",
-                border: "1px solid #d1d5db",
-                background: "white",
+                border: "1px solid #DCD0B9",
+                background: "#FBF7EF",
                 fontWeight: "600",
                 cursor: "pointer",
-                color: "#374151",
+                color: "#3A352D",
               }}
             >
               Cancelar
@@ -495,8 +495,8 @@ export default function NovoQuadroModal({
                 border: "none",
                 background:
                   loading || jaExiste
-                    ? "#d1d5db"
-                    : "linear-gradient(135deg, #3b82f6 0%, #1e40af 100%)",
+                    ? "#DCD0B9"
+                    : "linear-gradient(135deg, #6E7B57 0%, #566239 100%)",
                 color: "white",
                 fontWeight: "600",
                 cursor: loading || jaExiste ? "not-allowed" : "pointer",

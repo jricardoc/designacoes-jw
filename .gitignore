@@ -13,11 +13,25 @@
 !frontend/
 !frontend/**
 
+# Manter pasta mobile (app React Native / Expo)
+!mobile/
+!mobile/**
+
 # Ignorar node_modules e builds dentro das pastas
 backend/node_modules/
 backend/dist/
 frontend/node_modules/
 frontend/dist/
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/dist-check/
+mobile/expo-env.d.ts
+
+# NUNCA versionar chaves de service account do Firebase/Google (segredo!)
+mobile/*-firebase-adminsdk-*.json
+mobile/*service-account*.json
+mobile/google-service-account*.json
 
 # Ignorar arquivos de ambiente (manter .env.example)
 .env

@@ -61,7 +61,7 @@ export default function GerenciarIrmaos() {
     <div>
       {/* Header */}
       <div style={{
-        background: 'white',
+        background: '#FBF7EF',
         borderRadius: '16px',
         padding: '1.25rem 1.5rem',
         marginBottom: '1rem',
@@ -83,10 +83,10 @@ export default function GerenciarIrmaos() {
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <Users size={22} color="#f97316" />
+              <Users size={22} color="#B06A43" />
               Gerenciar Irmãos
             </h2>
-            <p style={{ color: '#64748b', margin: '0.25rem 0 0', fontSize: '0.85rem' }}>
+            <p style={{ color: '#8A8071', margin: '0.25rem 0 0', fontSize: '0.85rem' }}>
               {irmaos.length} irmãos cadastrados
             </p>
           </div>
@@ -98,7 +98,7 @@ export default function GerenciarIrmaos() {
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.6rem 1.25rem',
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+              background: 'linear-gradient(135deg, #B06A43 0%, #9A5A38 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
@@ -125,7 +125,7 @@ export default function GerenciarIrmaos() {
         <div style={{ position: 'relative', marginTop: '1rem' }}>
           <Search 
             size={18} 
-            color="#9ca3af" 
+            color="#A2977F" 
             style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
           />
           <input
@@ -138,13 +138,13 @@ export default function GerenciarIrmaos() {
               maxWidth: '350px',
               padding: '0.6rem 1rem 0.6rem 2.5rem',
               borderRadius: '10px',
-              border: '2px solid #e5e7eb',
+              border: '2px solid #E6DCC9',
               fontSize: '0.9rem',
               boxSizing: 'border-box',
               transition: 'border-color 0.2s'
             }}
-            onFocus={(e) => e.target.style.borderColor = '#f97316'}
-            onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+            onFocus={(e) => e.target.style.borderColor = '#B06A43'}
+            onBlur={(e) => e.target.style.borderColor = '#E6DCC9'}
           />
         </div>
       </div>
@@ -160,7 +160,7 @@ export default function GerenciarIrmaos() {
             key={irmao.id}
             onClick={() => editarIrmao(irmao)}
             style={{
-              background: 'white',
+              background: '#FBF7EF',
               borderRadius: '10px',
               padding: '0.875rem 1rem',
               boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
@@ -173,7 +173,7 @@ export default function GerenciarIrmaos() {
               border: '2px solid transparent'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#f97316';
+              e.currentTarget.style.borderColor = '#B06A43';
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(249, 115, 22, 0.15)';
             }}
@@ -188,8 +188,8 @@ export default function GerenciarIrmaos() {
               height: '36px',
               borderRadius: '10px',
               background: irmao.ativo 
-                ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)'
-                : '#cbd5e1',
+                ? 'linear-gradient(135deg, #B06A43 0%, #9A5A38 100%)'
+                : '#C6BAA0',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -202,7 +202,7 @@ export default function GerenciarIrmaos() {
               <div style={{ 
                 fontWeight: '600', 
                 fontSize: '0.9rem',
-                color: irmao.ativo ? '#1e293b' : '#94a3b8',
+                color: irmao.ativo ? '#2B2620' : '#A2977F',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
@@ -210,13 +210,13 @@ export default function GerenciarIrmaos() {
                 {irmao.nome}
               </div>
               {!irmao.ativo && (
-                <div style={{ fontSize: '0.7rem', color: '#ef4444' }}>Inativo</div>
+                <div style={{ fontSize: '0.7rem', color: '#A8503B' }}>Inativo</div>
               )}
             </div>
 
             <Edit2 
               size={16} 
-              color="#94a3b8" 
+              color="#A2977F" 
               style={{ flexShrink: 0 }}
             />
           </div>
@@ -227,7 +227,7 @@ export default function GerenciarIrmaos() {
         <div style={{
           textAlign: 'center',
           padding: '2rem',
-          color: '#64748b'
+          color: '#8A8071'
         }}>
           {busca ? 'Nenhum irmão encontrado' : 'Nenhum irmão cadastrado'}
         </div>

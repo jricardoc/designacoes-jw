@@ -3,10 +3,10 @@ import { Clock, Edit2, Plus, Archive, FileText, ChevronDown, ChevronUp } from 'l
 import { useAuth } from '../../../context/AuthContext';
 
 const ACAO_CONFIG = {
-  criou: { label: 'Criou', icon: Plus, color: '#10b981' },
-  editou: { label: 'Editou', icon: Edit2, color: '#3b82f6' },
-  publicou: { label: 'Publicou', icon: FileText, color: '#8b5cf6' },
-  arquivou: { label: 'Arquivou', icon: Archive, color: '#64748b' }
+  criou: { label: 'Criou', icon: Plus, color: '#5E6B48' },
+  editou: { label: 'Editou', icon: Edit2, color: '#6E7B57' },
+  publicou: { label: 'Publicou', icon: FileText, color: '#6E7B57' },
+  arquivou: { label: 'Arquivou', icon: Archive, color: '#8A8071' }
 };
 
 const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
@@ -71,7 +71,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
 
   if (loading) {
     return (
-      <div style={{ padding: '1rem', textAlign: 'center', color: '#64748b' }}>
+      <div style={{ padding: '1rem', textAlign: 'center', color: '#8A8071' }}>
         Carregando historico...
       </div>
     );
@@ -79,7 +79,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
 
   return (
     <div style={{
-      background: 'white',
+      background: '#FBF7EF',
       borderRadius: '16px',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       overflow: 'hidden'
@@ -93,33 +93,33 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
           justifyContent: 'space-between',
           alignItems: 'center',
           cursor: 'pointer',
-          background: '#f8fafc',
-          borderBottom: expandido ? '1px solid #e5e7eb' : 'none'
+          background: '#F3EDE2',
+          borderBottom: expandido ? '1px solid #E6DCC9' : 'none'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Clock size={18} color="#64748b" />
-          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: '#374151' }}>
+          <Clock size={18} color="#8A8071" />
+          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: '#3A352D' }}>
             Historico
           </h3>
           <span style={{
-            background: '#e5e7eb',
+            background: '#E6DCC9',
             padding: '0.15rem 0.5rem',
             borderRadius: '10px',
             fontSize: '0.75rem',
-            color: '#64748b'
+            color: '#8A8071'
           }}>
             {historicos.length}
           </span>
         </div>
-        {expandido ? <ChevronUp size={18} color="#64748b" /> : <ChevronDown size={18} color="#64748b" />}
+        {expandido ? <ChevronUp size={18} color="#8A8071" /> : <ChevronDown size={18} color="#8A8071" />}
       </div>
 
       {/* Conteudo */}
       {expandido && (
         <div style={{ maxHeight: '400px', overflow: 'auto' }}>
           {historicos.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>
+            <div style={{ padding: '2rem', textAlign: 'center', color: '#8A8071' }}>
               Nenhuma modificacao registrada
             </div>
           ) : (
@@ -128,10 +128,10 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                 {/* Data Header */}
                 <div style={{
                   padding: '0.5rem 1.25rem',
-                  background: '#f8fafc',
+                  background: '#F3EDE2',
                   fontSize: '0.75rem',
                   fontWeight: '600',
-                  color: '#64748b',
+                  color: '#8A8071',
                   textTransform: 'capitalize',
                   position: 'sticky',
                   top: 0
@@ -153,7 +153,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                       key={h.id}
                       style={{
                         padding: '0.875rem 1.25rem',
-                        borderBottom: '1px solid #f1f5f9',
+                        borderBottom: '1px solid #F6F0E4',
                         display: 'flex',
                         gap: '0.75rem'
                       }}
@@ -189,7 +189,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                             <span style={{ 
                               fontWeight: '600', 
                               fontSize: '0.85rem',
-                              color: '#1e293b'
+                              color: '#2B2620'
                             }}>
                               {h.usuario?.nome || 'Usuario'}
                             </span>
@@ -205,7 +205,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                             </span>
                           </div>
                           <span style={{ 
-                            color: '#94a3b8', 
+                            color: '#A2977F', 
                             fontSize: '0.75rem',
                             flexShrink: 0
                           }}>
@@ -216,7 +216,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                         <p style={{ 
                           margin: '0.25rem 0 0', 
                           fontSize: '0.85rem', 
-                          color: '#475569',
+                          color: '#5C5446',
                           lineHeight: 1.4
                         }}>
                           {h.descricao}
@@ -227,10 +227,10 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                             display: 'inline-block',
                             marginTop: '0.35rem',
                             padding: '0.2rem 0.5rem',
-                            background: '#f1f5f9',
+                            background: '#F6F0E4',
                             borderRadius: '4px',
                             fontSize: '0.75rem',
-                            color: '#64748b'
+                            color: '#8A8071'
                           }}>
                             {h.designacaoInfo}
                           </span>

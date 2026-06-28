@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Servir Mais",
+    "slug": "servir-mais",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "designacoesjw",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F3EDE2",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.norteitapua.designacoesjw"
+    },
+    "android": {
+      "package": "com.norteitapua.designacoesjw",
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/adaptive-bg.png"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font",
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 190,
+          "resizeMode": "contain",
+          "backgroundColor": "#5E6A46"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#5E6A46"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiUrl": "https://api.designacoes.jricardodev.com.br",
+      "router": {},
+      "eas": {
+        "projectId": "fb0e366c-d0bf-441a-8faa-b70bd7c34242"
+      }
+    },
+    "owner": "ocaradocopytrade"
+  }
+}

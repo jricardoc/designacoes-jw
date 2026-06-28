@@ -4,30 +4,30 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #6E7B57 0%, #5E6B48 100%);
   color: white;
   border: none;
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 14px -3px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 14px -3px rgba(94, 107, 72, 0.4);
   transition: all 0.2s;
 }
 
 .btn-novo-quadro:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px -3px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 6px 20px -3px rgba(94, 107, 72, 0.5);
 }
 
 .loading-state {
   text-align: center;
   padding: 4rem;
-  color: #64748b;
+  color: #8A8071;
   font-size: 1.1rem;
 }
 
 .empty-state {
-  background: white;
+  background: #FBF7EF;
   border-radius: 16px;
   padding: 4rem 2rem;
   text-align: center;
@@ -35,23 +35,23 @@
 }
 
 .empty-icon {
-  color: #cbd5e1;
+  color: #C6BAA0;
   margin-bottom: 1rem;
 }
 
 .empty-state h3 {
   margin: 0 0 0.5rem;
-  color: #374151;
+  color: #3A352D;
 }
 
 .empty-state p {
-  color: #64748b;
+  color: #8A8071;
   margin-bottom: 1.5rem;
 }
 
 .btn-primary {
   padding: 0.75rem 1.5rem;
-  background: #3b82f6;
+  background: #6E7B57;
   color: white;
   border: none;
   border-radius: 10px;
@@ -61,7 +61,7 @@
 }
 
 .btn-primary:hover {
-  background: #2563eb;
+  background: #5E6B48;
 }
 
 .quadros-grid {
@@ -71,7 +71,7 @@
 }
 
 .quadro-card {
-  background: white;
+  background: #FBF7EF;
   border-radius: 16px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -83,9 +83,9 @@
 }
 
 .quadro-card:hover {
-  border-color: #3b82f6;
+  border-color: #6E7B57;
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 8px 25px rgba(94, 107, 72, 0.15);
 }
 
 .quadro-card-indicator {
@@ -107,7 +107,7 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #6E7B57 0%, #5E6B48 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,13 +124,13 @@
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1e293b;
+  color: #2B2620;
 }
 
 .quadro-card-info {
   display: flex;
   gap: 1rem;
-  color: #64748b;
+  color: #8A8071;
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }
@@ -146,8 +146,8 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 1rem;
-  border-top: 1px solid #f1f5f9;
-  color: #94a3b8;
+  border-top: 1px solid #F6F0E4;
+  color: #A2977F;
   font-size: 0.8rem;
 }
 

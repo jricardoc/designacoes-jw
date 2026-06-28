@@ -245,19 +245,19 @@ export default function TabelaQuadro({
 
     if (mesmoDia) {
       return {
-        color: "#1e3a8a",
+        color: "#3A382C",
         background: "#bfdbfe",
         borderRadius: "4px",
         padding: "2px 6px",
       };
     }
     if (indisponivel) {
-      return { color: "#dc2626", textDecoration: "line-through" };
+      return { color: "#9A4632", textDecoration: "line-through" };
     }
     if (seguida) {
       return {
-        color: "#b45309",
-        background: "#fef3c7",
+        color: "#78532A",
+        background: "#F1E1D2",
         borderRadius: "4px",
         padding: "2px 6px",
       };
@@ -391,18 +391,18 @@ export default function TabelaQuadro({
                               let suffix = "";
 
                               if (mesmoDia) {
-                                color = "#1d4ed8";
-                                background = "#dbeafe";
+                                color = "#566239";
+                                background = "#EAEFDC";
                                 fontWeight = "bold";
                                 suffix = " (Já Hoje)";
                               } else if (indisponivel) {
-                                color = "#dc2626";
-                                background = "#fee2e2";
+                                color = "#9A4632";
+                                background = "#F6E7E0";
                                 fontWeight = "bold";
                                 suffix = " (Indisponível)";
                               } else if (seguida) {
-                                color = "#b45309";
-                                background = "#fef3c7";
+                                color = "#78532A";
+                                background = "#F1E1D2";
                                 fontWeight = "bold";
                                 suffix = " (Seguida)";
                               }
@@ -485,18 +485,18 @@ export default function TabelaQuadro({
                               let suffix = "";
 
                               if (mesmoDia) {
-                                color = "#1d4ed8";
-                                background = "#dbeafe";
+                                color = "#566239";
+                                background = "#EAEFDC";
                                 fontWeight = "bold";
                                 suffix = " (Já Hoje)";
                               } else if (indisponivel) {
-                                color = "#dc2626";
-                                background = "#fee2e2";
+                                color = "#9A4632";
+                                background = "#F6E7E0";
                                 fontWeight = "bold";
                                 suffix = " (Indisponível)";
                               } else if (seguida) {
-                                color = "#b45309";
-                                background = "#fef3c7";
+                                color = "#78532A";
+                                background = "#F1E1D2";
                                 fontWeight = "bold";
                                 suffix = " (Seguida)";
                               }

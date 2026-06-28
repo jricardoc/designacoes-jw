@@ -25,7 +25,7 @@
 }
 
 .estatisticas-modal-content {
-  background: white;
+  background: #FBF7EF;
   border-radius: 16px;
   width: 100%;
   max-width: 500px;
@@ -56,28 +56,28 @@
   align-items: flex-start;
   justify-content: space-between;
   padding: 1.5rem;
-  border-bottom: 1px solid #f1f5f9;
-  background: white;
+  border-bottom: 1px solid #F6F0E4;
+  background: #FBF7EF;
 }
 
 .estatisticas-modal-title {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #2B2620;
 }
 
 .estatisticas-modal-subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;
-  color: #64748b;
+  color: #8A8071;
 }
 
 .estatisticas-modal-close {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #94a3b8;
+  color: #A2977F;
   padding: 0.25rem;
   border-radius: 8px;
   transition: all 0.2s;
@@ -89,8 +89,8 @@
 @media (min-width: 1050px) {
   .estatisticas-modal-close:hover {
 
-  background: #f1f5f9;
-  color: #ef4444;
+  background: #F6F0E4;
+  color: #A8503B;
 
   }
 }
@@ -108,39 +108,39 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, #F3EDE2 0%, #F6F0E4 100%);
   border-radius: 12px;
   margin-bottom: 1.5rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #ECE3D3;
 }
 
 .perfil-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #6E7B57 0%, #566239 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   font-weight: 700;
-  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(94, 107, 72, 0.3);
 }
 
 .perfil-info h3 {
   margin: 0 0 0.25rem 0;
   font-size: 1.125rem;
   font-weight: 700;
-  color: #1e293b;
+  color: #2B2620;
 }
 
 .perfil-badge {
   display: inline-block;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #10b981;
-  background: #d1fae5;
+  color: #5E6B48;
+  background: #E2E7D2;
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
 }
@@ -152,7 +152,7 @@
   gap: 0.5rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #475569;
+  color: #5C5446;
   margin-bottom: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -169,8 +169,8 @@
   align-items: center;
   gap: 1rem;
   padding: 1rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: #FBF7EF;
+  border: 1px solid #ECE3D3;
   border-radius: 12px;
   transition: all 0.2s;
 }
@@ -178,7 +178,7 @@
 @media (min-width: 1050px) {
   .designacao-item-card:hover {
 
-  border-color: #cbd5e1;
+  border-color: #C6BAA0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 
@@ -192,14 +192,14 @@
   align-items: center;
   justify-content: center;
   padding-right: 1rem;
-  border-right: 1px dashed #cbd5e1;
+  border-right: 1px dashed #C6BAA0;
   min-width: 60px;
 }
 
 .designacao-item-data .data-numero {
   font-size: 1.5rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #2B2620;
   line-height: 1;
 }
 
@@ -216,16 +216,16 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
+  color: #8A8071;
   align-self: flex-start;
 }
 
 .designacao-dia.meio-de-semana {
-  color: #3b82f6;
+  color: #6E7B57;
 }
 
 .designacao-dia.fim-de-semana {
-  color: #8b5cf6;
+  color: #6E7B57;
 }
 
 .designacao-funcao-wrap {
@@ -235,7 +235,7 @@
 }
 
 .funcao-icone {
-  color: #64748b;
+  color: #8A8071;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -243,7 +243,7 @@
 
 .funcao-texto {
   font-weight: 600;
-  color: #334155;
+  color: #3A352D;
   font-size: 0.95rem;
 }
 
@@ -251,11 +251,11 @@
 .estatisticas-vazio {
   text-align: center;
   padding: 2rem;
-  color: #94a3b8;
+  color: #A2977F;
   font-style: italic;
-  background: #f8fafc;
+  background: #F3EDE2;
   border-radius: 12px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed #C6BAA0;
 }
 
 /* Otimizacoes de responsividade */

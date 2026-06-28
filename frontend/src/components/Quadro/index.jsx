@@ -21,14 +21,14 @@ export default function Quadro() {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '50vh',
-        color: '#64748b'
+        color: '#8A8071'
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{
             width: '40px',
             height: '40px',
-            border: '4px solid #e5e7eb',
-            borderTop: '4px solid #3b82f6',
+            border: '4px solid #E6DCC9',
+            borderTop: '4px solid #6E7B57',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
             margin: '0 auto 1rem'
@@ -69,7 +69,7 @@ export default function Quadro() {
       const canvas1 = await html2canvas(pagina1Element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FBF7EF',
         logging: false
       });
 
@@ -83,7 +83,7 @@ export default function Quadro() {
       const canvas2 = await html2canvas(pagina2Element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FBF7EF',
         logging: false
       });
 

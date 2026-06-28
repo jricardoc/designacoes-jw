@@ -37,9 +37,9 @@ const MESES = [
 ];
 
 const STATUS_CONFIG = {
-  rascunho: { label: "Rascunho", color: "#f59e0b", bg: "#fef3c7" },
-  publicado: { label: "Publicado", color: "#10b981", bg: "#d1fae5" },
-  arquivado: { label: "Arquivado", color: "#64748b", bg: "#f1f5f9" },
+  rascunho: { label: "Rascunho", color: "#B06A43", bg: "#F1E1D2" },
+  publicado: { label: "Publicado", color: "#5E6B48", bg: "#E2E7D2" },
+  arquivado: { label: "Arquivado", color: "#8A8071", bg: "#F6F0E4" },
 };
 
 export default function QuadroView() {
@@ -183,7 +183,7 @@ export default function QuadroView() {
           const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
-            backgroundColor: "#ffffff",
+            backgroundColor: "#FBF7EF",
             logging: false,
           });
 
@@ -298,7 +298,7 @@ export default function QuadroView() {
             marginLeft: "70px",
             padding: "3rem",
             textAlign: "center",
-            color: "#64748b",
+            color: "#8A8071",
           }}
         >
           Carregando quadro...
@@ -532,9 +532,9 @@ export default function QuadroView() {
                         <div
                           className="estatistica-footer"
                           style={{
-                            color: "#10b981",
+                            color: "#5E6B48",
                             fontWeight: "600",
-                            borderTop: "1px solid #e5e7eb",
+                            borderTop: "1px solid #E6DCC9",
                             paddingTop: "0.75rem",
                             marginTop: "0.5rem",
                           }}
@@ -551,7 +551,7 @@ export default function QuadroView() {
                             gap: "8px",
                             alignItems: "flex-start",
                             textAlign: "left",
-                            borderTop: "1px solid #e5e7eb",
+                            borderTop: "1px solid #E6DCC9",
                             paddingTop: "0.75rem",
                             marginTop: "0.5rem",
                           }}
@@ -564,7 +564,7 @@ export default function QuadroView() {
                           <div
                             style={{
                               fontSize: "0.85rem",
-                              color: "#64748b",
+                              color: "#8A8071",
                               lineHeight: "1.4",
                             }}
                           >

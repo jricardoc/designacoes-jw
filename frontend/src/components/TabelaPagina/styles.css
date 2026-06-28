@@ -1,7 +1,7 @@
 /* TabelaPagina Component Styles */
 
 .tabela-pagina-container {
-  background: white;
+  background: #FBF7EF;
   width: 100%;
   max-width: 1100px;
   box-sizing: border-box;
@@ -13,7 +13,7 @@
 
 /* Header */
 .tabela-pagina-header {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #5E6B48 0%, #566239 100%);
   padding: 15px 20px;
   border-radius: 0;
   text-align: center;
@@ -56,7 +56,7 @@
 .tabela-pagina-thead {
   display: grid;
   grid-template-columns: 80px 100px 1fr 1fr 1fr;
-  background: #1f2937;
+  background: #2B2620;
   color: white;
   font-weight: 600;
   font-size: 0.85rem;
@@ -72,27 +72,27 @@
 .tabela-pagina-row {
   display: grid;
   grid-template-columns: 80px 100px 1fr;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #E6DCC9;
 }
 
 .row-even {
-  background: #f3f4f6;
+  background: #F6F0E4;
 }
 
 .row-odd {
-  background: white;
+  background: #FBF7EF;
 }
 
 /* Data cell */
 .td-data-cell {
-  background: #2563eb;
+  background: #5E6B48;
   color: white;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 10px;
-  border-right: 3px solid #7c3aed;
+  border-right: 3px solid #566239;
 }
 
 .data-info {
@@ -136,12 +136,12 @@
 }
 
 .dia-badge.domingo {
-  background: #f59e0b;
+  background: #B06A43;
   color: #78350f;
 }
 
 .dia-badge.quinta {
-  background: #10b981;
+  background: #5E6B48;
   color: #064e3b;
 }
 
@@ -159,7 +159,7 @@
 }
 
 .funcao-row.with-border {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #E6DCC9;
 }
 
 .funcao-cell {
@@ -189,7 +189,7 @@
 
 .irmao-nome {
   font-weight: 600;
-  color: #374151;
+  color: #3A352D;
   font-size: 0.95rem;
 }
 
@@ -203,7 +203,7 @@
 @media (min-width: 1050px) {
   .irmao-nome.editable:hover {
 
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(86, 98, 57, 0.1);
 
   }
 }
@@ -212,7 +212,7 @@
 .btn-delete-dia {
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #A2977F;
   cursor: pointer;
   padding: 0;
   display: flex;
@@ -237,8 +237,8 @@
 @media (min-width: 1050px) {
   .btn-delete-dia:hover {
 
-  background: #fee2e2;
-  color: #ef4444;
+  background: #F6E7E0;
+  color: #A8503B;
 
   }
 }
@@ -270,12 +270,12 @@
 /* Edit select */
 .edit-select {
   padding: 6px 10px;
-  border: 2px solid #3b82f6;
+  border: 2px solid #6E7B57;
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
-  background: white;
-  color: #374151;
+  background: #FBF7EF;
+  color: #3A352D;
   cursor: pointer;
   outline: none;
   width: 100%;
@@ -286,8 +286,8 @@
 }
 
 .edit-select:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+  border-color: #5E6B48;
+  box-shadow: 0 0 0 3px rgba(86, 98, 57, 0.2);
 }
 
 /* ============================================
@@ -356,7 +356,7 @@
   .tabela-pagina-row {
     display: flex;
     flex-direction: column;
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 2px solid #E6DCC9;
   }
 
   /* Data e Dia lado a lado no topo */
@@ -394,12 +394,12 @@
   }
 
   .dia-badge-mobile.domingo {
-    background: #f59e0b;
+    background: #B06A43;
     color: #78350f;
   }
 
   .dia-badge-mobile.quinta {
-    background: #10b981;
+    background: #5E6B48;
     color: #064e3b;
   }
 
