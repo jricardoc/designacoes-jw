@@ -33,6 +33,10 @@ mobile/*-firebase-adminsdk-*.json
 mobile/*service-account*.json
 mobile/google-service-account*.json
 
+# Config do Firebase do cliente — contém API key; fornecer via EAS secret no build
+mobile/google-services.json
+mobile/GoogleService-Info.plist
+
 # Ignorar arquivos de ambiente (manter .env.example)
 .env
 backend/.env
