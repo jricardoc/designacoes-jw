@@ -1,0 +1,40 @@
+# O EAS Build usa este arquivo NO LUGAR do .gitignore para decidir o que enviar
+# ao servidor de build. O .gitignore da raiz ignora tudo com "*" (whitelist),
+# e o uploader do EAS nao lida bem com essa negacao em monorepo — por isso a
+# pasta mobile/ subia incompleta e o build quebrava com:
+#   "package.json does not exist in /home/expo/workingdir/build/mobile"
+# Aqui listamos apenas o que NAO deve subir; o mobile/ vai completo.
+
+# Dependencias e caches
+**/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/dist-check/
+
+# Servicos que nao entram no build do app mobile
+/backend/
+/frontend/
+/docker-compose.yml
+/seed.sql
+
+# Arquivos e scripts de apoio na raiz do monorepo
+/*.xlsx
+/*.pdf
+/*.md
+/addTrash.js
+/refactor.js
+/read_excel.js
+/read_march_excel.js
+/excel_dump.json
+/package.json
+/package-lock.json
+/.env
+/.env.example
+
+# Segredo de SERVIDOR do Firebase (chave admin-sdk / service account) — NUNCA enviar.
+# Obs: o google-services.json (config de cliente) SOBE de proposito, para o build
+# funcionar mesmo sem o EAS secret GOOGLE_SERVICES_JSON.
+mobile/*-firebase-adminsdk-*.json
+mobile/*service-account*.json
+mobile/google-service-account*.json
+.DS_Store

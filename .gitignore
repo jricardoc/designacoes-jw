@@ -5,6 +5,7 @@
 !README.md
 !EASYPANEL.md
 !.gitignore
+!.easignore
 !docker-compose.yml
 !.env.example
 
