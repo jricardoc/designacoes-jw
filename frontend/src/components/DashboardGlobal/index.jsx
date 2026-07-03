@@ -171,7 +171,7 @@ export default function DashboardGlobal() {
             <h3>Menos Designados Historicamente</h3>
           </div>
           <div className="card-body">
-            {stats.menosEscaladosGeral?.map((irmao, index) => {
+            {stats.menosEscaladosGeral?.map((irmao) => {
               const maxQtd = stats.top5Geral[0]?.qtd || 1;
               // Usar o topo geral para que a barra seja minuscula indicando pouco serviço
               let percentage = (irmao.qtd / maxQtd) * 100;

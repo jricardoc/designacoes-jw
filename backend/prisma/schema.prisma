@@ -41,8 +41,8 @@ model Historico {
   id          Int      @id @default(autoincrement())
   quadroId    Int
   quadro      Quadro   @relation(fields: [quadroId], references: [id], onDelete: Cascade)
-  usuarioId   Int
-  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId   Int?
+  usuario     Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
   acao        String   // "criou", "editou", "excluiu", "publicou", "arquivou"
   descricao   String   // Descricao legivel
   campo       String?  // Campo modificado (irmao1, irmao2, data, dia)

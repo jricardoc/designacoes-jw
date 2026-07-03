@@ -3,13 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './theme.css'
 import App from './App.jsx'
-import { DesignacoesProvider } from './context/DesignacoesContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <DesignacoesProvider>
-      <App />
-    </DesignacoesProvider>
+    <App />
   </StrictMode>,
 )
-

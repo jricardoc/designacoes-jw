@@ -14,7 +14,9 @@ class SeedService {
             let adminUser;
             if (usuarioCount === 0) {
                 console.log('Seeding Usuario admin...');
-                const senhaHash = await bcrypt.hash('jw1010', 10);
+                // Senha inicial configuravel via env; padrao apenas para dev local.
+                const senhaInicial = process.env.ADMIN_SEED_PASSWORD || 'jw1010';
+                const senhaHash = await bcrypt.hash(senhaInicial, 10);
                 adminUser = await prisma.usuario.create({
                     data: {
                         nickname: 'admin',
@@ -23,7 +25,8 @@ class SeedService {
                         isAdmin: true
                     }
                 });
-                console.log('Admin criado: nickname=admin, senha=jw1010');
+                // Nunca logar a senha em texto claro.
+                console.log('Admin criado: nickname=admin (troque a senha no primeiro acesso).');
             } else {
                 adminUser = await prisma.usuario.findFirst();
             }

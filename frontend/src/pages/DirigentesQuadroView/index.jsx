@@ -242,7 +242,7 @@ export default function DirigentesQuadroView() {
           } else {
             addToast("Erro ao excluir escala", "error");
           }
-        } catch (error) {
+        } catch {
           addToast("Erro de conexão", "error");
         }
       },

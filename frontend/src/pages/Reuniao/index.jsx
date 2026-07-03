@@ -422,7 +422,7 @@ export default function Reuniao() {
                                 <div className="linha-atribuicao">
                                   <span className="label">Oração:</span>
                                   <span className="nome">
-                                    <EditableField value={semana.presidente} fieldName="presidente" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
+                                    <EditableField value={semana.oracaoInicial} fieldName="oracaoInicial" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
                                   </span>
                                 </div>
                               </div>

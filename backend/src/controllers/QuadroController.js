@@ -127,45 +127,53 @@ class QuadroController {
                 }
             });
 
-            // SEMPRE criar template com datas, dias e funções
-            // Isso garante que o quadro nao fique completamente vazio
-            const designacoesTemplate = gerarTemplate(mes, ano);
+            // A partir daqui, qualquer falha deve desfazer o quadro recem-criado para
+            // nao deixar registros orfaos (o backend/cleanup.js existe por causa desse bug).
+            try {
+                // SEMPRE criar template com datas, dias e funções
+                // Isso garante que o quadro nao fique completamente vazio
+                const designacoesTemplate = gerarTemplate(mes, ano);
 
-            if (designacoesTemplate.length > 0) {
-                await prisma.designacao.createMany({
-                    data: designacoesTemplate.map(d => ({ ...d, quadroId: quadro.id }))
-                });
-            }
-
-            // Se auto-preenchimento, chamar servico de automatizacao para preencher irmaos
-            if (autoPreenchimento) {
-                const AutoDesignacaoService = require('../services/AutoDesignacaoService');
-                await AutoDesignacaoService.gerarDesignacoes(
-                    quadro.id,
-                    parseInt(mes),
-                    parseInt(ano),
-                    regras || {}
-                );
-            }
-
-            // Registrar no historico
-            let descricao = `Quadro de ${MESES[mes]} ${ano} criado`;
-            if (autoPreenchimento) {
-                descricao += ' com preenchimento automatico';
-            } else if (comTemplate) {
-                descricao += ' com template vazio';
-            } else {
-                descricao += ' vazio';
-            }
-
-            await prisma.historico.create({
-                data: {
-                    quadroId: quadro.id,
-                    usuarioId: req.user.id,
-                    acao: 'criou',
-                    descricao
+                if (designacoesTemplate.length > 0) {
+                    await prisma.designacao.createMany({
+                        data: designacoesTemplate.map(d => ({ ...d, quadroId: quadro.id }))
+                    });
                 }
-            });
+
+                // Se auto-preenchimento, chamar servico de automatizacao para preencher irmaos
+                if (autoPreenchimento) {
+                    const AutoDesignacaoService = require('../services/AutoDesignacaoService');
+                    await AutoDesignacaoService.gerarDesignacoes(
+                        quadro.id,
+                        parseInt(mes),
+                        parseInt(ano),
+                        regras || {}
+                    );
+                }
+
+                // Registrar no historico
+                let descricao = `Quadro de ${MESES[mes]} ${ano} criado`;
+                if (autoPreenchimento) {
+                    descricao += ' com preenchimento automatico';
+                } else if (comTemplate) {
+                    descricao += ' com template vazio';
+                } else {
+                    descricao += ' vazio';
+                }
+
+                await prisma.historico.create({
+                    data: {
+                        quadroId: quadro.id,
+                        usuarioId: req.user.id,
+                        acao: 'criou',
+                        descricao
+                    }
+                });
+            } catch (err) {
+                // Rollback manual: apaga o quadro (cascade remove designacoes/historico).
+                await prisma.quadro.delete({ where: { id: quadro.id } }).catch(() => {});
+                throw err;
+            }
 
             return res.status(201).json(quadro);
         } catch (error) {
@@ -241,6 +249,11 @@ class QuadroController {
     async updateDesignacao(req, res) {
         try {
             const { quadroId, data, funcao, campo, valor } = req.body;
+
+            // Whitelist: so os nomes dos irmaos sao editaveis por aqui (bloqueia mass assignment).
+            if (campo !== 'irmao1' && campo !== 'irmao2') {
+                return res.status(400).json({ error: 'Campo inválido' });
+            }
 
             const designacao = await prisma.designacao.findFirst({
                 where: {

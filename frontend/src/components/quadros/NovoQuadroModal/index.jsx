@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X, Calendar, Wand2, Check } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -78,7 +78,7 @@ export default function NovoQuadroModal({
         const data = await response.json();
         setErro(data.error || "Erro ao criar quadro");
       }
-    } catch (error) {
+    } catch {
       setErro("Erro de conexão");
     }
 

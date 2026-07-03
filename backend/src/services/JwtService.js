@@ -1,7 +1,11 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'quadro-designacoes-secret-key-2025';
-const JWT_EXPIRES_IN = '7d';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+    // Falha explicita no boot: sem segredo definido, tokens seriam forjaveis.
+    throw new Error('JWT_SECRET nao definido. Configure a variavel de ambiente antes de iniciar o servidor.');
+}
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 class JwtService {
     generateToken(usuario) {

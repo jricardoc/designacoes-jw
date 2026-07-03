@@ -3,6 +3,26 @@ const { parseExcel } = require('../services/ExcelReuniaoParser');
 const { parsePdf } = require('../services/PdfReuniaoParser');
 const { buildIndisponibilidadePreview } = require('../services/MatchIrmaosService');
 
+// Campos editaveis de SemanaReuniao (whitelist para o updateSemana).
+// Bloqueia mass assignment em id/reuniaoId/timestamps e colunas nao editaveis.
+const CAMPOS_SEMANA_EDITAVEIS = new Set([
+    'faixaData', 'dataReuniao', 'leituraSemanal',
+    'presidente', 'conselheiroB', 'oracaoInicial', 'oracaoFinal',
+    'canticoInicial', 'canticoMeio', 'canticoFinal',
+    'tesouro1_titulo', 'tesouro1_irmao', 'tesouro2_titulo', 'tesouro2_irmao',
+    'tesouro3_titulo', 'tesouro3_salaB', 'tesouro3_principal',
+    'ministerio1_titulo', 'ministerio1_salaB', 'ministerio1_principal',
+    'ministerio2_titulo', 'ministerio2_salaB', 'ministerio2_principal',
+    'ministerio3_titulo', 'ministerio3_salaB', 'ministerio3_principal',
+    'ministerio4_titulo', 'ministerio4_salaB', 'ministerio4_principal',
+    'vidaCrista1_titulo', 'vidaCrista1_irmao', 'vidaCrista2_titulo', 'vidaCrista2_irmao',
+    'estudoBiblico_dirigente', 'estudoBiblico_leitor',
+    'fds_presidente', 'fds_tema', 'fds_orador', 'fds_congregacao', 'fds_leitor',
+    'mecanica_audioVideo', 'mecanica_indicadores', 'mecanica_microfone',
+    'fds_mecanica_audioVideo', 'fds_mecanica_indicadores', 'fds_mecanica_microfone', 'fds_mecanica_portao',
+    'limpeza'
+]);
+
 class ReuniaoController {
     /**
      * Lista todas as reuniões agrupadas por mês/ano
@@ -137,23 +157,6 @@ class ReuniaoController {
         }
     }
 
-    async debugDump(req, res) {
-        try {
-            const xlsx = require('xlsx');
-            const fs = require('fs');
-            const filePath = '/app/Programacao.xlsx';
-            if (!fs.existsSync(filePath)) {
-                return res.status(404).json({ error: "Programacao.xlsx não encontrado no /app" });
-            }
-            const workbook = xlsx.readFile(filePath);
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const data = xlsx.utils.sheet_to_json(sheet, { header: 1, raw: false });
-            return res.json(data);
-        } catch (err) {
-            return res.status(500).json({ error: err.message });
-        }
-    }
-
     async delete(req, res) {
         try {
             const { id } = req.params;
@@ -171,6 +174,10 @@ class ReuniaoController {
 
             if (!campo) {
                 return res.status(400).json({ error: 'Campo não informado' });
+            }
+
+            if (!CAMPOS_SEMANA_EDITAVEIS.has(campo)) {
+                return res.status(400).json({ error: 'Campo inválido' });
             }
 
             const semanaAtualizada = await prisma.semanaReuniao.update({

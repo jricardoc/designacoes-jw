@@ -23,7 +23,7 @@ export default function EstatisticasIrmaoModal({
   quadro.designacoes.forEach((d) => {
     if (d.irmao1 === irmaoNome || d.irmao2 === irmaoNome) {
       // Formatar dia para comparacao/ordenacao
-      const [diaStr, mesStr] = d.data.split("/");
+      const [diaStr] = d.data.split("/");
       const diaNum = parseInt(diaStr, 10);
 
       designacoesDoIrmao.push({

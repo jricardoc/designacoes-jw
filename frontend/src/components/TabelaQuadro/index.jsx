@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { useAuth } from '../../context/AuthContext';
 import ConfirmModal from '../ConfirmModal';
-import '../TabelaPagina/styles.css';
+import './styles.css';
 
 // Ordem correta das funcoes
 const ORDEM_FUNCAO = [

@@ -43,9 +43,8 @@ export default function TabelaPDF({ dados, quadro, id }) {
   const mes = MESES_CURTO[quadro?.mes] || "JAN";
   const mesLongo = MESES_LONGO[quadro?.mes] || "JANEIRO";
 
-  // Titulo e subtitulo fixos
+  // Titulo fixo
   const titulo = `Quadro de Designações ${mesLongo} ${quadro?.ano || 2026}`;
-  const subtitulo = "Congregação Norte de Itapuã";
 
   // Ordenar funcoes na ordem correta
   const ordenarFuncoes = (funcoes) => {

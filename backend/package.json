@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon -L src/index.js",
-    "prisma:start": "prisma migrate dev && npm run dev"
+    "prisma:start": "prisma db push && npm run dev"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

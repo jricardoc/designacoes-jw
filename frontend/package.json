@@ -5,8 +5,6 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "node server/index.cjs",
-    "start": "start cmd /c \"npm run server\" && npm run dev",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

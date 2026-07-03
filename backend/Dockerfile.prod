@@ -8,4 +8,6 @@ RUN npm install
 COPY . .
 RUN npx prisma generate
 EXPOSE 3001
-CMD ["npm", "start"]
+# Aplica o schema ao banco no boot antes de subir a API (sem isso, um deploy
+# limpo inicia sem as tabelas). Idempotente.
+CMD ["sh", "-c", "npx prisma db push && npm start"]

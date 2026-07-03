@@ -30,8 +30,9 @@ app.use(cors({
         if (allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            // Origem nao autorizada: nega o CORS (sem lancar erro para nao gerar 500).
             console.log('CORS blocked origin:', origin);
-            callback(null, true); // Temporariamente permitir para debug
+            callback(null, false);
         }
     },
     credentials: true,
@@ -53,9 +54,6 @@ const limiter = rateLimit({
 app.use(limiter);
 
 app.use(express.json());
-
-// Rota publica de dump
-app.get('/debug_dump_public', require('./controllers/ReuniaoController').debugDump);
 
 // Middleware de autenticacao
 app.use(authMiddleware);

@@ -1,0 +1,76 @@
+version: "3.8"
+
+# Ambiente de DESENVOLVIMENTO local. Em producao (EasyPanel) as variaveis abaixo
+# devem ser fornecidas pela plataforma — ver EASYPANEL.md.
+# Os valores apos ":-" sao defaults SOMENTE para dev local; troque em producao.
+
+services:
+  # Banco de Dados
+  postgres:
+    image: postgres:15-alpine
+    container_name: quadro_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+      POSTGRES_DB: ${POSTGRES_DB:-designacoes}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin} -d ${POSTGRES_DB:-designacoes}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend (API)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quadro_backend
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 3001
+      DATABASE_URL: postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-password123}@postgres:5432/${POSTGRES_DB:-designacoes}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-troque-em-producao}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    # Garante que o Prisma gere o cliente e crie as tabelas ao iniciar
+    command: >
+      sh -c "npx prisma generate && npx prisma db push && npm run dev"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  # Frontend (React + Vite)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: quadro_frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      # Vite precisa disso para saber onde chamar a API (mas no browser é localhost)
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:

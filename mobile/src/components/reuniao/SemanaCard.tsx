@@ -5,12 +5,21 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import type { SemanaReuniao } from "@/api/types";
 import { colors, radius } from "@/theme";
 
+// Sentinela gravada pela web para marcar uma linha como excluida.
+const SENTINELA_DELETADO = "__DELETADO__";
+
+function limpar(value?: string | null): string | null {
+  if (!value || value === SENTINELA_DELETADO) return null;
+  return value;
+}
+
 function Linha({ label, value }: { label: string; value?: string | null }) {
-  if (!value) return null;
+  const conteudo = limpar(value);
+  if (!conteudo) return null;
   return (
     <View style={styles.linha}>
       <Text style={styles.linhaLabel}>{label}</Text>
-      <Text style={styles.linhaValue}>{value}</Text>
+      <Text style={styles.linhaValue}>{conteudo}</Text>
     </View>
   );
 }
@@ -36,8 +45,10 @@ function Secao({
 }
 
 function par(titulo?: string | null, irmao?: string | null) {
-  if (!titulo && !irmao) return null;
-  return [titulo, irmao].filter(Boolean).join(" — ");
+  const t = limpar(titulo);
+  const i = limpar(irmao);
+  if (!t && !i) return null;
+  return [t, i].filter(Boolean).join(" — ");
 }
 
 export function SemanaCard({ semana, index = 0 }: { semana: SemanaReuniao; index?: number }) {
@@ -85,7 +96,7 @@ export function SemanaCard({ semana, index = 0 }: { semana: SemanaReuniao; index
             </Secao>
           ) : null}
 
-          {semana.estudoBiblico_dirigente || semana.estudoBiblico_leitor ? (
+          {limpar(semana.estudoBiblico_dirigente) || limpar(semana.estudoBiblico_leitor) ? (
             <Secao titulo="Estudo Bíblico de Congregação" cor={colors.redDark}>
               <Linha label="Dirigente" value={semana.estudoBiblico_dirigente} />
               <Linha label="Leitor" value={semana.estudoBiblico_leitor} />

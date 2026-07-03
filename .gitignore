@@ -3,9 +3,10 @@
 
 # Manter arquivos essenciais
 !README.md
-!seed.sql
 !EASYPANEL.md
 !.gitignore
+!docker-compose.yml
+!.env.example
 
 # Manter pastas backend e frontend
 !backend/

@@ -50,14 +50,22 @@ class ConfigController {
         try {
             console.log('Iniciando reset do banco de dados...');
 
-            // Deletar todos os dados em ordem (respeitando foreign keys)
-            await prisma.historico.deleteMany({});
-            await prisma.designacao.deleteMany({});
-            await prisma.quadro.deleteMany({});
-            await prisma.indisponibilidade.deleteMany({});
-            await prisma.irmao.deleteMany({});
-            await prisma.config.deleteMany({});
-            // Nao deletar usuarios para manter o login
+            // Deletar todos os dados em ordem (respeitando foreign keys), de forma atomica.
+            // Cobre TODOS os modelos exceto Usuario (mantido para preservar o login).
+            await prisma.$transaction([
+                prisma.historico.deleteMany({}),
+                prisma.designacao.deleteMany({}),
+                prisma.quadro.deleteMany({}),
+                prisma.escalaDirigente.deleteMany({}),
+                prisma.quadroDirigente.deleteMany({}),
+                prisma.dirigenteSaidaCampo.deleteMany({}),
+                prisma.saidaCampo.deleteMany({}),
+                prisma.semanaReuniao.deleteMany({}),
+                prisma.reuniao.deleteMany({}),
+                prisma.indisponibilidade.deleteMany({}),
+                prisma.irmao.deleteMany({}),
+                prisma.config.deleteMany({}),
+            ]);
 
             console.log('Dados limpos. Executando seed...');
 

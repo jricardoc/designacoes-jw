@@ -84,15 +84,21 @@ class DirigentesController {
                 }
             });
 
-            const AutoDirigenteService = require('../services/AutoDirigenteService');
-            
-            // Gerar o template vazio (dias e saídas) e auto-preencher se solicitado
-            await AutoDirigenteService.gerarEscala(
-                quadro.id,
-                parseInt(mes),
-                parseInt(ano),
-                autoPreenchimento
-            );
+            try {
+                const AutoDirigenteService = require('../services/AutoDirigenteService');
+
+                // Gerar o template vazio (dias e saídas) e auto-preencher se solicitado
+                await AutoDirigenteService.gerarEscala(
+                    quadro.id,
+                    parseInt(mes),
+                    parseInt(ano),
+                    autoPreenchimento
+                );
+            } catch (err) {
+                // Rollback manual: sem isso, uma falha na geracao deixaria um quadro vazio orfao.
+                await prisma.quadroDirigente.delete({ where: { id: quadro.id } }).catch(() => {});
+                throw err;
+            }
 
             return res.status(201).json(quadro);
         } catch (error) {

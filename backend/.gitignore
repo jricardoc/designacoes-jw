@@ -6,7 +6,7 @@ dist/
 
 # Ambiente
 .env
-.env.example
+!.env.example
 
 # Sistema
 .DS_Store

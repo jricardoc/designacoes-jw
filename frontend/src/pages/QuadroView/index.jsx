@@ -281,7 +281,7 @@ export default function QuadroView() {
           } else {
             addToast("Erro ao excluir quadro", "error");
           }
-        } catch (error) {
+        } catch {
           addToast("Erro de conexão", "error");
         }
       },
@@ -333,7 +333,6 @@ export default function QuadroView() {
     paginas.push(grupos.slice(i, i + ITEMS_PER_PAGE));
   }
 
-  const pagina1 = paginas.length > 0 ? paginas[0] : [];
   const statusConfig = STATUS_CONFIG[quadro.status];
 
   return (
@@ -498,7 +497,7 @@ export default function QuadroView() {
                   }
 
                   const maxDesignacoes = Math.max(
-                    ...ordenado.map(([_, v]) => v),
+                    ...ordenado.map(([, v]) => v),
                   );
 
                   // Calcular irmaos ativos que nao foram designados

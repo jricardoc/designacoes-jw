@@ -1,9 +1,11 @@
 const JwtService = require('../services/JwtService');
+const prisma = require('../prisma');
 
-function authMiddleware(req, res, next) {
-    // Rotas publicas que nao precisam de autenticacao
-    const publicRoutes = ['/auth/login', '/health'];
-    if (publicRoutes.some(route => req.path.includes(route))) {
+// Rotas publicas que nao exigem autenticacao (comparacao exata, sem includes)
+const PUBLIC_ROUTES = ['/auth/login', '/health'];
+
+async function authMiddleware(req, res, next) {
+    if (PUBLIC_ROUTES.includes(req.path)) {
         return next();
     }
 
@@ -20,16 +22,31 @@ function authMiddleware(req, res, next) {
         return res.status(401).json({ error: 'Token mal formatado' });
     }
 
-    const token = parts[1];
-    const decoded = JwtService.verifyToken(token);
+    const decoded = JwtService.verifyToken(parts[1]);
 
     if (!decoded) {
         return res.status(401).json({ error: 'Token invalido ou expirado' });
     }
 
-    // Adicionar usuario decodificado na requisicao
-    req.user = decoded;
-    return next();
+    // Revalida o usuario no banco a cada requisicao: garante que ele ainda existe
+    // e usa o isAdmin atual. Sem isso, um token de 7 dias manteria acesso/privilegios
+    // mesmo apos exclusao ou rebaixamento do usuario.
+    try {
+        const usuario = await prisma.usuario.findUnique({
+            where: { id: decoded.id },
+            select: { id: true, nickname: true, nome: true, isAdmin: true }
+        });
+
+        if (!usuario) {
+            return res.status(401).json({ error: 'Usuario nao encontrado' });
+        }
+
+        req.user = usuario;
+        return next();
+    } catch (error) {
+        console.error('Erro ao validar usuario:', error);
+        return res.status(500).json({ error: 'Erro interno' });
+    }
 }
 
 module.exports = authMiddleware;
