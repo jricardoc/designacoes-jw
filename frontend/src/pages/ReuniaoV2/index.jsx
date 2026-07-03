@@ -126,13 +126,16 @@ export default function ReuniaoV2() {
     try {
       const originalTransform = element.style.transform;
       const originalPadding = element.style.padding;
+      const originalWidth = element.style.width;
 
-      // Remove os "espaços brancos" extras (padding) do container antes do clique do documento
+      // Layout deterministico (independe da largura da tela) e forca as 2 colunas.
+      // Largura fixa em ~A4 (1123px @96dpi) para capturar sempre a mesma proporcao.
       element.style.transform = "none";
-      element.style.padding = "0px";
+      element.style.padding = "16px";
+      element.style.width = "1123px";
 
       const canvas = await html2canvas(element, {
-        scale: 1.5, // Reduzido para evitar lentidão e megabytes massivos
+        scale: 2, // Boa nitidez sem inflar demais o arquivo
         useCORS: true,
         backgroundColor: "#f4f7f6",
       });
@@ -140,26 +143,30 @@ export default function ReuniaoV2() {
       // Restaura o estilo depois que a foto for batida
       element.style.transform = originalTransform;
       element.style.padding = originalPadding;
+      element.style.width = originalWidth;
 
-      // Usa JPEG para comprimir drasticamente o PDF
-      const imgData = canvas.toDataURL("image/jpeg", 0.7);
-      const pdf = new jsPDF("p", "mm", "a4"); // "p" para portrait (vertical)
+      // Usa JPEG para comprimir o PDF
+      const imgData = canvas.toDataURL("image/jpeg", 0.85);
+
+      // A orientacao acompanha a proporcao real do poster: como e um layout largo
+      // de 2 colunas, isso resulta em paisagem e preenche a pagina (antes ficava
+      // uma faixa pequena no topo de um A4 retrato).
+      const isLandscape = canvas.width >= canvas.height;
+      const pdf = new jsPDF(isLandscape ? "l" : "p", "mm", "a4");
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const marginX = 5;
-      const marginY = 5; // Encostado no topo
+      const margin = 4; // Margem minima para aproveitar a folha
+      const availableWidth = pdfWidth - margin * 2;
+      const availableHeight = pdfHeight - margin * 2;
 
-      const availableWidth = pdfWidth - marginX * 2;
-      const availableHeight = pdfHeight - marginY * 2;
+      const imgRatio = canvas.width / canvas.height;
+      const pageRatio = availableWidth / availableHeight;
 
-      const imgProps = pdf.getImageProperties(imgData);
-      const imgRatio = imgProps.width / imgProps.height;
-      const pdfRatio = availableWidth / availableHeight;
-
+      // Fit-to-contain: preenche o eixo que limita, sem distorcer nem cortar conteudo.
       let finalWidth, finalHeight;
-      if (imgRatio > pdfRatio) {
+      if (imgRatio > pageRatio) {
         finalWidth = availableWidth;
         finalHeight = availableWidth / imgRatio;
       } else {
@@ -167,9 +174,8 @@ export default function ReuniaoV2() {
         finalWidth = availableHeight * imgRatio;
       }
 
-      // No X (A4 vertical) preenche as laterais, e no Y trava no Topo!
-      const x = marginX + (availableWidth - finalWidth) / 2;
-      const y = marginY; // Não centraliza verticalmente, cola no topo
+      const x = margin + (availableWidth - finalWidth) / 2;
+      const y = margin + (availableHeight - finalHeight) / 2;
 
       pdf.addImage(
         imgData,
@@ -343,7 +349,7 @@ export default function ReuniaoV2() {
                                   Presidente
                                 </span>
                                 <span className="v2-pres-value">
-                                  {semana.presidente || "A definir"}
+                                  <EditableField value={semana.presidente} fieldName="presidente" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
                                 </span>
                               </div>
                               <div className="v2-pres-item">
@@ -351,7 +357,7 @@ export default function ReuniaoV2() {
                                   Conselheiro B
                                 </span>
                                 <span className="v2-pres-value">
-                                  {semana.conselheiroB || "-"}
+                                  <EditableField value={semana.conselheiroB} fieldName="conselheiroB" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                 </span>
                               </div>
                               <div className="v2-pres-item">
@@ -359,9 +365,7 @@ export default function ReuniaoV2() {
                                   Oração Inicial
                                 </span>
                                 <span className="v2-pres-value">
-                                  {semana.oracaoInicial ||
-                                    semana.presidente ||
-                                    "-"}
+                                  <EditableField value={semana.oracaoInicial} fieldName="oracaoInicial" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                 </span>
                               </div>
                             </div>
@@ -448,12 +452,9 @@ export default function ReuniaoV2() {
                                         <div className="v2-time">{p.time}</div>
                                         <div className="v2-desc">{p.text}</div>
                                         <div className="v2-assign v2-multi">
-                                          {semana.tesouro3_salaB &&
-                                            semana.tesouro3_salaB !== "-" && (
-                                              <span className="v2-salab">
-                                                B: {semana.tesouro3_salaB}
-                                              </span>
-                                            )}
+                                          <span className="v2-salab">
+                                            B: <EditableField value={semana.tesouro3_salaB} fieldName="tesouro3_salaB" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                          </span>
                                           <span className="v2-principal">
                                             <EditableField value={semana.tesouro3_principal} fieldName="tesouro3_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                           </span>
@@ -485,13 +486,9 @@ export default function ReuniaoV2() {
                                         <div className="v2-time">{p.time}</div>
                                         <div className="v2-desc">{p.text}</div>
                                         <div className="v2-assign v2-multi">
-                                          {semana.ministerio1_salaB &&
-                                            semana.ministerio1_salaB !==
-                                              "-" && (
-                                              <span className="v2-salab">
-                                                B: {semana.ministerio1_salaB}
-                                              </span>
-                                            )}
+                                          <span className="v2-salab">
+                                            B: <EditableField value={semana.ministerio1_salaB} fieldName="ministerio1_salaB" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                          </span>
                                           <span className="v2-principal">
                                             <EditableField value={semana.ministerio1_principal} fieldName="ministerio1_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                           </span>
@@ -517,13 +514,9 @@ export default function ReuniaoV2() {
                                             {p.text}
                                           </div>
                                           <div className="v2-assign v2-multi">
-                                            {semana.ministerio2_salaB &&
-                                              semana.ministerio2_salaB !==
-                                                "-" && (
-                                                <span className="v2-salab">
-                                                  B: {semana.ministerio2_salaB}
-                                                </span>
-                                              )}
+                                            <span className="v2-salab">
+                                              B: <EditableField value={semana.ministerio2_salaB} fieldName="ministerio2_salaB" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                            </span>
                                             <span className="v2-principal">
                                               <EditableField value={semana.ministerio2_principal} fieldName="ministerio2_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                             </span>
@@ -550,13 +543,9 @@ export default function ReuniaoV2() {
                                             {p.text}
                                           </div>
                                           <div className="v2-assign v2-multi">
-                                            {semana.ministerio3_salaB &&
-                                              semana.ministerio3_salaB !==
-                                                "-" && (
-                                                <span className="v2-salab">
-                                                  B: {semana.ministerio3_salaB}
-                                                </span>
-                                              )}
+                                            <span className="v2-salab">
+                                              B: <EditableField value={semana.ministerio3_salaB} fieldName="ministerio3_salaB" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                            </span>
                                             <span className="v2-principal">
                                               <EditableField value={semana.ministerio3_principal} fieldName="ministerio3_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                             </span>
@@ -583,13 +572,9 @@ export default function ReuniaoV2() {
                                             {p.text}
                                           </div>
                                           <div className="v2-assign v2-multi">
-                                            {semana.ministerio4_salaB &&
-                                              semana.ministerio4_salaB !==
-                                                "-" && (
-                                                <span className="v2-salab">
-                                                  B: {semana.ministerio4_salaB}
-                                                </span>
-                                              )}
+                                            <span className="v2-salab">
+                                              B: <EditableField value={semana.ministerio4_salaB} fieldName="ministerio4_salaB" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                            </span>
                                             <span className="v2-principal">
                                               <EditableField value={semana.ministerio4_principal} fieldName="ministerio4_principal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
                                             </span>
@@ -771,16 +756,17 @@ export default function ReuniaoV2() {
                               </div>
                             </div>
 
-                            {semana.limpeza && (
-                              <div className="v2-limpeza-card">
-                                <div className="v2-limp-header">
-                                  🧹 LIMPEZA SEMANAL
-                                </div>
-                                <div className="v2-limp-body">
-                                  Grupo: <strong>{semana.limpeza}</strong>
-                                </div>
+                            <div className="v2-limpeza-card">
+                              <div className="v2-limp-header">
+                                🧹 LIMPEZA SEMANAL
                               </div>
-                            )}
+                              <div className="v2-limp-body">
+                                Grupo:{" "}
+                                <strong>
+                                  <EditableField value={semana.limpeza} fieldName="limpeza" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                                </strong>
+                              </div>
+                            </div>
                           </div>
                           {/* MARCA D'ÁGUA DA DATA (Posicionada ABSOLUTA no Grid) */}
                           <div className="v2-watermark">
