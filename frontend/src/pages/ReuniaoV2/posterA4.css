@@ -41,7 +41,9 @@
   --p-font: "Archivo", system-ui, sans-serif;
 
   box-sizing: border-box;
-  padding: 40px 34px;
+  /* Respiro mínimo. Na tela o pôster fica dentro de um card, então não precisa de
+     moldura própria; no papel, a margem quem dá é a folha. */
+  padding: 12px 14px;
   background: #fff;
   color: var(--p-text);
   font-family: var(--p-font);
@@ -476,13 +478,18 @@
   display: none;
 }
 
-/* --- exportação: largura fixa A4 ----------------------------------------- */
-/* 794px = 210mm a 96dpi. Capturar exatamente na proporção da folha evita as
-   margens laterais enormes que sobravam quando a captura era mais estreita
-   e alta que o A4. */
+/* --- exportação: proporção A4 exata --------------------------------------- */
+/* 794 x 1123px = 210 x 297mm a 96dpi.
+   A altura mínima não é enfeite: sem ela a captura saía 4% mais estreita que a
+   folha, e o "fit to contain" do jsPDF centralizava a imagem deixando ~2,8mm de
+   sobra em cada lado — uma borda que ninguém pediu e que não vinha de padding
+   nenhum. Fixando a proporção, esse espaço deixa de existir, e as seções (que
+   são flex:1) esticam para ocupar a página inteira.
+   Semanas com mais partes podem passar de 1123px; aí o contain volta a agir,
+   o que é o certo — melhor uma borda pequena que conteúdo cortado. */
 .v2-exportable-poster.v2-export {
   width: 794px;
-  padding: 40px 34px;
+  min-height: 1123px;
 }
 
 @media (max-width: 1024px) {

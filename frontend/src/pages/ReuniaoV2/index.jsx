@@ -202,7 +202,10 @@ export default function ReuniaoV2() {
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const margin = 4; // Margem minima para aproveitar a folha
+      // 2mm: o suficiente para o conteudo nao encostar na borda da folha, e ainda
+      // dentro da area imprimivel de qualquer impressora comum. O poster ja traz o
+      // proprio respiro interno (padding de 12/14px).
+      const margin = 2;
       const availableWidth = pdfWidth - margin * 2;
       const availableHeight = pdfHeight - margin * 2;
 

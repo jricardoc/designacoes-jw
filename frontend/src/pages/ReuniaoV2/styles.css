@@ -637,7 +637,9 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    /* 6mm é o mínimo que a maioria das impressoras domésticas consegue imprimir
+       sem cortar. Abaixo disso o risco deixa de ser estético e vira conteúdo perdido. */
+    margin: 6mm;
   }
 
   /* Some com tudo que não é o pôster: menu, cabeçalhos, botões, acordeões. */
