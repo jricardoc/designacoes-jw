@@ -283,6 +283,12 @@
   border: none;
   padding: 7px 10px;
 }
+/* Quebra deliberada: "Cântico 31" numa linha, "Oração: Fulano" na outra.
+   Solto, o texto se dobrava onde a largura acabava — no meio do nome, quase sempre.
+   Como bloco, a quebra acontece onde faz sentido ler. */
+.v2-exportable-poster .v2-cantico-meio.final .v2-cantico-texto strong {
+  display: block;
+}
 
 /* --- barra de título de seção -------------------------------------------- */
 .v2-exportable-poster .v2-section {
