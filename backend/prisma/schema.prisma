@@ -199,6 +199,68 @@ model SemanaReuniao {
   createdAt      DateTime @default(now())
 }
 
+// ==========================================================================
+// CARRINHO DE PUBLICAÇÕES
+// ==========================================================================
+// Os turnos do carrinho sao FIXOS e se repetem toda semana — nao ha quadro
+// mensal como nas outras areas. Por isso a escala e modelada como
+// (ponto -> turno semanal -> pessoas), e nao por data.
+//
+// O cadastro de pessoas e proprio, separado de `Irmao`: a maioria e irma, o
+// vinculo nao tem relacao com funcoes de reuniao ou saida de campo, e a lista
+// e mantida por quem cuida do carrinho. Misturar as duas obrigaria a inventar
+// funcoes que nao existem no cadastro principal.
+//
+// O `telefone` existe para a automacao de lembretes (n8n + Evolution API) que
+// sera ligada depois: com dia da semana e hora do turno, da para consultar quem
+// serve e disparar a mensagem sem precisar de mais nenhuma tabela.
+
+model CarrinhoPonto {
+  id        Int             @id @default(autoincrement())
+  nome      String          @unique // "Ex Combatentes", "KM 17"
+  cor       String          @default("#8A8071") // cor do cabecalho na planilha de origem
+  ativo     Boolean         @default(true)
+  ordem     Int             @default(0)
+  turnos    CarrinhoTurno[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model CarrinhoPublicador {
+  id        Int              @id @default(autoincrement())
+  nome      String           @unique
+  telefone  String? // formato livre; a automacao normaliza na hora de enviar
+  ativo     Boolean          @default(true)
+  escalas   CarrinhoEscala[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model CarrinhoTurno {
+  id         Int              @id @default(autoincrement())
+  pontoId    Int
+  ponto      CarrinhoPonto    @relation(fields: [pontoId], references: [id], onDelete: Cascade)
+  diaSemana  Int // 0 = domingo ... 6 = sabado, igual ao Date.getDay()
+  horaInicio String // "06:00"
+  horaFim    String // "08:00"
+  escalas    CarrinhoEscala[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([pontoId, diaSemana, horaInicio])
+}
+
+model CarrinhoEscala {
+  id            Int                @id @default(autoincrement())
+  turnoId       Int
+  turno         CarrinhoTurno      @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  publicadorId  Int
+  publicador    CarrinhoPublicador @relation(fields: [publicadorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime           @default(now())
+
+  @@unique([turnoId, publicadorId])
+}
+
 // Configuração das Saídas de Campo (locais/horários por dia da semana)
 model SaidaCampo {
   id        Int      @id @default(autoincrement())

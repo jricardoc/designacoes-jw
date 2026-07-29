@@ -12,6 +12,7 @@ const ReuniaoController = require('./controllers/ReuniaoController');
 const SaidaCampoController = require('./controllers/SaidaCampoController');
 const DirigentesController = require('./controllers/DirigentesController');
 const MinhasDesignacoesController = require('./controllers/MinhasDesignacoesController');
+const CarrinhoController = require('./controllers/CarrinhoController');
 const requireAdmin = require('./middleware/requireAdmin');
 const multer = require('multer');
 
@@ -69,6 +70,24 @@ routes.delete('/quadros/dias', QuadroController.deleteDia);
 routes.get('/quadros/:id', QuadroController.show);
 routes.put('/quadros/:id', QuadroController.update);
 routes.delete('/quadros/:id', requireAdmin, QuadroController.delete);
+
+// ==================== CARRINHO DE PUBLICACOES ====================
+routes.get('/carrinho', CarrinhoController.index);
+// Achatada e filtravel por dia/hora: e o formato que a automacao de lembretes
+// (n8n + Evolution API) consome.
+routes.get('/carrinho/agenda', CarrinhoController.agenda);
+
+routes.post('/carrinho/pontos', CarrinhoController.criarPonto);
+routes.put('/carrinho/pontos/:id', CarrinhoController.atualizarPonto);
+routes.delete('/carrinho/pontos/:id', requireAdmin, CarrinhoController.excluirPonto);
+
+routes.post('/carrinho/turnos', CarrinhoController.criarTurno);
+routes.put('/carrinho/turnos/:id', CarrinhoController.atualizarTurno);
+routes.delete('/carrinho/turnos/:id', CarrinhoController.excluirTurno);
+
+routes.post('/carrinho/publicadores', CarrinhoController.criarPublicador);
+routes.put('/carrinho/publicadores/:id', CarrinhoController.atualizarPublicador);
+routes.delete('/carrinho/publicadores/:id', requireAdmin, CarrinhoController.excluirPublicador);
 
 // ==================== MINHAS DESIGNACOES ====================
 routes.get('/minhas-designacoes', MinhasDesignacoesController.index);

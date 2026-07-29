@@ -203,6 +203,9 @@ class SeedService {
             const VinculoIrmaoService = require('./VinculoIrmaoService');
             await VinculoIrmaoService.sincronizarUsuarios();
 
+            // 7. Carrinho de publicações (turnos fixos semanais).
+            await require('./SeedCarrinhoService').execute();
+
             console.log('Seed verified.');
         } catch (error) {
             console.error('Seed failed:', error);
