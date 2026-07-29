@@ -125,6 +125,29 @@ export const MESES_CURTO = [
   "DEZ",
 ] as const;
 
+/**
+ * Movimento das superfícies que entram na tela (folha, toast, splash).
+ *
+ * Entrada é desaceleração pura, sem mola. A mola de antes passava do ponto de
+ * chegada e voltava — num sheet de tela cheia esse retorno vira um salto de uns
+ * 20px, e é ele que faz o modal parecer que bateu ao abrir.
+ *
+ * `curvaSuave` são os pontos de controle de um ease-out longo: arranca rápido e
+ * encosta devagar, sem nunca ultrapassar o destino. Serve tanto para o `Easing`
+ * do Reanimated quanto para o do react-native — os dois aceitam bezier com os
+ * mesmos quatro números.
+ */
+export const motion = {
+  /** ms — entrada de uma superfície (folha subindo, toast descendo). */
+  entrada: 380,
+  /** ms — saída e fades curtos. */
+  saida: 220,
+  /** ms — fade do backdrop. Um pouco mais longo que a saída, para o escurecimento
+   *  não chegar antes da folha. */
+  fundo: 300,
+  curvaSuave: [0.16, 1, 0.3, 1],
+} as const;
+
 /** Indexado por `Date.getDay()` — 0 = domingo, como o `diaSemana` da API. */
 export const DIAS_CURTOS = [
   "Dom",

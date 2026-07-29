@@ -1,10 +1,17 @@
 import type { ReactNode } from "react";
 import { Modal, Pressable, StyleSheet, View } from "react-native";
-import Animated, { FadeIn, FadeOut, SlideInDown } from "react-native-reanimated";
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeOut,
+  SlideInDown,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors } from "@/theme";
+import { colors, motion } from "@/theme";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+const CURVA = Easing.bezier(...motion.curvaSuave);
 
 interface SheetProps {
   visible: boolean;
@@ -33,13 +40,13 @@ export function Sheet({ visible, onClose, children, maxHeightPct = 0.9, flush }:
     >
       <View style={styles.root}>
         <AnimatedPressable
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(150)}
+          entering={FadeIn.duration(motion.fundo)}
+          exiting={FadeOut.duration(motion.saida)}
           style={styles.backdrop}
           onPress={onClose}
         />
         <Animated.View
-          entering={SlideInDown.springify().damping(20).stiffness(180)}
+          entering={SlideInDown.duration(motion.entrada).easing(CURVA)}
           style={[
             styles.sheet,
             {

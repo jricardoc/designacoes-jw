@@ -8,9 +8,9 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radius, shadow } from "@/theme";
+import { colors, motion, radius, shadow } from "@/theme";
 
 type ToastType = "success" | "error" | "info";
 
@@ -72,10 +72,11 @@ function ToastView({ toast }: { toast: ToastItem }) {
   const conf = TYPE_STYLE[toast.type];
 
   useEffect(() => {
-    Animated.spring(anim, {
+    Animated.timing(anim, {
       toValue: 1,
+      duration: motion.entrada,
+      easing: Easing.bezier(...motion.curvaSuave),
       useNativeDriver: true,
-      friction: 7,
     }).start();
   }, [anim]);
 

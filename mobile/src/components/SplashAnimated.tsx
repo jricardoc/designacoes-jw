@@ -14,6 +14,9 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { motion } from "@/theme";
+
+const CURVA = Easing.bezier(...motion.curvaSuave);
 
 /**
  * Splash animada do app "Servir Mais" — recria a tela de splash do design:
@@ -31,8 +34,10 @@ export function SplashAnimated({ onDone }: { onDone: () => void }) {
   const d2 = useSharedValue(0);
 
   useEffect(() => {
-    logo.value = withTiming(1, { duration: 620, easing: Easing.out(Easing.back(1.4)) });
-    plus.value = withDelay(180, withTiming(1, { duration: 520, easing: Easing.out(Easing.back(3)) }));
+    // Sem `Easing.back`: ele ultrapassa o tamanho final e volta, e o "+" com back(3)
+    // dava um estalo bem mais forte que o resto da abertura do app.
+    logo.value = withTiming(1, { duration: 620, easing: CURVA });
+    plus.value = withDelay(180, withTiming(1, { duration: 520, easing: CURVA }));
     ring.value = withRepeat(withTiming(1, { duration: 1700, easing: Easing.out(Easing.cubic) }), -1, false);
     glow.value = withRepeat(withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.ease) }), -1, true);
     const bounce = (sv: typeof d0, delay: number) => {
