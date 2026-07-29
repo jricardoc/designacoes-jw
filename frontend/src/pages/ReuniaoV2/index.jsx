@@ -274,6 +274,34 @@ export default function ReuniaoV2() {
     return { time: defaultTime, text: titulo };
   };
 
+  /**
+   * Intervalo da semana no formato "27/07 - 02/08".
+   *
+   * A semana da reunião vai de segunda a domingo, e a única data confiável que temos é
+   * `dataReuniao` (a reunião do meio de semana). A partir dela recuamos até a segunda e
+   * avançamos seis dias — aritmética de Date, nunca de string, porque a semana atravessa
+   * o mês com frequência (é justamente o caso do exemplo acima).
+   */
+  const faixaDaSemana = (dataReuniao) => {
+    const m = String(dataReuniao || "").match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (!m) return null;
+
+    const meio = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+    if (Number.isNaN(meio.getTime())) return null;
+
+    const segunda = new Date(meio);
+    // getDay(): 0 = domingo. Domingo pertence à semana que começou na segunda anterior.
+    const diasDesdeSegunda = (meio.getDay() + 6) % 7;
+    segunda.setDate(segunda.getDate() - diasDesdeSegunda);
+
+    const domingo = new Date(segunda);
+    domingo.setDate(domingo.getDate() + 6);
+
+    const ddmm = (d) =>
+      `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+    return `${ddmm(segunda)} - ${ddmm(domingo)}`;
+  };
+
   const renderCantico = (canticoStr, defaultTime) => {
     if (!canticoStr || canticoStr === "-")
       return { time: defaultTime, num: "-" };
@@ -377,7 +405,15 @@ export default function ReuniaoV2() {
                         <div className="v2-poster-header">
                           <div className="v2-poster-brand">
                             <Globe size={24} />
-                            <span>{nomesMeses[reuniao.mes].toUpperCase()} / {reuniao.ano}</span>
+                            <div className="v2-brand-datas">
+                              <span className="v2-brand-mes">
+                                {nomesMeses[reuniao.mes].toUpperCase()} / {reuniao.ano}
+                              </span>
+                              {/* Sem o ano: ele já está na linha de cima. */}
+                              <span className="v2-brand-semana">
+                                {faixaDaSemana(semana.dataReuniao)}
+                              </span>
+                            </div>
                           </div>
                           <div className="v2-poster-title">
                             <h2>Programação da Congregação</h2>
@@ -393,10 +429,9 @@ export default function ReuniaoV2() {
                           <div className="v2-col v2-col-meio">
                             <div className="v2-split-header">
                               <h4 className="v2-split-title">Meio da Semana</h4>
+                              {/* A data saiu daqui e foi para o cabeçalho, embaixo do mês.
+                                  Sem ela, "Meio da Semana" cabe numa linha só. */}
                               <div className="v2-split-meta">
-                                <span className="v2-badge-date">
-                                  {semana.dataReuniao}
-                                </span>
                                 <span className="v2-badge-reading">
                                   {semana.leituraSemanal}
                                 </span>
@@ -752,7 +787,6 @@ export default function ReuniaoV2() {
                                   <div className="v2-desc">
                                     Comentários finais (3 min)
                                   </div>
-                                  <div className="v2-assign"> - </div>
                                 </div>
 
                                 <div className="v2-cantico-meio final">
@@ -768,7 +802,7 @@ export default function ReuniaoV2() {
                                         </span>{" "}
                                         Cântico {cf.num}{" "}
                                         <strong>
-                                          | Oração:{" "}
+                                          Oração:{" "}
                                           <EditableField value={semana.oracaoFinal} fieldName="oracaoFinal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
                                         </strong>
                                       </>

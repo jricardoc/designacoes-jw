@@ -93,6 +93,23 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+/* Mês/ano em cima, intervalo da semana embaixo. O ano não se repete na segunda
+   linha porque já está na primeira. */
+.v2-exportable-poster .v2-brand-datas {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.v2-exportable-poster .v2-brand-mes {
+  font: 800 19px/1 var(--p-font);
+  letter-spacing: 0.06em;
+}
+.v2-exportable-poster .v2-brand-semana {
+  font: 600 13px/1 var(--p-font);
+  letter-spacing: 0.08em;
+  color: var(--p-n-400);
+  font-variant-numeric: tabular-nums;
+}
 .v2-exportable-poster .v2-poster-brand svg {
   color: var(--p-accent-500);
   width: 17px;
@@ -194,10 +211,14 @@
   padding: 0;
   margin-bottom: 0;
 }
+/* Os três cargos são células de mesma largura numa faixa; centralizado o bloco fica
+   equilibrado, alinhado à esquerda cada um flutuava dentro da própria célula. */
 .v2-exportable-poster .v2-pres-item {
   padding: 7px 12px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 3px;
 }
 .v2-exportable-poster .v2-pres-item + .v2-pres-item {
@@ -216,29 +237,37 @@
 }
 
 /* --- cânticos ------------------------------------------------------------ */
+/* Cântico não é designação: é marcador de momento. Centralizando, ele se lê como
+   um separador entre os blocos em vez de competir com as linhas de parte.
+   De quebra some o desalinhamento antigo — a linha de 19:30 tinha padding lateral
+   de 12px e a de 21:08 mais 10px no horário, então cada cântico começava num ponto
+   diferente dos horários das partes logo abaixo. */
 .v2-exportable-poster .v2-cantico-row,
 .v2-exportable-poster .v2-cantico-meio {
-  display: grid;
-  grid-template-columns: 52px 1fr;
-  gap: 10px;
-  align-items: center;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
   background: transparent;
   border-radius: 0;
   padding: 7px 0;
   margin: 0;
   font: 600 18px/1.2 var(--p-font);
   color: var(--p-text);
+  text-align: center;
 }
-.v2-exportable-poster .v2-cantico-row {
-  padding: 7px 12px;
+/* Dentro do cântico o horário é uma peça inline, não a primeira coluna de um grid. */
+.v2-exportable-poster .v2-cantico-row .v2-time,
+.v2-exportable-poster .v2-cantico-meio .v2-time {
+  grid-column: auto;
+  grid-row: auto;
+  padding: 0;
+  flex: none;
 }
 .v2-exportable-poster .v2-cantico-meio.final {
   background: var(--p-n-100);
   border: none;
-  padding: 7px 10px 7px 0;
-}
-.v2-exportable-poster .v2-cantico-meio.final .v2-time {
-  padding-left: 10px;
+  padding: 7px 10px;
 }
 
 /* --- barra de título de seção -------------------------------------------- */
