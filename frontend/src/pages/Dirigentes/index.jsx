@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/PageHeader';
 import NovoDirigenteModal from './NovoDirigenteModal';
+import DiagnosticoEscala from '../../components/dirigentes/DiagnosticoEscala';
 
 const MESES = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -20,6 +21,7 @@ export default function Dirigentes() {
   const [quadros, setQuadros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
+  const [diagnostico, setDiagnostico] = useState(null);
 
   const carregar = async () => {
     try {
@@ -106,10 +108,19 @@ export default function Dirigentes() {
         <NovoDirigenteModal
           isOpen={modalAberto}
           onClose={() => fecharModal(false)}
-          onSuccess={() => fecharModal(true)}
+          onSuccess={(novaEscala) => {
+            fecharModal(true);
+            if (novaEscala?.diagnostico) setDiagnostico(novaEscala.diagnostico);
+          }}
           quadrosExistentes={quadros}
         />
       )}
+
+      <DiagnosticoEscala
+        diagnostico={diagnostico}
+        onClose={() => setDiagnostico(null)}
+        titulo="Escala gerada"
+      />
     </div>
   );
 }

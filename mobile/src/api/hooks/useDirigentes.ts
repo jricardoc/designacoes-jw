@@ -6,9 +6,11 @@ import {
 import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
 import type {
+  DiagnosticoEscala,
   DirigenteSaida,
   QuadroDirigente,
   QuadroDirigenteResumo,
+  RegrasEscala,
   SaidaCampo,
   StatusQuadro,
 } from "@/api/types";
@@ -36,12 +38,28 @@ export function useCriarDirigenteQuadro() {
       mes: number;
       ano: number;
       autoPreenchimento: boolean;
+      regras?: RegrasEscala | null;
     }) =>
-      apiRequest<QuadroDirigenteResumo>("/dirigentes/quadros", {
-        method: "POST",
-        body: payload,
-      }),
+      apiRequest<QuadroDirigenteResumo & { diagnostico?: DiagnosticoEscala | null }>(
+        "/dirigentes/quadros",
+        { method: "POST", body: payload },
+      ),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.dirigentesQuadros }),
+  });
+}
+
+export function useRegerarDirigenteQuadro(id: string | number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (regras: RegrasEscala) =>
+      apiRequest<{ success: boolean; diagnostico: DiagnosticoEscala }>(
+        `/dirigentes/quadros/${id}/regerar`,
+        { method: "POST", body: { regras } },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.dirigentesQuadro(id) });
+      qc.invalidateQueries({ queryKey: qk.dirigentesQuadros });
+    },
   });
 }
 

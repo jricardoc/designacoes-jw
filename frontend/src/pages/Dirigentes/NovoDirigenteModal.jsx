@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, Wand2, Check } from 'lucide-react';
+import { X, Wand2, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { REGRAS_PADRAO, REGRAS_ESSENCIAIS, REGRAS_AVANCADAS } from './regras';
 
 const MESES = [
   { value: 1, label: 'Janeiro' },
@@ -22,11 +23,15 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [ano, setAno] = useState(new Date().getFullYear());
   const [autoPreenchimento, setAutoPreenchimento] = useState(true);
+  const [regras, setRegras] = useState(REGRAS_PADRAO);
+  const [mostrarAvancadas, setMostrarAvancadas] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
   // Verificar se mes/ano ja existe
   const jaExiste = quadrosExistentes.some(q => q.mes === mes && q.ano === ano);
+
+  const toggleRegra = (chave) => setRegras(prev => ({ ...prev, [chave]: !prev[chave] }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,12 +50,14 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
         body: JSON.stringify({
           mes,
           ano,
-          autoPreenchimento
+          autoPreenchimento,
+          regras: autoPreenchimento ? regras : null
         })
       });
 
       if (response.ok) {
-        onSuccess?.();
+        const novaEscala = await response.json();
+        onSuccess?.(novaEscala);
       } else {
         const data = await response.json();
         setErro(data.error || 'Erro ao criar escala');
@@ -64,6 +71,48 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
   };
 
   if (!isOpen) return null;
+
+  const Regra = ({ chave, label, desc }) => (
+    <label
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '0.75rem',
+        padding: '0.75rem',
+        cursor: 'pointer',
+        borderRadius: '8px',
+        marginBottom: '0.5rem',
+        background: regras[chave] ? '#E9EFDC' : 'white'
+      }}
+    >
+      <div
+        style={{
+          width: '20px',
+          height: '20px',
+          borderRadius: '4px',
+          border: regras[chave] ? '2px solid #5E6B48' : '2px solid #DCD0B9',
+          background: regras[chave] ? '#5E6B48' : 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          marginTop: '2px'
+        }}
+      >
+        {regras[chave] && <Check size={14} color="white" />}
+      </div>
+      <input
+        type="checkbox"
+        checked={regras[chave]}
+        onChange={() => toggleRegra(chave)}
+        style={{ display: 'none' }}
+      />
+      <div>
+        <div style={{ fontWeight: '500', color: '#2B2620' }}>{label}</div>
+        <div style={{ fontSize: '0.8rem', color: '#8A8071', lineHeight: 1.4 }}>{desc}</div>
+      </div>
+    </label>
+  );
 
   return (
     <div style={{
@@ -95,7 +144,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: '#2B2620' }}>
             Nova Escala de Dirigentes
           </h2>
-          <button 
+          <button
             onClick={onClose}
             style={{
               background: 'none',
@@ -172,11 +221,11 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
             padding: '1rem',
             background: autoPreenchimento ? '#E9EFDC' : '#F3EDE2',
             borderRadius: '12px',
-            marginBottom: '1.5rem'
+            marginBottom: '1rem'
           }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
+            <label style={{
+              display: 'flex',
+              alignItems: 'center',
               gap: '0.75rem',
               cursor: 'pointer'
             }}>
@@ -217,6 +266,89 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
               </div>
             </label>
           </div>
+
+          {/* Regras (visível apenas se auto-preenchimento ativo) */}
+          {autoPreenchimento && (
+            <div style={{
+              padding: '1rem',
+              background: '#F3EDE2',
+              borderRadius: '12px',
+              marginBottom: '1.5rem'
+            }}>
+              <h4 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: '#8A8071', fontWeight: '600' }}>
+                Regras de Preenchimento
+              </h4>
+
+              {REGRAS_ESSENCIAIS.map(r => (
+                <Regra key={r.chave} chave={r.chave} label={r.label} desc={r.desc} />
+              ))}
+
+              <button
+                type="button"
+                onClick={() => setMostrarAvancadas(v => !v)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#6E7B57',
+                  fontWeight: '600',
+                  fontSize: '0.85rem',
+                  padding: '0.5rem 0.25rem'
+                }}
+              >
+                {mostrarAvancadas ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                Ajustes finos
+              </button>
+
+              {mostrarAvancadas && (
+                <div style={{ marginTop: '0.25rem' }}>
+                  {REGRAS_AVANCADAS.map(r => (
+                    <Regra key={r.chave} chave={r.chave} label={r.label} desc={r.desc} />
+                  ))}
+
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    background: 'white',
+                    opacity: regras.evitarRepeticoes ? 1 : 0.5
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: '500', color: '#2B2620' }}>Dias de descanso</div>
+                      <div style={{ fontSize: '0.8rem', color: '#8A8071' }}>
+                        Intervalo desejado entre duas designações do mesmo irmão
+                      </div>
+                    </div>
+                    <input
+                      type="number"
+                      min={0}
+                      max={31}
+                      disabled={!regras.evitarRepeticoes}
+                      value={regras.diasDescanso}
+                      onChange={(e) => setRegras(prev => ({
+                        ...prev,
+                        diasDescanso: Math.max(0, Math.min(31, parseInt(e.target.value) || 0))
+                      }))}
+                      style={{
+                        width: '68px',
+                        padding: '0.5rem',
+                        borderRadius: '8px',
+                        border: '1px solid #DCD0B9',
+                        fontSize: '1rem',
+                        textAlign: 'center'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {erro && (
             <div style={{

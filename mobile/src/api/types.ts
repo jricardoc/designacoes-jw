@@ -244,3 +244,64 @@ export interface ImportarReuniaoResponse {
   message: string;
   indisponibilidades: IndisponibilidadePreview;
 }
+
+// ===== Escala de Dirigentes: regras e diagnóstico da geração automática =====
+
+/** Espelha REGRAS_PADRAO de backend/src/services/EscalaDirigenteAlgoritmo.js. */
+export interface RegrasEscala {
+  respeitarIndisponibilidades: boolean;
+  evitarDuplicidadeNoDia: boolean;
+  distribuicaoIgualitaria: boolean;
+  ponderarDisponibilidade: boolean;
+  designarTodos: boolean;
+  evitarRepeticoes: boolean;
+  equilibrarPapeis: boolean;
+  rodizioLocais: boolean;
+  evitarRepetirDupla: boolean;
+  considerarMesAnterior: boolean;
+  preencherSubstituto: boolean;
+  diasDescanso: number;
+}
+
+export interface AvisoEscala {
+  tipo: string;
+  mensagem: string;
+  irmao?: string;
+  data?: string;
+  papel?: string;
+  saidaCampoId?: number;
+}
+
+export interface CargaDirigente {
+  nome: string;
+  designacoes: number;
+  principais: number;
+  substitutos: number;
+  oportunidades: number;
+  cota: number | null;
+  aproveitamento: number | null;
+  saidasDistintas: number;
+  limitadoPelaDisponibilidade: boolean;
+}
+
+export interface DiagnosticoEscala {
+  totalVagas: number;
+  vagasPreenchidas: number;
+  vagasVazias: number;
+  totalDirigentes: number;
+  semDesignacao: string[];
+  limitadosPelaDisponibilidade: string[];
+  gargalos: {
+    saidaCampoId: number;
+    local: string | null;
+    datas: number;
+    vagas: number;
+    candidatos: number;
+    cargaForcada: number | null;
+  }[];
+  porIrmao: CargaDirigente[];
+  reparos: unknown[];
+  trocasRebalanceamento: number;
+  regrasRelaxadas: Record<string, number>;
+  avisos: AvisoEscala[];
+}

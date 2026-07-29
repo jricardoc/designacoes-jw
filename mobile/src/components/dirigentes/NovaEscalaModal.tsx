@@ -10,9 +10,16 @@ import {
   View,
 } from "react-native";
 import { useCriarDirigenteQuadro } from "@/api/hooks/useDirigentes";
-import type { QuadroDirigenteResumo } from "@/api/types";
+import type { QuadroDirigenteResumo, RegrasEscala } from "@/api/types";
 import { Sheet, useToast } from "@/components/ui";
 import { colors, MESES, radius } from "@/theme";
+import {
+  REGRAS_AVANCADAS,
+  REGRAS_ESSENCIAIS,
+  REGRAS_PADRAO,
+  type ChaveRegraBooleana,
+  type DescricaoRegra,
+} from "@/utils/regrasEscala";
 
 const BODY_MAX = Math.round(Dimensions.get("window").height * 0.52);
 
@@ -30,13 +37,23 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
   const [auto, setAuto] = useState(true);
+  const [regras, setRegras] = useState<RegrasEscala>(REGRAS_PADRAO);
+  const [mostrarAvancadas, setMostrarAvancadas] = useState(false);
 
   const jaExiste = existentes.some((q) => q.mes === mes && q.ano === ano);
+
+  const alternar = (chave: ChaveRegraBooleana) =>
+    setRegras((prev) => ({ ...prev, [chave]: !prev[chave] }));
 
   const handleSubmit = async () => {
     if (jaExiste) return;
     try {
-      const novo = await criar.mutateAsync({ mes, ano, autoPreenchimento: auto });
+      const novo = await criar.mutateAsync({
+        mes,
+        ano,
+        autoPreenchimento: auto,
+        regras: auto ? regras : null,
+      });
       toast.show("Escala criada com sucesso!");
       onCreated(novo);
       onClose();
@@ -44,6 +61,21 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
       toast.show(err instanceof Error ? err.message : "Erro ao criar escala", "error");
     }
   };
+
+  const LinhaRegra = ({ regra }: { regra: DescricaoRegra }) => (
+    <Pressable
+      onPress={() => alternar(regra.chave)}
+      style={[styles.regraRow, regras[regra.chave] && styles.regraRowAtiva]}
+    >
+      <View style={[styles.check, regras[regra.chave] && styles.checkAtivo]}>
+        {regras[regra.chave] ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+      </View>
+      <View style={styles.flex}>
+        <Text style={styles.regraLabel}>{regra.label}</Text>
+        <Text style={styles.regraDesc}>{regra.desc}</Text>
+      </View>
+    </Pressable>
+  );
 
   return (
     <Sheet visible={visible} onClose={onClose} maxHeightPct={0.92}>
@@ -103,6 +135,66 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
             thumbColor="#fff"
           />
         </View>
+
+        {auto ? (
+          <View style={styles.regrasBox}>
+            <Text style={styles.regrasTitulo}>Regras de preenchimento</Text>
+
+            {REGRAS_ESSENCIAIS.map((r) => (
+              <LinhaRegra key={r.chave} regra={r} />
+            ))}
+
+            <Pressable
+              onPress={() => setMostrarAvancadas((v) => !v)}
+              style={styles.avancadasBtn}
+            >
+              <Ionicons
+                name={mostrarAvancadas ? "chevron-down" : "chevron-forward"}
+                size={16}
+                color={colors.primary}
+              />
+              <Text style={styles.avancadasTexto}>Ajustes finos</Text>
+            </Pressable>
+
+            {mostrarAvancadas ? (
+              <>
+                {REGRAS_AVANCADAS.map((r) => (
+                  <LinhaRegra key={r.chave} regra={r} />
+                ))}
+
+                <View style={[styles.regraRow, { opacity: regras.evitarRepeticoes ? 1 : 0.5 }]}>
+                  <View style={styles.flex}>
+                    <Text style={styles.regraLabel}>Dias de descanso</Text>
+                    <Text style={styles.regraDesc}>
+                      Intervalo desejado entre duas designações do mesmo irmão
+                    </Text>
+                  </View>
+                  <View style={styles.stepperRow}>
+                    <Pressable
+                      disabled={!regras.evitarRepeticoes}
+                      onPress={() =>
+                        setRegras((p) => ({ ...p, diasDescanso: Math.max(0, p.diasDescanso - 1) }))
+                      }
+                      style={styles.stepperBtn}
+                    >
+                      <Ionicons name="remove" size={16} color={colors.primary} />
+                    </Pressable>
+                    <Text style={styles.stepperValor}>{regras.diasDescanso}</Text>
+                    <Pressable
+                      disabled={!regras.evitarRepeticoes}
+                      onPress={() =>
+                        setRegras((p) => ({ ...p, diasDescanso: Math.min(31, p.diasDescanso + 1) }))
+                      }
+                      style={styles.stepperBtn}
+                    >
+                      <Ionicons name="add" size={16} color={colors.primary} />
+                    </Pressable>
+                  </View>
+                </View>
+              </>
+            ) : null}
+          </View>
+        ) : null}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -190,6 +282,60 @@ const styles = StyleSheet.create({
   },
   autoTitle: { fontWeight: "600", color: colors.text, fontSize: 15 },
   autoDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  regrasBox: {
+    backgroundColor: "#F3ECDD",
+    borderWidth: 1,
+    borderColor: "#EAE0CC",
+    borderRadius: 16,
+    padding: 12,
+    marginTop: 12,
+  },
+  regrasTitulo: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: colors.textMuted,
+    marginBottom: 10,
+  },
+  regraRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 11,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 11,
+    marginBottom: 7,
+  },
+  regraRowAtiva: { backgroundColor: "#E9EFDC" },
+  check: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: "#DCD0B9",
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  checkAtivo: { borderColor: "#5E6B48", backgroundColor: "#5E6B48" },
+  regraLabel: { fontSize: 14, fontWeight: "600", color: colors.text },
+  regraDesc: { fontSize: 12, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
+  avancadasBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 7 },
+  avancadasTexto: { color: colors.primary, fontWeight: "600", fontSize: 13 },
+  stepperRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  stepperBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  stepperValor: { fontSize: 16, fontWeight: "600", color: colors.text, minWidth: 22, textAlign: "center" },
   footer: { flexDirection: "row", gap: 11, marginTop: 18 },
   btnGhost: {
     flex: 1,

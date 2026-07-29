@@ -1,5 +1,10 @@
 const prisma = require('../prisma');
+const { gerarEscala: resolverEscala, REGRAS_PADRAO } = require('./EscalaDirigenteAlgoritmo');
 
+/**
+ * Orquestra a geracao da Escala de Dirigentes: monta o universo a partir do banco,
+ * delega a decisao para EscalaDirigenteAlgoritmo (puro) e persiste o resultado.
+ */
 class AutoDirigenteService {
 
     /**
@@ -67,10 +72,106 @@ class AutoDirigenteService {
     }
 
     /**
-     * Gera template ou preenche automaticamente a escala
+     * Converte uma data "dd/MM" de um quadro (mes/ano) para Date real.
+     *
+     * Um quadro pode conter dias do mes anterior, porque a escala comeca na segunda-feira
+     * da semana que contem o dia 1. A versao antiga ignorava o "MM" da string e assumia o
+     * mes do quadro, o que colocava "30/06" de um quadro de julho no dia 30 de julho e
+     * quebrava toda a regra de descanso na virada do mes.
      */
-    async gerarEscala(quadroId, mes, ano, autoPreenchimento = false) {
-        // 1. Buscar saídas de campo ativas com os dirigentes disponíveis
+    resolverData(dataStr, mesQuadro, anoQuadro) {
+        const [dia, mes] = String(dataStr).split('/').map(Number);
+        if (!dia || !mes) return null;
+        // Unico caso em que o mes da data e maior que o do quadro: dezembro num quadro de janeiro.
+        const ano = mes > mesQuadro ? anoQuadro - 1 : anoQuadro;
+        return new Date(ano, mes - 1, dia);
+    }
+
+    /**
+     * Carrega o universo de dirigentes numa unica query.
+     *
+     * O pool inclui tanto quem tem vinculo com alguma saida ativa quanto quem esta marcado
+     * com a funcao "dirigente" sem vinculo nenhum. O segundo grupo nunca podera ser escalado,
+     * mas precisa aparecer para que "garantir que todos sejam designados" seja mensuravel e
+     * para que o diagnostico avise que falta vincular o irmao a alguma saida - antes ele
+     * simplesmente desaparecia do sistema sem nenhum sinal.
+     */
+    async carregarDirigentes() {
+        const irmaos = await prisma.irmao.findMany({
+            where: {
+                ativo: true,
+                OR: [
+                    { dirigenteSaidas: { some: { saidaCampo: { ativo: true } } } },
+                    { funcoes: { has: 'dirigente' } }
+                ]
+            },
+            include: {
+                indisponibilidades: true,
+                dirigenteSaidas: { include: { saidaCampo: true } }
+            },
+            orderBy: { nome: 'asc' }
+        });
+
+        return irmaos.map(i => ({
+            nome: i.nome,
+            saidaCampoIds: i.dirigenteSaidas
+                .filter(ds => ds.saidaCampo?.ativo)
+                .map(ds => ds.saidaCampoId),
+            indisponiveis: i.indisponibilidades.map(ind => ind.data)
+        }));
+    }
+
+    /**
+     * Monta o historico do mes anterior: quantas designacoes cada irmao teve e qual foi a
+     * ultima data em que serviu (usada pela regra de descanso na virada do mes).
+     */
+    async carregarHistorico(mes, ano) {
+        let prevMes = mes - 1;
+        let prevAno = ano;
+        if (prevMes === 0) {
+            prevMes = 12;
+            prevAno = ano - 1;
+        }
+
+        const quadroAnterior = await prisma.quadroDirigente.findUnique({
+            where: { mes_ano: { mes: prevMes, ano: prevAno } },
+            include: { escalas: { where: { removido: false } } }
+        });
+
+        const historico = {};
+        if (!quadroAnterior) return historico;
+
+        for (const esc of quadroAnterior.escalas) {
+            const dataObj = this.resolverData(esc.data, prevMes, prevAno);
+            if (!dataObj) continue;
+
+            for (const nome of [esc.principal, esc.substituto]) {
+                if (!nome) continue;
+                if (!historico[nome]) {
+                    historico[nome] = { designacoes: 0, ultimaDataObj: null };
+                }
+                historico[nome].designacoes += 1;
+                if (!historico[nome].ultimaDataObj || historico[nome].ultimaDataObj < dataObj) {
+                    historico[nome].ultimaDataObj = dataObj;
+                }
+            }
+        }
+
+        return historico;
+    }
+
+    /**
+     * Gera o template do mes e, se pedido, preenche automaticamente.
+     *
+     * @param {number} quadroId
+     * @param {number} mes
+     * @param {number} ano
+     * @param {boolean} autoPreenchimento
+     * @param {Object} regras  toggles do algoritmo (ver EscalaDirigenteAlgoritmo.REGRAS_PADRAO)
+     * @returns {Promise<{ success: boolean, diagnostico: Object|null }>}
+     */
+    async gerarEscala(quadroId, mes, ano, autoPreenchimento = false, regras = null) {
+        // 1. Saídas de campo ativas com os dirigentes habilitados
         const saidasCampo = await prisma.saidaCampo.findMany({
             where: { ativo: true },
             include: {
@@ -81,15 +182,11 @@ class AutoDirigenteService {
         });
 
         const dias = this.gerarDiasDoMes(mes, ano);
-        
-        // Estrutura para salvar o template
+
+        // 2. Template: uma escala por (dia, saída daquele dia da semana)
         const escalasParaCriar = [];
-
-        // Prepara os turnos do mês
         for (const dia of dias) {
-            // Acha as saídas programadas para esse dia da semana
             const saidasDoDia = saidasCampo.filter(s => s.diaSemana === dia.diaSemanaSlug);
-
             for (const saida of saidasDoDia) {
                 escalasParaCriar.push({
                     quadroId,
@@ -99,137 +196,98 @@ class AutoDirigenteService {
                     principal: '',
                     substituto: '',
                     removido: false,
-                    // Passar metadados para uso no algoritmo se for auto-preencher
-                    _meta: {
-                        dataObj: dia.dataObj,
-                        dirigentes: saida.dirigentesDisponiveis
-                            .filter(d => d.irmao.ativo)
-                            .map(d => d.irmao.nome)
-                    }
+                    _meta: { dataObj: dia.dataObj, turno: saida.turno, local: saida.local }
                 });
             }
         }
 
-        // Criar template primeiro
-        const escalasSemMeta = escalasParaCriar.map(e => {
-            const { _meta, ...rest } = e;
-            return rest;
-        });
+        let diagnostico = null;
 
-        // Prisma createMany retorna só a quantidade, então teremos que buscar depois para o algoritmo, 
-        // ou a gente preenche no JS e depois faz update/create.
-        // Vamos preencher no JS e criar de uma vez se for autoPreenchimento.
+        if (autoPreenchimento && escalasParaCriar.length > 0) {
+            // 3. Dirigentes e historico. Duas queries no total - a versao antiga disparava
+            //    um findUnique por linha de indisponibilidade.
+            const dirigentes = await this.carregarDirigentes();
+            const historico = await this.carregarHistorico(mes, ano);
 
-        if (autoPreenchimento) {
-            // Contadores para distribuição igualitária
-            const contadorDesignacoes = {};
-            
-            // Rastrear última vez que o dirigente foi escalado (para evitar seguidas)
-            const ultimaDesignacao = {}; // { nome: Date() }
+            // 4. Decisao (modulo puro)
+            const vagasBase = escalasParaCriar.map((e, indice) => ({
+                id: indice,
+                data: e.data,
+                dataObj: e._meta.dataObj,
+                saidaCampoId: e.saidaCampoId,
+                turno: e._meta.turno,
+                local: e._meta.local
+            }));
 
-            // Buscar histórico anterior
-            let prevMes = mes - 1;
-            let prevAno = ano;
-            if (prevMes === 0) {
-                prevMes = 12;
-                prevAno = ano - 1;
-            }
-
-            const quadroAnterior = await prisma.quadroDirigente.findUnique({
-                where: { mes_ano: { mes: prevMes, ano: prevAno } },
-                include: { escalas: true }
+            const saida = resolverEscala({
+                vagasBase,
+                dirigentes,
+                historico,
+                regras: { ...REGRAS_PADRAO, ...(regras || {}) },
+                seed: `dirigentes-${ano}-${mes}`
             });
 
-            if (quadroAnterior && quadroAnterior.escalas) {
-                quadroAnterior.escalas.forEach(esc => {
-                    const dDate = new Date(prevAno, prevMes - 1, parseInt(esc.data.split('/')[0]));
-                    
-                    const atualizarSeMaisRecente = (irmao) => {
-                        if (irmao) {
-                            if (!ultimaDesignacao[irmao] || ultimaDesignacao[irmao] < dDate) {
-                                ultimaDesignacao[irmao] = dDate;
-                            }
-                        }
-                    };
+            saida.atribuicoes.forEach(a => {
+                escalasParaCriar[a.id].principal = a.principal;
+                escalasParaCriar[a.id].substituto = a.substituto;
+            });
 
-                    atualizarSeMaisRecente(esc.principal);
-                    atualizarSeMaisRecente(esc.substituto);
-                });
-            }
-
-            // Precisamos buscar indisponibilidades
-            const indisponibilidades = await prisma.indisponibilidade.findMany();
-            const indisponibilidadeMap = {}; // { 'Nome': ['01/01', '02/01'] }
-            
-            for (const ind of indisponibilidades) {
-                const irmao = await prisma.irmao.findUnique({ where: { id: ind.irmaoId } });
-                if (irmao) {
-                    if (!indisponibilidadeMap[irmao.nome]) indisponibilidadeMap[irmao.nome] = [];
-                    indisponibilidadeMap[irmao.nome].push(ind.data);
-                }
-            }
-
-            // Lógica de seleção de irmão
-            const selecionarDirigente = (candidatos, dataStr, dataObj, excluir = null) => {
-                let disponiveis = candidatos.filter(c => {
-                    // Excluir já escalado na mesma saída
-                    if (c === excluir) return false;
-                    
-                    // Verificar indisponibilidade no calendário
-                    if (indisponibilidadeMap[c] && indisponibilidadeMap[c].includes(dataStr)) {
-                        return false;
-                    }
-                    return true;
-                });
-
-                if (disponiveis.length === 0) return '';
-
-                // Regra: Evitar dias seguidos (diferença <= 2 dias)
-                const semRepeticao = disponiveis.filter(c => {
-                    const ultima = ultimaDesignacao[c];
-                    if (!ultima) return true;
-                    const diffDias = Math.abs(dataObj - ultima) / (1000 * 60 * 60 * 24);
-                    return diffDias > 2; // Tem que ter mais de 2 dias de descanso
-                });
-
-                if (semRepeticao.length > 0) {
-                    disponiveis = semRepeticao;
-                }
-
-                // Distribuição igualitária
-                disponiveis.sort((a, b) => {
-                    return (contadorDesignacoes[a] || 0) - (contadorDesignacoes[b] || 0);
-                });
-
-                const escolhido = disponiveis[0];
-                
-                // Atualizar rastreadores
-                contadorDesignacoes[escolhido] = (contadorDesignacoes[escolhido] || 0) + 1;
-                ultimaDesignacao[escolhido] = dataObj;
-
-                return escolhido;
-            };
-
-            // Processar escalas
-            for (const esc of escalasParaCriar) {
-                const candidatos = esc._meta.dirigentes;
-                
-                esc.principal = selecionarDirigente(candidatos, esc.data, esc._meta.dataObj);
-                esc.substituto = selecionarDirigente(candidatos, esc.data, esc._meta.dataObj, esc.principal);
-            }
+            diagnostico = saida.diagnostico;
         }
 
-        // Criar no banco removendo o _meta
-        const dataParaInserir = escalasParaCriar.map(e => {
-            const { _meta, ...rest } = e;
-            return rest;
+        // 5. Persistir
+        const dataParaInserir = escalasParaCriar.map(({ _meta, ...rest }) => rest);
+        if (dataParaInserir.length > 0) {
+            await prisma.escalaDirigente.createMany({ data: dataParaInserir });
+        }
+
+        return { success: true, diagnostico };
+    }
+
+    /**
+     * Regera o preenchimento de um quadro que ja existe, sem recriar o template.
+     * Preserva os dias que o usuario removeu (removido = true).
+     */
+    async regerarEscala(quadroId, mes, ano, regras = null) {
+        const escalas = await prisma.escalaDirigente.findMany({
+            where: { quadroId, removido: false },
+            include: { saidaCampo: true }
         });
 
-        await prisma.escalaDirigente.createMany({
-            data: dataParaInserir
+        if (escalas.length === 0) {
+            return { success: false, erro: 'Nenhuma saída ativa nesta escala para preencher.' };
+        }
+
+        const dirigentes = await this.carregarDirigentes();
+        const historico = await this.carregarHistorico(mes, ano);
+
+        const vagasBase = escalas.map(e => ({
+            id: e.id,
+            data: e.data,
+            dataObj: this.resolverData(e.data, mes, ano),
+            saidaCampoId: e.saidaCampoId,
+            turno: e.saidaCampo?.turno,
+            local: e.saidaCampo?.local
+        })).filter(v => v.dataObj);
+
+        const saida = resolverEscala({
+            vagasBase,
+            dirigentes,
+            historico,
+            regras: { ...REGRAS_PADRAO, ...(regras || {}) },
+            seed: `dirigentes-${ano}-${mes}`
         });
 
-        return { success: true };
+        await prisma.$transaction(
+            saida.atribuicoes.map(a =>
+                prisma.escalaDirigente.update({
+                    where: { id: a.id },
+                    data: { principal: a.principal, substituto: a.substituto }
+                })
+            )
+        );
+
+        return { success: true, diagnostico: saida.diagnostico };
     }
 }
 

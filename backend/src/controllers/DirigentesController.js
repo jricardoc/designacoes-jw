@@ -59,7 +59,7 @@ class DirigentesController {
     // Criar novo quadro de dirigentes
     async createQuadro(req, res) {
         try {
-            const { mes, ano, autoPreenchimento } = req.body;
+            const { mes, ano, autoPreenchimento, regras } = req.body;
 
             if (!mes || !ano) {
                 return res.status(400).json({ error: 'Mês e ano são obrigatórios' });
@@ -84,25 +84,61 @@ class DirigentesController {
                 }
             });
 
+            let diagnostico = null;
             try {
                 const AutoDirigenteService = require('../services/AutoDirigenteService');
 
                 // Gerar o template vazio (dias e saídas) e auto-preencher se solicitado
-                await AutoDirigenteService.gerarEscala(
+                const resultado = await AutoDirigenteService.gerarEscala(
                     quadro.id,
                     parseInt(mes),
                     parseInt(ano),
-                    autoPreenchimento
+                    autoPreenchimento,
+                    regras
                 );
+                diagnostico = resultado.diagnostico;
             } catch (err) {
                 // Rollback manual: sem isso, uma falha na geracao deixaria um quadro vazio orfao.
                 await prisma.quadroDirigente.delete({ where: { id: quadro.id } }).catch(() => {});
                 throw err;
             }
 
-            return res.status(201).json(quadro);
+            return res.status(201).json({ ...quadro, diagnostico });
         } catch (error) {
             console.error('Erro ao criar quadro de dirigentes:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
+
+    // Regerar o preenchimento automatico de um quadro ja existente
+    async regerarQuadro(req, res) {
+        try {
+            const { id } = req.params;
+            const { regras } = req.body || {};
+
+            const quadro = await prisma.quadroDirigente.findUnique({
+                where: { id: parseInt(id) }
+            });
+
+            if (!quadro) {
+                return res.status(404).json({ error: 'Quadro não encontrado' });
+            }
+
+            const AutoDirigenteService = require('../services/AutoDirigenteService');
+            const resultado = await AutoDirigenteService.regerarEscala(
+                quadro.id,
+                quadro.mes,
+                quadro.ano,
+                regras
+            );
+
+            if (!resultado.success) {
+                return res.status(400).json({ error: resultado.erro });
+            }
+
+            return res.json({ success: true, diagnostico: resultado.diagnostico });
+        } catch (error) {
+            console.error('Erro ao regerar escala de dirigentes:', error);
             return res.status(500).json({ error: 'Erro interno' });
         }
     }

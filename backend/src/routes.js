@@ -116,6 +116,7 @@ routes.post('/dirigentes/quadros', DirigentesController.createQuadro);
 routes.get('/dirigentes/quadros/:id', DirigentesController.showQuadro);
 routes.delete('/dirigentes/quadros/:id', requireAdmin, DirigentesController.deleteQuadro);
 routes.put('/dirigentes/quadros/:id/status', DirigentesController.updateStatus);
+routes.post('/dirigentes/quadros/:id/regerar', DirigentesController.regerarQuadro);
 
 routes.put('/dirigentes/escala', DirigentesController.updateEscala);
 routes.delete('/dirigentes/escala/dia', DirigentesController.deleteDia);

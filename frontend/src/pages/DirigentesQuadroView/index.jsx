@@ -8,6 +8,7 @@ import {
   Download,
   Check,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Sidebar from "../../components/Sidebar";
@@ -15,6 +16,8 @@ import TabelaDirigentes from "../../components/TabelaDirigentes";
 import TabelaDirigentesPDF from "../../components/TabelaDirigentesPDF";
 import { useToast, ToastContainer } from "../../components/Toast";
 import ConfirmModal from "../../components/ConfirmModal";
+import RegerarEscalaModal from "../../components/dirigentes/RegerarEscalaModal";
+import DiagnosticoEscala from "../../components/dirigentes/DiagnosticoEscala";
 import "./styles.css";
 
 const MESES = [
@@ -50,6 +53,8 @@ export default function DirigentesQuadroView() {
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
   const [modalConfig, setModalConfig] = useState({ isOpen: false });
+  const [regerarAberto, setRegerarAberto] = useState(false);
+  const [diagnostico, setDiagnostico] = useState(null);
 
   const openModal = (config) => setModalConfig({ ...config, isOpen: true });
   const closeModal = () => setModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -64,9 +69,18 @@ export default function DirigentesQuadroView() {
       if (responseQuadro.ok && responseIrmaos.ok) {
         const dataQuadro = await responseQuadro.json();
         const dataIrmaos = await responseIrmaos.json();
-        
+
         setQuadro(dataQuadro);
-        setIrmaosDirigentes(dataIrmaos.filter(i => i.funcoes && i.funcoes.includes('dirigente') && i.ativo));
+        // O critério tem que ser o MESMO do gerador (AutoDirigenteService.carregarDirigentes):
+        // quem está ativo e tem vínculo com alguma saída, ou está marcado como dirigente.
+        // Filtrar só por funcoes fazia o gerador escalar alguém que o <select> não listava,
+        // deixando o campo em branco na tela enquanto o PDF imprimia o nome.
+        setIrmaosDirigentes(dataIrmaos.filter(i =>
+          i.ativo && (
+            i.dirigenteSaidas?.length > 0
+            || (i.funcoes && i.funcoes.includes('dirigente'))
+          )
+        ));
       } else {
         navigate("/dirigentes");
       }
@@ -281,6 +295,13 @@ export default function DirigentesQuadroView() {
         return irmao.dirigenteSaidas?.some(ds => ds.saidaCampoId === d.saidaCampoId);
       }).map(irmao => irmao.nome);
 
+      // Quem já está escalado sempre entra na lista, mesmo que tenha ficado indisponível ou
+      // perdido o vínculo depois da geração. Sem isso o <select> renderiza em branco e o
+      // usuário acha que o slot está vazio, enquanto o PDF continua imprimindo o nome.
+      [d.principal, d.substituto].forEach(nome => {
+        if (nome && !candidatos.includes(nome)) candidatos.push(nome);
+      });
+
       acc[d.data].escalas.push({
         ...d,
         candidatosDisponiveis: candidatos
@@ -353,6 +374,15 @@ export default function DirigentesQuadroView() {
                   <span>Publicar</span>
                 </button>
               )}
+
+              <button
+                onClick={() => setRegerarAberto(true)}
+                className="btn-acao"
+                title="Refazer o preenchimento automático desta escala"
+              >
+                <RefreshCw size={18} />
+                <span>Regerar</span>
+              </button>
 
               <button
                 onClick={handleDownloadPDF}
@@ -435,6 +465,24 @@ export default function DirigentesQuadroView() {
         isOpen={modalConfig.isOpen}
         onClose={closeModal}
         {...modalConfig}
+      />
+
+      <RegerarEscalaModal
+        isOpen={regerarAberto}
+        quadroId={id}
+        onClose={() => setRegerarAberto(false)}
+        onConcluido={async (novoDiagnostico) => {
+          setRegerarAberto(false);
+          addToast("Escala regerada com sucesso!", "success");
+          await carregarQuadro();
+          if (novoDiagnostico) setDiagnostico(novoDiagnostico);
+        }}
+      />
+
+      <DiagnosticoEscala
+        diagnostico={diagnostico}
+        onClose={() => setDiagnostico(null)}
+        titulo="Escala regerada"
       />
     </div>
   );
