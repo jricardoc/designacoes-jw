@@ -2,6 +2,7 @@ const prisma = require('../prisma');
 const { parseExcel } = require('../services/ExcelReuniaoParser');
 const { parsePdf } = require('../services/PdfReuniaoParser');
 const { buildIndisponibilidadePreview } = require('../services/MatchIrmaosService');
+const { reconciliarSemanas } = require('../utils/semanaReuniao');
 
 // Campos editaveis de SemanaReuniao (whitelist para o updateSemana).
 // Bloqueia mass assignment em id/reuniaoId/timestamps e colunas nao editaveis.
@@ -78,7 +79,12 @@ class ReuniaoController {
                 });
             }
 
-            const { mes, ano, semanas } = parsed;
+            const { mes, ano } = parsed;
+            // O arquivo de origem pode trazer a data da reuniao contradizendo o rotulo da
+            // semana (aconteceu com a planilha de marco/2026). Corrigimos o que da para
+            // corrigir com seguranca e devolvemos os avisos para quem esta importando.
+            const { semanas, avisos: avisosDeData } = reconciliarSemanas(parsed.semanas);
+
             if (!semanas || semanas.length === 0) {
                 return res.status(422).json({
                     error: 'Não foi possível extrair nenhuma semana do arquivo. Verifique se é a programação correta.',
@@ -115,6 +121,8 @@ class ReuniaoController {
                 ano,
                 message: `${semanas.length} semana(s) importada(s) com sucesso para ${mes}/${ano}`,
                 indisponibilidades,
+                // Datas que contradiziam o rótulo da semana no arquivo de origem.
+                avisos: avisosDeData,
             });
         } catch (error) {
             console.error('Erro na importação da reunião:', error);

@@ -44,9 +44,9 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    # Garante que o Prisma gere o cliente e crie as tabelas ao iniciar
+    # Garante que o Prisma gere o cliente e aplique as migrations ao iniciar
     command: >
-      sh -c "npx prisma generate && npx prisma db push && npm run dev"
+      sh -c "npx prisma generate && npx prisma migrate deploy && npm run dev"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
       interval: 30s

@@ -2,6 +2,7 @@
 
 const prisma = require('../prisma');
 const { resolverDataDeQuadro, formatarDiaMes, chaveISO, nomeDoDia } = require('../utils/datas');
+const { reconciliarDataReuniao, domingoDaSemana } = require('../utils/semanaReuniao');
 
 /**
  * Reune, num lugar so, tudo em que um irmao esta designado.
@@ -123,69 +124,26 @@ const CAMPOS_REUNIAO = [
     { campo: 'limpeza', rotulo: 'Limpeza do salão', momento: 'semana' },
 ];
 
-const MESES_PT = {
-    janeiro: 1, fevereiro: 2, marco: 3, abril: 4, maio: 5, junho: 6,
-    julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12
-};
-
-/**
- * Le a faixa da semana e so devolve algo quando ela e INEQUIVOCA: um unico mes citado e dois
- * dias ("Março 9 - 15"). Faixas que atravessam o mes ("29 Junho - 5 Julho") ou que vem
- * corrompidas da importacao ("27 Junho - 2 Agosto") citam dois meses e sao descartadas -
- * usa-las para "corrigir" a data faria justamente o contrario.
- */
-function faixaInequivoca(faixaData) {
-    const texto = normalizar(faixaData);
-    const meses = Object.entries(MESES_PT).filter(([nome]) => texto.includes(nome));
-    if (meses.length !== 1) return null;
-
-    const dias = String(faixaData || '').match(/\d{1,2}/g);
-    if (!dias || dias.length < 2) return null;
-
-    const inicio = Number(dias[0]);
-    const fim = Number(dias[dias.length - 1]);
-    if (!(inicio >= 1 && fim >= inicio && fim <= 31)) return null;
-
-    return { mes: meses[0][1], inicio, fim };
-}
-
 /**
  * Datas de uma semana de reuniao.
  *
+ * A reconciliacao com o rotulo da semana acontece na IMPORTACAO (utils/semanaReuniao.js), que
+ * e onde o problema nasce. Aqui ela e refeita como rede de seguranca, para as semanas que ja
+ * estavam gravadas antes dessa validacao existir.
+ *
  * O domingo NAO pode sair de `Reuniao.mes`: uma semana atravessa o mes ("29 Junho - 5 Julho"),
  * entao ele vem de aritmetica de Date sobre a data do meio de semana.
- *
- * Ha ainda uma conferencia contra a faixa da semana. A importacao de marco/2026 gravou
- * dataReuniao "12/02" e "19/01" para as semanas rotuladas "Março 9 - 15" e "Março 16 - 22" -
- * o dia esta certo e o mes decrementa a cada semana, um defeito do parser. Como uma data
- * errada numa lista de compromissos e pior que nenhuma, quando o mes do rotulo e o da data
- * discordam e o DIA cabe no rotulo, adotamos o mes do rotulo e marcamos `corrigida`.
  */
 function datasDaSemana(semana) {
-    const m = String(semana.dataReuniao || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    const { dataReuniao, corrigida } = reconciliarDataReuniao(semana.faixaData, semana.dataReuniao);
+
+    const m = String(dataReuniao || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
     if (!m) return { meio: null, fds: null, corrigida: false };
 
-    const dia = Number(m[1]);
-    let mes = Number(m[2]);
-    const ano = Number(m[3]);
-    let corrigida = false;
-
-    const faixa = faixaInequivoca(semana.faixaData);
-    if (faixa && faixa.mes !== mes && dia >= faixa.inicio && dia <= faixa.fim) {
-        const candidata = new Date(ano, faixa.mes - 1, dia);
-        // So aceita se o dia existir naquele mes (evita 31/02 virar 03/03).
-        if (candidata.getDate() === dia) {
-            mes = faixa.mes;
-            corrigida = true;
-        }
-    }
-
-    const meio = new Date(ano, mes - 1, dia);
+    const meio = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
     if (Number.isNaN(meio.getTime())) return { meio: null, fds: null, corrigida: false };
 
-    const fds = new Date(meio);
-    fds.setDate(fds.getDate() + ((7 - meio.getDay()) % 7)); // proximo domingo (ou o proprio)
-    return { meio, fds, corrigida };
+    return { meio, fds: domingoDaSemana(dataReuniao), corrigida };
 }
 
 // --- montagem dos compromissos ---------------------------------------------

@@ -10,7 +10,7 @@ Crie um serviço PostgreSQL no EasyPanel e anote a connection string. Ela será 
 
 ## 2. Backend (API)
 
-- **Build**: use `backend/Dockerfile.prod` (aplica o schema com `prisma db push` no
+- **Build**: use `backend/Dockerfile.prod` (aplica as migrations com `prisma migrate deploy` no
   boot e sobe a API na porta `3001`).
 - **Variáveis de ambiente** (todas configuradas no painel, nunca no código):
 
