@@ -124,3 +124,14 @@ export const MESES_CURTO = [
   "NOV",
   "DEZ",
 ] as const;
+
+/** Indexado por `Date.getDay()` — 0 = domingo, como o `diaSemana` da API. */
+export const DIAS_CURTOS = [
+  "Dom",
+  "Seg",
+  "Ter",
+  "Qua",
+  "Qui",
+  "Sex",
+  "Sáb",
+] as const;

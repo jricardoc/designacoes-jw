@@ -353,3 +353,46 @@ export interface IrmaoDisponivel {
   disponivel: boolean;
   vinculadoA: { nome: string; nickname: string } | null;
 }
+
+// ===== Carrinho: pontos, turnos fixos semanais e o cadastro próprio de pessoas =====
+
+export interface CarrinhoPessoaNoTurno {
+  id: number;
+  nome: string;
+  telefone: string | null;
+  ativo: boolean;
+}
+
+export interface CarrinhoTurno {
+  id: number;
+  /** 0 = domingo … 6 = sábado. */
+  diaSemana: number;
+  diaSemanaNome: string;
+  horaInicio: string;
+  horaFim: string;
+  publicadores: CarrinhoPessoaNoTurno[];
+}
+
+export interface CarrinhoPonto {
+  id: number;
+  nome: string;
+  cor: string;
+  ativo: boolean;
+  ordem: number;
+  turnos: CarrinhoTurno[];
+}
+
+export interface CarrinhoPublicador {
+  id: number;
+  nome: string;
+  telefone: string | null;
+  ativo: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CarrinhoResposta {
+  pontos: CarrinhoPonto[];
+  publicadores: CarrinhoPublicador[];
+  dias: string[];
+}

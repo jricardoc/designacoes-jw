@@ -302,7 +302,8 @@ export default function ContaScreen() {
                   Sincronizar com um irmão
                 </Text>
                 <Text style={styles.novoHint}>
-                  É o vínculo que faz as designações dele aparecerem em "Minhas Designações".
+                  É o vínculo que faz as designações dele aparecerem em “Minhas
+                  Designações”.
                 </Text>
                 <View style={styles.irmaoChips}>
                   <Pressable
