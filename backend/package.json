@@ -6,7 +6,8 @@
     "start": "node src/index.js",
     "dev": "nodemon -L src/index.js",
     "prisma:start": "prisma db push && npm run dev",
-    "verificar:dirigentes": "node scripts/verificarRegrasDirigentes.js"
+    "verificar:dirigentes": "node scripts/verificarRegrasDirigentes.js",
+    "verificar:designacoes": "node scripts/verificarMinhasDesignacoes.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

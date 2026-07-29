@@ -4,6 +4,33 @@ const PrivilegioService = require('../services/PrivilegioService');
 
 const SENHA_PADRAO = 'jw1010';
 
+/**
+ * Valida o irmao que se quer vincular a uma conta.
+ * `irmaoId` ausente mantem como esta; `null` desvincula.
+ * Devolve `{ irmaoId }` ou `{ erro }`.
+ */
+async function validarVinculo(irmaoId, usuarioIdAtual) {
+    if (irmaoId === undefined) return { irmaoId: undefined };
+    if (irmaoId === null || irmaoId === '') return { irmaoId: null };
+
+    const id = parseInt(irmaoId);
+    if (!Number.isInteger(id)) return { erro: 'Irmão inválido' };
+
+    const irmao = await prisma.irmao.findUnique({
+        where: { id },
+        select: { id: true, nome: true, usuario: { select: { id: true, nome: true } } }
+    });
+
+    if (!irmao) return { erro: 'Irmão não encontrado' };
+
+    // irmaoId e @unique: sem esta checagem o Prisma devolveria um P2002 cru.
+    if (irmao.usuario && irmao.usuario.id !== usuarioIdAtual) {
+        return { erro: `${irmao.nome} já está vinculado à conta de ${irmao.usuario.nome}` };
+    }
+
+    return { irmaoId: id };
+}
+
 class UsuarioController {
     // Listar todos os usuarios (admin only)
     async index(req, res) {
@@ -19,6 +46,7 @@ class UsuarioController {
                     nickname: true,
                     nome: true,
                     isAdmin: true,
+                    irmaoId: true,
                     createdAt: true
                 },
                 orderBy: { nome: 'asc' }
@@ -33,6 +61,76 @@ class UsuarioController {
         }
     }
 
+    // Vincular (ou desvincular) a conta ao cadastro de um irmao — admin only
+    async vincularIrmao(req, res) {
+        try {
+            if (!req.user.isAdmin) {
+                return res.status(403).json({ error: 'Acesso negado. Apenas admin pode vincular contas.' });
+            }
+
+            const id = parseInt(req.params.id);
+            const { irmaoId } = req.body;
+
+            const usuario = await prisma.usuario.findUnique({ where: { id } });
+            if (!usuario) {
+                return res.status(404).json({ error: 'Usuário não encontrado' });
+            }
+
+            const vinculo = await validarVinculo(irmaoId, id);
+            if (vinculo.erro) return res.status(400).json({ error: vinculo.erro });
+            if (vinculo.irmaoId === undefined) {
+                return res.status(400).json({ error: 'Informe o irmão (ou null para desvincular)' });
+            }
+
+            const atualizado = await prisma.usuario.update({
+                where: { id },
+                data: { irmaoId: vinculo.irmaoId },
+                select: { id: true, nickname: true, nome: true, isAdmin: true, irmaoId: true, createdAt: true }
+            });
+
+            return res.json(await PrivilegioService.anotarUsuario(atualizado));
+        } catch (error) {
+            console.error('Erro ao vincular irmão:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
+
+    /**
+     * Irmãos disponíveis para vincular: os que ainda não têm conta, mais o já vinculado a
+     * esta conta (para ele aparecer selecionado no seletor).
+     */
+    async irmaosDisponiveis(req, res) {
+        try {
+            if (!req.user.isAdmin) {
+                return res.status(403).json({ error: 'Acesso negado.' });
+            }
+
+            const usuarioId = req.query.usuarioId ? parseInt(req.query.usuarioId) : null;
+
+            const irmaos = await prisma.irmao.findMany({
+                where: { ativo: true },
+                select: {
+                    id: true,
+                    nome: true,
+                    privilegio: true,
+                    usuario: { select: { id: true, nome: true, nickname: true } }
+                },
+                orderBy: { nome: 'asc' }
+            });
+
+            return res.json(irmaos.map(i => ({
+                id: i.id,
+                nome: i.nome,
+                privilegio: i.privilegio,
+                disponivel: !i.usuario || i.usuario.id === usuarioId,
+                vinculadoA: i.usuario ? { nome: i.usuario.nome, nickname: i.usuario.nickname } : null
+            })));
+        } catch (error) {
+            console.error('Erro ao listar irmãos disponíveis:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
+
     // Criar novo usuario (admin only)
     async create(req, res) {
         try {
@@ -41,7 +139,7 @@ class UsuarioController {
                 return res.status(403).json({ error: 'Acesso negado. Apenas admin pode criar usuarios.' });
             }
 
-            const { nickname, nome } = req.body;
+            const { nickname, nome, irmaoId } = req.body;
 
             if (!nickname || !nome) {
                 return res.status(400).json({ error: 'Nickname e nome sao obrigatorios' });
@@ -56,6 +154,9 @@ class UsuarioController {
                 return res.status(400).json({ error: 'Nickname ja esta em uso' });
             }
 
+            const vinculo = await validarVinculo(irmaoId, null);
+            if (vinculo.erro) return res.status(400).json({ error: vinculo.erro });
+
             // Hash da senha padrao
             const senhaHash = await bcrypt.hash(SENHA_PADRAO, 10);
 
@@ -64,18 +165,20 @@ class UsuarioController {
                     nickname,
                     nome,
                     senha: senhaHash,
-                    isAdmin: false
+                    isAdmin: false,
+                    irmaoId: vinculo.irmaoId
                 },
                 select: {
                     id: true,
                     nickname: true,
                     nome: true,
                     isAdmin: true,
+                    irmaoId: true,
                     createdAt: true
                 }
             });
 
-            return res.status(201).json(usuario);
+            return res.status(201).json(await PrivilegioService.anotarUsuario(usuario));
         } catch (error) {
             console.error('Erro ao criar usuario:', error);
             return res.status(500).json({ error: 'Erro interno' });

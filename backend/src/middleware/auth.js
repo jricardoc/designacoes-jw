@@ -34,7 +34,9 @@ async function authMiddleware(req, res, next) {
     try {
         const usuario = await prisma.usuario.findUnique({
             where: { id: decoded.id },
-            select: { id: true, nickname: true, nome: true, isAdmin: true }
+            // irmaoId entra aqui porque /minhas-designacoes precisa saber de quem sao as
+            // designacoes ja no proprio request, sem uma consulta extra.
+            select: { id: true, nickname: true, nome: true, isAdmin: true, irmaoId: true }
         });
 
         if (!usuario) {

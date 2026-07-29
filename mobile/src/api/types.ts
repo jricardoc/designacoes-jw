@@ -27,6 +27,9 @@ export interface Usuario {
    * Não existe FK entre Usuario e Irmao — ver backend/src/services/PrivilegioService.js.
    */
   privilegio?: PrivilegioId | null;
+  /** Vínculo com o cadastro da congregação. Sem ele não há "Minhas Designações". */
+  irmaoId?: number | null;
+  irmao?: { id: number; nome: string; funcoes: FuncaoId[] } | null;
 }
 
 export interface LoginResponse {
@@ -313,4 +316,40 @@ export interface DiagnosticoEscala {
   trocasRebalanceamento: number;
   regrasRelaxadas: Record<string, number>;
   avisos: AvisoEscala[];
+}
+
+// ===== Minhas Designações =====
+
+export type TipoCompromisso = "designacao" | "dirigente" | "reuniao";
+
+export interface Compromisso {
+  id: string;
+  tipo: TipoCompromisso;
+  dataISO: string | null;
+  data: string;
+  diaSemana: string;
+  titulo: string;
+  detalhe: string | null;
+  papel: string | null;
+  local: string | null;
+  horario: string | null;
+  origem: { tipo: string; id: number; titulo: string; status: string } | null;
+  dataAproximada: boolean;
+}
+
+export interface MinhasDesignacoesResposta {
+  vinculado: boolean;
+  irmao: { id: number; nome: string; funcoes: FuncaoId[]; privilegio?: PrivilegioId | null } | null;
+  escopo?: "proximas" | "todas";
+  totais?: { total: number; proximas: number };
+  compromissos: Compromisso[];
+  mensagem?: string;
+}
+
+export interface IrmaoDisponivel {
+  id: number;
+  nome: string;
+  privilegio: PrivilegioId | null;
+  disponivel: boolean;
+  vinculadoA: { nome: string; nickname: string } | null;
 }

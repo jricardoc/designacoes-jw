@@ -17,10 +17,11 @@ interface Props {
   onToggleAdmin: (u: Usuario) => void;
   onResetSenha: (u: Usuario) => void;
   onExcluir: (u: Usuario) => void;
+  onVincular: (u: Usuario) => void;
 }
 
 /** Bottom sheet de ações de um usuário (Conta → Usuários), fiel ao design. */
-export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, onExcluir }: Props) {
+export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, onExcluir, onVincular }: Props) {
   return (
     <Sheet visible={!!user} onClose={onClose}>
       {user ? (
@@ -41,6 +42,14 @@ export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, on
           </View>
 
           <View style={{ marginTop: 6 }}>
+            <Action
+              iconBg="#E4EFF2"
+              icon="link-outline"
+              iconColor="#2F6F7E"
+              title={user.irmaoId ? "Alterar irmão vinculado" : "Vincular a um irmão"}
+              sub={user.irmaoId ? user.irmao?.nome ?? "Vinculado" : "Sem vínculo, ele não vê as próprias designações"}
+              onPress={() => onVincular(user)}
+            />
             <Action
               iconBg="#EAEFDC"
               icon="shield-checkmark-outline"

@@ -63,7 +63,7 @@ export function useUsuarios(enabled: boolean) {
 export function useCriarUsuario() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { nome: string; nickname: string }) =>
+    mutationFn: (payload: { nome: string; nickname: string; irmaoId?: number | null }) =>
       apiRequest<Usuario>("/usuarios", { method: "POST", body: payload }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.usuarios }),
   });

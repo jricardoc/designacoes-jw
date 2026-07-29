@@ -58,22 +58,51 @@ async function carregarMapaDePrivilegios() {
     return mapa;
 }
 
-/** Anota um unico usuario com `privilegio`. */
+/** Anota um unico usuario com `irmao` e `privilegio`. */
 async function anotarUsuario(usuario) {
     if (!usuario) return usuario;
     const [anotado] = await anotarUsuarios([usuario]);
     return anotado;
 }
 
-/** Anota uma lista de usuarios com `privilegio`, sem N+1. */
+/**
+ * Anota uma lista de usuarios com o irmao vinculado e o privilegio dele, sem N+1.
+ *
+ * A fonte de verdade e `Usuario.irmaoId`. O casamento por nome ficou como plano B para as
+ * contas ainda nao vinculadas - util enquanto o administrador nao resolve os casos que a
+ * sincronizacao automatica nao teve certeza de decidir.
+ */
 async function anotarUsuarios(usuarios) {
     if (!Array.isArray(usuarios) || usuarios.length === 0) return usuarios || [];
 
-    const mapa = await carregarMapaDePrivilegios();
-    return usuarios.map(u => ({
-        ...u,
-        privilegio: mapa.get(normalizarNome(u.nome)) || null
-    }));
+    let porId = new Map();
+    const idsVinculados = usuarios.map(u => u.irmaoId).filter(Boolean);
+
+    if (idsVinculados.length > 0) {
+        try {
+            const irmaos = await prisma.irmao.findMany({
+                where: { id: { in: idsVinculados } },
+                select: { id: true, nome: true, privilegio: true, funcoes: true, ativo: true }
+            });
+            porId = new Map(irmaos.map(i => [i.id, i]));
+        } catch (error) {
+            console.error('Nao foi possivel carregar os irmaos vinculados:', error.message);
+        }
+    }
+
+    const precisaDeFallback = usuarios.some(u => !u.irmaoId);
+    const porNomeNormalizado = precisaDeFallback ? await carregarMapaDePrivilegios() : new Map();
+
+    return usuarios.map(u => {
+        const irmao = u.irmaoId ? porId.get(u.irmaoId) : null;
+        return {
+            ...u,
+            irmao: irmao ? { id: irmao.id, nome: irmao.nome, funcoes: irmao.funcoes } : null,
+            privilegio: irmao
+                ? irmao.privilegio || null
+                : porNomeNormalizado.get(normalizarNome(u.nome)) || null
+        };
+    });
 }
 
 module.exports = {

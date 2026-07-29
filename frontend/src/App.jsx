@@ -10,6 +10,7 @@ import Reuniao from "./pages/Reuniao";
 import ReuniaoV2 from "./pages/ReuniaoV2";
 import Carrinho from "./pages/Carrinho";
 import Dirigentes from "./pages/Dirigentes";
+import MinhasDesignacoes from "./pages/MinhasDesignacoes";
 import DirigentesQuadroView from "./pages/DirigentesQuadroView";
 
 // Componente de loading
@@ -74,6 +75,16 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+
+          {/* Compromissos do proprio irmao, reunidos das tres fontes */}
+          <Route
+            path="/minhas-designacoes"
+            element={
+              <RotaProtegida>
+                <MinhasDesignacoes />
+              </RotaProtegida>
+            }
+          />
 
           {/* Lista de Quadros */}
           <Route

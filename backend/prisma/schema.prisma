@@ -68,6 +68,12 @@ model Usuario {
   senha      String
   nome       String
   isAdmin    Boolean     @default(false)
+  // Vinculo com o cadastro da congregacao. E o que permite ao irmao ver as proprias
+  // designacoes: sem ele so restaria casar por nome, que falha em silencio quando o nome do
+  // login difere do cadastro ("Henzel D. Almeida" vs "Henzel Almeida").
+  // @unique: uma conta por irmao. SetNull para que excluir um irmao nao apague a conta.
+  irmaoId    Int?        @unique
+  irmao      Irmao?      @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
   historicos Historico[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
@@ -83,6 +89,7 @@ model Irmao {
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio         String?
   ativo              Boolean            @default(true)
+  usuario            Usuario?
   indisponibilidades Indisponibilidade[]
   dirigenteSaidas    DirigenteSaidaCampo[]
   createdAt          DateTime           @default(now())

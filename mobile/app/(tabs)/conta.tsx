@@ -24,6 +24,8 @@ import type { Usuario } from "@/api/types";
 import { ConfirmDialog, useConfirm, useToast } from "@/components/ui";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { UserActionSheet } from "@/components/conta/UserActionSheet";
+import { VincularIrmaoSheet } from "@/components/conta/VincularIrmaoSheet";
+import { useIrmaosDisponiveis } from "@/api/hooks/useMinhasDesignacoes";
 import { useAuth } from "@/context/AuthContext";
 import { colors, radius, shadow } from "@/theme";
 
@@ -98,6 +100,8 @@ export default function ContaScreen() {
   const [novoNome, setNovoNome] = useState("");
   const [novoNickname, setNovoNickname] = useState("");
   const [menuUser, setMenuUser] = useState<Usuario | null>(null);
+  const [vinculandoUser, setVinculandoUser] = useState<Usuario | null>(null);
+  const [novoIrmaoId, setNovoIrmaoId] = useState<number | null>(null);
 
   useEffect(() => {
     setNome(usuario?.nome ?? "");
@@ -113,6 +117,7 @@ export default function ContaScreen() {
   const toggleAdmin = useToggleAdmin();
   const resetSenha = useResetSenhaUsuario();
   const excluirUsuario = useExcluirUsuario();
+  const { data: irmaosLivres } = useIrmaosDisponiveis(null, isAdmin && showNovo);
 
   const profileDirty =
     nome.trim() !== (usuario?.nome ?? "") || nickname.trim() !== (usuario?.nickname ?? "");
@@ -292,6 +297,38 @@ export default function ContaScreen() {
                   onChangeText={setNovoNickname}
                   autoCapitalize="none"
                 />
+
+                <Text style={[styles.fieldLabel, { marginTop: 14 }]}>
+                  Sincronizar com um irmão
+                </Text>
+                <Text style={styles.novoHint}>
+                  É o vínculo que faz as designações dele aparecerem em "Minhas Designações".
+                </Text>
+                <View style={styles.irmaoChips}>
+                  <Pressable
+                    onPress={() => setNovoIrmaoId(null)}
+                    style={[styles.irmaoChip, novoIrmaoId === null && styles.irmaoChipAtivo]}
+                  >
+                    <Text style={[styles.irmaoChipTexto, novoIrmaoId === null && styles.irmaoChipTextoAtivo]}>
+                      Sem vínculo
+                    </Text>
+                  </Pressable>
+                  {(irmaosLivres ?? []).filter((i) => i.disponivel).map((i) => {
+                    const ativo = novoIrmaoId === i.id;
+                    return (
+                      <Pressable
+                        key={i.id}
+                        onPress={() => setNovoIrmaoId(i.id)}
+                        style={[styles.irmaoChip, ativo && styles.irmaoChipAtivo]}
+                      >
+                        <Text style={[styles.irmaoChipTexto, ativo && styles.irmaoChipTextoAtivo]}>
+                          {i.nome}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
                 <Pressable
                   style={[styles.btnPrimary, { marginTop: 14 }]}
                   onPress={() =>
@@ -301,9 +338,11 @@ export default function ContaScreen() {
                       await criarUsuario.mutateAsync({
                         nome: novoNome.trim(),
                         nickname: novoNickname.trim(),
+                        irmaoId: novoIrmaoId,
                       });
                       setNovoNome("");
                       setNovoNickname("");
+                      setNovoIrmaoId(null);
                       setShowNovo(false);
                     }, "Usuário criado! Senha: jw1010")
                   }
@@ -369,6 +408,12 @@ export default function ContaScreen() {
         onToggleAdmin={doToggleAdmin}
         onResetSenha={doReset}
         onExcluir={doExcluir}
+        onVincular={(u) => { setMenuUser(null); setVinculandoUser(u); }}
+      />
+      <VincularIrmaoSheet
+        user={vinculandoUser}
+        onClose={() => setVinculandoUser(null)}
+        onVinculado={refreshUsuario}
       />
       <ConfirmDialog config={confirm.config} onClose={confirm.close} />
     </View>
@@ -413,6 +458,19 @@ const styles = StyleSheet.create({
   profileName: { fontSize: 20, fontWeight: "600", color: colors.text },
   profileNick: { fontSize: 13, color: colors.textMuted, marginTop: 3 },
   linhaCargo: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+  novoHint: { fontSize: 12, color: colors.textMuted, marginTop: 3, marginBottom: 8, lineHeight: 17 },
+  irmaoChips: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  irmaoChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surface,
+  },
+  irmaoChipAtivo: { backgroundColor: colors.primary, borderColor: colors.primary },
+  irmaoChipTexto: { fontSize: 12.5, fontWeight: "500", color: colors.textSecondary },
+  irmaoChipTextoAtivo: { color: colors.textOnPrimary },
   adminBadge: {
     flexDirection: "row",
     alignItems: "center",

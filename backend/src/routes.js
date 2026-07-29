@@ -11,6 +11,7 @@ const EstatisticasController = require('./controllers/EstatisticasController');
 const ReuniaoController = require('./controllers/ReuniaoController');
 const SaidaCampoController = require('./controllers/SaidaCampoController');
 const DirigentesController = require('./controllers/DirigentesController');
+const MinhasDesignacoesController = require('./controllers/MinhasDesignacoesController');
 const requireAdmin = require('./middleware/requireAdmin');
 const multer = require('multer');
 
@@ -41,7 +42,9 @@ routes.put('/auth/nome', AuthController.alterarNome);
 
 // ==================== USUARIOS (Admin) ====================
 routes.get('/usuarios', requireAdmin, UsuarioController.index);
+routes.get('/usuarios/irmaos-disponiveis', requireAdmin, UsuarioController.irmaosDisponiveis);
 routes.post('/usuarios', requireAdmin, UsuarioController.create);
+routes.put('/usuarios/:id/irmao', requireAdmin, UsuarioController.vincularIrmao);
 routes.put('/usuarios/nickname', UsuarioController.updateNickname);
 routes.put('/usuarios/:id/admin', requireAdmin, UsuarioController.toggleAdmin);
 routes.put('/usuarios/:id/reset-senha', requireAdmin, UsuarioController.resetSenha);
@@ -66,6 +69,9 @@ routes.delete('/quadros/dias', QuadroController.deleteDia);
 routes.get('/quadros/:id', QuadroController.show);
 routes.put('/quadros/:id', QuadroController.update);
 routes.delete('/quadros/:id', requireAdmin, QuadroController.delete);
+
+// ==================== MINHAS DESIGNACOES ====================
+routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
 
 // ==================== HISTORICO ====================
 routes.get('/historico', HistoricoController.index);

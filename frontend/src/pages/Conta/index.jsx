@@ -8,6 +8,7 @@ import {
   KeyRound,
   LogOut,
   MoreVertical,
+  Link as LinkIcon,
   Eye,
   EyeOff,
   X,
@@ -64,6 +65,9 @@ export default function Conta() {
   const [showNovo, setShowNovo] = useState(false);
   const [novoNome, setNovoNome] = useState('');
   const [novoNickname, setNovoNickname] = useState('');
+  const [novoIrmaoId, setNovoIrmaoId] = useState('');
+  const [irmaosDisponiveis, setIrmaosDisponiveis] = useState([]);
+  const [vinculandoId, setVinculandoId] = useState(null);
   const [menuId, setMenuId] = useState(null);
 
   useEffect(() => {
@@ -80,10 +84,42 @@ export default function Conta() {
     }
   };
 
+  const carregarIrmaosDisponiveis = async (usuarioId = null) => {
+    try {
+      const qs = usuarioId ? `?usuarioId=${usuarioId}` : '';
+      const res = await authFetch(`/usuarios/irmaos-disponiveis${qs}`);
+      if (res.ok) setIrmaosDisponiveis(await res.json());
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
-    if (usuario?.isAdmin) carregarUsuarios();
+    if (usuario?.isAdmin) {
+      carregarUsuarios();
+      carregarIrmaosDisponiveis();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario?.isAdmin]);
+
+  /** Vincula (irmaoId) ou desvincula (null) a conta ao cadastro de um irmão. */
+  const handleVincular = async (usuarioId, irmaoId) => {
+    try {
+      const res = await authFetch(`/usuarios/${usuarioId}/irmao`, {
+        method: 'PUT',
+        body: JSON.stringify({ irmaoId: irmaoId === '' ? null : Number(irmaoId) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao vincular');
+
+      addToast(irmaoId ? `Vinculado a ${data.irmao?.nome}` : 'Vínculo removido', 'success');
+      setVinculandoId(null);
+      await carregarUsuarios();
+      await carregarIrmaosDisponiveis();
+    } catch (e) {
+      addToast(e.message || 'Erro ao vincular', 'error');
+    }
+  };
 
   const profileDirty =
     nome.trim() !== (usuario?.nome || '') || nickname.trim() !== (usuario?.nickname || '');
@@ -130,13 +166,22 @@ export default function Conta() {
   const handleCriarUsuario = async () => {
     if (!novoNome.trim() || !novoNickname.trim()) return;
     try {
-      const res = await authFetch('/usuarios', { method: 'POST', body: JSON.stringify({ nome: novoNome.trim(), nickname: novoNickname.trim() }) });
+      const res = await authFetch('/usuarios', {
+        method: 'POST',
+        body: JSON.stringify({
+          nome: novoNome.trim(),
+          nickname: novoNickname.trim(),
+          irmaoId: novoIrmaoId ? Number(novoIrmaoId) : null,
+        }),
+      });
       if (res.ok) {
         addToast(`Usuário ${novoNome} criado! Senha: jw1010`, 'success');
         setNovoNome('');
         setNovoNickname('');
+        setNovoIrmaoId('');
         setShowNovo(false);
         carregarUsuarios();
+        carregarIrmaosDisponiveis();
       } else {
         const d = await res.json();
         addToast(d.error || 'Erro ao criar usuário', 'error');
@@ -249,6 +294,25 @@ export default function Conta() {
                 <div style={{ background: '#F6F0E4', borderRadius: '14px', padding: '14px', marginTop: '12px' }}>
                   <input placeholder="Nome completo" value={novoNome} onChange={(e) => setNovoNome(e.target.value)} className="t-input" style={{ marginBottom: '10px' }} />
                   <input placeholder="Nickname (para login)" value={novoNickname} onChange={(e) => setNovoNickname(e.target.value)} className="t-input" />
+
+                  <label className="t-label" style={{ marginTop: '12px', display: 'block' }}>
+                    Sincronizar com um irmão cadastrado
+                  </label>
+                  <select
+                    value={novoIrmaoId}
+                    onChange={(e) => setNovoIrmaoId(e.target.value)}
+                    className="t-input"
+                    style={{ width: '100%' }}
+                  >
+                    <option value="">Não vincular por enquanto</option>
+                    {irmaosDisponiveis.filter((i) => i.disponivel).map((i) => (
+                      <option key={i.id} value={i.id}>{i.nome}</option>
+                    ))}
+                  </select>
+                  <p style={{ fontSize: '0.75rem', color: '#A2977F', margin: '6px 0 0', lineHeight: 1.45 }}>
+                    O vínculo é o que faz as designações do irmão aparecerem em "Minhas Designações".
+                  </p>
+
                   <button onClick={handleCriarUsuario} className="t-btn t-btn-primary" style={{ width: '100%', marginTop: '12px' }}>Criar Usuário</button>
                 </div>
               )}
@@ -262,6 +326,14 @@ export default function Conta() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '0.78rem', color: '#A2977F' }}>@{u.nickname}</span>
                         <PrivilegioBadge privilegio={u.privilegio} tamanho="sm" abreviado />
+                        {!u.irmaoId && (
+                          <span
+                            title="Sem vínculo, este irmão não consegue ver as próprias designações"
+                            style={{ fontSize: '0.66rem', fontWeight: 700, color: '#9A5A38', background: '#F1E1D2', borderRadius: '999px', padding: '3px 8px' }}
+                          >
+                            Sem irmão vinculado
+                          </span>
+                        )}
                       </div>
                     </div>
                     {u.isAdmin && <span style={{ ...adminBadge, padding: '4px 9px', fontSize: '0.66rem' }}><Shield size={10} fill="#54622F" /> Admin</span>}
@@ -274,11 +346,45 @@ export default function Conta() {
                         </button>
                         {menuId === u.id && (
                           <div style={{ position: 'absolute', right: 0, top: '40px', background: '#FBF7EF', border: '1px solid #ECE3D3', borderRadius: '12px', boxShadow: '0 10px 24px rgba(43,38,32,0.12)', zIndex: 20, overflow: 'hidden', minWidth: '170px' }}>
+                            <button
+                              onClick={() => { setMenuId(null); setVinculandoId(u.id); carregarIrmaosDisponiveis(u.id); }}
+                              style={menuItem}
+                            >
+                              <LinkIcon size={15} /> {u.irmaoId ? 'Alterar irmão' : 'Vincular a irmão'}
+                            </button>
                             <button onClick={() => handleToggleAdmin(u.id)} style={menuItem}><Shield size={15} /> {u.isAdmin ? 'Remover admin' : 'Tornar admin'}</button>
                             <button onClick={() => handleResetSenha(u.id, u.nome)} style={menuItem}><KeyRound size={15} /> Redefinir senha</button>
                             <button onClick={() => handleDeletar(u.id, u.nome)} style={{ ...menuItem, color: '#9A4632', borderBottom: 'none' }}><X size={15} /> Excluir</button>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {vinculandoId === u.id && (
+                      <div style={{ position: 'absolute', right: 0, top: '40px', background: '#FBF7EF', border: '1px solid #ECE3D3', borderRadius: '12px', boxShadow: '0 10px 24px rgba(43,38,32,0.12)', zIndex: 30, padding: '12px', minWidth: '260px' }}>
+                        <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#8A8071', marginBottom: '8px' }}>
+                          Vincular {u.nome} a:
+                        </div>
+                        <select
+                          defaultValue={u.irmaoId || ''}
+                          onChange={(e) => handleVincular(u.id, e.target.value)}
+                          className="t-input"
+                          style={{ width: '100%' }}
+                        >
+                          <option value="">— sem vínculo —</option>
+                          {irmaosDisponiveis.map((i) => (
+                            <option key={i.id} value={i.id} disabled={!i.disponivel}>
+                              {i.nome}{!i.disponivel ? ` (já é ${i.vinculadoA?.nickname})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => setVinculandoId(null)}
+                          className="t-btn t-btn-secondary"
+                          style={{ width: '100%', marginTop: '8px' }}
+                        >
+                          Fechar
+                        </button>
                       </div>
                     )}
                   </div>

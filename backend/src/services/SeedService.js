@@ -197,6 +197,12 @@ class SeedService {
                 console.log('Saídas de Campo e Dirigentes configurados com sucesso.');
             }
 
+            // 6. Vincular contas de acesso ao cadastro de irmaos.
+            // Roda a cada boot de proposito: e idempotente, so mexe em quem esta sem vinculo,
+            // e assim uma conta criada antes do irmao existir acaba sendo ligada sozinha.
+            const VinculoIrmaoService = require('./VinculoIrmaoService');
+            await VinculoIrmaoService.sincronizarUsuarios();
+
             console.log('Seed verified.');
         } catch (error) {
             console.error('Seed failed:', error);

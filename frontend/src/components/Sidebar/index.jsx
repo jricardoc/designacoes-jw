@@ -10,6 +10,7 @@ import {
   Users,
   BookOpen,
   Compass,
+  CalendarCheck,
 } from "lucide-react";
 import { LogoMark } from "../Logo";
 import "./styles.css";
@@ -53,6 +54,7 @@ export default function Sidebar() {
   }, []);
 
   const menuItems = [
+    { name: "Minhas", icon: CalendarCheck, path: "/minhas-designacoes" },
     { name: "Designações", icon: FileText, path: "/designacoes" },
     { name: "Dirigentes", icon: Compass, path: "/dirigentes" },
     { name: "Reunião", icon: Users, path: "/reuniao" },
