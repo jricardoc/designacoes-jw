@@ -207,7 +207,7 @@
   font: 800 11px/1 var(--p-font);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--p-n-600);
+  color: var(--p-n-700);
   margin: 0;
 }
 .v2-exportable-poster .v2-pres-value {
@@ -357,7 +357,10 @@
   border-radius: 0;
   padding: 0;
   font: 600 15.5px/1.25 var(--p-font);
-  color: var(--p-n-600);
+  /* Era --p-n-600 (#8A8071), que dá só 3,63:1 sobre o creme — abaixo do mínimo de
+     4,5:1 para texto normal, e some na impressão. Este marrom sobe para 6,99:1
+     sem virar a cor do nome principal, então a reserva continua sendo reserva. */
+  color: var(--p-n-700);
   text-align: left;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -433,7 +436,7 @@
   font: 800 11px/1 var(--p-font);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--p-n-600);
+  color: var(--p-n-700);
 }
 .v2-exportable-poster .v2-f-value {
   font: 800 17.5px/1.2 var(--p-font);
@@ -493,7 +496,7 @@
   font: 800 11px/1 var(--p-font);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--p-n-600);
+  color: var(--p-n-700);
   text-align: left;
 }
 .v2-exportable-poster .v2-limp-body strong {
