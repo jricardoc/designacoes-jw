@@ -398,7 +398,10 @@
   font-size: 1.12rem;
 }
 .v2-desc {
-  flex: 1;
+  /* `flex: 1` sozinho permitia que a coluna de nomes espremesse o titulo ate ele virar um
+     filete de uma palavra por linha. A base de 42% garante espaco minimo para o titulo. */
+  flex: 1 1 42%;
+  min-width: 0;
   font-weight: 600;
   color: #2B2620;
   font-size: 1.1rem;
@@ -409,6 +412,10 @@
   display: flex;
   justify-content: flex-end;
   min-width: 140px;
+  /* Sem o teto, um nome duplo longo empurrava a caixa para fora da linha e ela passava por
+     cima do titulo da parte (era o caso do item 5, com dois nomes completos). */
+  max-width: 58%;
+  flex-shrink: 1;
 }
 .v2-principal {
   font-weight: 700;
@@ -418,7 +425,11 @@
   border-radius: 6px;
   border: 1px solid #ECE3D3;
   font-size: 1.05rem;
-  white-space: nowrap;
+  /* `nowrap` era a causa do transbordamento: a caixa se recusava a quebrar e crescia sem
+     limite. Nomes duplos ("Fulana / Beltrana") agora quebram em duas linhas. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 /* Múltiplos (Sala A e B / Dirigente e Leitor) */
@@ -436,7 +447,9 @@
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.95rem;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 .v2-dir {
   font-weight: 700;
@@ -615,4 +628,144 @@
 }
 .group-row:hover .btn-delete-row {
   opacity: 1;
+}
+
+/* ==========================================================================
+   MODO EXPORTAÇÃO / IMPRESSÃO
+   ==========================================================================
+   A classe .v2-export é aplicada ao pôster só durante a geração do arquivo e
+   removida logo depois — a tela continua exatamente como estava.
+
+   O que muda, e por quê:
+   - tipografia maior: os tamanhos da tela são pensados para leitura a 50 cm
+     de distância, num monitor; no papel, e principalmente afixado no quadro
+     da congregação, ficavam pequenos demais;
+   - marca d'água escondida: ela ocupava a área 4/4-6/6 do grid, transbordava
+     a folha (saía cortada, "9 Junho -") e ainda gastava tinta sem informar nada;
+   - coluna do fim de semana ocupando toda a altura: antes ela parava na linha 3
+     e o terço inferior da folha ficava vazio;
+   - fundos mais claros e bordas definidas: no papel, contraste de texto vale
+     mais que preenchimento colorido, e economiza tinta.
+   ========================================================================== */
+
+.v2-export {
+  /* Proporção A4 retrato. Antes a captura saía numa tira estreita e alta, que
+     ao caber na folha encolhia tudo e deixava margens enormes nas laterais. */
+  width: 1240px;
+  background: #FFFFFF;
+}
+
+.v2-export .v2-poster-grid {
+  gap: 18px;
+}
+
+/* Fim de semana passa a ocupar a coluna inteira (antes parava na linha 3 e o terço
+   inferior da folha ficava vazio, que era onde a marca d'água tentava disfarçar). */
+.v2-export .v2-col-fim {
+  grid-area: 1 / 4 / 6 / 6;
+}
+
+.v2-export .v2-watermark {
+  display: none;
+}
+
+/* --- tipografia --- */
+.v2-export .v2-time {
+  font-size: 1.32rem;
+  width: 78px;
+  min-width: 78px;
+}
+.v2-export .v2-desc {
+  font-size: 1.34rem;
+  line-height: 1.35;
+}
+.v2-export .v2-principal {
+  font-size: 1.26rem;
+  padding: 7px 13px;
+}
+.v2-export .v2-salab,
+.v2-export .v2-lei {
+  font-size: 1.1rem;
+  padding: 5px 11px;
+}
+.v2-export .v2-sec-title {
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+}
+.v2-export .v2-part-row {
+  padding: 14px 0;
+}
+
+/* --- impressão direta do navegador (texto vetorial, nítido em qualquer DPI) --- */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  /* Some com tudo que não é o pôster: menu, cabeçalhos, botões, acordeões. */
+  body * {
+    visibility: hidden;
+  }
+  .v2-exportable-poster,
+  .v2-exportable-poster * {
+    visibility: visible;
+  }
+  /* Marcada em tempo de execucao para imprimir uma semana de cada vez. */
+  .v2-exportable-poster.v2-nao-imprimir,
+  .v2-exportable-poster.v2-nao-imprimir * {
+    display: none !important;
+  }
+  .v2-exportable-poster {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    background: #FFFFFF;
+  }
+
+  .v2-watermark,
+  .v2-btn-export,
+  .v2-btn-pdf,
+  .v2-controls {
+    display: none !important;
+  }
+
+  /* Não quebrar um bloco no meio entre duas folhas. */
+  .v2-section,
+  .v2-col,
+  .v2-part-row,
+  .v2-fds-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Garante que as cores dos cabeçalhos de seção saiam impressas. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* Botão de impressão direta (qualidade vetorial, ao lado dos de exportação). */
+.v2-btn-imprimir {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #2F6F7E;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(47, 111, 126, 0.2);
+}
+.v2-btn-imprimir:hover {
+  background: #255A66;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(47, 111, 126, 0.3);
 }

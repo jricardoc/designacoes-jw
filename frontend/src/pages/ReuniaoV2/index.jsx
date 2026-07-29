@@ -6,6 +6,7 @@ import {
   Globe,
   Upload,
   Download,
+  Printer,
   Trash2,
   ChevronDown,
   ChevronUp,
@@ -96,13 +97,21 @@ export default function ReuniaoV2() {
 
     try {
       const originalTransform = element.style.transform;
+      const originalWidth = element.style.width;
+
+      // Mesma largura fixa do PDF: sem isso o pôster saía com a largura da janela do
+      // usuário, então a mesma semana gerava imagens diferentes em cada computador.
       element.style.transform = "none";
+      element.style.width = "1240px";
+      element.classList.add("v2-export");
 
       const canvas = await html2canvas(element, {
         scale: 4, // Quadruplica a resolução nativa da tela para hiper qualidade
         useCORS: true,
-        backgroundColor: "#f4f7f6",
+        backgroundColor: "#FFFFFF",
       });
+      element.classList.remove("v2-export");
+      element.style.width = originalWidth;
       const link = document.createElement("a");
       link.download = `programacao-v2-${weekId}.png`;
       link.href = canvas.toDataURL("image/png");
@@ -119,6 +128,36 @@ export default function ReuniaoV2() {
     }
   };
 
+  /**
+   * Impressão direta pelo navegador.
+   *
+   * É o caminho de MAIOR qualidade: o navegador manda o texto para a impressora como
+   * vetor, então sai nítido em qualquer resolução. O "Exportar PDF" continua existindo
+   * porque gera um arquivo para compartilhar — mas ele é uma imagem do pôster, e imagem
+   * sempre perde para texto no papel.
+   *
+   * A folha de estilo @media print (styles.css) esconde menu, botões e marca d'água e
+   * deixa só o pôster.
+   */
+  const imprimirSemana = async (weekId) => {
+    const jaAberta = expandedWeeks[weekId];
+    if (!jaAberta) {
+      setExpandedWeeks((prev) => ({ ...prev, [weekId]: true }));
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    }
+
+    // Só a semana escolhida vai para o papel; as outras saem do fluxo de impressão.
+    const posters = document.querySelectorAll(".v2-exportable-poster");
+    posters.forEach((p) => {
+      if (p.id !== `v2-week-content-${weekId}`) p.classList.add("v2-nao-imprimir");
+    });
+
+    window.print();
+
+    posters.forEach((p) => p.classList.remove("v2-nao-imprimir"));
+    if (!jaAberta) setExpandedWeeks((prev) => ({ ...prev, [weekId]: false }));
+  };
+
   const exportAsPdf = async (weekId) => {
     const element = document.getElementById(`v2-week-content-${weekId}`);
     if (!element) return;
@@ -129,24 +168,30 @@ export default function ReuniaoV2() {
       const originalWidth = element.style.width;
 
       // Layout deterministico (independe da largura da tela) e forca as 2 colunas.
-      // Largura fixa em ~A4 (1123px @96dpi) para capturar sempre a mesma proporcao.
+      // A classe .v2-export aumenta a tipografia, esconde a marca d'agua e faz a coluna do
+      // fim de semana ocupar toda a altura — ver o bloco "MODO EXPORTACAO" no styles.css.
+      element.classList.add("v2-export");
       element.style.transform = "none";
-      element.style.padding = "16px";
-      element.style.width = "1123px";
+      element.style.padding = "20px";
+      element.style.width = "1240px";
 
       const canvas = await html2canvas(element, {
-        scale: 2, // Boa nitidez sem inflar demais o arquivo
+        // scale 3 leva a captura a ~290 DPI numa folha A4; com scale 2 dava ~190 DPI e o
+        // texto saia visivelmente borrado na impressao.
+        scale: 3,
         useCORS: true,
-        backgroundColor: "#f4f7f6",
+        backgroundColor: "#FFFFFF",
       });
 
       // Restaura o estilo depois que a foto for batida
+      element.classList.remove("v2-export");
       element.style.transform = originalTransform;
       element.style.padding = originalPadding;
       element.style.width = originalWidth;
 
-      // Usa JPEG para comprimir o PDF
-      const imgData = canvas.toDataURL("image/jpeg", 0.85);
+      // 0.95 em vez de 0.85: a compressao JPEG mais agressiva criava sujeira em volta das
+      // letras, que e justamente onde o olho repara ao imprimir.
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
       // A orientacao acompanha a proporcao real do poster: como e um layout largo
       // de 2 colunas, isso resulta em paisagem e preenche a pagina (antes ficava
@@ -177,6 +222,8 @@ export default function ReuniaoV2() {
       const x = margin + (availableWidth - finalWidth) / 2;
       const y = margin + (availableHeight - finalHeight) / 2;
 
+      // "SLOW" comprime melhor sem perder qualidade: o arquivo fica menor que com "FAST"
+      // e a imagem continua a mesma. Vale o segundo a mais na geracao.
       pdf.addImage(
         imgData,
         "JPEG",
@@ -185,7 +232,7 @@ export default function ReuniaoV2() {
         finalWidth,
         finalHeight,
         undefined,
-        "FAST",
+        "SLOW",
       );
       pdf.save(`programacao-v2-${weekId}.pdf`);
     } catch (error) {
@@ -297,6 +344,16 @@ export default function ReuniaoV2() {
                               title="Fazer Download (Poster)"
                             >
                               <Download size={16} /> Exportar Imagem
+                            </button>
+                            <button
+                              className="v2-btn-imprimir"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                imprimirSemana(semana.id);
+                              }}
+                              title="Imprimir com qualidade máxima (texto vetorial)"
+                            >
+                              <Printer size={16} /> Imprimir
                             </button>
                           </>
                         )}
