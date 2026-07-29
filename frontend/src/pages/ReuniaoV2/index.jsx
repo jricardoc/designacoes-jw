@@ -110,7 +110,7 @@ export default function ReuniaoV2() {
       const canvas = await html2canvas(element, {
         scale: 4, // Quadruplica a resolução nativa da tela para hiper qualidade
         useCORS: true,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#FBF7EF",
       });
       element.classList.remove("v2-export");
       element.style.width = originalWidth;
@@ -180,7 +180,7 @@ export default function ReuniaoV2() {
         // texto saia visivelmente borrado na impressao.
         scale: 3,
         useCORS: true,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: "#FBF7EF",
       });
 
       // Restaura o estilo depois que a foto for batida

@@ -26,25 +26,38 @@
 @import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap");
 
 .v2-exportable-poster {
-  /* Tokens do design system Modernist. */
-  --p-text: #201e1d;
-  --p-accent: #ec3013;
-  --p-accent-400: #ff9783;
-  --p-accent-500: #ff563c;
-  --p-accent-700: #ae1800;
-  --p-n-100: #f8f4f4;
-  --p-n-300: #d7d3d3;
-  --p-n-400: #bab6b6;
-  --p-n-500: #9b9797;
-  --p-n-600: #7d7979;
-  --p-n-700: #605d5d;
+  /* PALETA — vinda da Reunião V1 (src/pages/Reuniao/styles.css).
+     Do design Modernist ficou só a estrutura e a fonte Archivo; as cores são as
+     que a congregação já reconhece do resto do sistema: base creme, texto marrom
+     escuro, terracota como acento e uma cor própria por seção. */
+  --p-text: #2B2620;
+  --p-accent: #A8503B;
+  --p-accent-400: #C6BAA0;
+  --p-accent-500: #B06A43;
+  --p-accent-700: #7A3D2C;
+  --p-n-100: #F6F0E4;
+  --p-n-300: #ECE3D3;
+  --p-n-400: #C6BAA0;
+  --p-n-500: #A2977F;
+  --p-n-600: #8A8071;
+  --p-n-700: #5C5446;
+
+  /* Cor de cada seção, como na V1. */
+  --p-tesouros: #558790;
+  --p-ministerio: #be8217;
+  --p-vidacrista: #b92f23;
+  --p-fds: #dbe4c6;
+  --p-fds-borda: #aec28a;
+  --p-limpeza: #538d35;
+  --p-limpeza-borda: #3c6e22;
+
   --p-font: "Archivo", system-ui, sans-serif;
 
   box-sizing: border-box;
   /* Respiro mínimo. Na tela o pôster fica dentro de um card, então não precisa de
      moldura própria; no papel, a margem quem dá é a folha. */
   padding: 12px 14px;
-  background: #fff;
+  background: #FBF7EF;
   color: var(--p-text);
   font-family: var(--p-font);
   display: flex;
@@ -161,7 +174,7 @@
 }
 .v2-exportable-poster .v2-badge-reading {
   background: var(--p-accent);
-  color: #fff;
+  color: #FBF7EF;
   padding: 5px 10px 4px;
   border-radius: 0;
   font: 800 14.5px/1 var(--p-font);
@@ -238,25 +251,33 @@
   border-radius: 0;
   overflow: visible;
 }
-.v2-exportable-poster .v2-sec-title,
-.v2-exportable-poster .v2-sec-tesouros .v2-sec-title,
-.v2-exportable-poster .v2-sec-ministerio .v2-sec-title,
-.v2-exportable-poster .v2-sec-vidacrista .v2-sec-title {
+/* Barra de seção: forma do design novo (sólida, reta, caixa-alta espaçada) com a
+   cor que cada seção já tinha na V1. São elas que deixam a folha legível de longe,
+   afixada no quadro — a pessoa acha a seção pela cor antes de ler o título. */
+.v2-exportable-poster .v2-sec-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  /* O design troca os gradientes coloridos por uma barra única preta: no papel
-     isso dá mais contraste e gasta muito menos tinta. O vermelho fica reservado
-     para o que precisa saltar (leitura semanal, fim de semana, horários). */
   background: var(--p-text);
-  color: #fff;
+  color: #FBF7EF;
   padding: 6px 10px;
   font: 800 14px/1 var(--p-font);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+.v2-exportable-poster .v2-sec-tesouros .v2-sec-title {
+  background: var(--p-tesouros);
+}
+.v2-exportable-poster .v2-sec-ministerio .v2-sec-title {
+  background: var(--p-ministerio);
+}
+.v2-exportable-poster .v2-sec-vidacrista .v2-sec-title {
+  background: var(--p-vidacrista);
+}
 .v2-exportable-poster .v2-sec-title svg {
-  color: var(--p-accent-400);
+  /* Creme translúcido em vez de uma cor fixa: o ícone acompanha qualquer barra
+     sem precisar de uma regra por seção. */
+  color: rgba(251, 247, 239, 0.75);
   width: 13px;
   height: 13px;
 }
@@ -371,12 +392,16 @@
   border-bottom: none;
   padding-bottom: 0;
 }
+/* Na V1 o Fim de Semana é uma faixa clara (sage) com texto escuro e um filete mais
+   forte embaixo — é o único bloco que não usa barra escura, e isso o distingue à
+   distância. Mantido aqui. */
 .v2-exportable-poster .v2-split-header.fim .v2-split-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--p-accent);
-  color: #fff;
+  background: var(--p-fds);
+  color: var(--p-text);
+  border-bottom: 2px solid var(--p-fds-borda);
   width: 100%;
   padding: 7px 10px;
   font: 800 15px/1 var(--p-font);
@@ -433,12 +458,15 @@
 }
 
 /* --- limpeza semanal: faixa de largura total no rodapé -------------------- */
+/* Limpeza: verde da V1. Só a moldura e o rótulo ganham cor — encher a faixa
+   inteira de verde num rodapé de largura total gastaria tinta à toa e roubaria
+   contraste do nome do grupo, que é a informação. */
 .v2-exportable-poster .v2-limpeza-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 16px;
-  border: 2px solid var(--p-text);
+  border: 2px solid var(--p-limpeza);
   padding: 10px 14px;
 }
 .v2-exportable-poster .v2-limp-header {
@@ -447,7 +475,7 @@
   gap: 8px;
   flex: none;
   background: transparent;
-  color: var(--p-text);
+  color: var(--p-limpeza-borda);
   padding: 0;
   font: 800 13px/1 var(--p-font);
   letter-spacing: 0.12em;
