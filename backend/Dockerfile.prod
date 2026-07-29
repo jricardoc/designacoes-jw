@@ -10,4 +10,18 @@ RUN npx prisma generate
 EXPOSE 3001
 # Aplica o schema ao banco no boot antes de subir a API (sem isso, um deploy
 # limpo inicia sem as tabelas). Idempotente.
-CMD ["sh", "-c", "npx prisma db push && npm start"]
+#
+# O `|| echo` nao e descuido: `prisma db push` RECUSA mudancas que considera arriscadas
+# (criar uma constraint UNIQUE, por exemplo). Com o encadeamento anterior, so com `&&`, o
+# `npm start` nunca era alcancado: o container reiniciava em loop e a API ficava 100% fora
+# do ar por causa de uma alteracao de schema. Foi o que aconteceu ao adicionar
+# `Usuario.irmaoId @unique`.
+#
+# Agora o servidor sobe de qualquer jeito e o log traz o aviso. Aplicar manualmente depois
+# de conferir o diff:
+#   npx prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --script
+#   npx prisma db push --accept-data-loss
+# Uma coluna faltando degrada um endpoint; um crash loop derruba o sistema inteiro.
+#
+# Correcao definitiva: trocar `db push` por migrations versionadas (`prisma migrate deploy`).
+CMD ["sh", "-c", "{ npx prisma db push || echo '>>> AVISO: prisma db push foi RECUSADO. O schema do banco pode estar desatualizado. Confira o diff e aplique manualmente. <<<'; } && npm start"]
