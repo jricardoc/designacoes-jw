@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
-import type { FuncaoId, Irmao, NivelAudioVideo } from "@/api/types";
+import type { FuncaoId, Irmao, NivelAudioVideo, PrivilegioId } from "@/api/types";
 
 export function useIrmaos() {
   return useQuery({
@@ -18,6 +18,8 @@ export interface IrmaoInput {
   nome: string;
   funcoes: FuncaoId[];
   nivelAudioVideo: NivelAudioVideo;
+  /** `null` limpa o privilégio; omitir mantém o valor atual (ver IrmaoController.update). */
+  privilegio?: PrivilegioId | null;
   ativo?: boolean;
 }
 

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Usuario } from "@/api/types";
 import { Sheet } from "@/components/ui";
 import { colors } from "@/theme";
+import { privilegioLabel } from "@/utils/funcoes";
 
 function initials(name?: string | null) {
   if (!name) return "?";
@@ -34,6 +35,7 @@ export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, on
               </Text>
               <Text style={styles.sub}>
                 @{user.nickname} · {user.isAdmin ? "Administrador" : "Membro"}
+                {user.privilegio ? ` · ${privilegioLabel(user.privilegio)}` : ""}
               </Text>
             </View>
           </View>

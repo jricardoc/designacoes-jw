@@ -78,7 +78,9 @@ export default function EscalaScreen() {
       if (!map[e.data]) map[e.data] = { data: e.data, dia: e.dia, escalas: [] };
       map[e.data].escalas.push(e);
     }
-    return Object.values(map).sort((a, b) => compareDataBR(a.data, b.data));
+    // O mês do quadro é necessário para ordenar corretamente a virada de ano (um quadro de
+    // janeiro começa com os dias de dezembro).
+    return Object.values(map).sort((a, b) => compareDataBR(a.data, b.data, quadro.mes));
   }, [quadro]);
 
   const stats = useMemo(() => {

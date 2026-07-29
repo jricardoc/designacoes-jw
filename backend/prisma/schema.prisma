@@ -79,6 +79,9 @@ model Irmao {
   nome               String             @unique
   funcoes            String[]
   nivelAudioVideo    String             @default("experiente") // "experiente" ou "treinando"
+  // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
+  // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
+  privilegio         String?
   ativo              Boolean            @default(true)
   indisponibilidades Indisponibilidade[]
   dirigenteSaidas    DirigenteSaidaCampo[]

@@ -1,4 +1,35 @@
-import type { FuncaoId } from "@/api/types";
+import type { FuncaoId, PrivilegioId } from "@/api/types";
+
+/**
+ * Privilégios de serviço. Espelha frontend/src/utils/privilegios.js e os valores aceitos por
+ * `normalizarPrivilegio` em backend/src/controllers/IrmaoController.js.
+ * O irmão tem no máximo um, e pode não ter nenhum.
+ */
+export const PRIVILEGIOS: {
+  id: PrivilegioId;
+  label: string;
+  abreviacao: string;
+  color: string;
+  bg: string;
+}[] = [
+  { id: "anciao", label: "Ancião", abreviacao: "Ancião", color: "#7A5C9E", bg: "#EFE9F5" },
+  {
+    id: "servoMinisterial",
+    label: "Servo Ministerial",
+    abreviacao: "Servo Min.",
+    color: "#2F6F7E",
+    bg: "#E4EFF2",
+  },
+];
+
+export function privilegioInfo(id: PrivilegioId | null | undefined) {
+  if (!id) return null;
+  return PRIVILEGIOS.find((p) => p.id === id) ?? null;
+}
+
+export function privilegioLabel(id: PrivilegioId | null | undefined): string {
+  return privilegioInfo(id)?.label ?? "";
+}
 
 /** Functions a brother can be assigned, as shown in the editor. */
 export const FUNCOES: { id: FuncaoId; label: string; color: string }[] = [

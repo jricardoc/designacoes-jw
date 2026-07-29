@@ -23,11 +23,11 @@ import {
   useExcluirIrmao,
   useIrmaos,
 } from "@/api/hooks/useIrmaos";
-import type { FuncaoId, NivelAudioVideo } from "@/api/types";
+import type { FuncaoId, NivelAudioVideo, PrivilegioId } from "@/api/types";
 import { ConfirmDialog, useConfirm, useToast } from "@/components/ui";
 import { CalendarioIndisponibilidade } from "@/components/config/CalendarioIndisponibilidade";
 import { colors } from "@/theme";
-import { FUNCOES } from "@/utils/funcoes";
+import { FUNCOES, PRIVILEGIOS, privilegioLabel } from "@/utils/funcoes";
 
 const WD_LABEL: Record<string, string> = {
   domingo: "Domingo",
@@ -64,6 +64,7 @@ export default function IrmaoScreen() {
   const [nome, setNome] = useState("");
   const [funcoes, setFuncoes] = useState<FuncaoId[]>([]);
   const [nivel, setNivel] = useState<NivelAudioVideo>("experiente");
+  const [privilegio, setPrivilegio] = useState<PrivilegioId | null>(null);
   const [ativo, setAtivo] = useState(true);
   const [saidas, setSaidas] = useState<number[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -73,6 +74,7 @@ export default function IrmaoScreen() {
       setNome(existente.nome);
       setFuncoes(existente.funcoes);
       setNivel(existente.nivelAudioVideo);
+      setPrivilegio(existente.privilegio ?? null);
       setAtivo(existente.ativo);
       setHydrated(true);
     }
@@ -84,6 +86,9 @@ export default function IrmaoScreen() {
 
   const toggleFuncao = (f: FuncaoId) =>
     setFuncoes((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
+  // Exclusivo e desmarcável: tocar no que já está ativo limpa o privilégio.
+  const togglePrivilegio = (p: PrivilegioId) =>
+    setPrivilegio((prev) => (prev === p ? null : p));
   const toggleSaida = (sid: number) =>
     setSaidas((prev) => (prev.includes(sid) ? prev.filter((x) => x !== sid) : [...prev, sid]));
 
@@ -95,10 +100,15 @@ export default function IrmaoScreen() {
   const isAV = funcoes.includes("audioVideo");
   const saving = criar.isPending || atualizar.isPending;
 
-  const summary =
-    (funcoes.length
+  const summary = [
+    privilegioLabel(privilegio),
+    funcoes.length
       ? `${funcoes.length} ${funcoes.length === 1 ? "função" : "funções"}`
-      : "Sem funções") + (ativo ? "" : " · inativo");
+      : "Sem funções",
+    ativo ? "" : "inativo",
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   const handleSave = async () => {
     if (!nome.trim()) {
@@ -108,9 +118,9 @@ export default function IrmaoScreen() {
     try {
       let savedId = irmaoId;
       if (irmaoId) {
-        await atualizar.mutateAsync({ id: irmaoId, nome: nome.trim(), funcoes, nivelAudioVideo: nivel, ativo });
+        await atualizar.mutateAsync({ id: irmaoId, nome: nome.trim(), funcoes, nivelAudioVideo: nivel, privilegio, ativo });
       } else {
-        const novo = await criar.mutateAsync({ nome: nome.trim(), funcoes, nivelAudioVideo: nivel });
+        const novo = await criar.mutateAsync({ nome: nome.trim(), funcoes, nivelAudioVideo: nivel, privilegio });
         savedId = novo.id;
       }
       if (isDirigente && savedId) {
@@ -170,6 +180,33 @@ export default function IrmaoScreen() {
                   {active ? <Ionicons name="checkmark" size={14} color="#FBF7EF" /> : null}
                   <Text style={[styles.chipText, { color: active ? "#FBF7EF" : "#7A7060" }]}>
                     {f.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Text style={[styles.label, { marginTop: 18 }]}>Privilégio</Text>
+          <Text style={styles.hint}>Opcional. Toque de novo para remover.</Text>
+          <View style={styles.chips}>
+            {PRIVILEGIOS.map((p) => {
+              const active = privilegio === p.id;
+              return (
+                <Pressable
+                  key={p.id}
+                  onPress={() => togglePrivilegio(p.id)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  style={[
+                    styles.chip,
+                    active
+                      ? { backgroundColor: p.color, borderColor: p.color }
+                      : { backgroundColor: colors.surface, borderColor: colors.borderStrong },
+                  ]}
+                >
+                  {active ? <Ionicons name="checkmark" size={14} color="#FBF7EF" /> : null}
+                  <Text style={[styles.chipText, { color: active ? "#FBF7EF" : "#7A7060" }]}>
+                    {p.label}
                   </Text>
                 </Pressable>
               );
@@ -336,6 +373,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
   },
+  hint: { fontSize: 12, color: colors.textMuted, marginTop: 4, lineHeight: 17 },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
   chip: {
     flexDirection: "row",

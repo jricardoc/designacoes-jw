@@ -10,6 +10,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from '../../../context/AuthContext';
+import { PRIVILEGIOS } from '../../../utils/privilegios';
 
 const FUNCOES = [
   { id: "microfone", label: "Microfone", color: "#6E7B57" },
@@ -41,6 +42,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
   const [nivelAudioVideo, setNivelAudioVideo] = useState(
     irmao?.nivelAudioVideo || "experiente",
   );
+  const [privilegio, setPrivilegio] = useState(irmao?.privilegio ?? null);
   const [ativo, setAtivo] = useState(irmao?.ativo ?? true);
   const [indisponibilidades, setIndisponibilidades] = useState([]);
   const [salvando, setSalvando] = useState(false);
@@ -76,31 +78,12 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
 
   const carregarSaidasCampo = async () => {
     try {
+      // A ordem (dia da semana, depois turno) já vem pronta do backend — ver
+      // backend/src/utils/ordenacao.js. Antes esta tela reordenava por conta própria, e o
+      // desempate dela era por id, não por turno: uma saída de sábado cadastrada fora de
+      // ordem aparecia aqui diferente de todas as outras telas.
       const response = await authFetch("/saidas-campo");
-      let data = await response.json();
-      
-      const ordemDias = {
-        "segunda": 1, "segunda-feira": 1,
-        "terca": 2, "terça": 2, "terça-feira": 2,
-        "quarta": 3, "quarta-feira": 3,
-        "quinta": 4, "quinta-feira": 4,
-        "sexta": 5, "sexta-feira": 5,
-        "sabado": 6, "sábado": 6,
-        "domingo": 7
-      };
-
-      data.sort((a, b) => {
-        const diaA = (a.diaSemana || "").toLowerCase();
-        const diaB = (b.diaSemana || "").toLowerCase();
-        const dif = (ordemDias[diaA] || 99) - (ordemDias[diaB] || 99);
-        if (dif === 0) {
-          // Se mesmo dia, ordena pelo id ou horário
-          return a.id - b.id;
-        }
-        return dif;
-      });
-
-      setSaidasCampo(data);
+      setSaidasCampo(await response.json());
     } catch (error) {
       console.error("Erro ao carregar saídas de campo:", error);
     }
@@ -226,6 +209,11 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
     );
   };
 
+  // Privilegio e exclusivo (no maximo um) e desmarcavel: clicar no que ja esta ativo limpa.
+  const togglePrivilegio = (privilegioId) => {
+    setPrivilegio((prev) => (prev === privilegioId ? null : privilegioId));
+  };
+
   // Salvar irmao
   const salvar = async () => {
     if (!nome.trim()) {
@@ -242,13 +230,13 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
         // Atualizar
         await authFetch(`/irmaos/${irmao.id}`, {
           method: "PUT",
-          body: JSON.stringify({ nome, funcoes, ativo, nivelAudioVideo }),
+          body: JSON.stringify({ nome, funcoes, ativo, nivelAudioVideo, privilegio }),
         });
       } else {
         // Criar novo
         const res = await authFetch("/irmaos", {
           method: "POST",
-          body: JSON.stringify({ nome, funcoes, nivelAudioVideo }),
+          body: JSON.stringify({ nome, funcoes, nivelAudioVideo, privilegio }),
         });
         const novoIrmao = await res.json();
         irmaoId = novoIrmao.id;
@@ -457,6 +445,68 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   {funcao.label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Privilegio de servico (no maximo um; clicar de novo desmarca) */}
+          <div style={{ marginBottom: "1.25rem" }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "0.35rem",
+                fontWeight: "600",
+                fontSize: "0.9rem",
+                color: "#3A352D",
+              }}
+            >
+              Privilégio
+            </label>
+            <p
+              style={{
+                margin: "0 0 0.6rem",
+                fontSize: "0.78rem",
+                color: "#8A8071",
+                lineHeight: 1.4,
+              }}
+            >
+              Opcional. Clique de novo para remover.
+            </p>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {PRIVILEGIOS.map((p) => {
+                const ativoChip = privilegio === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => togglePrivilegio(p.id)}
+                    aria-pressed={ativoChip}
+                    style={{
+                      padding: "0.5rem 1rem",
+                      borderRadius: "20px",
+                      border: `2px solid ${p.cor}`,
+                      background: ativoChip ? p.cor : "white",
+                      color: ativoChip ? "white" : p.cor,
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      fontSize: "0.85rem",
+                      boxShadow: ativoChip ? `0 4px 12px ${p.cor}40` : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-2px) scale(1.05)";
+                      e.currentTarget.style.boxShadow = `0 6px 16px ${p.cor}50`;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0) scale(1)";
+                      e.currentTarget.style.boxShadow = ativoChip
+                        ? `0 4px 12px ${p.cor}40`
+                        : "none";
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import PageHeader from '../../components/PageHeader';
+import PrivilegioBadge from '../../components/PrivilegioBadge';
 import { useToast, ToastContainer } from '../../components/Toast';
 
 function initials(name) {
@@ -184,7 +185,10 @@ export default function Conta() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                 <div style={{ width: '60px', height: '60px', borderRadius: '999px', background: '#6E7B57', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 700, color: '#FBF7EF', flexShrink: 0 }}>{initials(usuario?.nome)}</div>
                 <div style={{ minWidth: 0, flex: 1 }}>
-                  <div style={{ fontSize: '1.3rem', fontWeight: 600, color: '#2B2620' }}>{usuario?.nome}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '1.3rem', fontWeight: 600, color: '#2B2620' }}>{usuario?.nome}</span>
+                    <PrivilegioBadge privilegio={usuario?.privilegio} />
+                  </div>
                   <div style={{ fontSize: '0.85rem', color: '#A2977F', marginTop: '2px' }}>@{usuario?.nickname}</div>
                 </div>
                 {usuario?.isAdmin && <span style={adminBadge}><Shield size={12} fill="#54622F" /> Admin</span>}
@@ -255,7 +259,10 @@ export default function Conta() {
                     <div style={{ width: '40px', height: '40px', borderRadius: '999px', background: '#EDE6D5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, color: '#9A7E55', flexShrink: 0 }}>{initials(u.nome)}</div>
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontSize: '0.93rem', fontWeight: 600, color: '#2B2620', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{u.nome}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#A2977F' }}>@{u.nickname}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.78rem', color: '#A2977F' }}>@{u.nickname}</span>
+                        <PrivilegioBadge privilegio={u.privilegio} tamanho="sm" abreviado />
+                      </div>
                     </div>
                     {u.isAdmin && <span style={{ ...adminBadge, padding: '4px 9px', fontSize: '0.66rem' }}><Shield size={10} fill="#54622F" /> Admin</span>}
                     {u.id === usuario?.id ? (

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Users, Plus, Search, Edit2, User } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import EditarIrmaoModal from '../EditarIrmaoModal';
+import PrivilegioBadge from '../../PrivilegioBadge';
 
 export default function GerenciarIrmaos() {
   const { authFetch } = useAuth();
@@ -209,8 +210,13 @@ export default function GerenciarIrmaos() {
               }}>
                 {irmao.nome}
               </div>
-              {!irmao.ativo && (
-                <div style={{ fontSize: '0.7rem', color: '#A8503B' }}>Inativo</div>
+              {(irmao.privilegio || !irmao.ativo) && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                  <PrivilegioBadge privilegio={irmao.privilegio} tamanho="sm" abreviado />
+                  {!irmao.ativo && (
+                    <span style={{ fontSize: '0.7rem', color: '#A8503B' }}>Inativo</span>
+                  )}
+                </div>
               )}
             </div>
 

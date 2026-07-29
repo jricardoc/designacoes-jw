@@ -1,5 +1,6 @@
 const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
+const PrivilegioService = require('../services/PrivilegioService');
 
 const SENHA_PADRAO = 'jw1010';
 
@@ -23,7 +24,9 @@ class UsuarioController {
                 orderBy: { nome: 'asc' }
             });
 
-            return res.json(usuarios);
+            // Anota o cargo (servo ministerial / anciao) de quem tambem esta cadastrado como
+            // irmao. Uma query extra para a lista inteira, sem N+1.
+            return res.json(await PrivilegioService.anotarUsuarios(usuarios));
         } catch (error) {
             console.error('Erro ao listar usuarios:', error);
             return res.status(500).json({ error: 'Erro interno' });

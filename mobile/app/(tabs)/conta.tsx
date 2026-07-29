@@ -22,6 +22,7 @@ import {
 } from "@/api/hooks/useMisc";
 import type { Usuario } from "@/api/types";
 import { ConfirmDialog, useConfirm, useToast } from "@/components/ui";
+import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { UserActionSheet } from "@/components/conta/UserActionSheet";
 import { useAuth } from "@/context/AuthContext";
 import { colors, radius, shadow } from "@/theme";
@@ -183,7 +184,10 @@ export default function ContaScreen() {
               <Text style={styles.profileName} numberOfLines={1}>
                 {usuario?.nome}
               </Text>
-              <Text style={styles.profileNick}>@{usuario?.nickname}</Text>
+              <View style={styles.linhaCargo}>
+                <Text style={styles.profileNick}>@{usuario?.nickname}</Text>
+                <PrivilegioBadge privilegio={usuario?.privilegio} size="sm" />
+              </View>
             </View>
             {isAdmin ? (
               <View style={styles.adminBadge}>
@@ -319,7 +323,10 @@ export default function ContaScreen() {
                     <Text style={styles.userName} numberOfLines={1}>
                       {u.nome}
                     </Text>
-                    <Text style={styles.userNick}>@{u.nickname}</Text>
+                    <View style={styles.linhaCargo}>
+                      <Text style={styles.userNick}>@{u.nickname}</Text>
+                      <PrivilegioBadge privilegio={u.privilegio} size="sm" abreviado />
+                    </View>
                   </View>
                   {u.isAdmin ? (
                     <View style={styles.adminBadgeSm}>
@@ -405,6 +412,7 @@ const styles = StyleSheet.create({
   avatarText: { color: colors.textOnPrimary, fontSize: 20, fontWeight: "700" },
   profileName: { fontSize: 20, fontWeight: "600", color: colors.text },
   profileNick: { fontSize: 13, color: colors.textMuted, marginTop: 3 },
+  linhaCargo: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
   adminBadge: {
     flexDirection: "row",
     alignItems: "center",

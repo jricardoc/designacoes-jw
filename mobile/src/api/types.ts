@@ -13,12 +13,20 @@ export type FuncaoId =
 
 export type NivelAudioVideo = "experiente" | "treinando";
 
+/** Privilégio de serviço do irmão. Informativo por enquanto; ausente/null = nenhum. */
+export type PrivilegioId = "servoMinisterial" | "anciao";
+
 export interface Usuario {
   id: number;
   nickname: string;
   nome: string;
   isAdmin: boolean;
   createdAt?: string;
+  /**
+   * Cargo resolvido no backend cruzando o nome do usuário com o cadastro de irmãos.
+   * Não existe FK entre Usuario e Irmao — ver backend/src/services/PrivilegioService.js.
+   */
+  privilegio?: PrivilegioId | null;
 }
 
 export interface LoginResponse {
@@ -54,6 +62,7 @@ export interface Irmao {
   nome: string;
   funcoes: FuncaoId[];
   nivelAudioVideo: NivelAudioVideo;
+  privilegio?: PrivilegioId | null;
   ativo: boolean;
   indisponibilidades?: Indisponibilidade[];
   dirigenteSaidas?: DirigenteSaida[];

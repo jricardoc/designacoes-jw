@@ -20,6 +20,7 @@ import { useIrmaos } from "@/api/hooks/useIrmaos";
 import type { FuncaoId, SaidaCampo } from "@/api/types";
 import { GradientHeader, Loading, useToast } from "@/components/ui";
 import { SaidaCampoModal } from "@/components/config/SaidaCampoModal";
+import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useNotifPref } from "@/notifications/notifPref";
 import { colors, radius, shadow } from "@/theme";
 import { FUNCOES, funcaoColor, funcaoLabel } from "@/utils/funcoes";
@@ -183,8 +184,9 @@ export default function ConfigScreen() {
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color="#C6BAA0" />
                   </View>
-                  {irmao.funcoes.length > 0 ? (
+                  {irmao.privilegio || irmao.funcoes.length > 0 ? (
                     <View style={styles.funcoesRow}>
+                      <PrivilegioBadge privilegio={irmao.privilegio} size="sm" abreviado />
                       {irmao.funcoes.map((f) => (
                         <View
                           key={f}

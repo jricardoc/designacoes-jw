@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 const JwtService = require('../services/JwtService');
+const PrivilegioService = require('../services/PrivilegioService');
 
 class AuthController {
     // Login por nickname (nao email)
@@ -33,12 +34,12 @@ class AuthController {
 
             return res.json({
                 token,
-                usuario: {
+                usuario: await PrivilegioService.anotarUsuario({
                     id: usuario.id,
                     nickname: usuario.nickname,
                     nome: usuario.nome,
                     isAdmin: usuario.isAdmin
-                }
+                })
             });
         } catch (error) {
             console.error('Erro no login:', error);
@@ -64,7 +65,7 @@ class AuthController {
                 return res.status(404).json({ error: 'Usuario nao encontrado' });
             }
 
-            return res.json(usuario);
+            return res.json(await PrivilegioService.anotarUsuario(usuario));
         } catch (error) {
             console.error('Erro ao buscar usuario:', error);
             return res.status(500).json({ error: 'Erro interno do servidor' });
@@ -117,7 +118,9 @@ class AuthController {
                 select: { id: true, nome: true, nickname: true, isAdmin: true }
             });
 
-            return res.json(atualizado);
+            // Trocar o nome pode passar a casar (ou deixar de casar) com um irmao cadastrado,
+            // entao o cargo e reavaliado aqui.
+            return res.json(await PrivilegioService.anotarUsuario(atualizado));
         } catch (error) {
             console.error('Erro ao alterar nome:', error);
             return res.status(500).json({ error: 'Erro interno do servidor' });

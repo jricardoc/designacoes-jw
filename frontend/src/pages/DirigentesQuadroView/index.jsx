@@ -36,6 +36,21 @@ const MESES = [
   "DEZEMBRO",
 ];
 
+/**
+ * Chave de ordenação para datas "dd/MM" dentro de um quadro mensal.
+ *
+ * Um quadro pode conter dias do mês anterior — a escala começa na segunda-feira da semana que
+ * contém o dia 1. Ordenar por `mes * 100 + dia` quebra na virada do ano: num quadro de
+ * JANEIRO, "29/12" daria 1229 e "01/01" daria 101, jogando dezembro para o fim. Como
+ * `agruparPorSemana` abre uma semana nova a cada segunda-feira encontrada, a numeração
+ * "SEMANA N" do PDF saía errada nesse mês.
+ */
+function chaveData(data, mesQuadro) {
+  const [dia, mes] = String(data).split("/").map(Number);
+  const mesRelativo = mes > mesQuadro ? mes - 12 : mes;
+  return mesRelativo * 100 + dia;
+}
+
 const STATUS_CONFIG = {
   rascunho: { label: "Rascunho", color: "#B06A43", bg: "#F1E1D2" },
   publicado: { label: "Publicado", color: "#5E6B48", bg: "#E2E7D2" },
@@ -309,11 +324,7 @@ export default function DirigentesQuadroView() {
 
       return acc;
     }, {})
-  ).sort((a, b) => {
-    const [diaA, mesA] = a.data.split("/").map(Number);
-    const [diaB, mesB] = b.data.split("/").map(Number);
-    return mesA * 100 + diaA - (mesB * 100 + diaB);
-  });
+  ).sort((a, b) => chaveData(a.data, quadro.mes) - chaveData(b.data, quadro.mes));
 
   // Paginação dinâmica para o PDF/Visualização
   const ITEMS_PER_PAGE = 12; // 12 dias = exatamente 2 semanas completas por página

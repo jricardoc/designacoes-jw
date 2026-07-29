@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const { compararSaidasCampo } = require('../utils/ordenacao');
 
 class SaidaCampoController {
     // Listar todas as saídas de campo
@@ -6,10 +7,6 @@ class SaidaCampoController {
         try {
             const saidas = await prisma.saidaCampo.findMany({
                 where: { ativo: true },
-                orderBy: [
-                    { diaSemana: 'asc' },
-                    { turno: 'asc' }
-                ],
                 include: {
                     dirigentesDisponiveis: {
                         include: {
@@ -18,6 +15,12 @@ class SaidaCampoController {
                     }
                 }
             });
+
+            // A ordenacao nao pode ser feita no banco: `diaSemana` e texto, entao o Prisma
+            // ordenaria alfabeticamente (quarta, quinta, sabado, segunda...). Ordenamos aqui
+            // para que todas as telas recebam a semana na ordem natural.
+            saidas.sort(compararSaidasCampo);
+
             return res.json(saidas);
         } catch (error) {
             console.error('Erro ao listar saídas de campo:', error);

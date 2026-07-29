@@ -1,5 +1,19 @@
 const prisma = require('../prisma');
 
+/** Privilegios de servico reconhecidos. `null` = o irmao nao tem nenhum dos dois. */
+const PRIVILEGIOS = ['servoMinisterial', 'anciao'];
+
+/**
+ * Normaliza o privilegio recebido da rede.
+ * Devolve `undefined` quando o campo nao veio (para nao apagar o valor num update parcial)
+ * e `null` quando veio explicitamente vazio (para limpar de verdade).
+ */
+function normalizarPrivilegio(valor) {
+    if (valor === undefined) return undefined;
+    if (valor === null || valor === '') return null;
+    return PRIVILEGIOS.includes(valor) ? valor : null;
+}
+
 class IrmaoController {
     // Listar todos os irmaos
     async index(req, res) {
@@ -45,7 +59,7 @@ class IrmaoController {
     // Criar novo irmao
     async create(req, res) {
         try {
-            const { nome, funcoes, nivelAudioVideo } = req.body;
+            const { nome, funcoes, nivelAudioVideo, privilegio } = req.body;
 
             if (!nome) {
                 return res.status(400).json({ error: 'Nome e obrigatorio' });
@@ -53,9 +67,10 @@ class IrmaoController {
 
             const irmao = await prisma.irmao.create({
                 data: {
-                    nome,
+                    nome: String(nome).trim(),
                     funcoes: funcoes || [],
-                    nivelAudioVideo: nivelAudioVideo || 'experiente'
+                    nivelAudioVideo: nivelAudioVideo || 'experiente',
+                    privilegio: normalizarPrivilegio(privilegio) ?? null
                 }
             });
 
@@ -73,13 +88,18 @@ class IrmaoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { nome, funcoes, ativo, nivelAudioVideo } = req.body;
+            const { nome, funcoes, ativo, nivelAudioVideo, privilegio } = req.body;
 
             const updateData = {};
-            if (nome !== undefined) updateData.nome = nome;
+            if (nome !== undefined) updateData.nome = String(nome).trim();
             if (funcoes !== undefined) updateData.funcoes = funcoes;
             if (ativo !== undefined) updateData.ativo = ativo;
             if (nivelAudioVideo !== undefined) updateData.nivelAudioVideo = nivelAudioVideo;
+
+            // Omitir o campo mantem o valor; enviar null ou "" limpa. Assim um PUT parcial de
+            // outra tela nao apaga o privilegio sem querer.
+            const privilegioNormalizado = normalizarPrivilegio(privilegio);
+            if (privilegioNormalizado !== undefined) updateData.privilegio = privilegioNormalizado;
 
             const irmao = await prisma.irmao.update({
                 where: { id: parseInt(id) },
