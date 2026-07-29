@@ -316,12 +316,16 @@
 .v2-exportable-poster .v2-assign.v2-multi {
   flex-direction: column-reverse;
 }
+/* Principal e Sala B: a diferença de tamanho era de 5px (19 vs 14), o que fazia a
+   reserva parecer uma nota de rodapé. Aproximados para 2px de diferença — a
+   hierarquia continua clara pelo peso (800 vs 600) e pela cor (quase preto vs
+   cinza), que são sinais mais fortes que o corpo da letra e não custam espaço. */
 .v2-exportable-poster .v2-principal {
   background: transparent;
   border: none;
   border-radius: 0;
   padding: 0;
-  font: 800 19px/1.18 var(--p-font);
+  font: 800 17.5px/1.2 var(--p-font);
   color: var(--p-text);
   text-align: left;
   white-space: normal;
@@ -331,7 +335,7 @@
   background: transparent;
   border-radius: 0;
   padding: 0;
-  font: 600 14px/1.25 var(--p-font);
+  font: 600 15.5px/1.25 var(--p-font);
   color: var(--p-n-600);
   text-align: left;
   white-space: normal;
@@ -350,7 +354,7 @@
   background: transparent;
   border-radius: 0;
   padding: 0;
-  font: 600 15px/1.3 var(--p-font);
+  font: 600 15.5px/1.3 var(--p-font);
   color: var(--p-n-700);
   white-space: normal;
 }
@@ -407,7 +411,7 @@
   color: var(--p-n-600);
 }
 .v2-exportable-poster .v2-f-value {
-  font: 800 19px/1.18 var(--p-font);
+  font: 800 17.5px/1.2 var(--p-font);
   color: var(--p-text);
   text-wrap: pretty;
 }
@@ -419,7 +423,7 @@
   color: var(--p-text);
 }
 .v2-exportable-poster .v2-f-sub {
-  font: 600 15px/1.2 var(--p-font);
+  font: 600 15.5px/1.2 var(--p-font);
   color: var(--p-n-700);
 }
 .v2-exportable-poster .v2-f-sub strong,
