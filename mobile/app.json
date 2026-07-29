@@ -14,7 +14,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.norteitapua.designacoesjw"
+      "bundleIdentifier": "com.norteitapua.designacoesjw",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.norteitapua.designacoesjw",

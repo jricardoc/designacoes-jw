@@ -13,6 +13,7 @@ const SaidaCampoController = require('./controllers/SaidaCampoController');
 const DirigentesController = require('./controllers/DirigentesController');
 const MinhasDesignacoesController = require('./controllers/MinhasDesignacoesController');
 const CarrinhoController = require('./controllers/CarrinhoController');
+const PushTokenController = require('./controllers/PushTokenController');
 const requireAdmin = require('./middleware/requireAdmin');
 const multer = require('multer');
 
@@ -91,6 +92,12 @@ routes.delete('/carrinho/publicadores/:id', requireAdmin, CarrinhoController.exc
 
 // ==================== MINHAS DESIGNACOES ====================
 routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
+
+// ==================== PUSH ====================
+// O aparelho registra o token no login e apaga no logout; o lembrete das 19h
+// (AgendadorLembretes) so alcanca quem tem token gravado aqui.
+routes.post('/push/token', PushTokenController.registrar);
+routes.delete('/push/token', PushTokenController.remover);
 
 // ==================== HISTORICO ====================
 routes.get('/historico', HistoricoController.index);

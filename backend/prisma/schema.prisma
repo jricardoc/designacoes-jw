@@ -75,6 +75,7 @@ model Usuario {
   irmaoId    Int?        @unique
   irmao      Irmao?      @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
   historicos Historico[]
+  pushTokens PushToken[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }
@@ -315,4 +316,34 @@ model EscalaDirigente {
   removido        Boolean         @default(false) // Para remover dias
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
+}
+
+// ==========================================================================
+// NOTIFICACOES PUSH
+// ==========================================================================
+
+// Aparelhos que recebem push. A chave e o `token`, nao o usuario: um mesmo
+// aparelho pode trocar de dono (logout/login) e um mesmo irmao pode ter varios
+// aparelhos, entao o vinculo e reatribuido no upsert por token.
+// Cascade porque token de conta apagada nao serve para mais nada.
+model PushToken {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  token     String   @unique // ExponentPushToken[...]
+  platform  String? // "ios" | "android"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Trava de idempotencia do lembrete diario. Se o container reiniciar depois do
+// disparo das 19h, o agendador roda de novo no mesmo dia; sem o unique abaixo
+// isso viraria push repetido no celular de todo mundo a cada restart.
+model LembreteEnviado {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  dataISO   String // dia das designacoes lembradas (YYYY-MM-DD)
+  createdAt DateTime @default(now())
+
+  @@unique([usuarioId, dataISO])
 }

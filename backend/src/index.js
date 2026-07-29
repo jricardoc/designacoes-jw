@@ -5,6 +5,7 @@ const rateLimit = require('express-rate-limit');
 const routes = require('./routes');
 const authMiddleware = require('./middleware/auth');
 const SeedService = require('./services/SeedService');
+const AgendadorLembretes = require('./services/AgendadorLembretes');
 require('dotenv').config();
 
 const app = express();
@@ -71,4 +72,6 @@ app.listen(PORT, async () => {
     console.log(`Server running on port ${PORT}`);
     // Executa seed ao iniciar
     await SeedService.execute();
+    // Depois do seed: e ele que cria/corrige o vinculo usuario-irmao de que o lembrete depende.
+    AgendadorLembretes.iniciar();
 });
