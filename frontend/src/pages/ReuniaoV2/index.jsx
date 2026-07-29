@@ -176,9 +176,11 @@ export default function ReuniaoV2() {
       element.style.transform = "none";
 
       const canvas = await html2canvas(element, {
-        // scale 3 leva a captura a ~290 DPI numa folha A4; com scale 2 dava ~190 DPI e o
-        // texto saia visivelmente borrado na impressao.
-        scale: 3,
+        // 794px de largura x 4 = 3176px numa folha A4 de 210mm, ou seja ~384 DPI.
+        // Impressoras domesticas trabalham em 300-600 DPI; abaixo disso a impressora
+        // interpola e a borda das letras sai macia. Com scale 3 dava ~290 DPI, ja no
+        // limite, e com 2 (o valor original) dava ~190 e borrava de verdade.
+        scale: 4,
         useCORS: true,
         backgroundColor: "#FBF7EF",
       });
@@ -189,9 +191,12 @@ export default function ReuniaoV2() {
       element.style.padding = originalPadding;
       element.style.width = originalWidth;
 
-      // 0.95 em vez de 0.85: a compressao JPEG mais agressiva criava sujeira em volta das
-      // letras, que e justamente onde o olho repara ao imprimir.
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
+      // PNG em vez de JPEG. O JPEG comprime perdendo informacao em transicoes bruscas
+      // de cor, que e exatamente o que e uma letra preta sobre fundo claro: mesmo em
+      // 0.95 sobrava um halo em volta dos caracteres, e a impressora reproduz o halo.
+      // O PNG e sem perdas, entao o texto sai com a borda limpa. O arquivo fica maior,
+      // mas isso e um pdf de uma pagina para afixar - vale a troca.
+      const imgData = canvas.toDataURL("image/png");
 
       // A orientacao acompanha a proporcao real do poster: como e um layout largo
       // de 2 colunas, isso resulta em paisagem e preenche a pagina (antes ficava
@@ -229,7 +234,7 @@ export default function ReuniaoV2() {
       // e a imagem continua a mesma. Vale o segundo a mais na geracao.
       pdf.addImage(
         imgData,
-        "JPEG",
+        "PNG",
         x,
         y,
         finalWidth,
@@ -705,8 +710,10 @@ export default function ReuniaoV2() {
                                       <>
                                         <span className="v2-time">
                                           {cm.time}
-                                        </span>{" "}
-                                        Cântico {cm.num}
+                                        </span>
+                                        <span className="v2-cantico-texto">
+                                          Cântico {cm.num}
+                                        </span>
                                       </>
                                     );
                                   })()}
@@ -799,12 +806,17 @@ export default function ReuniaoV2() {
                                       <>
                                         <span className="v2-time">
                                           {cf.time}
-                                        </span>{" "}
-                                        Cântico {cf.num}{" "}
-                                        <strong>
-                                          Oração:{" "}
-                                          <EditableField value={semana.oracaoFinal} fieldName="oracaoFinal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
-                                        </strong>
+                                        </span>
+                                        {/* Tudo num elemento só: solto, cada
+                                            pedaço de texto virava um item do
+                                            grid e a linha se despedaçava. */}
+                                        <span className="v2-cantico-texto">
+                                          Cântico {cf.num}{" "}
+                                          <strong>
+                                            Oração:{" "}
+                                            <EditableField value={semana.oracaoFinal} fieldName="oracaoFinal" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="A definir" />
+                                          </strong>
+                                        </span>
                                       </>
                                     );
                                   })()}

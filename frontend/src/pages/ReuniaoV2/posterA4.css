@@ -164,16 +164,22 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 14px;
+  /* Se o par não couber, a leitura desce para a linha de baixo — o título nunca
+     quebra. Uma leitura como "1 Coríntios 12 - 14" é bem mais larga que
+     "Jeremias 20 - 21", então isso não dá para resolver só no chute do tamanho. */
+  flex-wrap: wrap;
+  gap: 6px 14px;
   padding-bottom: 8px;
   margin-bottom: 0;
   border-bottom: 2px solid var(--p-text);
 }
 .v2-exportable-poster .v2-split-title {
   margin: 0;
-  font: 800 30px/1 var(--p-font);
+  /* 27px em vez de 30 para "Meio da Semana" caber numa linha com a leitura ao lado. */
+  font: 800 27px/1 var(--p-font);
   letter-spacing: -0.02em;
   color: var(--p-text);
+  white-space: nowrap;
 }
 .v2-exportable-poster .v2-split-meta {
   display: flex;
@@ -194,9 +200,12 @@
   color: #FBF7EF;
   padding: 5px 10px 4px;
   border-radius: 0;
-  font: 800 14.5px/1 var(--p-font);
-  letter-spacing: 0.09em;
+  font: 800 13.5px/1.15 var(--p-font);
+  letter-spacing: 0.07em;
   text-transform: uppercase;
+  /* Se a leitura for longa demais para a linha, ela desce inteira em vez de
+     quebrar no meio ("JEREMIAS 20 -" numa linha e "21" na outra). */
+  white-space: nowrap;
 }
 
 /* --- faixa presidente / conselheiro / oração ------------------------------ */
@@ -237,32 +246,37 @@
 }
 
 /* --- cânticos ------------------------------------------------------------ */
-/* Cântico não é designação: é marcador de momento. Centralizando, ele se lê como
-   um separador entre os blocos em vez de competir com as linhas de parte.
-   De quebra some o desalinhamento antigo — a linha de 19:30 tinha padding lateral
-   de 12px e a de 21:08 mais 10px no horário, então cada cântico começava num ponto
-   diferente dos horários das partes logo abaixo. */
+/* Mesma grade das linhas de parte (52px para o horário + o resto para o texto),
+   para que TODOS os horários da folha fiquem na mesma coluna. O que se centraliza
+   é o horário na VERTICAL: com `align-items: center` ele fica no meio do texto,
+   inclusive quando o texto ocupa duas linhas.
+   Centralizar na horizontal foi tentativa anterior e estava errado — jogava o
+   cântico para fora do alinhamento de todo o resto. */
 .v2-exportable-poster .v2-cantico-row,
 .v2-exportable-poster .v2-cantico-meio {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+  align-items: center;
   background: transparent;
   border-radius: 0;
   padding: 7px 0;
   margin: 0;
   font: 600 18px/1.2 var(--p-font);
   color: var(--p-text);
-  text-align: center;
+  text-align: left;
 }
-/* Dentro do cântico o horário é uma peça inline, não a primeira coluna de um grid. */
+/* O horário do cântico ocupa uma linha só — não pode herdar o `grid-row: 1 / span 2`
+   das linhas de parte, que existe para o par título + nome. */
 .v2-exportable-poster .v2-cantico-row .v2-time,
 .v2-exportable-poster .v2-cantico-meio .v2-time {
-  grid-column: auto;
+  grid-column: 1;
   grid-row: auto;
+  align-self: center;
   padding: 0;
-  flex: none;
+}
+.v2-exportable-poster .v2-cantico-texto {
+  grid-column: 2;
 }
 .v2-exportable-poster .v2-cantico-meio.final {
   background: var(--p-n-100);
@@ -405,6 +419,9 @@
 .v2-exportable-poster .v2-dir,
 .v2-exportable-poster .v2-lei {
   background: transparent;
+  /* O `.v2-dir` do styles.css tinha `border: 1px solid #ECE3D3`, e zerar só o fundo
+     deixava a moldura sozinha em volta do Dirigente — parecia um campo de formulário. */
+  border: none;
   border-radius: 0;
   padding: 0;
   font: 600 15.5px/1.3 var(--p-font);
