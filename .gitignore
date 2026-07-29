@@ -45,4 +45,8 @@ backend/.env
 frontend/.env
 .DS_Store
 Reorganização de layout A4/
-carrinho/
+# Planilhas de origem do carrinho (so a pasta da raiz).
+# A barra inicial e essencial: sem ela o padrao casa QUALQUER pasta chamada carrinho,
+# e com core.ignorecase=true no Windows ele engoliu frontend/src/pages/Carrinho/ —
+# os modais novos nunca chegaram a ser commitados e o build quebrou no deploy.
+/carrinho/
