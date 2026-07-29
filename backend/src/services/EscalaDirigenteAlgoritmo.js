@@ -63,7 +63,7 @@ const PESOS_PADRAO = {
     descanso: 1.5,      // evitar repeticoes
     cota: 1.0,          // distribuicao igualitaria
     heranca: 0.5,       // compensar o desequilibrio do mes anterior
-    papel: 0.4,         // equilibrio principal/substituto
+    papel: 0.9,         // equilibrio principal/substituto (termo com sinal: penaliza e premia)
     local: 0.3,         // rodizio de locais
     dupla: 0.3,         // evitar dupla repetida
     desempate: 0.02     // ruido deterministico (mata o vies de ordem do array)
@@ -103,6 +103,20 @@ function limitar(valor, minimo, maximo) {
     return Math.min(maximo, Math.max(minimo, valor));
 }
 
+/**
+ * Chave de horario de uma vaga, usada para impedir sobreposicao fisica.
+ *
+ * Nos dados reais o sabado tem turno 1 e turno 3 os DOIS as 08:45, em casas diferentes.
+ * Estar nos dois e impossivel na vida real, entao esta e a unica restricao que nunca e
+ * relaxada junto com a duplicidade no dia. Sem `horario` cada saida vira a propria chave,
+ * o que preserva o comportamento antigo em vez de bloquear o dia inteiro por engano.
+ */
+function chaveHorario(base) {
+    return base.horario
+        ? `${base.data}|h${base.horario}`
+        : `${base.data}|s${base.saidaCampoId}`;
+}
+
 function diasEntre(dataA, dataB) {
     return Math.abs(dataB.getTime() - dataA.getTime()) / 86400000;
 }
@@ -112,25 +126,30 @@ function diasEntre(dataA, dataB) {
 // ---------------------------------------------------------------------------
 
 /**
- * Distribui `totalVagas` entre os dirigentes de forma max-min justa.
+ * Calcula a cota max-min de cada dirigente REALIZANDO-A de fato.
  *
- * O alvo inicial e a media simples. Quem nao alcanca a media por falta de disponibilidade
- * (capacidade < alvo) e fixado na propria capacidade e sai da conta; as vagas que sobram sao
- * redivididas entre os demais, elevando o alvo. Repete ate ninguem mais ser limitado. O
- * resultado maximiza o menor quinhao - o significado util de "distribuicao igualitaria"
- * quando as disponibilidades sao desiguais.
+ * Por que nao basta o water-filling sobre a capacidade individual: ele so enxerga o teto de
+ * cada um isoladamente e ignora gargalo de GRUPO. Nos dados reais, terca + sexta + sabado T3
+ * so tem 5 irmaos habilitados no total para 24 vagas no mes: esses cinco sao obrigados a uma
+ * media de 4,8, mas a media global e 3,46. A cota ingenua entregava 3,46 a eles - um alvo
+ * matematicamente inatingivel. O efeito pratico era ruim em dois lugares: o rebalanceamento
+ * perseguia um alvo impossivel, e o diagnostico exibia "aproveitamento 1,73" para quem estava
+ * exatamente onde tinha de estar, como se a escala estivesse desequilibrada.
  *
- * A capacidade e o numero de DATAS distintas elegiveis (e nao de vagas), porque a regra de
- * nao repetir no mesmo dia limita a 1 designacao por data.
+ * A cota correta e o vetor de cargas do emparelhamento lexicograficamente max-min. Ele e
+ * obtido servindo repetidamente o irmao mais "seco" que ainda tem caminho aumentante no
+ * bipartido (irmao x vaga), com a restricao de no maximo uma vaga por data. Quando ninguem
+ * mais aumenta, o vetor resultante e atingivel por construcao e maximiza o menor quinhao.
  *
- * Limite conhecido: a cota olha a capacidade individual, nao gargalos de grupo. Se uma saida
- * tem 8 vagas e so 6 candidatos, esses 6 nao alcancam a cota global por mais que o algoritmo
- * tente. O diagnostico sinaliza esses casos em vez de fingir que a escala ficou desequilibrada.
+ * Efeito colateral util: "garantir que todos sejam designados" vira corolario - se existe
+ * QUALQUER escala em que o irmao aparece, a cota dele sai >= 1.
  */
-function calcularCotas(dirigentes, totalVagas, regras) {
+function calcularCotas(dirigentes, bases, papeisAtivos, elegivelPara, regras, seed) {
     dirigentes.forEach(d => { d.cota = 0; });
     const ativos = dirigentes.filter(d => d.capacidade > 0);
     if (ativos.length === 0) return;
+
+    const totalVagas = bases.length * papeisAtivos.length;
 
     // Sem balanceamento: ninguem tem teto e o score ignora os termos de cota.
     if (!regras.distribuicaoIgualitaria) {
@@ -146,29 +165,107 @@ function calcularCotas(dirigentes, totalVagas, regras) {
         return;
     }
 
-    let restantes = ativos.slice();
-    let vagas = totalVagas;
-
-    while (restantes.length > 0) {
-        const alvo = vagas / restantes.length;
-        const limitados = restantes.filter(d => d.capacidade < alvo);
-
-        if (limitados.length === 0) {
-            restantes.forEach(d => { d.cota = alvo; });
-            break;
-        }
-
-        limitados.forEach(d => {
-            d.cota = d.capacidade;
-            vagas -= d.capacidade;
-        });
-        restantes = restantes.filter(d => d.capacidade >= alvo);
-
-        if (vagas <= 0) {
-            restantes.forEach(d => { d.cota = 0; });
-            break;
+    // --- monta o bipartido ---
+    const vagas = [];
+    const indicePorBasePapel = new Map();
+    for (const base of bases) {
+        for (const papel of papeisAtivos) {
+            indicePorBasePapel.set(`${base.id}:${papel}`, vagas.length);
+            vagas.push({ base, papel });
         }
     }
+
+    const vagasDe = new Map();
+    ativos.forEach(d => {
+        const lista = [];
+        vagas.forEach((v, i) => { if (elegivelPara(d, v.base)) lista.push(i); });
+        vagasDe.set(d.nome, lista);
+    });
+
+    const dono = new Array(vagas.length).fill(null);
+    const datas = new Map(ativos.map(d => [d.nome, new Map()])); // nome -> Map(data -> qtd)
+    const carga = new Map(ativos.map(d => [d.nome, 0]));
+
+    const ocupar = (nome, i) => {
+        dono[i] = nome;
+        const m = datas.get(nome);
+        const chave = vagas[i].base.data;
+        m.set(chave, (m.get(chave) || 0) + 1);
+        carga.set(nome, carga.get(nome) + 1);
+    };
+
+    const liberar = (i) => {
+        const nome = dono[i];
+        if (!nome) return;
+        const m = datas.get(nome);
+        const chave = vagas[i].base.data;
+        const restante = (m.get(chave) || 1) - 1;
+        if (restante <= 0) m.delete(chave); else m.set(chave, restante);
+        carga.set(nome, carga.get(nome) - 1);
+        dono[i] = null;
+    };
+
+    const cabeNaVaga = (nome, i) => {
+        const { base, papel } = vagas[i];
+        // Nunca as duas vagas da mesma saida.
+        for (const outro of papeisAtivos) {
+            if (outro === papel) continue;
+            const j = indicePorBasePapel.get(`${base.id}:${outro}`);
+            if (j !== undefined && dono[j] === nome) return false;
+        }
+        if (regras.evitarDuplicidadeNoDia && datas.get(nome).has(base.data)) return false;
+        return true;
+    };
+
+    // Kuhn: tenta dar mais uma vaga a `nome`, deslocando os ocupantes em cadeia se preciso.
+    const aumentar = (nome, visitadas) => {
+        for (const i of vagasDe.get(nome)) {
+            if (visitadas.has(i)) continue;
+            if (!cabeNaVaga(nome, i)) continue;
+            visitadas.add(i);
+
+            if (dono[i] === null) {
+                ocupar(nome, i);
+                return true;
+            }
+
+            const anterior = dono[i];
+            liberar(i);
+            if (cabeNaVaga(nome, i) && aumentar(anterior, visitadas)) {
+                ocupar(nome, i);
+                return true;
+            }
+            ocupar(anterior, i); // desfaz
+        }
+        return false;
+    };
+
+    // Desempate estavel: sem isso, entre dois irmaos simetricos o alfabeticamente menor
+    // ganharia sempre a vaga extra - o mesmo vies de ordem que o resto do algoritmo combate.
+    const ordem = new Map(ativos.map(d => [d.nome, ruidoEstavel(`${seed}|cota|${d.nome}`)]));
+
+    const saturados = new Set();
+    let progrediu = true;
+    while (progrediu) {
+        progrediu = false;
+        const fila = ativos
+            .filter(d => !saturados.has(d.nome))
+            .sort((a, b) =>
+                carga.get(a.nome) - carga.get(b.nome)
+                || ordem.get(a.nome) - ordem.get(b.nome));
+
+        for (const d of fila) {
+            if (aumentar(d.nome, new Set())) {
+                progrediu = true;
+                break; // reordena: servimos sempre o mais seco
+            }
+            // Sem caminho aumentante agora significa sem caminho nunca mais: as atribuicoes
+            // seguintes so ocupam vagas, nunca liberam.
+            saturados.add(d.nome);
+        }
+    }
+
+    ativos.forEach(d => { d.cota = carga.get(d.nome); });
 }
 
 // ---------------------------------------------------------------------------
@@ -190,7 +287,13 @@ function custoIrmao(d, regras, simulacao = null) {
     if (regras.evitarRepeticoes && regras.diasDescanso > 0) {
         const datas = [];
         d.datasUsadas.forEach((dataObj, chave) => {
-            if (!simulacao || chave !== simulacao.remover) datas.push(dataObj);
+            // So some da lista se aquela era a UNICA vaga dele na data. Com a duplicidade
+            // relaxada ele pode ter duas no mesmo dia, e apagar a data inteira faria o custo
+            // de descanso mentir.
+            const ehAUltimaDaData = simulacao
+                && chave === simulacao.remover
+                && (d.ocupacoesPorData.get(chave) || 1) <= 1;
+            if (!ehAUltimaDaData) datas.push(dataObj);
         });
         if (simulacao && simulacao.adicionar) datas.push(simulacao.adicionar);
         if (d.dataHistorico) datas.push(d.dataHistorico);
@@ -252,10 +355,14 @@ function calcularScore(d, vaga, contexto) {
     }
 
     // --- equilibrio principal x substituto ---
+    // Termo COM SINAL: quem esta sobre-representado num papel e penalizado nele, e quem esta
+    // sub-representado ganha bonus. Com a versao so-penalidade, um irmao que nunca foi
+    // principal nao recebia nenhum empurrao para virar principal - ele simplesmente nao era
+    // punido -, e acabava substituto o mes inteiro (o irmao que "aparece 4x" e nunca dirige).
     let papel = 0;
     if (regras.equilibrarPapeis && d.carga > 0) {
         const noPapel = vaga.papel === 'principal' ? d.principais : d.substitutos;
-        papel = Math.max(0, (noPapel / d.carga) - 0.5) * 2;
+        papel = limitar((noPapel / d.carga - 0.5) * 2, -1, 1);
     }
 
     // --- rodizio de locais/saidas ---
@@ -307,6 +414,8 @@ function recomputarAgregados(dirigentes, bases, resultado, porNome) {
         d.porSaida = new Map();
         d.parceiros = new Map();
         d.datasUsadas = new Map();
+        d.ocupacoesPorData = new Map(); // quantas vagas na data (>1 se a duplicidade foi relaxada)
+        d.horariosUsados = new Set();
         d.ultimaDataObj = d.dataHistorico || null;
     });
 
@@ -325,6 +434,8 @@ function recomputarAgregados(dirigentes, bases, resultado, porNome) {
             d.carga += 1;
             if (papel === 'principal') d.principais += 1; else d.substitutos += 1;
             d.datasUsadas.set(base.data, base.dataObj);
+            d.ocupacoesPorData.set(base.data, (d.ocupacoesPorData.get(base.data) || 0) + 1);
+            d.horariosUsados.add(chaveHorario(base));
             d.porSaida.set(base.saidaCampoId, (d.porSaida.get(base.saidaCampoId) || 0) + 1);
             if (parceiro) {
                 d.parceiros.set(parceiro, (d.parceiros.get(parceiro) || 0) + 1);
@@ -381,7 +492,9 @@ function gerarEscala(entrada) {
         dataHistorico: null,  // ultima designacao do mes anterior (imutavel)
         porSaida: new Map(),
         parceiros: new Map(),
-        datasUsadas: new Map(), // data -> Date
+        datasUsadas: new Map(),      // data -> Date
+        ocupacoesPorData: new Map(), // data -> qtd de vagas nessa data
+        horariosUsados: new Set(),   // "data|hHH:MM" - sobreposicao fisica, nunca relaxada
         desvioAnterior: 0
     }));
 
@@ -419,6 +532,16 @@ function gerarEscala(entrada) {
         d.saidas.has(base.saidaCampoId)
         && !(regras.respeitarIndisponibilidades && d.indisponiveis.has(base.data));
 
+    /**
+     * Restricoes que valem SEMPRE, inclusive no caminho de degradacao: ninguem pode estar em
+     * duas saidas no mesmo horario, nem ocupar as duas vagas da mesma saida.
+     */
+    const livrePara = (d, base, atual, papel) => {
+        if (d.horariosUsados.has(chaveHorario(base))) return false;
+        if (d.nome === atual.principal || d.nome === atual.substituto) return false;
+        return true;
+    };
+
     const datasOrdenadas = [];
     const vistas = new Set();
     for (const base of bases) {
@@ -448,7 +571,7 @@ function gerarEscala(entrada) {
     // ---- 4. Cotas ---------------------------------------------------------
     const papeisAtivos = regras.preencherSubstituto ? PAPEIS : ['principal'];
     const totalVagas = bases.length * papeisAtivos.length;
-    calcularCotas(dirigentes, totalVagas, regras);
+    calcularCotas(dirigentes, bases, papeisAtivos, elegivelPara, regras, seed);
 
     // ---- 5. Preenchimento guloso, em ordem cronologica --------------------
     const resultado = new Map();
@@ -488,8 +611,7 @@ function gerarEscala(entrada) {
                     const parceiro = papel === 'substituto' ? atual.principal : '';
                     const candidatos = dirigentes.filter(d =>
                         elegivelPara(d, base)
-                        && d.nome !== atual.principal
-                        && d.nome !== atual.substituto
+                        && livrePara(d, base, atual, papel)
                         && !(regras.evitarDuplicidadeNoDia && d.datasUsadas.has(base.data))
                     );
 
@@ -510,10 +632,10 @@ function gerarEscala(entrada) {
                 // so quando a alternativa e deixar a saida sem dirigente.
                 if (candidatos.length === 0 && regras.evitarDuplicidadeNoDia) {
                     const atual = resultado.get(escolhida.id);
+                    // livrePara continua valendo: repetir no dia e aceitavel como ultimo
+                    // recurso, estar em dois lugares no mesmo horario nunca e.
                     candidatos = dirigentes.filter(d =>
-                        elegivelPara(d, escolhida)
-                        && d.nome !== atual.principal
-                        && d.nome !== atual.substituto
+                        elegivelPara(d, escolhida) && livrePara(d, escolhida, atual, papel)
                     );
                     if (candidatos.length > 0) {
                         registrarRelaxamento('evitarDuplicidadeNoDia');
@@ -526,19 +648,15 @@ function gerarEscala(entrada) {
                     }
                 }
 
-                if (candidatos.length === 0) {
-                    avisos.push({
-                        tipo: 'vaga_vazia',
-                        data: escolhida.data,
-                        saidaCampoId: escolhida.saidaCampoId,
-                        papel,
-                        mensagem: `Nenhum dirigente disponivel para ${papel} em ${escolhida.data} (${escolhida.local || 'saida'}).`
-                    });
-                    continue;
-                }
+                // Vaga sem candidato fica vazia; o aviso so e emitido no fim, porque os passes
+                // de correcao ainda podem preenche-la.
+                if (candidatos.length === 0) continue;
 
                 const vaga = {
-                    chave: `${escolhida.id}:${papel}`,
+                    // A chave nao pode usar `id`: ele e indice de array na criacao e id do
+                    // banco na regeracao, o que faria o mesmo mes com as mesmas regras gerar
+                    // escalas diferentes nos dois caminhos. Data + saida + papel e estavel.
+                    chave: `${escolhida.data}|${escolhida.saidaCampoId}|${papel}`,
                     dataObj: escolhida.dataObj,
                     saidaCampoId: escolhida.saidaCampoId,
                     papel,
@@ -561,6 +679,8 @@ function gerarEscala(entrada) {
                 if (papel === 'principal') melhor.principais += 1; else melhor.substitutos += 1;
                 melhor.ultimaDataObj = escolhida.dataObj;
                 melhor.datasUsadas.set(escolhida.data, escolhida.dataObj);
+                melhor.ocupacoesPorData.set(escolhida.data, (melhor.ocupacoesPorData.get(escolhida.data) || 0) + 1);
+                melhor.horariosUsados.add(chaveHorario(escolhida));
                 melhor.porSaida.set(escolhida.saidaCampoId, (melhor.porSaida.get(escolhida.saidaCampoId) || 0) + 1);
                 if (parceiro) {
                     melhor.parceiros.set(parceiro, (melhor.parceiros.get(parceiro) || 0) + 1);
@@ -590,14 +710,36 @@ function gerarEscala(entrada) {
         }
     }
 
+    // Por ultimo, porque as trocas anteriores podem ter liberado quem faltava.
+    const vaziasPreenchidas = preencherVagasVazias(ambiente);
+
     recomputarAgregados(dirigentes, bases, resultado, porNome);
+
+    // Depois de a carga estar decidida, so falta escolher quem dirige e quem e reserva.
+    let trocasDePapel = 0;
+    if (regras.equilibrarPapeis && regras.preencherSubstituto) {
+        trocasDePapel = equilibrarPapeis(ambiente);
+        recomputarAgregados(dirigentes, bases, resultado, porNome);
+    }
 
     // ---- 7. Diagnostico ---------------------------------------------------
     let preenchidas = 0;
-    resultado.forEach(v => {
-        if (v.principal) preenchidas += 1;
-        if (regras.preencherSubstituto && v.substituto) preenchidas += 1;
-    });
+    for (const base of bases) {
+        const v = resultado.get(base.id);
+        for (const papel of papeisAtivos) {
+            if (v[papel]) {
+                preenchidas += 1;
+            } else {
+                avisos.push({
+                    tipo: 'vaga_vazia',
+                    data: base.data,
+                    saidaCampoId: base.saidaCampoId,
+                    papel,
+                    mensagem: `Nenhum dirigente disponivel para ${papel} em ${base.data} (${base.local || 'saida'}).`
+                });
+            }
+        }
+    }
 
     // Um irmao pode ficar fora da cota sem que a escala esteja mal distribuida: se as saidas
     // dele tem mais vagas que candidatos, o grupo inteiro fica no teto e ninguem alcanca a
@@ -683,6 +825,8 @@ function gerarEscala(entrada) {
             porIrmao,
             reparos,
             trocasRebalanceamento,
+            vaziasPreenchidas,
+            trocasDePapel,
             regrasRelaxadas: relaxamentos,
             avisos
         }
@@ -728,6 +872,7 @@ function repararOrfaos(ambiente) {
 
         for (const base of bases) {
             if (!elegivelPara(orfao, base)) continue;
+            if (orfao.horariosUsados.has(chaveHorario(base))) continue;
             if (regras.evitarDuplicidadeNoDia && orfao.datasUsadas.has(base.data)) continue;
 
             const v = resultado.get(base.id);
@@ -846,6 +991,7 @@ function rebalancear(ambiente) {
                 for (const entra of dirigentes) {
                     if (entra === sai || entra.nome === outro) continue;
                     if (!elegivelPara(entra, base)) continue;
+                    if (entra.horariosUsados.has(chaveHorario(base))) continue;
                     if (regras.evitarDuplicidadeNoDia && entra.datasUsadas.has(base.data)) continue;
 
                     const delta =
@@ -883,12 +1029,103 @@ function rebalancear(ambiente) {
 }
 
 /**
+ * Alterna principal e substituto dentro da MESMA escala enquanto isso reduzir o desequilibrio
+ * de papeis do conjunto.
+ *
+ * Este passe e seguro por construcao: trocar as duas colunas de uma mesma linha nao muda a
+ * carga de ninguem, nem a data, nem o local - so quem dirige e quem e reserva. Por isso ele
+ * nao pode desfazer nada que a distribuicao igualitaria conquistou.
+ *
+ * Faz falta porque o preenchimento resolve todos os principais do dia antes dos substitutos:
+ * um irmao de disponibilidade alta tem urgencia baixa, perde sempre a rodada dos principais e
+ * termina o mes inteiro como reserva - aparecendo 3 ou 4 vezes na escala sem nunca dirigir.
+ */
+function equilibrarPapeis({ bases, resultado, porNome }) {
+    const desequilibrio = (d) => Math.abs(d.principais - d.substitutos);
+    let trocas = 0;
+
+    for (let passada = 0; passada < 10; passada++) {
+        let mudou = false;
+
+        for (const base of bases) {
+            const v = resultado.get(base.id);
+            if (!v.principal || !v.substituto) continue;
+
+            const p = porNome.get(v.principal);
+            const s = porNome.get(v.substituto);
+            if (!p || !s) continue;
+
+            const antes = desequilibrio(p) + desequilibrio(s);
+            const depois =
+                Math.abs((p.principais - 1) - (p.substitutos + 1))
+                + Math.abs((s.principais + 1) - (s.substitutos - 1));
+
+            if (depois >= antes) continue;
+
+            p.principais -= 1; p.substitutos += 1;
+            s.principais += 1; s.substitutos -= 1;
+            v.principal = s.nome;
+            v.substituto = p.nome;
+            trocas += 1;
+            mudou = true;
+        }
+
+        if (!mudou) break;
+    }
+
+    return trocas;
+}
+
+/**
+ * Preenche vagas que sobraram vazias.
+ *
+ * O guloso deixa uma vaga vazia quando, naquele instante, todo candidato estava indisponivel,
+ * ja usado no dia ou em outra saida do mesmo horario. As trocas posteriores podem ter liberado
+ * alguem. Sem este passe a vaga ficava vazia para sempre: `repararOrfaos` so cuida de quem tem
+ * carga zero e `rebalancear` ignora slot sem ocupante.
+ */
+function preencherVagasVazias(ambiente) {
+    const { dirigentes, bases, resultado, regras, porNome, elegivelPara, papeisAtivos } = ambiente;
+    let preenchidas = 0;
+
+    for (const base of bases) {
+        for (const papel of papeisAtivos) {
+            const v = resultado.get(base.id);
+            if (v[papel]) continue;
+
+            const candidatos = dirigentes.filter(d =>
+                elegivelPara(d, base)
+                && !d.horariosUsados.has(chaveHorario(base))
+                && d.nome !== v.principal
+                && d.nome !== v.substituto
+                && !(regras.evitarDuplicidadeNoDia && d.datasUsadas.has(base.data))
+            );
+            if (candidatos.length === 0) continue;
+
+            // Quem estiver mais longe da propria cota entra primeiro.
+            candidatos.sort((a, b) => {
+                const fa = Number.isFinite(a.cota) && a.cota > 0 ? a.carga / a.cota : a.carga;
+                const fb = Number.isFinite(b.cota) && b.cota > 0 ? b.carga / b.cota : b.carga;
+                return fa - fb || a.nome.localeCompare(b.nome);
+            });
+
+            v[papel] = candidatos[0].nome;
+            recomputarAgregados(dirigentes, bases, resultado, porNome);
+            preenchidas += 1;
+        }
+    }
+
+    return preenchidas;
+}
+
+/**
  * Existe alguma troca simples que aproximaria `alvo` da cota sem piorar o conjunto?
  * Se nao existe, a carga dele nao e culpa da distribuicao: e o que a estrutura permite.
  */
 function existeTrocaMelhorante(alvo, { bases, resultado, regras, porNome, elegivelPara, papeisAtivos }) {
     for (const base of bases) {
         if (!elegivelPara(alvo, base)) continue;
+        if (alvo.horariosUsados.has(chaveHorario(base))) continue;
         if (regras.evitarDuplicidadeNoDia && alvo.datasUsadas.has(base.data)) continue;
 
         const v = resultado.get(base.id);

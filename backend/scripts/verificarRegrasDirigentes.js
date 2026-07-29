@@ -70,6 +70,44 @@ chk(rTight.atribuicoes.every(a => !a.principal || a.principal !== a.substituto),
   'mesmo relaxando, principal nunca e igual ao substituto da mesma saida');
 
 // --------------------------------------------------------------------------
+sec('conflito de horario: duas saidas na mesma data E no mesmo horario');
+// Espelha os dados reais: sabado turno 1 e turno 3 sao AMBOS 08:45, em casas diferentes.
+const mesmoHorario = [
+  { id: 1, data: '03/01', dataObj: sabado, saidaCampoId: 1, turno: 1, local: 'Casa A', horario: '08:45' },
+  { id: 2, data: '03/01', dataObj: sabado, saidaCampoId: 3, turno: 3, local: 'Casa B', horario: '08:45' },
+  { id: 3, data: '03/01', dataObj: sabado, saidaCampoId: 2, turno: 2, local: 'Casa C', horario: '16:00' },
+];
+const doisIrmaos = ['P', 'Q'].map(n => ({ nome: n, saidaCampoIds: [1, 2, 3], indisponiveis: [] }));
+const rHor = gerarEscala({ vagasBase: mesmoHorario, dirigentes: doisIrmaos, historico: {}, regras: {} });
+const porHorario = {};
+rHor.atribuicoes.forEach(a => {
+  const b = mesmoHorario.find(v => v.id === a.id);
+  [a.principal, a.substituto].filter(Boolean).forEach(n => {
+    const k = `${b.data} ${b.horario} ${n}`;
+    porHorario[k] = (porHorario[k] || 0) + 1;
+  });
+});
+const sobrepostos = Object.entries(porHorario).filter(([, c]) => c > 1);
+chk(sobrepostos.length === 0,
+  `ninguem em dois lugares no mesmo horario, mesmo com so 2 irmaos para 6 vagas: ${sobrepostos.map(([k]) => k).join(', ') || 'nenhuma sobreposicao'}`);
+chk(rHor.diagnostico.vagasVazias > 0, 'prefere deixar vaga vazia a criar sobreposicao fisica');
+
+// --------------------------------------------------------------------------
+sec('determinismo entre gerar e regerar (ids diferentes, mesma escala)');
+// Na criacao o id da vaga e indice de array; na regeracao e o id do banco. A escala tem
+// de ser a mesma nos dois casos.
+const comoCriacao = vagasSab.map((v, i) => ({ ...v, id: i }));
+const comoRegeracao = vagasSab.map((v, i) => ({ ...v, id: 5000 + i * 7 }));
+const rc = gerarEscala({ vagasBase: comoCriacao, dirigentes: oito, historico: {}, regras: {}, seed: 'x' });
+const rr = gerarEscala({ vagasBase: comoRegeracao, dirigentes: oito, historico: {}, regras: {}, seed: 'x' });
+const porSaidaPapel = (r, base) => r.atribuicoes.map(a => {
+  const b = base.find(v => v.id === a.id);
+  return `${b.data}|${b.saidaCampoId}|${a.principal}|${a.substituto}`;
+}).sort().join('\n');
+chk(porSaidaPapel(rc, comoCriacao) === porSaidaPapel(rr, comoRegeracao),
+  'gerar e regerar o mesmo mes com as mesmas regras produz escala identica');
+
+// --------------------------------------------------------------------------
 sec('indisponibilidade e restricao DURA (nunca relaxada)');
 const rInd = gerarEscala({
   vagasBase: vagasSab,
@@ -151,9 +189,58 @@ const rG = gerarEscala({ vagasBase: vagasG, dirigentes: dirsG, historico: {}, re
 const gSaida = rG.diagnostico.gargalos.filter(g => g.escopo === 'saida');
 chk(gSaida.length > 0,
   `detecta o gargalo de SAIDA: ${gSaida.map(g => `${g.local} (${g.candidatos} dirigentes p/ ${g.vagas} vagas -> ${g.cargaForcada}x cada)`).join(', ')}`);
-chk(rG.diagnostico.limitadosPelaDisponibilidade.length > 0,
-  `marca quem esta preso na saida apertada: ${rG.diagnostico.limitadosPelaDisponibilidade.join(', ')}`);
 chk(rG.diagnostico.avisos.some(a => a.tipo === 'saida_com_poucos_dirigentes'), 'gera aviso acionavel de cadastro');
+
+// A cota tem de ser ATINGIVEL, e nao a media global. Os 3 presos na saida apertada sao
+// obrigados a ~3.3 cada; os 12 da folgada nao chegam perto disso. Uma cota unica (20/15=1.33)
+// mentiria para os dois grupos - era esse o defeito do water-filling sobre capacidade.
+const cotaDe = (n) => rG.diagnostico.porIrmao.find(p => p.nome === n).cota;
+const cargaDe = (n) => rG.diagnostico.porIrmao.find(p => p.nome === n).designacoes;
+const cotasApertada = ['T1', 'T2', 'T3'].map(cotaDe);
+const cotasFolgada = Array.from({ length: 12 }, (_, i) => cotaDe(`F${i + 1}`));
+console.log(`  cota dos presos na apertada: ${cotasApertada.join(', ')} | cota dos folgados: ${cotasFolgada.join(', ')}`);
+chk(Math.min(...cotasApertada) > Math.max(...cotasFolgada),
+  'a cota reconhece o gargalo: quem esta preso na saida apertada recebe cota MAIOR');
+chk(cotasApertada.reduce((a, b) => a + b, 0) === 10,
+  `as 10 vagas da saida apertada estao integralmente na cota dos 3 (soma=${cotasApertada.reduce((a, b) => a + b, 0)})`);
+chk(['T1', 'T2', 'T3'].every(n => cargaDe(n) === cotaDe(n)),
+  'e a escala entrega exatamente a cota deles (aproveitamento 1.00, sem mentir no painel)');
+const somaCotas = rG.diagnostico.porIrmao.reduce((s, p) => s + p.cota, 0);
+chk(somaCotas === rG.diagnostico.totalVagas,
+  `a soma das cotas fecha com o total de vagas (${somaCotas} de ${rG.diagnostico.totalVagas})`);
+
+// --------------------------------------------------------------------------
+sec('equilibrio principal x substituto');
+// Cenario que produz o problema: 2 saidas no mesmo dia, um grupo com muitas oportunidades
+// (urgencia baixa, perde sempre a rodada dos principais) e um grupo escasso.
+const vagasPap = [];
+let idpap = 0;
+for (let dia = 5; dia <= 12; dia++) {
+  const dataObj = new Date(2026, 0, dia);
+  const data = `${String(dia).padStart(2, '0')}/01`;
+  vagasPap.push({ id: idpap++, data, dataObj, saidaCampoId: 1, turno: 1, local: 'A', horario: '08:45' });
+  vagasPap.push({ id: idpap++, data, dataObj, saidaCampoId: 2, turno: 2, local: 'B', horario: '16:00' });
+}
+const dirsPap = [
+  ...Array.from({ length: 4 }, (_, i) => ({ nome: `Amplo${i + 1}`, saidaCampoIds: [1, 2], indisponiveis: [] })),
+  ...Array.from({ length: 4 }, (_, i) => ({ nome: `Restrito${i + 1}`, saidaCampoIds: [1], indisponiveis: [] })),
+];
+const rPap = gerarEscala({ vagasBase: vagasPap, dirigentes: dirsPap, historico: {}, regras: {}, seed: 'p' });
+console.log('  ' + rPap.diagnostico.porIrmao.map(p => `${p.nome}=${p.principais}P/${p.substitutos}S`).join(' '));
+const nuncaDirige = rPap.diagnostico.porIrmao.filter(p => p.designacoes >= 2 && p.principais === 0);
+chk(nuncaDirige.length === 0,
+  `ninguem aparece varias vezes na escala sem nunca dirigir: ${nuncaDirige.map(p => p.nome).join(', ') || 'nenhum'}`);
+const piorDesvio = Math.max(...rPap.diagnostico.porIrmao.map(p => Math.abs(p.principais - p.substitutos)));
+chk(piorDesvio <= 1, `desvio maximo entre papeis e ${piorDesvio} (minimo possivel para cargas impares)`);
+const rSemPap = gerarEscala({ vagasBase: vagasPap, dirigentes: dirsPap, historico: {}, regras: { equilibrarPapeis: false }, seed: 'p' });
+chk(
+  Math.max(...rSemPap.diagnostico.porIrmao.map(p => Math.abs(p.principais - p.substitutos))) > piorDesvio,
+  'e o toggle equilibrarPapeis faz diferenca de fato (desligado, o desvio piora)',
+);
+// o passe de papeis nao pode mexer na carga de ninguem
+const cargasCom = rPap.diagnostico.porIrmao.map(p => `${p.nome}:${p.designacoes}`).sort().join(',');
+const cargasSem = rSemPap.diagnostico.porIrmao.map(p => `${p.nome}:${p.designacoes}`).sort().join(',');
+chk(cargasCom === cargasSem, 'equilibrar papeis nao altera a carga de ninguem (so quem dirige e quem e reserva)');
 
 // --------------------------------------------------------------------------
 sec('mes anterior influencia sem zerar ninguem');

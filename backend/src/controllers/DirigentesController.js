@@ -1,7 +1,36 @@
 const prisma = require('../prisma');
+const { REGRAS_PADRAO } = require('../services/EscalaDirigenteAlgoritmo');
 
 const MESES = ['', 'JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO',
     'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
+
+/** JSON vindo da rede nao e confiavel: "false" e string e string e verdadeira em JS. */
+const paraBooleano = (valor, padrao) => {
+    if (valor === undefined || valor === null) return padrao;
+    if (typeof valor === 'boolean') return valor;
+    if (typeof valor === 'string') return !['false', '0', 'nao', 'não', ''].includes(valor.toLowerCase());
+    return Boolean(valor);
+};
+
+/**
+ * Aceita apenas as chaves conhecidas e coage cada uma ao tipo certo.
+ * Sem isso, `autoPreenchimento: "false"` ligava o preenchimento e um `diasDescanso` absurdo
+ * (ou nao numerico) entrava direto no algoritmo.
+ */
+const sanearRegras = (entrada) => {
+    if (!entrada || typeof entrada !== 'object') return null;
+
+    const regras = {};
+    for (const [chave, padrao] of Object.entries(REGRAS_PADRAO)) {
+        if (typeof padrao === 'boolean') {
+            regras[chave] = paraBooleano(entrada[chave], padrao);
+        } else {
+            const numero = Number(entrada[chave]);
+            regras[chave] = Number.isFinite(numero) ? Math.max(0, Math.min(31, numero)) : padrao;
+        }
+    }
+    return regras;
+};
 
 class DirigentesController {
     // Listar todos os quadros de dirigentes
@@ -65,20 +94,32 @@ class DirigentesController {
                 return res.status(400).json({ error: 'Mês e ano são obrigatórios' });
             }
 
+            const mesNum = parseInt(mes);
+            const anoNum = parseInt(ano);
+
+            if (!Number.isInteger(mesNum) || mesNum < 1 || mesNum > 12) {
+                return res.status(400).json({ error: 'Mês inválido' });
+            }
+            if (!Number.isInteger(anoNum) || anoNum < 2000 || anoNum > 2100) {
+                return res.status(400).json({ error: 'Ano inválido' });
+            }
+
+            const preencher = paraBooleano(autoPreenchimento, false);
+
             const existente = await prisma.quadroDirigente.findUnique({
-                where: { mes_ano: { mes: parseInt(mes), ano: parseInt(ano) } }
+                where: { mes_ano: { mes: mesNum, ano: anoNum } }
             });
 
             if (existente) {
                 return res.status(400).json({ error: 'Já existe um quadro de dirigentes para esse mês/ano' });
             }
 
-            const titulo = `Escala de Dirigentes ${MESES[mes]} ${ano}`;
+            const titulo = `Escala de Dirigentes ${MESES[mesNum]} ${anoNum}`;
 
             const quadro = await prisma.quadroDirigente.create({
                 data: {
-                    mes: parseInt(mes),
-                    ano: parseInt(ano),
+                    mes: mesNum,
+                    ano: anoNum,
                     titulo,
                     status: 'rascunho'
                 }
@@ -91,10 +132,10 @@ class DirigentesController {
                 // Gerar o template vazio (dias e saídas) e auto-preencher se solicitado
                 const resultado = await AutoDirigenteService.gerarEscala(
                     quadro.id,
-                    parseInt(mes),
-                    parseInt(ano),
-                    autoPreenchimento,
-                    regras
+                    mesNum,
+                    anoNum,
+                    preencher,
+                    preencher ? sanearRegras(regras) : null
                 );
                 diagnostico = resultado.diagnostico;
             } catch (err) {
@@ -129,7 +170,7 @@ class DirigentesController {
                 quadro.id,
                 quadro.mes,
                 quadro.ano,
-                regras
+                sanearRegras(regras)
             );
 
             if (!resultado.success) {

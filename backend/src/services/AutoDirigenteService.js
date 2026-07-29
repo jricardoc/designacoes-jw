@@ -196,7 +196,7 @@ class AutoDirigenteService {
                     principal: '',
                     substituto: '',
                     removido: false,
-                    _meta: { dataObj: dia.dataObj, turno: saida.turno, local: saida.local }
+                    _meta: { dataObj: dia.dataObj, turno: saida.turno, local: saida.local, horario: saida.horario }
                 });
             }
         }
@@ -216,7 +216,8 @@ class AutoDirigenteService {
                 dataObj: e._meta.dataObj,
                 saidaCampoId: e.saidaCampoId,
                 turno: e._meta.turno,
-                local: e._meta.local
+                local: e._meta.local,
+                horario: e._meta.horario
             }));
 
             const saida = resolverEscala({
@@ -267,7 +268,8 @@ class AutoDirigenteService {
             dataObj: this.resolverData(e.data, mes, ano),
             saidaCampoId: e.saidaCampoId,
             turno: e.saidaCampo?.turno,
-            local: e.saidaCampo?.local
+            local: e.saidaCampo?.local,
+            horario: e.saidaCampo?.horario
         })).filter(v => v.dataObj);
 
         const saida = resolverEscala({
