@@ -1,0 +1,516 @@
+/* ==========================================================================
+   PÔSTER A4 — LAYOUT MODERNIST
+   ==========================================================================
+   Reimplementação do layout desenhado no Claude Design ("Reorganização de
+   layout A4", design system Modernist).
+
+   Do design vieram APENAS os tokens visuais — a fonte Archivo e a paleta
+   abaixo. Toda a maquinaria do projeto de design (_ds_bundle.js, doc-page.js,
+   support.js, os custom elements <sc-if>) ficou de fora: é um runtime próprio,
+   incompatível com o React, e desnecessário para reproduzir o resultado.
+
+   As duas mudanças estruturais que fazem o layout funcionar no papel:
+
+   1. O NOME VAI ABAIXO DO TÍTULO, não ao lado. O layout antigo colocava o
+      nome numa caixa à direita disputando a mesma linha; com nomes duplos
+      longos a caixa esmagava o título até ele virar um filete e transbordava
+      por cima (era o bug da parte 5). Empilhando, isso deixa de ser possível.
+
+   2. Cada seção usa `flex: 1` e cada linha `flex: 1 0 auto`, então o conteúdo
+      se distribui e preenche a folha A4 inteira em vez de se amontoar no topo
+      e deixar o terço de baixo vazio.
+
+   Carregada DEPOIS de styles.css, então vence os estilos antigos do pôster.
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap");
+
+.v2-exportable-poster {
+  /* Tokens do design system Modernist. */
+  --p-text: #201e1d;
+  --p-accent: #ec3013;
+  --p-accent-400: #ff9783;
+  --p-accent-500: #ff563c;
+  --p-accent-700: #ae1800;
+  --p-n-100: #f8f4f4;
+  --p-n-300: #d7d3d3;
+  --p-n-400: #bab6b6;
+  --p-n-500: #9b9797;
+  --p-n-600: #7d7979;
+  --p-n-700: #605d5d;
+  --p-font: "Archivo", system-ui, sans-serif;
+
+  box-sizing: border-box;
+  padding: 40px 34px;
+  background: #fff;
+  color: var(--p-text);
+  font-family: var(--p-font);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.v2-exportable-poster *,
+.v2-exportable-poster *::before,
+.v2-exportable-poster *::after {
+  box-sizing: border-box;
+}
+
+/* --- cabeçalho ----------------------------------------------------------- */
+.v2-exportable-poster .v2-poster-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--p-text);
+  color: var(--p-n-100);
+  padding: 13px 18px 12px;
+  border-radius: 0;
+  margin-bottom: 0;
+  box-shadow: none;
+}
+.v2-exportable-poster .v2-poster-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font: 800 19px/1 var(--p-font);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.v2-exportable-poster .v2-poster-brand svg {
+  color: var(--p-accent-500);
+  width: 17px;
+  height: 17px;
+}
+.v2-exportable-poster .v2-poster-title h2 {
+  margin: 0;
+  font: 800 23px/1.05 var(--p-font);
+  letter-spacing: -0.015em;
+  color: var(--p-n-100);
+  text-align: right;
+}
+.v2-exportable-poster .v2-poster-title h3 {
+  margin: 3px 0 0;
+  font: 600 11px/1 var(--p-font);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--p-n-400);
+  text-align: right;
+}
+
+/* --- grade principal: meio da semana | fim de semana ---------------------- */
+.v2-exportable-poster .v2-poster-grid {
+  display: grid;
+  grid-template-columns: 1.32fr 1fr;
+  grid-template-rows: none;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+}
+.v2-exportable-poster .v2-col {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.v2-exportable-poster .v2-col-meio {
+  grid-area: auto;
+  padding-right: 18px;
+}
+.v2-exportable-poster .v2-col-fim {
+  grid-area: auto;
+  padding-left: 18px;
+  border-left: 2px solid var(--p-text);
+}
+
+/* --- cabeçalho de bloco (Meio da Semana / data / leitura) ----------------- */
+.v2-exportable-poster .v2-split-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 8px;
+  margin-bottom: 0;
+  border-bottom: 2px solid var(--p-text);
+}
+.v2-exportable-poster .v2-split-title {
+  margin: 0;
+  font: 800 30px/1 var(--p-font);
+  letter-spacing: -0.02em;
+  color: var(--p-text);
+}
+.v2-exportable-poster .v2-split-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.v2-exportable-poster .v2-badge-date {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font: 800 18px/1 var(--p-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--p-text);
+  letter-spacing: 0;
+}
+.v2-exportable-poster .v2-badge-reading {
+  background: var(--p-accent);
+  color: #fff;
+  padding: 5px 10px 4px;
+  border-radius: 0;
+  font: 800 14.5px/1 var(--p-font);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* --- faixa presidente / conselheiro / oração ------------------------------ */
+.v2-exportable-poster .v2-president-box {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  background: var(--p-n-100);
+  border: none;
+  border-bottom: 1px solid var(--p-n-300);
+  border-radius: 0;
+  padding: 0;
+  margin-bottom: 0;
+}
+.v2-exportable-poster .v2-pres-item {
+  padding: 7px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.v2-exportable-poster .v2-pres-item + .v2-pres-item {
+  border-left: 1px solid var(--p-n-300);
+}
+.v2-exportable-poster .v2-pres-label {
+  font: 800 11px/1 var(--p-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--p-n-600);
+  margin: 0;
+}
+.v2-exportable-poster .v2-pres-value {
+  font: 800 19px/1.15 var(--p-font);
+  color: var(--p-text);
+}
+
+/* --- cânticos ------------------------------------------------------------ */
+.v2-exportable-poster .v2-cantico-row,
+.v2-exportable-poster .v2-cantico-meio {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 10px;
+  align-items: center;
+  background: transparent;
+  border-radius: 0;
+  padding: 7px 0;
+  margin: 0;
+  font: 600 18px/1.2 var(--p-font);
+  color: var(--p-text);
+}
+.v2-exportable-poster .v2-cantico-row {
+  padding: 7px 12px;
+}
+.v2-exportable-poster .v2-cantico-meio.final {
+  background: var(--p-n-100);
+  border: none;
+  padding: 7px 10px 7px 0;
+}
+.v2-exportable-poster .v2-cantico-meio.final .v2-time {
+  padding-left: 10px;
+}
+
+/* --- barra de título de seção -------------------------------------------- */
+.v2-exportable-poster .v2-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin-bottom: 0;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+}
+.v2-exportable-poster .v2-sec-title,
+.v2-exportable-poster .v2-sec-tesouros .v2-sec-title,
+.v2-exportable-poster .v2-sec-ministerio .v2-sec-title,
+.v2-exportable-poster .v2-sec-vidacrista .v2-sec-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* O design troca os gradientes coloridos por uma barra única preta: no papel
+     isso dá mais contraste e gasta muito menos tinta. O vermelho fica reservado
+     para o que precisa saltar (leitura semanal, fim de semana, horários). */
+  background: var(--p-text);
+  color: #fff;
+  padding: 6px 10px;
+  font: 800 14px/1 var(--p-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.v2-exportable-poster .v2-sec-title svg {
+  color: var(--p-accent-400);
+  width: 13px;
+  height: 13px;
+}
+.v2-exportable-poster .v2-sec-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0;
+  background: transparent;
+}
+
+/* --- linha de parte: tempo | (título / nomes) ----------------------------- */
+.v2-exportable-poster .v2-part-row {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 3px 10px;
+  align-items: center;
+  align-content: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--p-n-300);
+  flex: 1 0 auto;
+}
+.v2-exportable-poster .v2-part-row:last-child {
+  border-bottom: none;
+}
+.v2-exportable-poster .v2-time {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: auto;
+  min-width: 0;
+  font: 800 17px/1 var(--p-font);
+  color: var(--p-accent-700);
+  font-variant-numeric: tabular-nums;
+}
+.v2-exportable-poster .v2-desc {
+  grid-column: 2;
+  grid-row: 1;
+  font: 600 19px/1.2 var(--p-font);
+  color: var(--p-text);
+  padding: 0;
+  text-wrap: pretty;
+}
+.v2-exportable-poster .v2-assign {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 2px;
+  min-width: 0;
+  max-width: none;
+}
+/* No JSX a Sala B vem antes do principal; o design mostra o principal primeiro
+   e a reserva embaixo, em cinza. Inverter aqui evita mexer no JSX. */
+.v2-exportable-poster .v2-assign.v2-multi {
+  flex-direction: column-reverse;
+}
+.v2-exportable-poster .v2-principal {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font: 800 19px/1.18 var(--p-font);
+  color: var(--p-text);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.v2-exportable-poster .v2-salab {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  font: 600 14px/1.25 var(--p-font);
+  color: var(--p-n-600);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Estudo bíblico: dirigente e leitor lado a lado, não empilhados. */
+.v2-exportable-poster .v2-assign.v2-estudo {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 14px;
+}
+.v2-exportable-poster .v2-dir,
+.v2-exportable-poster .v2-lei {
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  font: 600 15px/1.3 var(--p-font);
+  color: var(--p-n-700);
+  white-space: normal;
+}
+.v2-exportable-poster .v2-dir strong,
+.v2-exportable-poster .v2-lei strong,
+.v2-exportable-poster .v2-dir b,
+.v2-exportable-poster .v2-lei b {
+  font-weight: 800;
+  color: var(--p-text);
+}
+
+/* --- fim de semana ------------------------------------------------------- */
+.v2-exportable-poster .v2-split-header.fim {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.v2-exportable-poster .v2-split-header.fim .v2-split-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--p-accent);
+  color: #fff;
+  width: 100%;
+  padding: 7px 10px;
+  font: 800 15px/1 var(--p-font);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.v2-exportable-poster .v2-fim-cards {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0;
+}
+.v2-exportable-poster .v2-fim-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+  padding: 7px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--p-n-300);
+  border-radius: 0;
+  flex: 1 0 auto;
+}
+.v2-exportable-poster .v2-fim-card:last-child {
+  border-bottom: none;
+}
+.v2-exportable-poster .v2-f-label {
+  font: 800 11px/1 var(--p-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--p-n-600);
+}
+.v2-exportable-poster .v2-f-value {
+  font: 800 19px/1.18 var(--p-font);
+  color: var(--p-text);
+  text-wrap: pretty;
+}
+.v2-exportable-poster .v2-fim-card.theme .v2-f-value {
+  font-size: 21px;
+  color: var(--p-accent-700);
+}
+.v2-exportable-poster .v2-f-value.highlight {
+  color: var(--p-text);
+}
+.v2-exportable-poster .v2-f-sub {
+  font: 600 15px/1.2 var(--p-font);
+  color: var(--p-n-700);
+}
+.v2-exportable-poster .v2-f-sub strong,
+.v2-exportable-poster .v2-f-sub b {
+  font-weight: 800;
+  color: var(--p-text);
+}
+
+/* --- limpeza semanal: faixa de largura total no rodapé -------------------- */
+.v2-exportable-poster .v2-limpeza-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  border: 2px solid var(--p-text);
+  padding: 10px 14px;
+}
+.v2-exportable-poster .v2-limp-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  background: transparent;
+  color: var(--p-text);
+  padding: 0;
+  font: 800 13px/1 var(--p-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.v2-exportable-poster .v2-limp-body {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 0 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: 800 11px/1 var(--p-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--p-n-600);
+  text-align: left;
+}
+.v2-exportable-poster .v2-limp-body strong {
+  font: 800 19px/1.18 var(--p-font);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--p-text);
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+/* A marca d'água não faz parte deste layout. */
+.v2-exportable-poster .v2-watermark {
+  display: none;
+}
+
+/* --- exportação: largura fixa A4 ----------------------------------------- */
+/* 794px = 210mm a 96dpi. Capturar exatamente na proporção da folha evita as
+   margens laterais enormes que sobravam quando a captura era mais estreita
+   e alta que o A4. */
+.v2-exportable-poster.v2-export {
+  width: 794px;
+  padding: 40px 34px;
+}
+
+@media (max-width: 1024px) {
+  .v2-exportable-poster .v2-poster-grid {
+    grid-template-columns: 1fr;
+  }
+  .v2-exportable-poster .v2-col-fim {
+    padding-left: 0;
+    border-left: none;
+    border-top: 2px solid var(--p-text);
+    padding-top: 12px;
+  }
+  .v2-exportable-poster .v2-col-meio {
+    padding-right: 0;
+  }
+}
+
+/* --- impressão direta: o pôster ocupa a folha A4 inteira ------------------ */
+@media print {
+  .v2-exportable-poster {
+    width: 100%;
+    padding: 0;
+    /* @page já reserva 8mm de margem; padding aqui roubaria área útil. */
+  }
+  /* Sem isso o Chrome descarta os fundos escuros das barras de seção e o pôster
+     sai com faixas brancas e texto branco por cima — ilegível. */
+  .v2-exportable-poster * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

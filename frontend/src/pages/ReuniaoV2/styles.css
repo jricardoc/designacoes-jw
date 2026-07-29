@@ -630,71 +630,8 @@
   opacity: 1;
 }
 
-/* ==========================================================================
-   MODO EXPORTAÇÃO / IMPRESSÃO
-   ==========================================================================
-   A classe .v2-export é aplicada ao pôster só durante a geração do arquivo e
-   removida logo depois — a tela continua exatamente como estava.
-
-   O que muda, e por quê:
-   - tipografia maior: os tamanhos da tela são pensados para leitura a 50 cm
-     de distância, num monitor; no papel, e principalmente afixado no quadro
-     da congregação, ficavam pequenos demais;
-   - marca d'água escondida: ela ocupava a área 4/4-6/6 do grid, transbordava
-     a folha (saía cortada, "9 Junho -") e ainda gastava tinta sem informar nada;
-   - coluna do fim de semana ocupando toda a altura: antes ela parava na linha 3
-     e o terço inferior da folha ficava vazio;
-   - fundos mais claros e bordas definidas: no papel, contraste de texto vale
-     mais que preenchimento colorido, e economiza tinta.
-   ========================================================================== */
-
-.v2-export {
-  /* Proporção A4 retrato. Antes a captura saía numa tira estreita e alta, que
-     ao caber na folha encolhia tudo e deixava margens enormes nas laterais. */
-  width: 1240px;
-  background: #FFFFFF;
-}
-
-.v2-export .v2-poster-grid {
-  gap: 18px;
-}
-
-/* Fim de semana passa a ocupar a coluna inteira (antes parava na linha 3 e o terço
-   inferior da folha ficava vazio, que era onde a marca d'água tentava disfarçar). */
-.v2-export .v2-col-fim {
-  grid-area: 1 / 4 / 6 / 6;
-}
-
-.v2-export .v2-watermark {
-  display: none;
-}
-
-/* --- tipografia --- */
-.v2-export .v2-time {
-  font-size: 1.32rem;
-  width: 78px;
-  min-width: 78px;
-}
-.v2-export .v2-desc {
-  font-size: 1.34rem;
-  line-height: 1.35;
-}
-.v2-export .v2-principal {
-  font-size: 1.26rem;
-  padding: 7px 13px;
-}
-.v2-export .v2-salab,
-.v2-export .v2-lei {
-  font-size: 1.1rem;
-  padding: 5px 11px;
-}
-.v2-export .v2-sec-title {
-  font-size: 1.3rem;
-  letter-spacing: 0.04em;
-}
-.v2-export .v2-part-row {
-  padding: 14px 0;
-}
+/* O visual do pôster, incluindo o modo exportação, vive em posterA4.css — carregado
+   depois deste arquivo. Aqui ficou só a folha de impressão. */
 
 /* --- impressão direta do navegador (texto vetorial, nítido em qualquer DPI) --- */
 @media print {

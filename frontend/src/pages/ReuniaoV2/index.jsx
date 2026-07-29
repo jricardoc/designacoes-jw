@@ -17,6 +17,9 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import "./styles.css";
+// Carregado depois de styles.css de propósito: reescreve o visual do pôster com o
+// layout A4 desenhado no Claude Design (design system Modernist).
+import "./posterA4.css";
 import { useAuth } from "../../context/AuthContext";
 import PageHeader from "../../components/PageHeader";
 import html2canvas from "html2canvas";
@@ -102,7 +105,6 @@ export default function ReuniaoV2() {
       // Mesma largura fixa do PDF: sem isso o pôster saía com a largura da janela do
       // usuário, então a mesma semana gerava imagens diferentes em cada computador.
       element.style.transform = "none";
-      element.style.width = "1240px";
       element.classList.add("v2-export");
 
       const canvas = await html2canvas(element, {
@@ -172,8 +174,6 @@ export default function ReuniaoV2() {
       // fim de semana ocupar toda a altura — ver o bloco "MODO EXPORTACAO" no styles.css.
       element.classList.add("v2-export");
       element.style.transform = "none";
-      element.style.padding = "20px";
-      element.style.width = "1240px";
 
       const canvas = await html2canvas(element, {
         // scale 3 leva a captura a ~290 DPI numa folha A4; com scale 2 dava ~190 DPI e o
@@ -644,6 +644,12 @@ export default function ReuniaoV2() {
                               </div>
                             </div>
 
+                          </div>
+
+                          {/* ==================================== */}
+                          {/* COLUNA 2: FIM DE SEMANA E LIMPEZA   */}
+                          {/* ==================================== */}
+                          <div className="v2-col v2-col-fim">
                             {/* VIDA CRISTÃ */}
                             <div className="v2-section v2-sec-vidacrista">
                               <div className="v2-sec-title">
@@ -768,12 +774,6 @@ export default function ReuniaoV2() {
                                 </div>
                               </div>
                             </div>
-                          </div>
-
-                          {/* ==================================== */}
-                          {/* COLUNA 2: FIM DE SEMANA E LIMPEZA   */}
-                          {/* ==================================== */}
-                          <div className="v2-col v2-col-fim">
                             <div className="v2-split-header fim">
                               <h4 className="v2-split-title">Fim de Semana</h4>
                             </div>
@@ -813,26 +813,19 @@ export default function ReuniaoV2() {
                               </div>
                             </div>
 
-                            <div className="v2-limpeza-card">
-                              <div className="v2-limp-header">
-                                🧹 LIMPEZA SEMANAL
-                              </div>
-                              <div className="v2-limp-body">
-                                Grupo:{" "}
-                                <strong>
-                                  <EditableField value={semana.limpeza} fieldName="limpeza" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
-                                </strong>
-                              </div>
-                            </div>
                           </div>
-                          {/* MARCA D'ÁGUA DA DATA (Posicionada ABSOLUTA no Grid) */}
-                          <div className="v2-watermark">
-                            <div className="v2-wm-month">
-                              {nomesMeses[reuniao.mes]}
-                            </div>
-                            <div className="v2-wm-days">
-                              {semana.faixaData.replace(new RegExp(nomesMeses[reuniao.mes], 'i'), '').trim()}
-                            </div>
+                        </div>
+
+                        {/* Faixa de largura total, abaixo das duas colunas. */}
+                        <div className="v2-limpeza-bar">
+                          <div className="v2-limp-header">
+                            🧹 LIMPEZA SEMANAL
+                          </div>
+                          <div className="v2-limp-body">
+                            Grupo:{" "}
+                            <strong>
+                              <EditableField value={semana.limpeza} fieldName="limpeza" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="-" />
+                            </strong>
                           </div>
                         </div>
                       </div>
