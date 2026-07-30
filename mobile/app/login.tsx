@@ -29,7 +29,7 @@ export default function LoginScreen() {
     const result = await login(nickname.trim(), senha);
     setLoading(false);
     if (result.success) {
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/minhas");
     } else {
       setErro(result.error || "Erro ao fazer login");
     }

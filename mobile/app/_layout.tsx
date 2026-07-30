@@ -26,7 +26,7 @@ function AuthGate() {
     if (!isAuthenticated && !onLogin) {
       router.replace("/login");
     } else if (isAuthenticated && onLogin) {
-      router.replace("/(tabs)");
+      router.replace("/(tabs)/minhas");
     }
   }, [isAuthenticated, initializing, segments, router]);
 
@@ -40,8 +40,8 @@ function AuthGate() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="quadro/[id]" />
       <Stack.Screen name="escala/[id]" />
-      <Stack.Screen name="config" />
       <Stack.Screen name="irmao" />
+      <Stack.Screen name="notificacoes" />
     </Stack>
   );
 }

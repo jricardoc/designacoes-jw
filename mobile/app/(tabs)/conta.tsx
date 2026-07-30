@@ -9,7 +9,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   useAlterarNickname,
   useAlterarNome,
@@ -21,7 +20,7 @@ import {
   useUsuarios,
 } from "@/api/hooks/useMisc";
 import type { Usuario } from "@/api/types";
-import { ConfirmDialog, useConfirm, useToast } from "@/components/ui";
+import { ConfirmDialog, GradientHeader, useConfirm, useToast } from "@/components/ui";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { UserActionSheet } from "@/components/conta/UserActionSheet";
 import { VincularIrmaoSheet } from "@/components/conta/VincularIrmaoSheet";
@@ -90,7 +89,6 @@ export default function ContaScreen() {
   const { usuario, logout, refreshUsuario } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
-  const insets = useSafeAreaInsets();
 
   const [nome, setNome] = useState(usuario?.nome ?? "");
   const [nickname, setNickname] = useState(usuario?.nickname ?? "");
@@ -173,12 +171,9 @@ export default function ContaScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 16 }]}>
-        <View style={styles.headerWrap}>
-          <Text style={styles.h1}>Conta</Text>
-          <Text style={styles.sub}>Perfil e usuários</Text>
-        </View>
+      <GradientHeader title="Conta" description="Perfil e usuários" />
 
+      <ScrollView contentContainerStyle={styles.scroll}>
         {/* Perfil */}
         <View style={styles.card}>
           <View style={styles.profileTop}>
@@ -387,8 +382,13 @@ export default function ContaScreen() {
           </View>
         ) : null}
 
-        {/* Configurações */}
-        <Pressable style={styles.linkRow} onPress={() => router.push("/config")}>
+        {/* Configurações — `replace` e não `push`: agora é um item do menu como
+            os outros, e sem botão "Voltar" próprio empilhar deixaria o irmão sem
+            saída visível da tela. */}
+        <Pressable
+          style={styles.linkRow}
+          onPress={() => router.replace("/(tabs)/config")}
+        >
           <View style={styles.linkIcon}>
             <Ionicons name="settings-outline" size={18} color={colors.brown} />
           </View>
@@ -423,10 +423,7 @@ export default function ContaScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 18, paddingTop: 58, paddingBottom: 40 },
-  headerWrap: { paddingHorizontal: 4, marginBottom: 16 },
-  h1: { fontSize: 33, fontWeight: "600", letterSpacing: -0.6, color: colors.text },
-  sub: { fontSize: 15, color: colors.textSecondary, marginTop: 6 },
+  scroll: { padding: 18, paddingTop: 4, paddingBottom: 40 },
 
   card: {
     backgroundColor: colors.surface,

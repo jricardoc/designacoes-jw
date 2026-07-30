@@ -94,7 +94,6 @@ export default function ConfigScreen() {
       <GradientHeader
         title="Configurações"
         description="Irmãos, funções e sistema"
-        showBack
       />
 
       <View style={styles.segmented}>

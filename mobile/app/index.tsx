@@ -6,5 +6,8 @@ export default function Index() {
   const { isAuthenticated, initializing } = useAuth();
 
   if (initializing) return <Loading />;
-  return <Redirect href={isAuthenticated ? "/(tabs)" : "/login"} />;
+  // A tela de início é "minhas". O arquivo (tabs)/index continua sendo o das
+  // Designações — não foi renomeado para não mexer em rota nenhuma —, então a
+  // porta de entrada aponta direto para a tela certa.
+  return <Redirect href={isAuthenticated ? "/(tabs)/minhas" : "/login"} />;
 }

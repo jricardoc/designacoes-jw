@@ -1,8 +1,6 @@
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
-  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -26,15 +24,6 @@ export default function DesignacoesScreen() {
         title="Designações"
         description="Gerencie os quadros mensais"
         icon="document-text"
-        right={
-          <Pressable
-            hitSlop={10}
-            onPress={() => router.push("/config")}
-            style={styles.headerBtn}
-          >
-            <Ionicons name="options-outline" size={20} color={colors.oliveSoft} />
-          </Pressable>
-        }
       />
 
       {isLoading ? (
@@ -105,16 +94,6 @@ export default function DesignacoesScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
-  headerBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   scroll: { padding: 16, paddingBottom: 40 },
   titleRow: {
     flexDirection: "row",

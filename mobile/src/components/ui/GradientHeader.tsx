@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTemBarraGlobal } from "@/components/layout/contextoBarra";
 import { colors } from "@/theme";
 
 interface GradientHeaderProps {
@@ -27,9 +28,12 @@ export function GradientHeader({
   right,
 }: GradientHeaderProps) {
   const insets = useSafeAreaInsets();
+  // Nas telas do menu a barra global já consumiu o safe area do topo; repetir o
+  // recuo aqui empilharia dois blocos altos antes do conteúdo.
+  const temBarra = useTemBarraGlobal();
 
   return (
-    <View style={[styles.header, { paddingTop: insets.top + 14 }]}>
+    <View style={[styles.header, { paddingTop: temBarra ? 6 : insets.top + 14 }]}>
       {showBack ? (
         <Pressable
           style={styles.back}

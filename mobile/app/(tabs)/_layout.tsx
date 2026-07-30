@@ -1,83 +1,45 @@
-import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
-import { Platform } from "react-native";
+import { Stack } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { BarraGlobalProvider } from "@/components/layout/contextoBarra";
 import { usePushNotifications } from "@/notifications/usePushNotifications";
 import { colors } from "@/theme";
 
-export default function TabsLayout() {
+export default function LayoutDoMenu() {
+  const insets = useSafeAreaInsets();
+
   // Registra o dispositivo para notificações push após o login.
   usePushNotifications();
 
+  // A pasta continua "(tabs)" de propósito: o nome entre parênteses não entra na
+  // URL, então trocar a tab bar pelo menu lateral não mexeu em nenhuma rota.
+  // O recuo de baixo é o que a tab bar reservava: sem ele o fim das listas fica
+  // debaixo da barra de navegação do sistema.
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primaryDark,
-        tabBarInactiveTintColor: "#A99E8B",
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: "#EAE1D1",
-          height: Platform.OS === "ios" ? 84 : 64,
-          paddingTop: 6,
-          paddingBottom: Platform.OS === "ios" ? 24 : 8,
-        },
-        tabBarLabelStyle: { fontSize: 10.5, fontWeight: "600" },
-      }}
-    >
-      <Tabs.Screen
-        name="minhas"
-        options={{
-          title: "Minhas",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Designações",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="dirigentes"
-        options={{
-          title: "Dirigentes",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="compass" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="reuniao"
-        options={{
-          title: "Reunião",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="carrinho"
-        options={{
-          title: "Carrinho",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="book" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="conta"
-        options={{
-          title: "Conta",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    <View style={[styles.raiz, { paddingBottom: insets.bottom }]}>
+      <AppHeader />
+      <BarraGlobalProvider value>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.background },
+            animation: "fade",
+          }}
+        >
+          <Stack.Screen name="minhas" />
+          <Stack.Screen name="index" />
+          <Stack.Screen name="dirigentes" />
+          <Stack.Screen name="reuniao" />
+          <Stack.Screen name="carrinho" />
+          <Stack.Screen name="conta" />
+          <Stack.Screen name="config" />
+        </Stack>
+      </BarraGlobalProvider>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  raiz: { flex: 1, backgroundColor: colors.background },
+});
