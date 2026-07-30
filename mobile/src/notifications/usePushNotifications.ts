@@ -1,17 +1,29 @@
 import * as Notifications from "expo-notifications";
+import { useRootNavigationState, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { Platform } from "react-native";
+import { registrarPushToken } from "@/api/hooks/usePush";
 import { getNotifEnabled } from "./notifPref";
 import { registerForPushNotificationsAsync } from "./push";
+import { getPushTokenAtual, setPushTokenAtual } from "./tokenAtual";
+
+// Identificador da última notificação já tratada. Fica no módulo, e não num ref,
+// porque `getLastNotificationResponse()` devolve a resposta em cache toda vez —
+// sem isso, uma remontagem das abas reabriria uma notificação antiga.
+let ultimaRespostaTratada: string | null = null;
 
 /**
- * Registra o dispositivo para push e expõe o Expo Push Token.
- *
- * Use o token impresso no console para enviar uma notificação de teste em
- * https://expo.dev/notifications. Para enviar notificações pelo backend, salve
- * este token (via um endpoint dedicado) e dispare pela API de push do Expo.
+ * Registra o dispositivo para push, envia o Expo Push Token para o backend
+ * (`POST /push/token`) e leva o usuário à tela certa quando ele toca na
+ * notificação.
  */
 export function usePushNotifications() {
   const [pushToken, setPushToken] = useState<string | null>(null);
+  const [telaPendente, setTelaPendente] = useState<"minhas" | null>(null);
+  const router = useRouter();
+  // Fica falso enquanto o router não montou: na abertura fria o toque na
+  // notificação chega antes de existir para onde navegar.
+  const navegacaoPronta = !!useRootNavigationState()?.key;
   const receivedRef = useRef<Notifications.EventSubscription | null>(null);
   const responseRef = useRef<Notifications.EventSubscription | null>(null);
 
@@ -21,21 +33,41 @@ export function usePushNotifications() {
     getNotifEnabled().then((enabled) => {
       if (!enabled || !mounted) return; // usuário desativou nas Configurações
       registerForPushNotificationsAsync().then((token) => {
-        if (mounted && token) {
-          setPushToken(token);
-          console.log("Expo Push Token:", token);
-        }
+        if (!mounted || !token) return;
+        setPushToken(token);
+        console.log("Expo Push Token:", token);
+        // O backend faz upsert por token, mas não há motivo de reenviar o mesmo
+        // token a cada remontagem das abas. O logout limpa isto, então o próximo
+        // login registra de novo — o aparelho pode ter trocado de dono.
+        if (getPushTokenAtual() === token) return;
+        setPushTokenAtual(token);
+        registrarPushToken(token, Platform.OS).catch((err) => {
+          // Silencioso de propósito: quem acabou de logar não pode ser punido
+          // por uma falha de rede num cadastro que é reenviado no próximo boot.
+          console.warn("Falha ao registrar o push token:", err);
+        });
       });
     });
+
+    const tratarResposta = (resposta: Notifications.NotificationResponse) => {
+      const { identifier } = resposta.notification.request;
+      if (identifier === ultimaRespostaTratada) return;
+      ultimaRespostaTratada = identifier;
+      const data = resposta.notification.request.content.data as
+        | { screen?: string }
+        | undefined;
+      if (data?.screen === "minhas") setTelaPendente("minhas");
+    };
+
+    // Abertura fria: o toque chega ao nativo antes de haver listener em JS.
+    const inicial = Notifications.getLastNotificationResponse();
+    if (inicial) tratarResposta(inicial);
 
     receivedRef.current = Notifications.addNotificationReceivedListener(() => {
       // Notificação recebida com o app aberto (já exibida pelo handler).
     });
-    responseRef.current = Notifications.addNotificationResponseReceivedListener(
-      () => {
-        // Usuário tocou na notificação — navegue aqui se necessário.
-      },
-    );
+    responseRef.current =
+      Notifications.addNotificationResponseReceivedListener(tratarResposta);
 
     return () => {
       mounted = false;
@@ -43,6 +75,14 @@ export function usePushNotifications() {
       responseRef.current?.remove();
     };
   }, []);
+
+  // Navega assim que houver rota pendente e o router estiver pronto — cobre
+  // tanto o toque com o app aberto quanto a abertura fria.
+  useEffect(() => {
+    if (!telaPendente || !navegacaoPronta) return;
+    setTelaPendente(null);
+    router.push("/(tabs)/minhas");
+  }, [telaPendente, navegacaoPronta, router]);
 
   return { pushToken };
 }

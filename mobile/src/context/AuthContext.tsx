@@ -7,8 +7,13 @@ import React, {
   useState,
 } from "react";
 import { apiRequest } from "@/api/client";
+import { removerPushToken } from "@/api/hooks/usePush";
 import { tokenStore } from "@/api/tokenStore";
 import type { LoginResponse, Usuario } from "@/api/types";
+import {
+  getPushTokenAtual,
+  setPushTokenAtual,
+} from "@/notifications/tokenAtual";
 
 interface AuthContextValue {
   usuario: Usuario | null;
@@ -68,6 +73,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    // Antes de limpar o token de auth: depois disso a chamada não teria como se
+    // autenticar e o aparelho continuaria recebendo os lembretes deste usuário.
+    const pushToken = getPushTokenAtual();
+    if (pushToken) {
+      try {
+        await removerPushToken(pushToken);
+      } catch {
+        // Sair é mais importante do que descadastrar o aparelho.
+      }
+      setPushTokenAtual(null);
+    }
     await tokenStore.clear();
     setUsuarioState(null);
   }, []);
