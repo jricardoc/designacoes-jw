@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const LembreteDesignacoesService = require('../services/LembreteDesignacoesService');
 
 /**
  * Tokens de push do Expo.
@@ -53,6 +54,42 @@ class PushTokenController {
             return res.status(204).send();
         } catch (error) {
             console.error('Erro ao remover token de push:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
+
+    /**
+     * Dispara o lembrete sob demanda, para conferir a corrente inteira sem esperar as 19h.
+     *
+     * Manda so para QUEM PEDIU por padrao: uma conferencia nao pode virar push na congregacao
+     * inteira por descuido. `todos: true` amplia, de proposito explicito.
+     *
+     * Nao usa nem grava a trava de idempotencia: testar nao pode consumir o lembrete real
+     * daquele dia, senao o disparo das 19h acharia que ja avisou e ficaria calado.
+     */
+    async testar(req, res) {
+        try {
+            const { dataISO, todos } = req.body || {};
+
+            if (dataISO !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(dataISO))) {
+                return res.status(400).json({ error: 'dataISO deve estar no formato YYYY-MM-DD' });
+            }
+
+            const resumo = await LembreteDesignacoesService.enviarLembretes({
+                dataISO: dataISO ? String(dataISO) : undefined,
+                usuarioIds: todos === true ? null : [req.user.id],
+                usarTrava: false,
+            });
+
+            return res.json({
+                ...resumo,
+                escopo: todos === true ? 'todos os usuarios com aparelho' : 'somente voce',
+                observacao: resumo.enviados === 0
+                    ? 'Nada saiu. Confira: o aparelho registrou o token (precisa de build novo e login), o irmao esta vinculado ao usuario, e ha designacao PUBLICADA nessa data.'
+                    : 'Push despachado para a API do Expo. No iOS so chega com a chave APNs configurada.',
+            });
+        } catch (error) {
+            console.error('Erro ao testar lembrete:', error);
             return res.status(500).json({ error: 'Erro interno' });
         }
     }

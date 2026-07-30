@@ -98,6 +98,8 @@ routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
 // (AgendadorLembretes) so alcanca quem tem token gravado aqui.
 routes.post('/push/token', PushTokenController.registrar);
 routes.delete('/push/token', PushTokenController.remover);
+// Dispara o lembrete na hora, para conferir sem esperar as 19h. Admin: manda push de verdade.
+routes.post('/push/testar', requireAdmin, PushTokenController.testar);
 
 // ==================== HISTORICO ====================
 routes.get('/historico', HistoricoController.index);

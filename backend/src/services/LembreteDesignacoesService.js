@@ -57,47 +57,64 @@ function montarCorpo(itens, dataISO) {
     return `${itens[0].titulo} e mais ${itens.length - 1} - ${quando}`;
 }
 
-async function enviarLembretesDeAmanha() {
-    const amanha = dataDeAmanhaEmBahia();
+/**
+ * Envia o lembrete de um dia.
+ *
+ * `usuarioIds` limita o publico (a rota de teste manda so para quem pediu, para uma conferencia
+ * nao virar push na congregacao inteira). `usarTrava` desliga a idempotencia E o registro dela:
+ * um teste nao pode consumir a trava do dia, senao o disparo real das 19h seria pulado.
+ *
+ * `diagnostico` existe para o teste conseguir dizer POR QUE nada saiu — sem ele, "0 enviados"
+ * e indistinguivel entre "ninguem tem token", "ninguem tem designacao" e "quadro em rascunho".
+ */
+async function enviarLembretes({ dataISO, usuarioIds = null, usarTrava = true } = {}) {
+    const dia = dataISO || dataDeAmanhaEmBahia();
 
     const usuarios = await prisma.usuario.findMany({
         where: {
             irmaoId: { not: null },
             pushTokens: { some: {} },
+            ...(usuarioIds ? { id: { in: usuarioIds } } : {}),
         },
         include: { irmao: true, pushTokens: true },
     });
 
+    const diagnostico = { comAparelho: usuarios.length, semCompromisso: 0, jaAvisados: 0 };
+
     if (usuarios.length === 0) {
-        console.log(`[lembretes] ${amanha}: nenhum usuario com aparelho registrado.`);
-        return { data: amanha, usuarios: 0, enviados: 0, falhas: 0 };
+        console.log(`[lembretes] ${dia}: nenhum usuario com aparelho registrado.`);
+        return { data: dia, usuarios: 0, enviados: 0, falhas: 0, diagnostico };
     }
 
     // Trava de idempotencia: se o container reiniciar depois do disparo, o agendador roda de
     // novo no mesmo dia e nao pode repetir o push de quem ja foi avisado.
-    const jaAvisados = await prisma.lembreteEnviado.findMany({
-        where: { dataISO: amanha, usuarioId: { in: usuarios.map(u => u.id) } },
-        select: { usuarioId: true },
-    });
-    const avisados = new Set(jaAvisados.map(l => l.usuarioId));
+    let avisados = new Set();
+    if (usarTrava) {
+        const jaAvisados = await prisma.lembreteEnviado.findMany({
+            where: { dataISO: dia, usuarioId: { in: usuarios.map(u => u.id) } },
+            select: { usuarioId: true },
+        });
+        avisados = new Set(jaAvisados.map(l => l.usuarioId));
+    }
 
     const mensagens = [];
     const lembrados = [];
 
     for (const usuario of usuarios) {
-        if (avisados.has(usuario.id) || !usuario.irmao) continue;
+        if (avisados.has(usuario.id)) { diagnostico.jaAvisados += 1; continue; }
+        if (!usuario.irmao) continue;
 
         const compromissos = await MinhasDesignacoesService.listarPorIrmao(usuario.irmao);
         // Quadro em rascunho ainda muda de mao ate ser publicado; avisar sobre designacao que
         // pode sumir e pior do que nao avisar.
         const doDia = compromissos.filter(
-            c => c.dataISO === amanha && c.origem && c.origem.status === 'publicado'
+            c => c.dataISO === dia && c.origem && c.origem.status === 'publicado'
         );
 
-        // Sem nada amanha, silencio: notificacao vazia so ensina o irmao a ignorar o app.
-        if (doDia.length === 0) continue;
+        // Sem nada no dia, silencio: notificacao vazia so ensina o irmao a ignorar o app.
+        if (doDia.length === 0) { diagnostico.semCompromisso += 1; continue; }
 
-        const body = montarCorpo(doDia, amanha);
+        const body = montarCorpo(doDia, dia);
         // Um irmao pode ter mais de um aparelho, e cada token e um destino separado.
         for (const { token } of usuario.pushTokens) {
             mensagens.push({
@@ -105,41 +122,50 @@ async function enviarLembretesDeAmanha() {
                 title: 'Suas designações de amanhã',
                 body,
                 // `screen` e o que faz o toque abrir a aba certa em vez de so a home.
-                data: { screen: 'minhas', dataISO: amanha },
+                data: { screen: 'minhas', dataISO: dia },
             });
         }
         lembrados.push(usuario.id);
     }
 
     if (mensagens.length === 0) {
-        console.log(`[lembretes] ${amanha}: ninguem tem designacao publicada amanha.`);
-        return { data: amanha, usuarios: 0, enviados: 0, falhas: 0 };
+        console.log(`[lembretes] ${dia}: ninguem tem designacao publicada nesse dia.`);
+        return { data: dia, usuarios: 0, enviados: 0, falhas: 0, diagnostico };
     }
 
     const resultado = await ExpoPushService.enviar(mensagens);
 
     // Marca depois do envio, e por usuario (nao por token): a trava e "essa pessoa ja foi
     // avisada desse dia". skipDuplicates protege de dois disparos concorrentes.
-    await prisma.lembreteEnviado.createMany({
-        data: lembrados.map(usuarioId => ({ usuarioId, dataISO: amanha })),
-        skipDuplicates: true,
-    });
+    if (usarTrava) {
+        await prisma.lembreteEnviado.createMany({
+            data: lembrados.map(usuarioId => ({ usuarioId, dataISO: dia })),
+            skipDuplicates: true,
+        });
+    }
 
     const resumo = {
-        data: amanha,
+        data: dia,
         usuarios: lembrados.length,
         enviados: resultado.enviados,
         falhas: resultado.falhas,
+        diagnostico,
     };
     console.log(
-        `[lembretes] ${amanha}: ${resumo.usuarios} irmao(s), ` +
+        `[lembretes] ${dia}: ${resumo.usuarios} irmao(s), ` +
         `${resumo.enviados} push enviado(s), ${resumo.falhas} falha(s), ` +
         `${resultado.removidos} token(s) removido(s).`
     );
     return resumo;
 }
 
+/** O disparo das 19h: amanha, congregacao inteira, com a trava ligada. */
+async function enviarLembretesDeAmanha() {
+    return enviarLembretes({ dataISO: dataDeAmanhaEmBahia(), usarTrava: true });
+}
+
 module.exports = {
+    enviarLembretes,
     enviarLembretesDeAmanha,
     dataDeAmanhaEmBahia,
     dataDeHojeEmBahia,
