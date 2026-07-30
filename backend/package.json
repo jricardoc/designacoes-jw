@@ -7,7 +7,8 @@
     "dev": "nodemon -L src/index.js",
     "prisma:start": "prisma migrate deploy && npm run dev",
     "verificar:dirigentes": "node scripts/verificarRegrasDirigentes.js",
-    "verificar:designacoes": "node scripts/verificarMinhasDesignacoes.js"
+    "verificar:designacoes": "node scripts/verificarMinhasDesignacoes.js",
+    "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

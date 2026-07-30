@@ -92,6 +92,21 @@ class IrmaoController {
 
             const updateData = {};
             if (nome !== undefined) updateData.nome = String(nome).trim();
+
+            // Designacao guarda o nome como TEXTO (irmao1/irmao2), nao como chave estrangeira.
+            // Sem propagar o rename, as designacoes ja gravadas ficam apontando para um nome que
+            // nao existe mais: o irmao deixa de ver as proprias designacoes (MinhasDesignacoes
+            // casa por igualdade exata), sai do rodizio do AutoDesignacaoService e aparece como
+            // "ainda nao designado" no quadro em que ele esta escalado.
+            const anterior = await prisma.irmao.findUnique({
+                where: { id: parseInt(id) },
+                select: { nome: true }
+            });
+            if (!anterior) {
+                return res.status(404).json({ error: 'Irmao nao encontrado' });
+            }
+            const nomeAntigo = anterior.nome;
+            const renomeou = updateData.nome !== undefined && updateData.nome !== nomeAntigo;
             if (funcoes !== undefined) updateData.funcoes = funcoes;
             if (ativo !== undefined) updateData.ativo = ativo;
             if (nivelAudioVideo !== undefined) updateData.nivelAudioVideo = nivelAudioVideo;
@@ -101,13 +116,26 @@ class IrmaoController {
             const privilegioNormalizado = normalizarPrivilegio(privilegio);
             if (privilegioNormalizado !== undefined) updateData.privilegio = privilegioNormalizado;
 
-            const irmao = await prisma.irmao.update({
-                where: { id: parseInt(id) },
-                data: updateData,
-                include: {
-                    indisponibilidades: true
-                }
-            });
+            // Uma transacao: ou o irmao e as designacoes dele andam juntos, ou nada muda.
+            const [irmao] = await prisma.$transaction([
+                prisma.irmao.update({
+                    where: { id: parseInt(id) },
+                    data: updateData,
+                    include: {
+                        indisponibilidades: true
+                    }
+                }),
+                ...(renomeou ? [
+                    prisma.designacao.updateMany({
+                        where: { irmao1: nomeAntigo },
+                        data: { irmao1: updateData.nome }
+                    }),
+                    prisma.designacao.updateMany({
+                        where: { irmao2: nomeAntigo },
+                        data: { irmao2: updateData.nome }
+                    })
+                ] : [])
+            ]);
 
             return res.json(irmao);
         } catch (error) {

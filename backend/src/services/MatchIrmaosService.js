@@ -207,4 +207,7 @@ function buildIndisponibilidadePreview(semanas, irmaosDB) {
     return { confirmados, ambiguos };
 }
 
-module.exports = { buildIndisponibilidadePreview, CAMPOS };
+// tokenize/matchStrength saem tambem soltos: o script de normalizacao de nomes das
+// designacoes precisa do mesmo criterio de semelhanca, e reimplementa-lo la deixaria duas
+// regras de match divergindo com o tempo.
+module.exports = { buildIndisponibilidadePreview, CAMPOS, tokenize, matchStrength };
