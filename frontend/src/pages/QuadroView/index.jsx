@@ -18,6 +18,7 @@ import HistoricoPanel from "../../components/quadros/HistoricoPanel";
 import { useToast, ToastContainer } from "../../components/Toast";
 import ConfirmModal from "../../components/ConfirmModal";
 import EstatisticasIrmaoModal from "../../components/EstatisticasIrmaoModal";
+import { serveNoQuadro } from "../../utils/funcoes";
 import "./styles.css";
 
 const MESES = [
@@ -500,9 +501,11 @@ export default function QuadroView() {
                     ...ordenado.map(([, v]) => v),
                   );
 
-                  // Calcular irmaos ativos que nao foram designados
+                  // Calcular irmaos ativos que nao foram designados. Quem so e dirigente
+                  // fica fora: ele entra na escala de dirigentes, nao neste quadro, entao
+                  // listar como pendente daria a entender que falta designa-lo aqui.
                   const irmaosAtivos = irmaos
-                    .filter((i) => i.ativo)
+                    .filter((i) => i.ativo && serveNoQuadro(i))
                     .map((i) => i.nome);
                   const nomesDesignados = Object.keys(contagem);
                   const naoDesignados = irmaosAtivos.filter(
@@ -538,8 +541,8 @@ export default function QuadroView() {
                             marginTop: "0.5rem",
                           }}
                         >
-                          ✅ Todos os {irmaosAtivos.length} irmãos ativos foram
-                          designados neste mês!
+                          ✅ Todos os {irmaosAtivos.length} irmãos do quadro
+                          foram designados neste mês!
                         </div>
                       ) : (
                         <div
