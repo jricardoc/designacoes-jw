@@ -1,8 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -31,6 +32,7 @@ import {
   useToast,
   type SelectOption,
 } from "@/components/ui";
+import { DiaShareCard } from "@/components/quadros/DiaShareCard";
 import { HistoricoList } from "@/components/quadros/HistoricoList";
 import { colors, MESES, MESES_CURTO, radius, statusConfig } from "@/theme";
 import {
@@ -42,6 +44,7 @@ import {
   type GrupoDia,
 } from "@/utils/designacaoRules";
 import { ordenarFuncoes } from "@/utils/funcoes";
+import { exportarImagem } from "@/utils/exportImagem";
 import { exportarPdf } from "@/utils/exportPdf";
 import { gerarHtmlQuadro } from "@/utils/pdfHtml";
 
@@ -71,6 +74,10 @@ export default function QuadroScreen() {
   >(null);
   const [showHistorico, setShowHistorico] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  // Dia sendo compartilhado: montar o cartao e o que dispara a captura (ver o onLayout abaixo).
+  const [diaShare, setDiaShare] = useState<GrupoDia | null>(null);
+  const shotRef = useRef<View>(null);
+  const capturando = useRef(false);
 
   const grupos = useMemo<GrupoDia[]>(
     () => (quadro ? agruparPorData(quadro.designacoes) : []),
@@ -141,6 +148,32 @@ export default function QuadroScreen() {
       toast.show(err instanceof Error ? err.message : "Erro ao gerar PDF", "error");
     } finally {
       setDownloading(false);
+    }
+  };
+
+  /**
+   * Chamado pelo onLayout do cartao escondido: so ali existe a garantia de que ele ja tem
+   * tamanho. Capturar antes disso devolve uma imagem em branco.
+   */
+  const capturarDia = async () => {
+    if (!diaShare || capturando.current) return;
+    capturando.current = true;
+    try {
+      // Mais um quadro de render: o layout ja saiu, falta o texto terminar de pintar.
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      const nomeMes = (MESES[quadro.mes] ?? "mes").toLowerCase();
+      const dia = diaShare.data.split("/")[0];
+      await exportarImagem(shotRef, `designacoes-${dia}-${nomeMes}-${quadro.ano}.png`);
+    } catch (err) {
+      toast.show(
+        err instanceof Error ? err.message : "Erro ao gerar imagem",
+        "error",
+      );
+    } finally {
+      setDiaShare(null);
+      capturando.current = false;
     }
   };
 
@@ -288,6 +321,22 @@ export default function QuadroScreen() {
               </View>
               <Pressable
                 hitSlop={8}
+                style={styles.shareDia}
+                disabled={!!diaShare}
+                onPress={() => setDiaShare(grupo)}
+              >
+                {diaShare?.data === grupo.data ? (
+                  <ActivityIndicator size="small" color={colors.primaryDark} />
+                ) : (
+                  <Ionicons
+                    name="share-social-outline"
+                    size={16}
+                    color={colors.primaryDark}
+                  />
+                )}
+              </Pressable>
+              <Pressable
+                hitSlop={8}
                 style={styles.deleteDia}
                 onPress={() =>
                   confirm.confirm({
@@ -390,6 +439,14 @@ export default function QuadroScreen() {
         {showHistorico ? <HistoricoList quadroId={id} /> : null}
       </ScrollView>
 
+      {/* Fora da tela de proposito: precisa estar montado e com layout para o view-shot
+          capturar, mas nao pode aparecer para o usuario. */}
+      {diaShare ? (
+        <View style={styles.shotHost} pointerEvents="none" onLayout={capturarDia}>
+          <DiaShareCard ref={shotRef} quadro={quadro} grupo={diaShare} />
+        </View>
+      ) : null}
+
       <SelectSheet
         visible={!!editing}
         title={editing ? `${editing.funcao} • ${editing.data}` : ""}
@@ -463,6 +520,14 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   diaBadgeText: { color: colors.primaryDark, fontWeight: "700" },
+  shareDia: {
+    width: 32,
+    height: 32,
+    borderRadius: radius.sm,
+    backgroundColor: colors.infoBg,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   deleteDia: {
     width: 32,
     height: 32,
@@ -471,6 +536,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  // Longe da area visivel, sem opacity 0: view invisivel por opacidade sai em branco no
+  // print de alguns Android.
+  shotHost: { position: "absolute", left: -10000, top: 0 },
   funcaoRow: {
     borderTopWidth: 1,
     borderTopColor: colors.border,

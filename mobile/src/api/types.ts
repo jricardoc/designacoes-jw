@@ -42,6 +42,33 @@ export interface Config {
   titulo: string;
   subtitulo: string;
   mes: string;
+  /** "HH:MM" — início da reunião, usado pelos lembretes de "N horas antes". */
+  horaMeioSemana?: string;
+  horaFimDeSemana?: string;
+}
+
+/** Uma opção de tipo de notificação ou de antecedência, como o backend a descreve. */
+export interface OpcaoNotificacao {
+  id: string;
+  label: string;
+  descricao: string;
+}
+
+/**
+ * O catálogo (`opcoes`) vem junto de propósito: a tela desenha o que o backend oferece, em
+ * vez de manter uma segunda lista aqui que sairia de sincronia com o agendador.
+ */
+export interface PreferenciaNotificacao {
+  tipos: string[];
+  antecedencias: string[];
+  opcoes: {
+    tipos: OpcaoNotificacao[];
+    regras: OpcaoNotificacao[];
+  };
+  horarios: {
+    meioSemana: string;
+    fimDeSemana: string;
+  };
 }
 
 export interface Indisponibilidade {
@@ -176,18 +203,27 @@ export interface QuadroDirigente extends QuadroDirigenteResumo {
 
 // ===== Reuniões =====
 
+/**
+ * Espelha `model SemanaReuniao` do Prisma. Estava faltando metade dos campos aqui — a tela
+ * não tinha como mostrar "Faça Seu Melhor no Ministério", a Sala B, o conselheiro nem as
+ * mecânicas de fim de semana, porque o TypeScript não sabia que eles chegavam.
+ */
 export interface SemanaReuniao {
   id: number;
   reuniaoId: number;
   faixaData: string;
+  /** "dd/MM/yyyy" da reunião do meio de semana. O fim de semana é derivado dela. */
   dataReuniao?: string | null;
   leituraSemanal?: string | null;
+
   presidente?: string | null;
+  conselheiroB?: string | null;
   oracaoInicial?: string | null;
   oracaoFinal?: string | null;
   canticoInicial?: string | null;
   canticoMeio?: string | null;
   canticoFinal?: string | null;
+
   tesouro1_titulo?: string | null;
   tesouro1_irmao?: string | null;
   tesouro2_titulo?: string | null;
@@ -195,18 +231,41 @@ export interface SemanaReuniao {
   tesouro3_titulo?: string | null;
   tesouro3_salaB?: string | null;
   tesouro3_principal?: string | null;
+
+  ministerio1_titulo?: string | null;
+  ministerio1_salaB?: string | null;
+  ministerio1_principal?: string | null;
+  ministerio2_titulo?: string | null;
+  ministerio2_salaB?: string | null;
+  ministerio2_principal?: string | null;
+  ministerio3_titulo?: string | null;
+  ministerio3_salaB?: string | null;
+  ministerio3_principal?: string | null;
+  ministerio4_titulo?: string | null;
+  ministerio4_salaB?: string | null;
+  ministerio4_principal?: string | null;
+
   vidaCrista1_titulo?: string | null;
   vidaCrista1_irmao?: string | null;
   vidaCrista2_titulo?: string | null;
   vidaCrista2_irmao?: string | null;
   estudoBiblico_dirigente?: string | null;
   estudoBiblico_leitor?: string | null;
+
   fds_presidente?: string | null;
   fds_tema?: string | null;
   fds_orador?: string | null;
+  fds_congregacao?: string | null;
+  fds_leitor?: string | null;
+
   mecanica_audioVideo?: string | null;
   mecanica_indicadores?: string | null;
   mecanica_microfone?: string | null;
+  fds_mecanica_audioVideo?: string | null;
+  fds_mecanica_indicadores?: string | null;
+  fds_mecanica_microfone?: string | null;
+  fds_mecanica_portao?: string | null;
+
   limpeza?: string | null;
 }
 

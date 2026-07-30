@@ -1,5 +1,15 @@
 const prisma = require('../prisma');
 
+/** "19:30" -> "19:30"; "9:5" -> "09:05"; qualquer outra coisa -> null (recusa o salvamento). */
+function normalizarHora(valor) {
+    const m = /^(\d{1,2}):(\d{1,2})$/.exec(String(valor ?? '').trim());
+    if (!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    if (h > 23 || min > 59) return null;
+    return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}
+
 class ConfigController {
     async getConfig(req, res) {
         try {
@@ -25,17 +35,27 @@ class ConfigController {
 
     async updateConfig(req, res) {
         try {
-            const { titulo, subtitulo, mes } = req.body;
+            const { titulo, subtitulo, mes, horaMeioSemana, horaFimDeSemana } = req.body;
             const config = await prisma.config.findFirst();
+
+            // Campo omitido mantem o valor; so entra no update o que veio no corpo. Sem isso,
+            // a tela de configuracao antiga (que nao conhece os horarios) apagaria os dois
+            // ao salvar o titulo, e os lembretes "3 horas antes" cairiam no horario errado.
+            const horarios = {};
+            if (horaMeioSemana !== undefined) horarios.horaMeioSemana = normalizarHora(horaMeioSemana);
+            if (horaFimDeSemana !== undefined) horarios.horaFimDeSemana = normalizarHora(horaFimDeSemana);
+            if (Object.values(horarios).some(v => v === null)) {
+                return res.status(400).json({ error: 'Horário deve estar no formato HH:MM' });
+            }
 
             if (!config) {
                 await prisma.config.create({
-                    data: { titulo, subtitulo, mes }
+                    data: { titulo, subtitulo, mes, ...horarios }
                 });
             } else {
                 await prisma.config.update({
                     where: { id: config.id },
-                    data: { titulo, subtitulo, mes }
+                    data: { titulo, subtitulo, mes, ...horarios }
                 });
             }
 

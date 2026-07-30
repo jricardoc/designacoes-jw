@@ -58,6 +58,11 @@ model Config {
   titulo    String
   subtitulo String
   mes       String
+  // Horario em que a reuniao comeca, "HH:MM" no fuso da congregacao. E o que torna possivel
+  // um lembrete "3 horas antes": a designacao guarda so a data, entao sem isto nao existe
+  // instante nenhum de onde subtrair as horas.
+  horaMeioSemana  String @default("19:30")
+  horaFimDeSemana String @default("09:00")
   updatedAt DateTime @updatedAt
 }
 
@@ -76,6 +81,7 @@ model Usuario {
   irmao      Irmao?      @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
   historicos Historico[]
   pushTokens PushToken[]
+  prefNotificacao PreferenciaNotificacao?
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }
@@ -336,14 +342,31 @@ model PushToken {
   updatedAt DateTime @updatedAt
 }
 
-// Trava de idempotencia do lembrete diario. Se o container reiniciar depois do
-// disparo das 19h, o agendador roda de novo no mesmo dia; sem o unique abaixo
-// isso viraria push repetido no celular de todo mundo a cada restart.
+// Trava de idempotencia do lembrete. Se o container reiniciar depois de um disparo, o
+// agendador roda de novo e sem o unique abaixo isso viraria push repetido no celular de
+// todo mundo a cada restart.
+//
+// `regra` entra na chave porque o irmao pode pedir mais de uma antecedencia para o MESMO
+// dia ("1 semana antes" e "1 dia antes"): sem ela, o primeiro lembrete travaria o segundo.
 model LembreteEnviado {
   id        Int      @id @default(autoincrement())
   usuarioId Int
   dataISO   String // dia das designacoes lembradas (YYYY-MM-DD)
+  regra     String   @default("1d") // id da regra de antecedencia (ver RegrasLembrete)
   createdAt DateTime @default(now())
 
-  @@unique([usuarioId, dataISO])
+  @@unique([usuarioId, dataISO, regra])
+}
+
+// O que cada irmao quer receber. Sem linha aqui vale o padrao (todos os tipos, so "1 dia
+// antes"), que e exatamente o comportamento que existia antes desta tela: quem nunca abrir
+// as configuracoes nao percebe diferenca nenhuma.
+model PreferenciaNotificacao {
+  id            Int      @id @default(autoincrement())
+  usuarioId     Int      @unique
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tipos         String[] // "designacao" | "dirigente" | "reuniao"
+  antecedencias String[] // ids de RegrasLembrete: "7d", "3d", "1d", "3h", "1h"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

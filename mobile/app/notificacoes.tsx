@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -98,12 +99,23 @@ export default function NotificacoesScreen() {
         description="O que chegou neste aparelho"
         showBack
         right={
-          !carregando && itens.length > 0 ? (
-            <Pressable style={styles.limpar} hitSlop={8} onPress={pedirLimpeza}>
-              <Ionicons name="trash-outline" size={16} color={colors.red} />
-              <Text style={styles.limparTexto}>Limpar tudo</Text>
+          // A engrenagem fica sempre; "Limpar tudo" só quando há o que limpar. Sem histórico
+          // ainda é quando o irmão mais precisa chegar às configurações.
+          <View style={styles.acoes}>
+            {!carregando && itens.length > 0 ? (
+              <Pressable style={styles.limpar} hitSlop={8} onPress={pedirLimpeza}>
+                <Ionicons name="trash-outline" size={16} color={colors.red} />
+              </Pressable>
+            ) : null}
+            <Pressable
+              style={styles.configurar}
+              hitSlop={8}
+              accessibilityLabel="Configurar notificações"
+              onPress={() => router.push("/notificacoes-config")}
+            >
+              <Ionicons name="settings-outline" size={18} color={colors.primaryDark} />
             </Pressable>
-          ) : null
+          </View>
         }
       />
 
@@ -131,16 +143,23 @@ export default function NotificacoesScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   lista: { padding: 18, paddingBottom: 44, gap: 11 },
+  acoes: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   limpar: {
-    flexDirection: "row",
+    width: 36,
+    height: 36,
     alignItems: "center",
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    justifyContent: "center",
     borderRadius: radius.pill,
     backgroundColor: colors.dangerBg,
   },
-  limparTexto: { color: colors.red, fontSize: 13, fontWeight: "600" },
+  configurar: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.pill,
+    backgroundColor: colors.infoBg,
+  },
   card: {
     backgroundColor: colors.surface,
     borderWidth: 1,

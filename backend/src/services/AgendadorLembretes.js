@@ -3,89 +3,51 @@
 const LembreteDesignacoesService = require('./LembreteDesignacoesService');
 
 /**
- * Agendador do lembrete diario: dispara as 19:00 de America/Bahia e reagenda o dia seguinte.
+ * Agendador dos lembretes: acorda de 15 em 15 minutos e despacha o que venceu.
+ *
+ * ANTES era um unico disparo diario as 19:00. Nao serve mais: desde que cada irmao escolhe a
+ * antecedencia, existe lembrete que vence as 16:30 ("3 horas antes" de uma reuniao das
+ * 19:30) e outro que vence uma semana antes. Quem decide se algo venceu e
+ * RegrasLembrete.estaVencida; aqui so garantimos que alguem pergunte com frequencia.
+ *
+ * 15 minutos e o passo porque os horarios de reuniao caem em meia hora cheia ("19:30"), e
+ * subtrair horas inteiras disso mantem o alvo na meia hora — um passo de 1 hora erraria todos
+ * os alvos :30. A janela de graca de 6h em estaVencida cobre o resto: reinicio de container,
+ * deploy no meio do caminho, tique perdido.
  *
  * Usa `setTimeout` puro de proposito. O docker-compose monta /app/node_modules como volume
  * anonimo, entao qualquer dependencia nova (node-cron e afins) exige rebuild da imagem e
  * quebra o deploy de quem so faz git pull.
  */
 
-const FUSO = 'America/Bahia';
-const HORA_DISPARO = 19;
+const PASSO_MS = 15 * 60 * 1000;
 
 let agendado = false;
 
-// hourCycle h23 para a hora vir 00-23; em alguns locales `hour12: false` devolve 24.
-const FORMATADOR_RELOGIO = new Intl.DateTimeFormat('en-CA', {
-    timeZone: FUSO,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-});
-
-/**
- * O mesmo instante, mas com os campos de data/hora do fuso da congregacao empacotados como se
- * fossem UTC. Permite fazer aritmetica de calendario sem depender do fuso do servidor (que
- * roda em UTC no deploy e no fuso da maquina em desenvolvimento).
- */
-function relogioDaCongregacao(instante) {
-    const partes = {};
-    for (const p of FORMATADOR_RELOGIO.formatToParts(instante)) partes[p.type] = p.value;
-    return new Date(Date.UTC(
-        Number(partes.year),
-        Number(partes.month) - 1,
-        Number(partes.day),
-        Number(partes.hour),
-        Number(partes.minute),
-        Number(partes.second)
-    ));
+/** Quantos ms faltam para o proximo quarto de hora cheio (:00, :15, :30, :45). */
+function msAteProximoTique(agora = new Date()) {
+    const t = agora.getTime();
+    const proximo = Math.floor(t / PASSO_MS) * PASSO_MS + PASSO_MS;
+    return proximo - t;
 }
 
-/**
- * Quantos ms faltam para as 19:00 da congregacao.
- *
- * A diferenca e calculada dentro do proprio fuso; como a Bahia nao tem horario de verao desde
- * 2019, o deslocamento e constante e essa diferenca vale tambem no relogio do servidor.
- */
-function msAteProximoDisparo(agora = new Date()) {
-    const local = relogioDaCongregacao(agora);
-    const alvo = new Date(Date.UTC(
-        local.getUTCFullYear(), local.getUTCMonth(), local.getUTCDate(), HORA_DISPARO, 0, 0, 0
-    ));
-    if (alvo.getTime() <= local.getTime()) alvo.setUTCDate(alvo.getUTCDate() + 1);
-    return alvo.getTime() - local.getTime();
-}
-
-/** Hora cheia (0-23) no relogio da congregacao. */
-function horaDaCongregacao(agora = new Date()) {
-    return relogioDaCongregacao(agora).getUTCHours();
-}
-
-function emHorasMinutos(ms) {
-    const minutos = Math.round(ms / 60000);
-    return `${Math.floor(minutos / 60)}h${String(minutos % 60).padStart(2, '0')}`;
+async function tique() {
+    try {
+        await LembreteDesignacoesService.processarTick();
+    } catch (erro) {
+        // Uma falha de envio nao pode matar o agendamento seguinte: sem isso, um push com
+        // erro deixaria a congregacao sem lembrete ate o proximo restart.
+        console.error('[lembretes] falha no tique:', erro);
+    }
 }
 
 function agendar() {
-    const espera = msAteProximoDisparo();
-    console.log(`[lembretes] proximo disparo em ${emHorasMinutos(espera)} (19:00 ${FUSO}).`);
-
+    // Recalcula a partir do relogio em vez de somar o passo fixo: somar acumula o atraso do
+    // proprio setTimeout e os tiques escorregam para fora da meia hora com o passar dos dias.
     setTimeout(async () => {
-        try {
-            await LembreteDesignacoesService.enviarLembretesDeAmanha();
-        } catch (erro) {
-            // Uma falha de envio nao pode matar o agendamento seguinte: sem isso, um push com
-            // erro deixaria a congregacao sem lembrete ate o proximo restart.
-            console.error('[lembretes] falha no disparo:', erro);
-        }
-        // Recalcula a partir do relogio em vez de somar 24h fixas: somar acumula o atraso do
-        // proprio setTimeout e o disparo escorrega alguns segundos por dia.
+        await tique();
         agendar();
-    }, espera);
+    }, msAteProximoTique());
 }
 
 function iniciar() {
@@ -98,18 +60,14 @@ function iniciar() {
     if (agendado) return;
     agendado = true;
 
-    // Um deploy (o webhook do EasyPanel reinicia o container) ou um crash que atravesse as
-    // 19:00 perderia o lembrete do dia em silencio: o proximo disparo so viria em ~24h e ja
-    // falaria de outro dia. A trava de LembreteEnviado torna essa re-execucao segura — quem
-    // ja foi avisado e pulado. Sem `await` para nao segurar o listen nem o agendar() abaixo.
-    if (horaDaCongregacao() >= HORA_DISPARO) {
-        console.log('[lembretes] boot depois das 19:00: recuperando o disparo do dia.');
-        LembreteDesignacoesService.enviarLembretesDeAmanha().catch(erro => {
-            console.error('[lembretes] falha na recuperacao do disparo:', erro);
-        });
-    }
+    console.log(`[lembretes] agendador ligado: um tique a cada ${PASSO_MS / 60000} minutos.`);
 
+    // Um tique imediato no boot recupera o que venceu enquanto o container estava fora do ar
+    // (deploy do EasyPanel, crash), dentro da janela de graca. A trava de LembreteEnviado
+    // torna essa re-execucao segura — quem ja foi avisado e pulado. Sem `await` para nao
+    // segurar o listen.
+    tique();
     agendar();
 }
 
-module.exports = { iniciar, msAteProximoDisparo, horaDaCongregacao };
+module.exports = { iniciar, msAteProximoTique, PASSO_MS };

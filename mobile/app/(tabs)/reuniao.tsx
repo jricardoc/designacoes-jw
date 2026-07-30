@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -12,11 +12,22 @@ import {
 } from "react-native";
 import { useImportarReuniao } from "@/api/hooks/useReunioes";
 import { useReunioes } from "@/api/hooks/useMisc";
-import type { IndisponibilidadePreview } from "@/api/types";
+import type { IndisponibilidadePreview, Reuniao, SemanaReuniao } from "@/api/types";
 import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { ImportIndisponibilidadeSheet } from "@/components/reuniao/ImportIndisponibilidadeSheet";
 import { SemanaCard } from "@/components/reuniao/SemanaCard";
+import { SemanaShareCard } from "@/components/reuniao/SemanaShareCard";
 import { colors, MESES, radius } from "@/theme";
+import { exportarImagem } from "@/utils/exportImagem";
+import { exportarPdf } from "@/utils/exportPdf";
+import { gerarHtmlSemana } from "@/utils/pdfHtml";
+import { datasDaSemana } from "@/utils/semanaReuniao";
+
+/** A semana escolhida junto do mês/ano dela — o PDF precisa dos dois para o cabeçalho. */
+interface Alvo {
+  reuniao: Reuniao;
+  semana: SemanaReuniao;
+}
 
 export default function ReuniaoScreen() {
   const { data: reunioes, isLoading, refetch, isRefetching } = useReunioes();
@@ -25,6 +36,51 @@ export default function ReuniaoScreen() {
 
   const [preview, setPreview] = useState<IndisponibilidadePreview | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
+  // Mesma mecânica do quadro: montar o cartão fora da tela é o que dispara a captura.
+  const [alvoImagem, setAlvoImagem] = useState<Alvo | null>(null);
+  const [pdfDe, setPdfDe] = useState<number | null>(null);
+  const shotRef = useRef<View>(null);
+  const capturando = useRef(false);
+
+  const nomeArquivo = (alvo: Alvo, ext: string) => {
+    const { meio } = datasDaSemana(alvo.semana);
+    const marca = meio ? meio.diaMes.replace("/", "-") : String(alvo.semana.id);
+    const mes = (MESES[alvo.reuniao.mes] ?? "mes").toLowerCase();
+    return `reuniao-${marca}-${mes}-${alvo.reuniao.ano}.${ext}`;
+  };
+
+  const gerarPdf = async (alvo: Alvo) => {
+    setPdfDe(alvo.semana.id);
+    try {
+      const html = gerarHtmlSemana(
+        alvo.reuniao,
+        alvo.semana,
+        datasDaSemana(alvo.semana),
+      );
+      await exportarPdf(html, nomeArquivo(alvo, "pdf"));
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Erro ao gerar PDF", "error");
+    } finally {
+      setPdfDe(null);
+    }
+  };
+
+  /** Chamado pelo onLayout do cartão escondido — antes disso a imagem sai em branco. */
+  const capturarSemana = async () => {
+    if (!alvoImagem || capturando.current) return;
+    capturando.current = true;
+    try {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      await exportarImagem(shotRef, nomeArquivo(alvoImagem, "png"));
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Erro ao gerar imagem", "error");
+    } finally {
+      setAlvoImagem(null);
+      capturando.current = false;
+    }
+  };
 
   const handleImport = async () => {
     try {
@@ -103,7 +159,15 @@ export default function ReuniaoScreen() {
                 </Text>
                 <View style={styles.semanas}>
                   {r.semanas.map((s, i) => (
-                    <SemanaCard key={s.id} semana={s} index={i} />
+                    <SemanaCard
+                      key={s.id}
+                      semana={s}
+                      index={i}
+                      onPdf={() => gerarPdf({ reuniao: r, semana: s })}
+                      onCompartilhar={() => setAlvoImagem({ reuniao: r, semana: s })}
+                      gerandoPdf={pdfDe === s.id}
+                      compartilhando={alvoImagem?.semana.id === s.id}
+                    />
                   ))}
                 </View>
               </View>
@@ -117,6 +181,18 @@ export default function ReuniaoScreen() {
           )}
         </ScrollView>
       )}
+
+      {/* Fora da tela de propósito: precisa estar montado e com layout para o view-shot
+          capturar, mas não pode aparecer para o usuário. */}
+      {alvoImagem ? (
+        <View style={styles.shotHost} pointerEvents="none" onLayout={capturarSemana}>
+          <SemanaShareCard
+            ref={shotRef}
+            reuniao={alvoImagem.reuniao}
+            semana={alvoImagem.semana}
+          />
+        </View>
+      ) : null}
 
       <ImportIndisponibilidadeSheet
         visible={sheetVisible}
@@ -152,4 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 13,
   },
+  // Longe da área visível, sem opacity 0: view invisível por opacidade sai em branco no
+  // print de alguns Android.
+  shotHost: { position: "absolute", left: -10000, top: 0 },
 });

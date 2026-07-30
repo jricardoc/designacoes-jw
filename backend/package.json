@@ -8,6 +8,8 @@
     "prisma:start": "prisma migrate deploy && npm run dev",
     "verificar:dirigentes": "node scripts/verificarRegrasDirigentes.js",
     "verificar:designacoes": "node scripts/verificarMinhasDesignacoes.js",
+    "verificar:lembretes": "node scripts/verificarLembretes.js",
+    "verificar:regras-lembrete": "node scripts/verificarRegrasLembrete.js",
     "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js"
   },
   "dependencies": {

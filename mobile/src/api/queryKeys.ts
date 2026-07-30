@@ -19,5 +19,6 @@ export const qk = {
     ["irmaos-disponiveis", String(usuarioId ?? "todos")] as const,
   minhasDesignacoes: (escopo: string) => ["minhas-designacoes", escopo] as const,
   config: ["config"] as const,
+  preferenciasNotificacao: ["preferencias-notificacao"] as const,
   carrinho: ["carrinho"] as const,
 };

@@ -1,6 +1,7 @@
-import type { Quadro } from "@/api/types";
+import type { Quadro, SemanaReuniao } from "@/api/types";
 import type { GrupoDia } from "@/utils/designacaoRules";
 import { ordenarFuncoes } from "@/utils/funcoes";
+import { canticoLegivel, parteTitulo } from "@/utils/semanaReuniao";
 
 /**
  * Geradores de HTML que reproduzem EXATAMENTE o layout dos PDFs do front-end web
@@ -260,4 +261,221 @@ export function gerarHtmlDirigentes(
     .join("");
 
   return `<!DOCTYPE html><html><head>${DOC_HEAD}<style>${DIRIGENTES_CSS}</style></head><body>${body}</body></html>`;
+}
+
+// ============================================================
+// PROGRAMAÇÃO DA SEMANA (réplica do pôster da ReuniaoV2 do web)
+// ============================================================
+
+const SEMANA_CSS = `
+  @page { size: A4 landscape; margin: 0; }
+  .pg { width: 297mm; height: 210mm; padding: 6mm 7mm; font-family: Roboto, Inter, sans-serif;
+        display: flex; flex-direction: column; background: #fff; }
+  .top { display: flex; justify-content: space-between; align-items: center;
+         border-bottom: 0.8mm solid #5E6B48; padding-bottom: 2mm; margin-bottom: 3mm; }
+  .top .mes { font-size: 4mm; font-weight: 800; color: #5E6B48; letter-spacing: 0.5mm; }
+  .top .faixa { font-size: 7mm; font-weight: 800; color: #2B2620; }
+  .top .cong { text-align: right; }
+  .top .cong h2 { margin: 0; font-size: 5.6mm; font-weight: 800; color: #2B2620; }
+  .top .cong h3 { margin: 0; font-size: 4mm; font-weight: 600; color: #8A8071; }
+  .cols { display: flex; gap: 5mm; flex: 1; }
+  .col { flex: 1; display: flex; flex-direction: column; gap: 2mm; }
+  /* O meio de semana tem 3x mais conteúdo que o fim de semana; com 50/50 os títulos das
+     partes quebravam em duas linhas e o pôster passava para uma segunda página. */
+  .col-meio { flex: 1.75; }
+  .col-fim { flex: 1; }
+  .colhead { background: #5E6B48; color: #fff; border-radius: 2mm; padding: 1.5mm 3mm;
+             display: flex; justify-content: space-between; align-items: baseline; }
+  .colhead .t { font-size: 4.8mm; font-weight: 800; text-transform: uppercase; }
+  .colhead .d { font-size: 4mm; font-weight: 600; opacity: 0.92; }
+  .leitura { font-size: 3.9mm; color: #5E6B48; font-weight: 700; }
+  .sec { border: 0.3mm solid #E6DCC9; border-radius: 2mm; overflow: hidden; }
+  .sec > .h { background: #F3EDE2; padding: 1.2mm 2.5mm; font-size: 3.9mm; font-weight: 800;
+              color: #566239; text-transform: uppercase; letter-spacing: 0.2mm; }
+  .row { display: flex; gap: 2mm; padding: 0.9mm 2.5mm; border-top: 0.25mm solid #F0E9DB;
+         align-items: baseline; line-height: 1.15; }
+  .row:first-of-type { border-top: none; }
+  .row .lbl { font-size: 3.7mm; color: #8A8071; font-weight: 700; min-width: 30mm; }
+  .row .hora { font-size: 3.5mm; color: #8A8071; font-weight: 700; min-width: 13mm; }
+  .row .val { font-size: 3.9mm; color: #2B2620; font-weight: 600; flex: 1; }
+  .row .tit { font-size: 3.8mm; color: #2B2620; flex: 1; }
+  .row .quem { font-size: 3.8mm; color: #2B2620; font-weight: 700; text-align: right;
+               min-width: 36mm; }
+  .row .salab { font-size: 3.3mm; color: #8A8071; font-weight: 600; display: block;
+                 margin-top: 0.3mm; }
+  .vazio { padding: 2mm 2.5mm; font-size: 3.7mm; color: #A2977F; }
+  /* Presidência sem cabeçalho de seção: os três papéis lado a lado, nome centralizado
+     embaixo do rótulo. Ganha a altura que o título da seção ocupava e sobra espaço para
+     a fonte maior que a congregação pediu. */
+  .presid { display: flex; border: 0.3mm solid #E6DCC9; border-radius: 2mm; overflow: hidden; }
+  .presid .p { flex: 1; text-align: center; padding: 1.4mm 1.5mm; }
+  .presid .p + .p { border-left: 0.25mm solid #F0E9DB; }
+  .presid .rot { font-size: 3.4mm; color: #8A8071; font-weight: 700; text-transform: uppercase;
+                 letter-spacing: 0.15mm; display: block; }
+  .presid .nome { font-size: 4.1mm; color: #2B2620; font-weight: 700; display: block;
+                  margin-top: 0.6mm; }
+  .cantico1 { font-size: 3.6mm; color: #566239; font-weight: 700; text-align: center; }
+`;
+
+const naoVazio = (v: unknown): string | null => {
+  const t = String(v ?? "").trim();
+  return !t || t === "__DELETADO__" || t === "-" ? null : t;
+};
+
+/** Linha "rótulo: valor", omitida quando não há valor. */
+function linhaHtml(label: string, valor?: string | null): string {
+  const v = naoVazio(valor);
+  if (!v) return "";
+  return `<div class="row"><div class="lbl">${esc(label)}</div><div class="val">${esc(v)}</div></div>`;
+}
+
+/** Linha de parte: hora + título à esquerda, quem faz à direita (com a Sala B embaixo). */
+function parteHtml(titulo?: string | null, principal?: string | null, salaB?: string | null): string {
+  const t = parteTitulo(titulo);
+  const p = naoVazio(principal);
+  const b = naoVazio(salaB);
+  if (!t && !p && !b) return "";
+  return `<div class="row">
+    ${t?.hora ? `<div class="hora">${esc(t.hora)}</div>` : ""}
+    <div class="tit">${esc(t?.texto || "—")}</div>
+    <div class="quem">${esc(p || "—")}${b ? `<span class="salab">Sala B: ${esc(b)}</span>` : ""}</div>
+  </div>`;
+}
+
+/** Linha de cântico, já sem o pipe do importador. */
+function canticoHtml(label: string, valor?: string | null): string {
+  const v = canticoLegivel(valor);
+  if (!v) return "";
+  return `<div class="row"><div class="lbl">${esc(label)}</div><div class="val">${esc(v)}</div></div>`;
+}
+
+function secaoHtml(titulo: string, corpo: string): string {
+  if (!corpo.trim()) return "";
+  return `<div class="sec"><div class="h">${esc(titulo)}</div>${corpo}</div>`;
+}
+
+/**
+ * Presidente, Conselheiro B e Oração inicial numa faixa só: rótulo em cima, irmão embaixo,
+ * os três centralizados lado a lado. Sem cabeçalho de seção — é o corte de altura que paga
+ * a fonte maior no resto do pôster.
+ */
+function presidenciaHtml(
+  presidente?: string | null,
+  conselheiro?: string | null,
+  oracao?: string | null,
+): string {
+  const papeis: [string, string | null][] = [
+    ["Presidente", naoVazio(presidente)],
+    ["Conselheiro B", naoVazio(conselheiro)],
+    ["Oração inicial", naoVazio(oracao)],
+  ];
+  if (papeis.every(([, nome]) => !nome)) return "";
+
+  const colunas = papeis
+    .map(
+      ([rotulo, nome]) =>
+        `<div class="p"><span class="rot">${esc(rotulo)}</span><span class="nome">${esc(nome || "—")}</span></div>`,
+    )
+    .join("");
+  return `<div class="presid">${colunas}</div>`;
+}
+
+/**
+ * Um pôster A4 paisagem com a semana inteira: meio de semana à esquerda, fim de semana à
+ * direita. Espelha o layout do `ReuniaoV2` do web (pages/ReuniaoV2/posterA4.css) para o
+ * irmão reconhecer o mesmo papel que já é afixado no quadro.
+ *
+ * `datas` vem pronto de utils/semanaReuniao para o PDF não repetir a derivação do domingo.
+ */
+export function gerarHtmlSemana(
+  reuniao: { mes: number; ano: number },
+  semana: SemanaReuniao,
+  datas: { meio?: { diaMes: string; diaSemana: string } | null; fds?: { diaMes: string; diaSemana: string } | null },
+): string {
+  // `keyof` de propósito: um nome de campo digitado errado vira erro de compilação em vez de
+  // uma seção que some em silêncio do PDF.
+  const g = (campo: keyof SemanaReuniao) => naoVazio(semana[campo]);
+
+  // O cântico inicial morava dentro de "Presidência"; sem a seção ele vira uma linha fina
+  // logo abaixo da faixa, para não sumir do pôster.
+  const canticoInicial = canticoLegivel(g("canticoInicial"));
+
+  const meioSemana = [
+    presidenciaHtml(g("presidente"), g("conselheiroB"), g("oracaoInicial")),
+    canticoInicial ? `<div class="cantico1">${esc(canticoInicial)}</div>` : "",
+    secaoHtml(
+      "Tesouros da Palavra de Deus",
+      parteHtml(g("tesouro1_titulo"), g("tesouro1_irmao")) +
+        parteHtml(g("tesouro2_titulo"), g("tesouro2_irmao")) +
+        parteHtml(g("tesouro3_titulo"), g("tesouro3_principal"), g("tesouro3_salaB")),
+    ),
+    secaoHtml(
+      "Faça Seu Melhor no Ministério",
+      parteHtml(g("ministerio1_titulo"), g("ministerio1_principal"), g("ministerio1_salaB")) +
+        parteHtml(g("ministerio2_titulo"), g("ministerio2_principal"), g("ministerio2_salaB")) +
+        parteHtml(g("ministerio3_titulo"), g("ministerio3_principal"), g("ministerio3_salaB")) +
+        parteHtml(g("ministerio4_titulo"), g("ministerio4_principal"), g("ministerio4_salaB")),
+    ),
+    secaoHtml(
+      "Nossa Vida Cristã",
+      canticoHtml("Cântico", g("canticoMeio")) +
+        parteHtml(g("vidaCrista1_titulo"), g("vidaCrista1_irmao")) +
+        parteHtml(g("vidaCrista2_titulo"), g("vidaCrista2_irmao")) +
+        linhaHtml("Estudo — dirigente", g("estudoBiblico_dirigente")) +
+        linhaHtml("Estudo — leitor", g("estudoBiblico_leitor")) +
+        canticoHtml("Cântico final", g("canticoFinal")) +
+        linhaHtml("Oração final", g("oracaoFinal")),
+    ),
+  ].join("");
+
+  const fimDeSemana = [
+    secaoHtml(
+      "Reunião pública",
+      linhaHtml("Presidente", g("fds_presidente")) +
+        linhaHtml("Tema", g("fds_tema")) +
+        linhaHtml("Orador", g("fds_orador")) +
+        linhaHtml("Congregação", g("fds_congregacao")),
+    ),
+    secaoHtml("A Sentinela", linhaHtml("Leitor", g("fds_leitor"))),
+    secaoHtml("Limpeza", linhaHtml("Responsável", g("limpeza"))),
+  ].join("");
+
+  const leitura = g("leituraSemanal");
+  const faixa =
+    datas.meio && datas.fds
+      ? `${datas.meio.diaMes} a ${datas.fds.diaMes}`
+      : semana.faixaData;
+
+  const body = `
+    <div class="pg">
+      <div class="top">
+        <div>
+          <div class="mes">${esc((MESES_LONGO[reuniao.mes] || "").toUpperCase())} / ${esc(reuniao.ano)}</div>
+          <div class="faixa">${esc(faixa)}</div>
+        </div>
+        <div class="cong">
+          <h2>Programação da Congregação</h2>
+          <h3>Norte de Itapuã</h3>
+        </div>
+      </div>
+      <div class="cols">
+        <div class="col col-meio">
+          <div class="colhead">
+            <span class="t">Meio da semana</span>
+            <span class="d">${esc(datas.meio ? `${datas.meio.diaSemana}, ${datas.meio.diaMes}` : "")}</span>
+          </div>
+          ${leitura ? `<div class="leitura">Leitura da semana: ${esc(leitura)}</div>` : ""}
+          ${meioSemana || '<div class="vazio">Sem partes importadas.</div>'}
+        </div>
+        <div class="col col-fim">
+          <div class="colhead">
+            <span class="t">Fim de semana</span>
+            <span class="d">${esc(datas.fds ? `${datas.fds.diaSemana}, ${datas.fds.diaMes}` : "")}</span>
+          </div>
+          ${fimDeSemana || '<div class="vazio">Sem partes importadas.</div>'}
+        </div>
+      </div>
+    </div>`;
+
+  return `<!DOCTYPE html><html><head>${DOC_HEAD}<style>${SEMANA_CSS}</style></head><body>${body}</body></html>`;
 }

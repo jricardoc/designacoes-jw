@@ -138,8 +138,19 @@ export function useConfig() {
 export function useAtualizarConfig() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Partial<Pick<Config, "titulo" | "subtitulo" | "mes">>) =>
-      apiRequest("/config", { method: "PUT", body: payload }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.config }),
+    mutationFn: (
+      payload: Partial<
+        Pick<
+          Config,
+          "titulo" | "subtitulo" | "mes" | "horaMeioSemana" | "horaFimDeSemana"
+        >
+      >,
+    ) => apiRequest("/config", { method: "PUT", body: payload }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.config });
+      // O horário da reunião é o que traduz "3 horas antes" em hora do relógio: mudou aqui,
+      // a tela de notificações precisa reler para não mostrar a conta antiga.
+      qc.invalidateQueries({ queryKey: qk.preferenciasNotificacao });
+    },
   });
 }

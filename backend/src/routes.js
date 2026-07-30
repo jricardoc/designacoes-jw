@@ -14,6 +14,7 @@ const DirigentesController = require('./controllers/DirigentesController');
 const MinhasDesignacoesController = require('./controllers/MinhasDesignacoesController');
 const CarrinhoController = require('./controllers/CarrinhoController');
 const PushTokenController = require('./controllers/PushTokenController');
+const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
 const requireAdmin = require('./middleware/requireAdmin');
 const multer = require('multer');
 
@@ -98,8 +99,13 @@ routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
 // (AgendadorLembretes) so alcanca quem tem token gravado aqui.
 routes.post('/push/token', PushTokenController.registrar);
 routes.delete('/push/token', PushTokenController.remover);
-// Dispara o lembrete na hora, para conferir sem esperar as 19h. Admin: manda push de verdade.
+// Dispara o lembrete na hora, para conferir sem esperar o horario. Admin: manda push de verdade.
 routes.post('/push/testar', requireAdmin, PushTokenController.testar);
+
+// O que cada irmao quer receber e com quanta antecedencia. Sempre do usuario logado: nao ha
+// rota para mexer na preferencia dos outros, nem para admin.
+routes.get('/push/preferencias', PreferenciaNotificacaoController.show);
+routes.put('/push/preferencias', PreferenciaNotificacaoController.update);
 
 // ==================== HISTORICO ====================
 routes.get('/historico', HistoricoController.index);
