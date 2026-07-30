@@ -3,7 +3,7 @@ import { forwardRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import type { SemanaReuniao } from "@/api/types";
 import { MESES } from "@/theme";
-import { datasDaSemana, parteTitulo } from "@/utils/semanaReuniao";
+import { datasDaSemana, faixaSemana, parteTitulo } from "@/utils/semanaReuniao";
 
 /**
  * A semana inteira como imagem, para mandar no WhatsApp.
@@ -13,6 +13,11 @@ import { datasDaSemana, parteTitulo } from "@/utils/semanaReuniao";
  *
  * O PDF (gerarHtmlSemana) é paisagem, de afixar no quadro; esta é retrato, de ler no celular.
  * Por isso as duas metades ficam empilhadas aqui e lado a lado lá.
+ *
+ * As linhas são construídas por FUNÇÃO, não por componente: `linha()` e `parte()` devolvem
+ * `null` quando não há o que mostrar, e aí `Secao` consegue sumir junto com o título. Com
+ * componentes isso não funcionava — `<Linha valor={null} />` é um elemento válido mesmo
+ * renderizando nada, e a seção "Mecânicas" aparecia como um título solto, sem conteúdo.
  */
 
 const LARGURA = 760;
@@ -23,37 +28,49 @@ const limpo = (v?: string | null): string | null => {
   return !t || t === SENTINELA || t === "-" ? null : t;
 };
 
-function Linha({ label, valor }: { label: string; valor?: string | null }) {
+/**
+ * "Rótulo .... valor", ou null quando não há valor.
+ *
+ * O nome vai encostado na direita, na mesma coluna em que as partes colocam quem faz: numa
+ * seção como "Nossa Vida Cristã", que mistura partes e linhas simples, os nomes ficavam em
+ * duas colunas diferentes e a leitura em diagonal se perdia.
+ */
+function linha(label: string, valor?: string | null) {
   const v = limpo(valor);
   if (!v) return null;
   return (
-    <View style={styles.linha}>
+    <View key={label} style={styles.linha}>
       <Text style={styles.label}>{label}</Text>
-      <Text style={styles.valor}>{v}</Text>
+      <Text style={styles.valorDireita}>{v}</Text>
     </View>
   );
 }
 
-function Parte({
-  titulo,
-  principal,
-  salaB,
-}: {
-  titulo?: string | null;
-  principal?: string | null;
-  salaB?: string | null;
-}) {
+/**
+ * Parte da reunião: hora + título à esquerda, quem faz à direita (Sala B embaixo).
+ *
+ * `largo` alarga a coluna dos nomes. É para o Ministério, onde cada parte tem DUAS duplas
+ * (principal e Sala B) e o título é curto — com a coluna estreita, um sobrenome a mais já
+ * quebrava a linha enquanto sobrava espaço vazio no meio da linha.
+ */
+function parte(
+  chave: string,
+  titulo?: string | null,
+  principal?: string | null,
+  salaB?: string | null,
+  largo = false,
+) {
   const t = parteTitulo(titulo);
   const p = limpo(principal);
   const b = limpo(salaB);
   if (!t && !p && !b) return null;
   return (
-    <View style={styles.linha}>
+    <View key={chave} style={styles.linha}>
       <Text style={styles.parteTitulo}>
         {t?.hora ? <Text style={styles.parteHora}>{t.hora} </Text> : null}
         {t?.texto || "—"}
       </Text>
-      <View style={styles.parteQuem}>
+      <View style={largo ? styles.parteQuemLargo : styles.parteQuem}>
         <Text style={styles.valor}>{p || "—"}</Text>
         {b ? <Text style={styles.salaB}>Sala B: {b}</Text> : null}
       </View>
@@ -61,15 +78,20 @@ function Parte({
   );
 }
 
-function Secao({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  const temAlgo = Array.isArray(children)
-    ? children.some((c) => c !== null && c !== false)
-    : Boolean(children);
-  if (!temAlgo) return null;
+/** Some por inteiro — título junto — quando nenhuma linha sobrou. */
+function Secao({
+  titulo,
+  itens,
+}: {
+  titulo: string;
+  itens: (React.ReactElement | null)[];
+}) {
+  const visiveis = itens.filter(Boolean);
+  if (visiveis.length === 0) return null;
   return (
     <View style={styles.secao}>
       <Text style={styles.secaoTitulo}>{titulo}</Text>
-      <View>{children}</View>
+      <View>{visiveis}</View>
     </View>
   );
 }
@@ -83,6 +105,15 @@ export const SemanaShareCard = forwardRef<View, SemanaShareCardProps>(
   function SemanaShareCard({ reuniao, semana }, ref) {
     const { meio, fds } = datasDaSemana(semana);
 
+    // Presidente, Conselheiro B e Oração inicial numa faixa só, centralizados: sem o título
+    // "Presidência" sobra a altura que paga a fonte maior no resto do cartão.
+    const presidencia: [string, string | null][] = [
+      ["Presidente", limpo(semana.presidente)],
+      ["Conselheiro B", limpo(semana.conselheiroB)],
+      ["Oração inicial", limpo(semana.oracaoInicial)],
+    ];
+    const temPresidencia = presidencia.some(([, nome]) => nome);
+
     return (
       <View ref={ref} collapsable={false} style={styles.card}>
         <LinearGradient
@@ -94,9 +125,7 @@ export const SemanaShareCard = forwardRef<View, SemanaShareCardProps>(
           <Text style={styles.headerMes}>
             {(MESES[reuniao.mes] ?? "").toUpperCase()} / {reuniao.ano}
           </Text>
-          <Text style={styles.headerFaixa}>
-            {meio && fds ? `${meio.diaMes} a ${fds.diaMes}` : semana.faixaData}
-          </Text>
+          <Text style={styles.headerFaixa}>{faixaSemana(semana)}</Text>
           {limpo(semana.leituraSemanal) ? (
             <Text style={styles.headerLeitura}>📖 {semana.leituraSemanal}</Text>
           ) : null}
@@ -110,58 +139,46 @@ export const SemanaShareCard = forwardRef<View, SemanaShareCardProps>(
             </Text>
           </View>
 
-          <Secao titulo="Presidência">
-            <Linha label="Presidente" valor={semana.presidente} />
-            <Linha label="Conselheiro B" valor={semana.conselheiroB} />
-            <Linha label="Oração inicial" valor={semana.oracaoInicial} />
-          </Secao>
+          {temPresidencia ? (
+            <View style={styles.presidencia}>
+              {presidencia.map(([rotulo, nome]) => (
+                <View key={rotulo} style={styles.presidCol}>
+                  <Text style={styles.presidRotulo}>{rotulo}</Text>
+                  <Text style={styles.presidNome}>{nome || "—"}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
-          <Secao titulo="Tesouros da Palavra de Deus">
-            <Parte titulo={semana.tesouro1_titulo} principal={semana.tesouro1_irmao} />
-            <Parte titulo={semana.tesouro2_titulo} principal={semana.tesouro2_irmao} />
-            <Parte
-              titulo={semana.tesouro3_titulo}
-              principal={semana.tesouro3_principal}
-              salaB={semana.tesouro3_salaB}
-            />
-          </Secao>
+          <Secao
+            titulo="Tesouros da Palavra de Deus"
+            itens={[
+              parte("t1", semana.tesouro1_titulo, semana.tesouro1_irmao),
+              parte("t2", semana.tesouro2_titulo, semana.tesouro2_irmao),
+              parte("t3", semana.tesouro3_titulo, semana.tesouro3_principal, semana.tesouro3_salaB),
+            ]}
+          />
 
-          <Secao titulo="Faça Seu Melhor no Ministério">
-            <Parte
-              titulo={semana.ministerio1_titulo}
-              principal={semana.ministerio1_principal}
-              salaB={semana.ministerio1_salaB}
-            />
-            <Parte
-              titulo={semana.ministerio2_titulo}
-              principal={semana.ministerio2_principal}
-              salaB={semana.ministerio2_salaB}
-            />
-            <Parte
-              titulo={semana.ministerio3_titulo}
-              principal={semana.ministerio3_principal}
-              salaB={semana.ministerio3_salaB}
-            />
-            <Parte
-              titulo={semana.ministerio4_titulo}
-              principal={semana.ministerio4_principal}
-              salaB={semana.ministerio4_salaB}
-            />
-          </Secao>
+          <Secao
+            titulo="Faça Seu Melhor no Ministério"
+            itens={[
+              parte("m1", semana.ministerio1_titulo, semana.ministerio1_principal, semana.ministerio1_salaB, true),
+              parte("m2", semana.ministerio2_titulo, semana.ministerio2_principal, semana.ministerio2_salaB, true),
+              parte("m3", semana.ministerio3_titulo, semana.ministerio3_principal, semana.ministerio3_salaB, true),
+              parte("m4", semana.ministerio4_titulo, semana.ministerio4_principal, semana.ministerio4_salaB, true),
+            ]}
+          />
 
-          <Secao titulo="Nossa Vida Cristã">
-            <Parte titulo={semana.vidaCrista1_titulo} principal={semana.vidaCrista1_irmao} />
-            <Parte titulo={semana.vidaCrista2_titulo} principal={semana.vidaCrista2_irmao} />
-            <Linha label="Estudo — dirigente" valor={semana.estudoBiblico_dirigente} />
-            <Linha label="Estudo — leitor" valor={semana.estudoBiblico_leitor} />
-            <Linha label="Oração final" valor={semana.oracaoFinal} />
-          </Secao>
-
-          <Secao titulo="Mecânicas">
-            <Linha label="Áudio e vídeo" valor={semana.mecanica_audioVideo} />
-            <Linha label="Indicadores" valor={semana.mecanica_indicadores} />
-            <Linha label="Microfones" valor={semana.mecanica_microfone} />
-          </Secao>
+          <Secao
+            titulo="Nossa Vida Cristã"
+            itens={[
+              parte("vc1", semana.vidaCrista1_titulo, semana.vidaCrista1_irmao),
+              parte("vc2", semana.vidaCrista2_titulo, semana.vidaCrista2_irmao),
+              linha("Estudo — dirigente", semana.estudoBiblico_dirigente),
+              linha("Estudo — leitor", semana.estudoBiblico_leitor),
+              linha("Oração final", semana.oracaoFinal),
+            ]}
+          />
         </View>
 
         <View style={[styles.metade, styles.metadeFds]}>
@@ -172,24 +189,18 @@ export const SemanaShareCard = forwardRef<View, SemanaShareCardProps>(
             </Text>
           </View>
 
-          <Secao titulo="Reunião pública">
-            <Linha label="Presidente" valor={semana.fds_presidente} />
-            <Linha label="Tema" valor={semana.fds_tema} />
-            <Linha label="Orador" valor={semana.fds_orador} />
-            <Linha label="Congregação" valor={semana.fds_congregacao} />
-            <Linha label="Leitor (Sentinela)" valor={semana.fds_leitor} />
-          </Secao>
+          <Secao
+            titulo="Reunião pública"
+            itens={[
+              linha("Presidente", semana.fds_presidente),
+              linha("Tema", semana.fds_tema),
+              linha("Orador", semana.fds_orador),
+              linha("Congregação", semana.fds_congregacao),
+              linha("Leitor (Sentinela)", semana.fds_leitor),
+            ]}
+          />
 
-          <Secao titulo="Mecânicas">
-            <Linha label="Áudio e vídeo" valor={semana.fds_mecanica_audioVideo} />
-            <Linha label="Indicadores" valor={semana.fds_mecanica_indicadores} />
-            <Linha label="Microfones" valor={semana.fds_mecanica_microfone} />
-            <Linha label="Portão" valor={semana.fds_mecanica_portao} />
-          </Secao>
-
-          <Secao titulo="Limpeza">
-            <Linha label="Responsável" valor={semana.limpeza} />
-          </Secao>
+          <Secao titulo="Limpeza" itens={[linha("Responsável", semana.limpeza)]} />
         </View>
       </View>
     );
@@ -198,16 +209,16 @@ export const SemanaShareCard = forwardRef<View, SemanaShareCardProps>(
 
 const styles = StyleSheet.create({
   card: { width: LARGURA, backgroundColor: "#FBF7EF" },
-  header: { padding: 22, gap: 4 },
+  header: { padding: 24, gap: 5 },
   headerMes: {
     color: "rgba(255,255,255,0.85)",
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: "800",
-    letterSpacing: 1.2,
+    letterSpacing: 1.3,
   },
-  headerFaixa: { color: "#fff", fontSize: 28, fontWeight: "800" },
-  headerLeitura: { color: "rgba(255,255,255,0.92)", fontSize: 14, marginTop: 2 },
-  metade: { paddingHorizontal: 22, paddingVertical: 16 },
+  headerFaixa: { color: "#fff", fontSize: 34, fontWeight: "800" },
+  headerLeitura: { color: "rgba(255,255,255,0.92)", fontSize: 17, marginTop: 2 },
+  metade: { paddingHorizontal: 24, paddingVertical: 18 },
   metadeFds: { backgroundColor: "#F3EDE2" },
   metadeHeader: {
     flexDirection: "row",
@@ -215,37 +226,62 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     borderBottomWidth: 2,
     borderBottomColor: "#5E6B48",
-    paddingBottom: 6,
-    marginBottom: 10,
+    paddingBottom: 7,
+    marginBottom: 12,
   },
   metadeTitulo: {
-    fontSize: 17,
+    fontSize: 21,
     fontWeight: "800",
     color: "#566239",
     textTransform: "uppercase",
   },
-  metadeData: { fontSize: 14, fontWeight: "700", color: "#8A8071" },
-  secao: { marginBottom: 10 },
+  metadeData: { fontSize: 17, fontWeight: "700", color: "#8A8071" },
+  presidencia: {
+    flexDirection: "row",
+    borderBottomWidth: 1,
+    borderBottomColor: "#ECE3D3",
+    paddingBottom: 10,
+    marginBottom: 12,
+  },
+  presidCol: { flex: 1, alignItems: "center", paddingHorizontal: 4 },
+  presidRotulo: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#8A8071",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  presidNome: {
+    fontSize: 19,
+    fontWeight: "700",
+    color: "#2B2620",
+    marginTop: 4,
+    textAlign: "center",
+  },
+  secao: { marginBottom: 12 },
   secaoTitulo: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: "800",
     color: "#8A8071",
     textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 3,
+    letterSpacing: 0.7,
+    marginBottom: 4,
   },
   linha: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
-    paddingVertical: 4,
+    gap: 14,
+    paddingVertical: 6,
     borderTopWidth: 1,
     borderTopColor: "#ECE3D3",
   },
-  label: { fontSize: 14, color: "#8A8071", fontWeight: "600", width: 190 },
-  valor: { fontSize: 14, color: "#2B2620", fontWeight: "700", flex: 1 },
-  parteTitulo: { fontSize: 14, color: "#2B2620", flex: 1 },
+  label: { fontSize: 17, color: "#8A8071", fontWeight: "600", width: 210 },
+  valor: { fontSize: 17, color: "#2B2620", fontWeight: "700", flex: 1 },
+  valorDireita: { fontSize: 17, color: "#2B2620", fontWeight: "700", flex: 1, textAlign: "right" },
+  parteTitulo: { fontSize: 17, color: "#2B2620", flex: 1 },
   parteHora: { color: "#8A8071", fontWeight: "700" },
-  parteQuem: { width: 250, alignItems: "flex-end" },
-  salaB: { fontSize: 12.5, color: "#8A8071", fontWeight: "600", marginTop: 1 },
+  parteQuem: { width: 290, alignItems: "flex-end" },
+  // Só o Ministério: duas duplas por linha precisam de mais largura que o título curto usa.
+  parteQuemLargo: { width: 430, alignItems: "flex-end" },
+  salaB: { fontSize: 15, color: "#8A8071", fontWeight: "600", marginTop: 2, textAlign: "right" },
 });

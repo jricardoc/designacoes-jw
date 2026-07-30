@@ -390,7 +390,11 @@ function presidenciaHtml(
 export function gerarHtmlSemana(
   reuniao: { mes: number; ano: number },
   semana: SemanaReuniao,
-  datas: { meio?: { diaMes: string; diaSemana: string } | null; fds?: { diaMes: string; diaSemana: string } | null },
+  datas: {
+    inicio?: { diaMes: string } | null;
+    meio?: { diaMes: string; diaSemana: string } | null;
+    fds?: { diaMes: string; diaSemana: string } | null;
+  },
 ): string {
   // `keyof` de propósito: um nome de campo digitado errado vira erro de compilação em vez de
   // uma seção que some em silêncio do PDF.
@@ -441,9 +445,10 @@ export function gerarHtmlSemana(
   ].join("");
 
   const leitura = g("leituraSemanal");
+  // Segunda a domingo — a semana inteira, não "reunião do meio até a do fim de semana".
   const faixa =
-    datas.meio && datas.fds
-      ? `${datas.meio.diaMes} a ${datas.fds.diaMes}`
+    datas.inicio && datas.fds
+      ? `${datas.inicio.diaMes} a ${datas.fds.diaMes}`
       : semana.faixaData;
 
   const body = `

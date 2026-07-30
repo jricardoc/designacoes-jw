@@ -54,28 +54,45 @@ function parseData(valor?: string | null): Date | null {
 }
 
 /**
- * { meio, fds } da semana. Qualquer um dos dois pode ser null quando a importação não trouxe
- * a data — a tela cai no rótulo textual nesse caso, em vez de inventar um dia.
+ * As datas da semana. Qualquer uma pode ser null quando a importação não trouxe a data — a
+ * tela cai no rótulo textual nesse caso, em vez de inventar um dia.
+ *
+ *   inicio — a segunda-feira que abre a semana
+ *   meio   — a reunião do meio de semana (a única data que o PDF importado traz)
+ *   fds    — o domingo que fecha a semana
  */
 export function datasDaSemana(semana: SemanaReuniao): {
+  inicio: DataDaSemana | null;
   meio: DataDaSemana | null;
   fds: DataDaSemana | null;
 } {
   const meio = parseData(semana.dataReuniao);
-  if (!meio) return { meio: null, fds: null };
+  if (!meio) return { inicio: null, meio: null, fds: null };
 
   // O domingo que fecha a semana (ou o próprio dia, se já for domingo).
   const fds = new Date(meio);
   fds.setDate(fds.getDate() + ((7 - meio.getDay()) % 7));
 
-  return { meio: descrever(meio), fds: descrever(fds) };
+  // A segunda que abre a semana. getDay(): 0=domingo ... 6=sábado, então (dia + 6) % 7 é
+  // quantos dias recuar — e para um domingo recua 6, ficando na segunda que o antecede,
+  // que é a semana que aquele domingo fecha.
+  const inicio = new Date(meio);
+  inicio.setDate(inicio.getDate() - ((meio.getDay() + 6) % 7));
+
+  return { inicio: descrever(inicio), meio: descrever(meio), fds: descrever(fds) };
 }
 
-/** "03/08 a 09/08" para o cabeçalho, ou o rótulo do PDF quando não há datas. */
-export function faixaLegivel(semana: SemanaReuniao): string {
-  const { meio, fds } = datasDaSemana(semana);
-  if (!meio || !fds) return semana.faixaData;
-  return `${meio.diaMes} a ${fds.diaMes}`;
+/**
+ * A faixa da SEMANA, de segunda a domingo: "17/08 a 23/08".
+ *
+ * Não é "reunião do meio de semana até a do fim de semana" (que daria 20/08 a 23/08): a
+ * semana da programação começa na segunda, e é assim que o rótulo do PDF importado e o
+ * pôster do web (faixaDaSemana em pages/ReuniaoV2) a descrevem.
+ */
+export function faixaSemana(semana: SemanaReuniao): string {
+  const { inicio, fds } = datasDaSemana(semana);
+  if (!inicio || !fds) return semana.faixaData;
+  return `${inicio.diaMes} a ${fds.diaMes}`;
 }
 
 /**
@@ -98,6 +115,14 @@ export function canticoLegivel(valor?: string | null): string | null {
 }
 
 /**
+ * A duração nunca deve quebrar no meio: sem isto o título termina com "(4" numa linha e
+ * "min)" na seguinte. O espaço vira NBSP (U+00A0), que segura as duas partes juntas tanto
+ * no React Native quanto no HTML do PDF — a quebra passa a acontecer ANTES do parêntese.
+ */
+const duracaoInteira = (texto: string) =>
+  texto.replace(/\((\d+)\s+min\)/gi, (_, n) => `(${n} min)`);
+
+/**
  * O título da parte vem com a hora colada ("19:36 1. Joias espirituais (10 min)").
  * Espelha `renderTitleTime` do web: separa para a hora poder ir numa coluna própria.
  */
@@ -106,5 +131,7 @@ export function parteTitulo(titulo?: string | null): { hora: string | null; text
   if (!t || t === "-" || t === "__DELETADO__") return null;
 
   const m = /^(\d{1,2}:\d{2})\s+(.*)$/.exec(t);
-  return m ? { hora: m[1], texto: m[2] } : { hora: null, texto: t };
+  return m
+    ? { hora: m[1], texto: duracaoInteira(m[2]) }
+    : { hora: null, texto: duracaoInteira(t) };
 }
