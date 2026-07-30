@@ -11,7 +11,7 @@ import { removerPushToken } from "@/api/hooks/usePush";
 import { tokenStore } from "@/api/tokenStore";
 import type { LoginResponse, Usuario } from "@/api/types";
 import {
-  getPushTokenAtual,
+  lerPushTokenAtual,
   setPushTokenAtual,
 } from "@/notifications/tokenAtual";
 
@@ -73,19 +73,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Antes de limpar o token de auth: depois disso a chamada não teria como se
-    // autenticar e o aparelho continuaria recebendo os lembretes deste usuário.
-    const pushToken = getPushTokenAtual();
-    if (pushToken) {
-      try {
-        await removerPushToken(pushToken);
-      } catch {
-        // Sair é mais importante do que descadastrar o aparelho.
+    try {
+      // Antes de limpar o token de auth: depois disso a chamada não teria como se
+      // autenticar e o aparelho continuaria recebendo os lembretes deste usuário.
+      const pushToken = await lerPushTokenAtual();
+      if (pushToken) {
+        // Com teto de tempo: no Android o fetch do React Native não tem timeout
+        // algum, então um backend no ar mas sem responder (container travado,
+        // portal cativo do Wi-Fi) deixaria o botão "Sair" morto para sempre.
+        await Promise.race([
+          removerPushToken(pushToken).catch(() => {}),
+          new Promise<void>((resolve) => setTimeout(resolve, 3000)),
+        ]);
+        setPushTokenAtual(null);
       }
-      setPushTokenAtual(null);
+    } catch {
+      // Sair é mais importante do que descadastrar o aparelho.
+    } finally {
+      await tokenStore.clear();
+      setUsuarioState(null);
     }
-    await tokenStore.clear();
-    setUsuarioState(null);
   }, []);
 
   const refreshUsuario = useCallback(async () => {

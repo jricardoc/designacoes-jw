@@ -1,11 +1,8 @@
 import * as Notifications from "expo-notifications";
 import { useRootNavigationState, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
-import { registrarPushToken } from "@/api/hooks/usePush";
 import { getNotifEnabled } from "./notifPref";
-import { registerForPushNotificationsAsync } from "./push";
-import { getPushTokenAtual, setPushTokenAtual } from "./tokenAtual";
+import { sincronizarPushToken } from "./sincronizarPush";
 
 // Identificador da última notificação já tratada. Fica no módulo, e não num ref,
 // porque `getLastNotificationResponse()` devolve a resposta em cache toda vez —
@@ -32,20 +29,8 @@ export function usePushNotifications() {
 
     getNotifEnabled().then((enabled) => {
       if (!enabled || !mounted) return; // usuário desativou nas Configurações
-      registerForPushNotificationsAsync().then((token) => {
-        if (!mounted || !token) return;
-        setPushToken(token);
-        console.log("Expo Push Token:", token);
-        // O backend faz upsert por token, mas não há motivo de reenviar o mesmo
-        // token a cada remontagem das abas. O logout limpa isto, então o próximo
-        // login registra de novo — o aparelho pode ter trocado de dono.
-        if (getPushTokenAtual() === token) return;
-        setPushTokenAtual(token);
-        registrarPushToken(token, Platform.OS).catch((err) => {
-          // Silencioso de propósito: quem acabou de logar não pode ser punido
-          // por uma falha de rede num cadastro que é reenviado no próximo boot.
-          console.warn("Falha ao registrar o push token:", err);
-        });
+      sincronizarPushToken(true).then((token) => {
+        if (mounted && token) setPushToken(token);
       });
     });
 

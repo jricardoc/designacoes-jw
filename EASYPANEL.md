@@ -22,6 +22,7 @@ Crie um serviço PostgreSQL no EasyPanel e anote a connection string. Ela será 
   | `PORT` | não | Padrão `3001` |
   | `JWT_EXPIRES_IN` | não | Padrão `7d` |
   | `ADMIN_SEED_PASSWORD` | não | Senha inicial do usuário `admin` criado no primeiro boot. **Troque no primeiro acesso.** |
+  | `LEMBRETES_ATIVOS` | não | `false` desliga o lembrete push das 19h (America/Bahia). Em produção deixe **sem definir** |
 
 > No primeiro boot, o backend cria automaticamente o usuário `admin` e os dados de
 > seed. Faça login e troque a senha imediatamente.

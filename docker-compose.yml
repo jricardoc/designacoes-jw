@@ -39,6 +39,9 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-admin}:${POSTGRES_PASSWORD:-password123}@postgres:5432/${POSTGRES_DB:-designacoes}
       JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-troque-em-producao}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      # Desligado por padrao no dev local: o agendador das 19h manda push de verdade
+      # para o celular dos irmaos, e o banco de dev costuma ter os mesmos tokens.
+      LEMBRETES_ATIVOS: ${LEMBRETES_ATIVOS:-false}
     ports:
       - "3001:3001"
     volumes:

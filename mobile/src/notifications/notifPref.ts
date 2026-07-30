@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCallback, useEffect, useState } from "react";
+import { sincronizarPushToken } from "./sincronizarPush";
 
 const KEY = "notif_enabled";
 
@@ -35,7 +36,12 @@ export function useNotifPref() {
 
   const toggle = useCallback(async (value: boolean) => {
     setEnabled(value);
+    // A preferência é gravada primeiro e sempre: a sincronização com o backend
+    // depende de rede e não pode desfazer o que o irmão acabou de escolher.
     await setNotifEnabled(value);
+    // Sem isto o switch mentiria — o lembrete das 19h sai da tabela PushToken do
+    // backend, que não sabe nada do AsyncStorage do aparelho.
+    await sincronizarPushToken(value);
   }, []);
 
   return { enabled, toggle };

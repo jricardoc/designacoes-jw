@@ -157,11 +157,15 @@ configure o Firebase Cloud Messaging:
 > iOS exige conta paga do Apple Developer (chave APNs) — o EAS configura via
 > `eas credentials`. O Firebase no plano Spark já cobre o FCM do Android.
 
-### Enviar notificações pelo backend (próximo passo)
-Para disparar notificações a partir do sistema, é preciso: (1) um endpoint no
-backend para salvar o Expo Push Token de cada usuário e (2) chamar a API de push
-do Expo (`https://exp.host/--/api/v2/push/send`). O app já tem o token pronto em
-`usePushNotifications()` para enviar a esse endpoint quando ele existir.
+### Envio pelo backend (lembrete da véspera)
+Já está ligado. `usePushNotifications()` registra o token em `POST /push/token` e o
+logout o remove com `DELETE /push/token`. Todo dia às **19h (America/Bahia)** o backend
+(`AgendadorLembretes` → `LembreteDesignacoesService`) procura quem tem designação
+**publicada** no dia seguinte e envia um push por `https://exp.host/--/api/v2/push/send`.
+O toque na notificação abre a aba **Minhas** (via `data.screen`).
+
+Para não disparar push real durante o desenvolvimento, o backend respeita
+`LEMBRETES_ATIVOS=false` (já é o padrão no `docker-compose.yml`).
 
 ## 🧪 Qualidade
 

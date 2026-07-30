@@ -60,6 +60,11 @@ function msAteProximoDisparo(agora = new Date()) {
     return alvo.getTime() - local.getTime();
 }
 
+/** Hora cheia (0-23) no relogio da congregacao. */
+function horaDaCongregacao(agora = new Date()) {
+    return relogioDaCongregacao(agora).getUTCHours();
+}
+
 function emHorasMinutos(ms) {
     const minutos = Math.round(ms / 60000);
     return `${Math.floor(minutos / 60)}h${String(minutos % 60).padStart(2, '0')}`;
@@ -92,7 +97,19 @@ function iniciar() {
     // estrago, mas melhor nem chegar la.
     if (agendado) return;
     agendado = true;
+
+    // Um deploy (o webhook do EasyPanel reinicia o container) ou um crash que atravesse as
+    // 19:00 perderia o lembrete do dia em silencio: o proximo disparo so viria em ~24h e ja
+    // falaria de outro dia. A trava de LembreteEnviado torna essa re-execucao segura — quem
+    // ja foi avisado e pulado. Sem `await` para nao segurar o listen nem o agendar() abaixo.
+    if (horaDaCongregacao() >= HORA_DISPARO) {
+        console.log('[lembretes] boot depois das 19:00: recuperando o disparo do dia.');
+        LembreteDesignacoesService.enviarLembretesDeAmanha().catch(erro => {
+            console.error('[lembretes] falha na recuperacao do disparo:', erro);
+        });
+    }
+
     agendar();
 }
 
-module.exports = { iniciar, msAteProximoDisparo };
+module.exports = { iniciar, msAteProximoDisparo, horaDaCongregacao };
