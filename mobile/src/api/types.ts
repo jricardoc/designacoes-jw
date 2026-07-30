@@ -126,11 +126,13 @@ export interface EstatisticasGlobais {
   };
 }
 
+/**
+ * Só estas duas chegam ao gerador: AutoDesignacaoService.gerarDesignacoes lê exatamente
+ * `respeitarIndisponibilidades` e `regraAudioVideo`. O rodízio já garante sozinho o equilíbrio
+ * que as antigas regras de repetição/distribuição prometiam.
+ */
 export interface RegrasAutoPreenchimento {
   respeitarIndisponibilidades: boolean;
-  evitarRepeticoes: boolean;
-  distribuicaoIgualitaria: boolean;
-  designarTodos: boolean;
   regraAudioVideo: boolean;
 }
 
@@ -153,7 +155,6 @@ export interface EscalaDirigente {
   data: string; // "dd/MM"
   dia: string;
   principal: string;
-  substituto: string;
   removido: boolean;
   saidaCampo?: SaidaCampo;
 }
@@ -259,20 +260,15 @@ export interface ImportarReuniaoResponse {
 
 // ===== Escala de Dirigentes: regras e diagnóstico da geração automática =====
 
-/** Espelha REGRAS_PADRAO de backend/src/services/EscalaDirigenteAlgoritmo.js. */
+/**
+ * Espelha REGRAS_PADRAO de backend/src/services/EscalaDirigenteAlgoritmo.js.
+ *
+ * `sanearRegras`, no backend, descarta em silêncio qualquer chave fora dessa lista — declarar
+ * uma regra a mais aqui só cria um controle na tela que não muda nada na escala gerada.
+ */
 export interface RegrasEscala {
   respeitarIndisponibilidades: boolean;
   evitarDuplicidadeNoDia: boolean;
-  distribuicaoIgualitaria: boolean;
-  ponderarDisponibilidade: boolean;
-  designarTodos: boolean;
-  evitarRepeticoes: boolean;
-  equilibrarPapeis: boolean;
-  rodizioLocais: boolean;
-  evitarRepetirDupla: boolean;
-  considerarMesAnterior: boolean;
-  preencherSubstituto: boolean;
-  diasDescanso: number;
 }
 
 export interface AvisoEscala {
@@ -287,8 +283,6 @@ export interface AvisoEscala {
 export interface CargaDirigente {
   nome: string;
   designacoes: number;
-  principais: number;
-  substitutos: number;
   oportunidades: number;
   cota: number | null;
   aproveitamento: number | null;

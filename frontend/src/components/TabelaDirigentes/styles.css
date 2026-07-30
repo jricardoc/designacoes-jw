@@ -132,10 +132,37 @@
   border-color: #F0DED3;
 }
 
+/* O titulo da semana continua centralizado na linha inteira: o botao sai do fluxo. */
+.semana-title-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remover-semana {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.4rem;
+  background-color: transparent;
+  color: #A8503B;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-remover-semana:hover {
+  background-color: #F8EDE8;
+  border-color: #F0DED3;
+}
+
 .col-data { width: 8%; text-align: center; }
 .col-dia { width: 12%; }
-.col-local { width: 25%; }
+.col-local { width: 35%; }
 .col-horario { width: 10%; }
-.col-principal { width: 20%; }
-.col-substituto { width: 20%; }
+.col-principal { width: 30%; }
 .col-acoes { width: 5%; text-align: center; }

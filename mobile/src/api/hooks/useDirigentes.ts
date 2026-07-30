@@ -90,11 +90,9 @@ export function useExcluirDirigenteQuadro() {
 export function useAtualizarEscala(quadroId: string | number) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: {
-      escalaId: number;
-      campo: "principal" | "substituto";
-      valor: string;
-    }) => apiRequest("/dirigentes/escala", { method: "PUT", body: payload }),
+    // Só existe o dirigente do turno: o substituto foi extinto, então não há mais `campo`.
+    mutationFn: (payload: { escalaId: number; valor: string }) =>
+      apiRequest("/dirigentes/escala", { method: "PUT", body: payload }),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: qk.dirigentesQuadro(quadroId) }),
   });
@@ -108,6 +106,29 @@ export function useExcluirDiaEscala(quadroId: string | number) {
         method: "DELETE",
         body: { quadroId: Number(quadroId), data },
       }),
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: qk.dirigentesQuadro(quadroId) }),
+  });
+}
+
+/**
+ * Remove a semana inteira do quadro (mesmo mecanismo do dia: marca `removido`).
+ *
+ * Mandamos as datas, e não o número da semana, porque "semana" é um agrupamento visual da
+ * tela (abre uma nova a cada Segunda-Feira) — assim o backend não precisa reproduzir a
+ * numeração que a lista montou.
+ */
+export function useExcluirSemanaEscala(quadroId: string | number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (datas: string[]) =>
+      apiRequest<{ success: boolean; count: number; datas: string[] }>(
+        "/dirigentes/escala/semana",
+        {
+          method: "DELETE",
+          body: { quadroId: Number(quadroId), datas },
+        },
+      ),
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: qk.dirigentesQuadro(quadroId) }),
   });

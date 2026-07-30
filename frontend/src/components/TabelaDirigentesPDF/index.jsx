@@ -47,14 +47,13 @@ export default function TabelaDirigentesPDF({ dados, quadro, id, semanaInicial =
             <th className="col-local">LOCAL</th>
             <th className="col-horario">HORÁRIO</th>
             <th className="col-principal">DIRIGENTE PRINCIPAL</th>
-            <th className="col-substituto">SUBSTITUTO</th>
           </tr>
         </thead>
         <tbody>
           {semanas.map((semana, semanaIdx) => (
             <React.Fragment key={semanaIdx}>
               <tr>
-                <td colSpan="6" className="semana-title-row">
+                <td colSpan="5" className="semana-title-row">
                   SEMANA {semanaInicial + semanaIdx}
                 </td>
               </tr>
@@ -91,7 +90,6 @@ export default function TabelaDirigentesPDF({ dados, quadro, id, semanaInicial =
                     <td className="cell-local">{escala.saidaCampo.local}</td>
                     <td className="cell-horario">{escala.saidaCampo.horario}</td>
                     <td className="cell-nome">{escala.principal || ''}</td>
-                    <td className="cell-nome">{escala.substituto || ''}</td>
                   </tr>
                 );
               });

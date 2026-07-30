@@ -188,7 +188,7 @@ export default function DiagnosticoEscala({ diagnostico, onClose, titulo = 'Resu
                           {p.nome}
                         </div>
                         <div style={{ fontSize: '0.72rem', color: '#8A8071' }}>
-                          {p.principais}P · {p.substitutos}S · {p.oportunidades} oportunidades
+                          {p.oportunidades} oportunidades
                           {p.limitadoPelaDisponibilidade && ' · limitado pela disponibilidade'}
                         </div>
                       </div>

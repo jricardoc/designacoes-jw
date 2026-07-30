@@ -17,6 +17,7 @@ import {
   useDirigentesQuadro,
   useExcluirDiaEscala,
   useExcluirDirigenteQuadro,
+  useExcluirSemanaEscala,
 } from "@/api/hooks/useDirigentes";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
 import type { EscalaDirigente, QuadroDirigente } from "@/api/types";
@@ -57,10 +58,10 @@ export default function EscalaScreen() {
   const status = useAtualizarStatusDirigente(id);
   const excluir = useExcluirDirigenteQuadro();
   const excluirDia = useExcluirDiaEscala(id);
+  const excluirSemana = useExcluirSemanaEscala(id);
 
   const [editing, setEditing] = useState<{
     escalaId: number;
-    campo: "principal" | "substituto";
     saidaCampoId: number;
     data: string;
   } | null>(null);
@@ -83,11 +84,28 @@ export default function EscalaScreen() {
     return Object.values(map).sort((a, b) => compareDataBR(a.data, b.data, quadro.mes));
   }, [quadro]);
 
+  /**
+   * Datas da semana a que cada dia pertence.
+   *
+   * "Semana" é o mesmo agrupamento visual do PDF e da tela web: abre uma nova a cada
+   * Segunda-Feira. Todos os dias de uma semana compartilham o mesmo array, que é o que
+   * mandamos ao backend — assim ele não precisa reproduzir esse agrupamento.
+   */
+  const datasDaSemana = useMemo(() => {
+    const mapa: Record<string, string[]> = {};
+    let atual: string[] = [];
+    for (const grupo of grupos) {
+      if (grupo.dia.startsWith("Segunda") && atual.length > 0) atual = [];
+      atual.push(grupo.data);
+      mapa[grupo.data] = atual;
+    }
+    return mapa;
+  }, [grupos]);
+
   const stats = useMemo(() => {
     const c: Record<string, number> = {};
     quadro?.escalas.forEach((e) => {
       if (e.principal) c[e.principal] = (c[e.principal] ?? 0) + 1;
-      if (e.substituto) c[e.substituto] = (c[e.substituto] ?? 0) + 1;
     });
     return Object.entries(c).sort((a, b) => b[1] - a[1]);
   }, [quadro]);
@@ -108,23 +126,19 @@ export default function EscalaScreen() {
       .map((i) => i.nome)
       .sort((a, b) => a.localeCompare(b));
 
-  const applyChange = async (
-    escalaId: number,
-    campo: "principal" | "substituto",
-    valor: string,
-  ) => {
+  const applyChange = async (escalaId: number, valor: string) => {
     qc.setQueryData<QuadroDirigente>(qk.dirigentesQuadro(id), (old) =>
       old
         ? {
             ...old,
             escalas: old.escalas.map((e) =>
-              e.id === escalaId ? { ...e, [campo]: valor } : e,
+              e.id === escalaId ? { ...e, principal: valor } : e,
             ),
           }
         : old,
     );
     try {
-      await atualizar.mutateAsync({ escalaId, campo, valor });
+      await atualizar.mutateAsync({ escalaId, valor });
       toast.show("Escala atualizada!");
     } catch {
       toast.show("Erro ao salvar", "error");
@@ -148,7 +162,6 @@ export default function EscalaScreen() {
   const loadMap: Record<string, number> = {};
   quadro.escalas.forEach((e) => {
     if (e.principal) loadMap[e.principal] = (loadMap[e.principal] ?? 0) + 1;
-    if (e.substituto) loadMap[e.substituto] = (loadMap[e.substituto] ?? 0) + 1;
   });
 
   const escalaEditando = editing
@@ -161,7 +174,7 @@ export default function EscalaScreen() {
         .sort((a, b) => a.load - b.load || a.nome.localeCompare(b.nome))
     : [];
 
-  const selectedValue = editing ? escalaEditando?.[editing.campo] : undefined;
+  const selectedValue = editing ? escalaEditando?.principal : undefined;
 
   return (
     <View style={styles.flex}>
@@ -260,6 +273,30 @@ export default function EscalaScreen() {
               <Pressable
                 hitSlop={8}
                 style={styles.deleteDia}
+                onPress={() => {
+                  const datas = datasDaSemana[grupo.data] ?? [grupo.data];
+                  confirm.confirm({
+                    title: "Remover semana",
+                    message: `Remover todas as saídas da semana de ${datas[0]} a ${datas[datas.length - 1]} (${datas.length} dia(s))?`,
+                    type: "danger",
+                    confirmText: "Remover",
+                    onConfirm: async () => {
+                      try {
+                        await excluirSemana.mutateAsync(datas);
+                        toast.show("Semana removida!");
+                        confirm.close();
+                      } catch {
+                        toast.show("Erro ao remover semana", "error");
+                      }
+                    },
+                  });
+                }}
+              >
+                <Ionicons name="calendar-clear-outline" size={16} color={colors.redDark} />
+              </Pressable>
+              <Pressable
+                hitSlop={8}
+                style={styles.deleteDia}
                 onPress={() =>
                   confirm.confirm({
                     title: "Remover dia",
@@ -289,30 +326,24 @@ export default function EscalaScreen() {
                   {e.saidaCampo?.horario} · {e.saidaCampo?.local}
                 </Text>
                 <View style={styles.cellsRow}>
-                  {(["principal", "substituto"] as const).map((campo) => (
-                    <Pressable
-                      key={campo}
-                      style={styles.cell}
-                      onPress={() =>
-                        setEditing({
-                          escalaId: e.id,
-                          campo,
-                          saidaCampoId: e.saidaCampoId,
-                          data: e.data,
-                        })
-                      }
+                  <Pressable
+                    style={styles.cell}
+                    onPress={() =>
+                      setEditing({
+                        escalaId: e.id,
+                        saidaCampoId: e.saidaCampoId,
+                        data: e.data,
+                      })
+                    }
+                  >
+                    <Text style={styles.cellTag}>Dirigente</Text>
+                    <Text
+                      style={[styles.cellText, !e.principal && styles.cellEmpty]}
+                      numberOfLines={1}
                     >
-                      <Text style={styles.cellTag}>
-                        {campo === "principal" ? "Dirigente" : "Substituto"}
-                      </Text>
-                      <Text
-                        style={[styles.cellText, !e[campo] && styles.cellEmpty]}
-                        numberOfLines={1}
-                      >
-                        {e[campo] || "—"}
-                      </Text>
-                    </Pressable>
-                  ))}
+                      {e.principal || "—"}
+                    </Text>
+                  </Pressable>
                 </View>
               </View>
             ))}
@@ -338,7 +369,7 @@ export default function EscalaScreen() {
 
       <DirigentePickerSheet
         visible={!!editing}
-        title={editing ? (editing.campo === "principal" ? "Dirigente" : "Substituto") : ""}
+        title={editing ? "Dirigente" : ""}
         sub={
           escalaEditando
             ? `${escalaEditando.saidaCampo?.horario ?? ""} · ${escalaEditando.saidaCampo?.local ?? ""}`
@@ -347,7 +378,7 @@ export default function EscalaScreen() {
         people={pickerPeople}
         current={selectedValue}
         onSelect={(valor) => {
-          if (editing) applyChange(editing.escalaId, editing.campo, valor);
+          if (editing) applyChange(editing.escalaId, valor);
         }}
         onClose={() => setEditing(null)}
       />

@@ -14,7 +14,6 @@ import type { QuadroDirigenteResumo, RegrasEscala } from "@/api/types";
 import { Sheet, useToast } from "@/components/ui";
 import { colors, MESES, radius } from "@/theme";
 import {
-  REGRAS_AVANCADAS,
   REGRAS_ESSENCIAIS,
   REGRAS_PADRAO,
   type ChaveRegraBooleana,
@@ -38,7 +37,6 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
   const [ano, setAno] = useState(now.getFullYear());
   const [auto, setAuto] = useState(true);
   const [regras, setRegras] = useState<RegrasEscala>(REGRAS_PADRAO);
-  const [mostrarAvancadas, setMostrarAvancadas] = useState(false);
 
   const jaExiste = existentes.some((q) => q.mes === mes && q.ano === ano);
 
@@ -143,56 +141,6 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
             {REGRAS_ESSENCIAIS.map((r) => (
               <LinhaRegra key={r.chave} regra={r} />
             ))}
-
-            <Pressable
-              onPress={() => setMostrarAvancadas((v) => !v)}
-              style={styles.avancadasBtn}
-            >
-              <Ionicons
-                name={mostrarAvancadas ? "chevron-down" : "chevron-forward"}
-                size={16}
-                color={colors.primary}
-              />
-              <Text style={styles.avancadasTexto}>Ajustes finos</Text>
-            </Pressable>
-
-            {mostrarAvancadas ? (
-              <>
-                {REGRAS_AVANCADAS.map((r) => (
-                  <LinhaRegra key={r.chave} regra={r} />
-                ))}
-
-                <View style={[styles.regraRow, { opacity: regras.evitarRepeticoes ? 1 : 0.5 }]}>
-                  <View style={styles.flex}>
-                    <Text style={styles.regraLabel}>Dias de descanso</Text>
-                    <Text style={styles.regraDesc}>
-                      Intervalo desejado entre duas designações do mesmo irmão
-                    </Text>
-                  </View>
-                  <View style={styles.stepperRow}>
-                    <Pressable
-                      disabled={!regras.evitarRepeticoes}
-                      onPress={() =>
-                        setRegras((p) => ({ ...p, diasDescanso: Math.max(0, p.diasDescanso - 1) }))
-                      }
-                      style={styles.stepperBtn}
-                    >
-                      <Ionicons name="remove" size={16} color={colors.primary} />
-                    </Pressable>
-                    <Text style={styles.stepperValor}>{regras.diasDescanso}</Text>
-                    <Pressable
-                      disabled={!regras.evitarRepeticoes}
-                      onPress={() =>
-                        setRegras((p) => ({ ...p, diasDescanso: Math.min(31, p.diasDescanso + 1) }))
-                      }
-                      style={styles.stepperBtn}
-                    >
-                      <Ionicons name="add" size={16} color={colors.primary} />
-                    </Pressable>
-                  </View>
-                </View>
-              </>
-            ) : null}
           </View>
         ) : null}
       </ScrollView>
@@ -322,20 +270,6 @@ const styles = StyleSheet.create({
   checkAtivo: { borderColor: "#5E6B48", backgroundColor: "#5E6B48" },
   regraLabel: { fontSize: 14, fontWeight: "600", color: colors.text },
   regraDesc: { fontSize: 12, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
-  avancadasBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingVertical: 7 },
-  avancadasTexto: { color: colors.primary, fontWeight: "600", fontSize: 13 },
-  stepperRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  stepperBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepperValor: { fontSize: 16, fontWeight: "600", color: colors.text, minWidth: 22, textAlign: "center" },
   footer: { flexDirection: "row", gap: 11, marginTop: 18 },
   btnGhost: {
     flex: 1,

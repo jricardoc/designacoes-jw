@@ -16,9 +16,9 @@ Tudo que o painel web oferece, adaptado para mobile:
   destaque de _indisponível / designação seguida / já escalado no dia_),
   publicar/arquivar, excluir dia (com motivo), histórico de alterações e
   **exportar PDF** (layout idêntico ao do site, via `expo-print`).
-- **Escala de Dirigentes** — lista de escalas, criação, editor com escolha de
-  dirigente principal/substituto por saída de campo (respeitando
-  disponibilidade e indisponibilidades) e **exportar PDF** idêntico ao web.
+- **Escala de Dirigentes** — lista de escalas, criação, editor com escolha do
+  dirigente de cada saída de campo (respeitando disponibilidade e
+  indisponibilidades), excluir dia ou semana e **exportar PDF** idêntico ao web.
 - **Reunião** — visualização da programação semanal importada (somente leitura).
 - **Carrinho** — painel de agendamentos (dados de exemplo, igual ao web).
 - **Conta** — editar nome, nickname e senha; administração de usuários

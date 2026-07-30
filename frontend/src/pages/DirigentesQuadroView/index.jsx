@@ -253,6 +253,42 @@ export default function DirigentesQuadroView() {
     });
   };
 
+  // Excluir Semana
+  // Manda as datas que a tabela agrupou, nao o numero da semana: o numero exibido e so um rotulo
+  // e o backend nao tem como reproduzir o agrupamento visual. As paginas quebram no fim de uma
+  // semana (ver `semanas` abaixo), entao `datas` sempre cobre a semana inteira.
+  const handleDeleteSemana = (datas, numeroSemana) => {
+    openModal({
+      title: "Remover semana da escala",
+      message: `Tem certeza que deseja remover todas as saídas da Semana ${numeroSemana} (${datas.join(", ")})?`,
+      type: "danger",
+      confirmText: "Sim, Remover",
+      cancelText: "Cancelar",
+      onConfirm: async () => {
+        try {
+          const response = await authFetch("/dirigentes/escala/semana", {
+            method: "DELETE",
+            body: JSON.stringify({
+              quadroId: parseInt(id),
+              datas,
+            }),
+          });
+
+          if (response.ok) {
+            addToast("Semana removida com sucesso!", "success");
+            carregarQuadro();
+            closeModal();
+          } else {
+            addToast("Erro ao excluir semana", "error");
+          }
+        } catch (error) {
+          console.error(error);
+          addToast("Erro de conexão", "error");
+        }
+      },
+    });
+  };
+
   // Confirmar Exclusao Quadro
   const confirmDeleteQuadro = () => {
     openModal({
@@ -313,9 +349,7 @@ export default function DirigentesQuadroView() {
       // Quem já está escalado sempre entra na lista, mesmo que tenha ficado indisponível ou
       // perdido o vínculo depois da geração. Sem isso o <select> renderiza em branco e o
       // usuário acha que o slot está vazio, enquanto o PDF continua imprimindo o nome.
-      [d.principal, d.substituto].forEach(nome => {
-        if (nome && !candidatos.includes(nome)) candidatos.push(nome);
-      });
+      if (d.principal && !candidatos.includes(d.principal)) candidatos.push(d.principal);
 
       acc[d.data].escalas.push({
         ...d,
@@ -326,11 +360,31 @@ export default function DirigentesQuadroView() {
     }, {})
   ).sort((a, b) => chaveData(a.data, quadro.mes) - chaveData(b.data, quadro.mes));
 
-  // Paginação dinâmica para o PDF/Visualização
-  const ITEMS_PER_PAGE = 12; // 12 dias = exatamente 2 semanas completas por página
+  // Semanas do mês inteiro, agrupadas UMA vez sobre a lista completa.
+  //
+  // O corte antigo era por dias (12 por página) e só coincidia com 2 semanas enquanto todo mês
+  // tivesse 6 dias por semana. Bastava excluir um dia — ou desativar uma saída de campo — para
+  // a página cortar no meio de uma semana: duas páginas exibiam o mesmo "Semana N" e a lixeira
+  // do cabeçalho removia só o pedaço que caiu naquela página. Agrupando aqui, a quebra de
+  // página cai sempre no fim de uma semana, então a tabela vê a semana completa.
+  const semanas = [];
+  for (const diaGrupo of grupos) {
+    if (diaGrupo.escalas[0]?.dia === "Segunda-Feira" && semanas.at(-1)?.length) {
+      semanas.push([]);
+    } else if (semanas.length === 0) {
+      semanas.push([]);
+    }
+    semanas.at(-1).push(diaGrupo);
+  }
+
+  // Paginação dinâmica para o PDF/Visualização: 2 semanas completas por página.
+  const SEMANAS_POR_PAGINA = 2;
   const paginas = [];
-  for (let i = 0; i < grupos.length; i += ITEMS_PER_PAGE) {
-    paginas.push(grupos.slice(i, i + ITEMS_PER_PAGE));
+  for (let i = 0; i < semanas.length; i += SEMANAS_POR_PAGINA) {
+    paginas.push({
+      dados: semanas.slice(i, i + SEMANAS_POR_PAGINA).flat(),
+      semanaInicial: i + 1,
+    });
   }
 
   const statusConfig = STATUS_CONFIG[quadro.status];
@@ -339,7 +393,6 @@ export default function DirigentesQuadroView() {
   const contagem = {};
   quadro.escalas.forEach((d) => {
     if (d.principal) contagem[d.principal] = (contagem[d.principal] || 0) + 1;
-    if (d.substituto) contagem[d.substituto] = (contagem[d.substituto] || 0) + 1;
   });
 
   const ordenado = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
@@ -422,25 +475,26 @@ export default function DirigentesQuadroView() {
           <div className="quadro-grid">
             {/* Tabelas */}
             <div className="quadro-tabelas">
-              {paginas.map((dadosPagina, index) => (
+              {paginas.map((pagina, index) => (
                 <div key={index}>
                   <div className="tabela-wrapper">
                     <TabelaDirigentes
-                      dados={dadosPagina}
+                      dados={pagina.dados}
                       quadro={quadro}
                       updateEscala={updateEscala}
                       onDeleteDia={handleDeleteDia}
+                      onDeleteSemana={handleDeleteSemana}
                       id={`tabela-view-${index + 1}`}
-                      semanaInicial={(index * 2) + 1}
+                      semanaInicial={pagina.semanaInicial}
                     />
                   </div>
 
                   <div style={{ position: "absolute", left: "-9999px", top: 0 }}>
                     <TabelaDirigentesPDF
-                      dados={dadosPagina}
+                      dados={pagina.dados}
                       quadro={quadro}
                       id={`tabela-pdf-${index + 1}`}
-                      semanaInicial={(index * 2) + 1}
+                      semanaInicial={pagina.semanaInicial}
                     />
                   </div>
                 </div>

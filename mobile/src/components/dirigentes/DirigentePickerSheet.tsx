@@ -25,7 +25,7 @@ interface Props {
 
 const LIST_MAX = Math.round(Dimensions.get("window").height * 0.5);
 
-/** Picker de dirigente/substituto (ordenado por carga), fiel ao design. */
+/** Picker do dirigente do turno (ordenado por carga), fiel ao design. */
 export function DirigentePickerSheet({ visible, title, sub, people, current, onSelect, onClose }: Props) {
   return (
     <Sheet visible={visible} onClose={onClose} maxHeightPct={0.8} flush>

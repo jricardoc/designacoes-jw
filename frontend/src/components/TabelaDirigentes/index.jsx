@@ -25,7 +25,7 @@ function agruparPorSemana(dados) {
   return semanas;
 }
 
-export default function TabelaDirigentes({ dados, quadro, updateEscala, onDeleteDia, id, semanaInicial = 1 }) {
+export default function TabelaDirigentes({ dados, quadro, updateEscala, onDeleteDia, onDeleteSemana, id, semanaInicial = 1 }) {
   const status = quadro.status;
   const semanas = agruparPorSemana(dados);
 
@@ -43,7 +43,6 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
             <th className="col-local">Local</th>
             <th className="col-horario">Horário</th>
             <th className="col-principal">Dirigente Principal</th>
-            <th className="col-substituto">Substituto</th>
             {status === 'rascunho' && <th className="col-acoes"></th>}
           </tr>
         </thead>
@@ -51,8 +50,25 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
           {semanas.map((semana, semanaIdx) => (
             <React.Fragment key={semanaIdx}>
               <tr>
-                <td colSpan={status === 'rascunho' ? 7 : 6} className="semana-title-row">
-                  Semana {semanaInicial + semanaIdx}
+                <td colSpan={status === 'rascunho' ? 6 : 5} className="semana-title-row">
+                  <div className="semana-title-content">
+                    <span>Semana {semanaInicial + semanaIdx}</span>
+                    {status === 'rascunho' && (
+                      <button
+                        onClick={() => onDeleteSemana(
+                          // A semana e um agrupamento visual: mandamos as datas em vez do numero,
+                          // que e so um rotulo. O pai pagina em blocos de semanas inteiras, entao
+                          // `semana` aqui nunca e um pedaco de uma semana maior.
+                          [...new Set(semana.map(g => g.data))],
+                          semanaInicial + semanaIdx
+                        )}
+                        className="btn-remover-semana"
+                        title="Remover esta semana inteira da escala"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
               {semana.map((diaGrupo, diaIdx) => {
@@ -110,31 +126,6 @@ export default function TabelaDirigentes({ dados, quadro, updateEscala, onDelete
                           <EditableField 
                             value={escala.principal} 
                             fieldName="principal" 
-                            onSave={(f, v) => handleChange(escala.id, f, v)} 
-                            fallback="-" 
-                            options={escala.candidatosDisponiveis}
-                          />
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="cell-select">
-                      {podeEditar ? (
-                        <select
-                          value={escala.substituto || ''}
-                          onChange={(e) => handleChange(escala.id, 'substituto', e.target.value)}
-                          className={`select-irmao ${escala.substituto ? 'filled' : 'empty'}`}
-                        >
-                          <option value="">Selecione...</option>
-                          {escala.candidatosDisponiveis?.map(nome => (
-                            <option key={nome} value={nome}>{nome}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="view-only-name">
-                          <EditableField 
-                            value={escala.substituto} 
-                            fieldName="substituto" 
                             onSave={(f, v) => handleChange(escala.id, f, v)} 
                             fallback="-" 
                             options={escala.candidatosDisponiveis}

@@ -135,12 +135,11 @@ export interface GrupoEscalaPdf {
     data: string;
     dia: string;
     principal: string;
-    substituto: string;
     saidaCampo?: { local: string; horario: string };
   }[];
 }
 
-const ITEMS_POR_PAGINA_DIRIGENTES = 12;
+const SEMANAS_POR_PAGINA_DIRIGENTES = 2;
 
 const DIRIGENTES_CSS = `
   .pdf-container { width:210mm; min-height:297mm; padding:15mm; background-color:white; font-family:Arial, Helvetica, sans-serif; color:black; }
@@ -185,7 +184,7 @@ function paginaDirigentesHtml(
 
   const corpo = semanas
     .map((semana, semanaIdx) => {
-      const headerSemana = `<tr><td colspan="6" class="semana-title-row">SEMANA ${semanaInicial + semanaIdx}</td></tr>`;
+      const headerSemana = `<tr><td colspan="5" class="semana-title-row">SEMANA ${semanaInicial + semanaIdx}</td></tr>`;
       const linhas = semana
         .map((diaGrupo, diaIdx) =>
           diaGrupo.escalas
@@ -204,7 +203,7 @@ function paginaDirigentesHtml(
               const cellsDataDia = isFirst
                 ? `<td rowspan="${rowSpan}" class="cell-data">${esc(escala.data)}</td><td rowspan="${rowSpan}" class="cell-dia">${esc(escala.dia)}</td>`
                 : "";
-              return `<tr class="${className}">${cellsDataDia}<td class="cell-local">${esc(escala.saidaCampo?.local)}</td><td class="cell-horario">${esc(escala.saidaCampo?.horario)}</td><td class="cell-nome">${esc(escala.principal)}</td><td class="cell-nome">${esc(escala.substituto)}</td></tr>`;
+              return `<tr class="${className}">${cellsDataDia}<td class="cell-local">${esc(escala.saidaCampo?.local)}</td><td class="cell-horario">${esc(escala.saidaCampo?.horario)}</td><td class="cell-nome">${esc(escala.principal)}</td></tr>`;
             })
             .join(""),
         )
@@ -227,7 +226,6 @@ function paginaDirigentesHtml(
             <th class="col-local">LOCAL</th>
             <th class="col-horario">HORÁRIO</th>
             <th class="col-principal">DIRIGENTE PRINCIPAL</th>
-            <th class="col-substituto">SUBSTITUTO</th>
           </tr>
         </thead>
         <tbody>${corpo}</tbody>
@@ -241,11 +239,23 @@ export function gerarHtmlDirigentes(
 ): string {
   const titulo = "ESCALA DE DIRIGENTES DE CAMPO";
   const subtitulo = `${(MESES_NOME[quadro.mes] || "").toUpperCase()} ${quadro.ano}`;
-  const paginas = chunk(grupos, ITEMS_POR_PAGINA_DIRIGENTES);
+
+  // Paginar por SEMANA, não por dia. Cortar de N em N dias só coincide com 2 semanas enquanto
+  // todo mês tiver 6 dias por semana; basta um dia excluído para a página cortar no meio de uma
+  // semana e duas páginas imprimirem o mesmo "SEMANA N". Agrupando antes, o corte cai sempre no
+  // fim de uma semana e a numeração global fica correta.
+  const semanas = agruparPorSemana(grupos);
+  const paginas = chunk(semanas, SEMANAS_POR_PAGINA_DIRIGENTES);
 
   const body = paginas
     .map((pg, i) =>
-      paginaDirigentesHtml(pg, titulo, subtitulo, i * 2 + 1, i < paginas.length - 1),
+      paginaDirigentesHtml(
+        pg.flat(),
+        titulo,
+        subtitulo,
+        i * SEMANAS_POR_PAGINA_DIRIGENTES + 1,
+        i < paginas.length - 1,
+      ),
     )
     .join("");
 

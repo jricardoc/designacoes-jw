@@ -9,7 +9,7 @@ const { reconciliarDataReuniao, domingoDaSemana } = require('../utils/semanaReun
  *
  * As tres fontes guardam o nome como TEXTO, nao como chave estrangeira:
  *   - Designacao.irmao1 / irmao2        (quadro de designacoes)
- *   - EscalaDirigente.principal / substituto (saidas de campo)
+ *   - EscalaDirigente.principal        (saidas de campo)
  *   - SemanaReuniao.<31 colunas>        (programacao da reuniao, importada de Excel/PDF)
  *
  * As duas primeiras vem de dropdowns alimentados por Irmao.nome, entao batem exatamente. A
@@ -207,7 +207,7 @@ async function listarPorIrmao(irmao) {
     const escalas = await prisma.escalaDirigente.findMany({
         where: {
             removido: false,
-            OR: [{ principal: irmao.nome }, { substituto: irmao.nome }],
+            principal: irmao.nome,
         },
         include: {
             quadro: { select: { id: true, mes: true, ano: true, titulo: true, status: true } },
@@ -217,18 +217,16 @@ async function listarPorIrmao(irmao) {
 
     for (const e of escalas) {
         if (!e.quadro) continue;
-        const principal = ehEle(e.principal);
-        const substituto = ehEle(e.substituto);
-        if (!principal && !substituto) continue;
+        // Cada turno tem um unico dirigente: nao ha mais parceiro para exibir no detalhe.
+        if (!ehEle(e.principal)) continue;
 
-        const parceiro = principal ? e.substituto : e.principal;
         compromissos.push(compromisso({
             id: `dirigente-${e.id}`,
             tipo: 'dirigente',
             data: resolverDataDeQuadro(e.data, e.quadro.mes, e.quadro.ano),
             titulo: 'Saída de campo',
-            detalhe: parceiro ? (principal ? `substituto: ${parceiro}` : `principal: ${parceiro}`) : null,
-            papel: principal ? 'Principal' : 'Substituto',
+            detalhe: null,
+            papel: 'Dirigente',
             local: e.saidaCampo?.local,
             horario: e.saidaCampo?.horario,
             origem: { tipo: 'dirigentes', id: e.quadro.id, titulo: e.quadro.titulo, status: e.quadro.status },

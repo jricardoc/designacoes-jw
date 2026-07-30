@@ -1,20 +1,15 @@
 import { useState } from 'react';
-import { X, Check, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Check, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
-import {
-  REGRAS_PADRAO,
-  REGRAS_ESSENCIAIS,
-  REGRAS_AVANCADAS,
-} from '../../../pages/Dirigentes/regras';
+import { REGRAS_PADRAO, REGRAS_ESSENCIAIS } from '../../../pages/Dirigentes/regras';
 
 /**
  * Refaz o preenchimento automatico de uma escala ja criada.
- * Preserva os dias que o usuario removeu; sobrescreve principal e substituto de todo o resto.
+ * Preserva os dias que o usuario removeu; sobrescreve o dirigente de todo o resto.
  */
 export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConcluido }) {
   const { authFetch } = useAuth();
   const [regras, setRegras] = useState(REGRAS_PADRAO);
-  const [mostrarAvancadas, setMostrarAvancadas] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
@@ -140,81 +135,13 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
               lineHeight: 1.45,
             }}
           >
-            Isso substitui o dirigente principal e o substituto de todas as saídas desta escala. Os dias
+            Isso substitui o dirigente de todas as saídas desta escala. Os dias
             que você removeu continuam removidos.
           </div>
 
           {REGRAS_ESSENCIAIS.map((r) => (
             <Regra key={r.chave} chave={r.chave} label={r.label} desc={r.desc} />
           ))}
-
-          <button
-            type="button"
-            onClick={() => setMostrarAvancadas((v) => !v)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.35rem',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#6E7B57',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              padding: '0.5rem 0.25rem',
-            }}
-          >
-            {mostrarAvancadas ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-            Ajustes finos
-          </button>
-
-          {mostrarAvancadas && (
-            <div style={{ marginTop: '0.25rem' }}>
-              {REGRAS_AVANCADAS.map((r) => (
-                <Regra key={r.chave} chave={r.chave} label={r.label} desc={r.desc} />
-              ))}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.75rem',
-                  padding: '0.7rem',
-                  borderRadius: '8px',
-                  background: 'white',
-                  opacity: regras.evitarRepeticoes ? 1 : 0.5,
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 500, color: '#2B2620' }}>Dias de descanso</div>
-                  <div style={{ fontSize: '0.8rem', color: '#8A8071' }}>
-                    Intervalo desejado entre duas designações do mesmo irmão
-                  </div>
-                </div>
-                <input
-                  type="number"
-                  min={0}
-                  max={31}
-                  disabled={!regras.evitarRepeticoes}
-                  value={regras.diasDescanso}
-                  onChange={(e) =>
-                    setRegras((prev) => ({
-                      ...prev,
-                      diasDescanso: Math.max(0, Math.min(31, parseInt(e.target.value) || 0)),
-                    }))
-                  }
-                  style={{
-                    width: '68px',
-                    padding: '0.5rem',
-                    borderRadius: '8px',
-                    border: '1px solid #DCD0B9',
-                    fontSize: '1rem',
-                    textAlign: 'center',
-                  }}
-                />
-              </div>
-            </div>
-          )}
 
           {erro && (
             <div

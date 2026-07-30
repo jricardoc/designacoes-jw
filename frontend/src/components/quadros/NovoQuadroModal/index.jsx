@@ -30,12 +30,12 @@ export default function NovoQuadroModal({
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState("");
 
-  // Regras de automatizacao
+  // Regras de automatizacao. So estas duas chegam ao gerador: AutoDesignacaoService.gerarDesignacoes
+  // le exatamente respeitarIndisponibilidades e regraAudioVideo. O rodizio ja garante sozinho o
+  // que evitarRepeticoes/distribuicaoIgualitaria/designarTodos prometiam, entao um toggle a mais
+  // aqui seria so um botao que nao muda a designacao gerada.
   const [regras, setRegras] = useState({
     respeitarIndisponibilidades: true,
-    evitarRepeticoes: true,
-    distribuicaoIgualitaria: true,
-    designarTodos: true,
     regraAudioVideo: true,
   });
 
@@ -323,21 +323,6 @@ export default function NovoQuadroModal({
                   key: "respeitarIndisponibilidades",
                   label: "Respeitar Indisponibilidades",
                   desc: "Não designar irmãos em dias que estão ocupados",
-                },
-                {
-                  key: "evitarRepeticoes",
-                  label: "Evitar Repetições",
-                  desc: "Não colocar o mesmo irmão em dias seguidos",
-                },
-                {
-                  key: "distribuicaoIgualitaria",
-                  label: "Distribuição Igualitária",
-                  desc: "Balancear quantidade de designações",
-                },
-                {
-                  key: "designarTodos",
-                  label: "Designar Todos",
-                  desc: "Garantir que todos tenham ao menos 1 designação",
                 },
               ].map((regra) => (
                 <label

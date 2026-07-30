@@ -152,6 +152,7 @@ routes.post('/dirigentes/quadros/:id/regerar', DirigentesController.regerarQuadr
 
 routes.put('/dirigentes/escala', DirigentesController.updateEscala);
 routes.delete('/dirigentes/escala/dia', DirigentesController.deleteDia);
+routes.delete('/dirigentes/escala/semana', DirigentesController.deleteSemana);
 
 routes.get('/dirigentes/disponibilidade/:irmaoId', DirigentesController.getDisponibilidade);
 routes.put('/dirigentes/disponibilidade', DirigentesController.updateDisponibilidade);

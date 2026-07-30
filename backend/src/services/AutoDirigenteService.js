@@ -122,40 +122,65 @@ class AutoDirigenteService {
     }
 
     /**
-     * Monta o historico do mes anterior: quantas designacoes cada irmao teve e qual foi a
-     * ultima data em que serviu (usada pela regra de descanso na virada do mes).
+     * Monta o historico dos quadros ANTERIORES, que e o que define a fila inicial do rodizio.
+     *
+     * Nao basta o mes passado e nao basta contar designacoes: o algoritmo precisa saber a
+     * ORDEM em que os irmaos serviram pela ultima vez, porque a fila do mes N e a fila com que
+     * o mes N-1 terminou. Por isso todas as designacoes anteriores sao colocadas numa unica
+     * sequencia cronologica (data, turno, saida) e cada irmao guarda o indice da ultima vez em
+     * que aparece nela - `ordem`. Maior = serviu mais recentemente = mais para o fim da fila.
+     *
+     * Uma janela de 12 quadros e suficiente: so a ULTIMA vez de cada um importa, e quem nao
+     * aparece na janela e tratado como "nunca serviu", que ja e a frente da fila.
      */
     async carregarHistorico(mes, ano) {
-        let prevMes = mes - 1;
-        let prevAno = ano;
-        if (prevMes === 0) {
-            prevMes = 12;
-            prevAno = ano - 1;
-        }
-
-        const quadroAnterior = await prisma.quadroDirigente.findUnique({
-            where: { mes_ano: { mes: prevMes, ano: prevAno } },
-            include: { escalas: { where: { removido: false } } }
+        const quadrosAnteriores = await prisma.quadroDirigente.findMany({
+            where: {
+                OR: [
+                    { ano: { lt: ano } },
+                    { ano, mes: { lt: mes } }
+                ]
+            },
+            include: {
+                escalas: {
+                    where: { removido: false },
+                    include: { saidaCampo: true }
+                }
+            },
+            orderBy: [{ ano: 'desc' }, { mes: 'desc' }],
+            take: 12
         });
 
-        const historico = {};
-        if (!quadroAnterior) return historico;
-
-        for (const esc of quadroAnterior.escalas) {
-            const dataObj = this.resolverData(esc.data, prevMes, prevAno);
-            if (!dataObj) continue;
-
-            for (const nome of [esc.principal, esc.substituto]) {
-                if (!nome) continue;
-                if (!historico[nome]) {
-                    historico[nome] = { designacoes: 0, ultimaDataObj: null };
-                }
-                historico[nome].designacoes += 1;
-                if (!historico[nome].ultimaDataObj || historico[nome].ultimaDataObj < dataObj) {
-                    historico[nome].ultimaDataObj = dataObj;
-                }
+        const eventos = [];
+        for (const quadro of quadrosAnteriores) {
+            for (const esc of quadro.escalas) {
+                if (!esc.principal) continue;
+                const dataObj = this.resolverData(esc.data, quadro.mes, quadro.ano);
+                if (!dataObj) continue;
+                eventos.push({
+                    nome: esc.principal,
+                    dataObj,
+                    turno: esc.saidaCampo?.turno || 0,
+                    saidaCampoId: esc.saidaCampoId
+                });
             }
         }
+
+        eventos.sort((a, b) =>
+            a.dataObj.getTime() - b.dataObj.getTime()
+            || a.turno - b.turno
+            || a.saidaCampoId - b.saidaCampoId);
+
+        const historico = {};
+        eventos.forEach((evento, indice) => {
+            if (!historico[evento.nome]) {
+                historico[evento.nome] = { designacoes: 0, ultimaDataObj: null, ordem: null };
+            }
+            const registro = historico[evento.nome];
+            registro.designacoes += 1;
+            registro.ultimaDataObj = evento.dataObj;
+            registro.ordem = indice;
+        });
 
         return historico;
     }
@@ -194,7 +219,6 @@ class AutoDirigenteService {
                     data: dia.data,
                     dia: dia.diaSemanaStr,
                     principal: '',
-                    substituto: '',
                     removido: false,
                     _meta: { dataObj: dia.dataObj, turno: saida.turno, local: saida.local, horario: saida.horario }
                 });
@@ -224,13 +248,11 @@ class AutoDirigenteService {
                 vagasBase,
                 dirigentes,
                 historico,
-                regras: { ...REGRAS_PADRAO, ...(regras || {}) },
-                seed: `dirigentes-${ano}-${mes}`
+                regras: { ...REGRAS_PADRAO, ...(regras || {}) }
             });
 
             saida.atribuicoes.forEach(a => {
                 escalasParaCriar[a.id].principal = a.principal;
-                escalasParaCriar[a.id].substituto = a.substituto;
             });
 
             diagnostico = saida.diagnostico;
@@ -276,15 +298,14 @@ class AutoDirigenteService {
             vagasBase,
             dirigentes,
             historico,
-            regras: { ...REGRAS_PADRAO, ...(regras || {}) },
-            seed: `dirigentes-${ano}-${mes}`
+            regras: { ...REGRAS_PADRAO, ...(regras || {}) }
         });
 
         await prisma.$transaction(
             saida.atribuicoes.map(a =>
                 prisma.escalaDirigente.update({
                     where: { id: a.id },
-                    data: { principal: a.principal, substituto: a.substituto }
+                    data: { principal: a.principal }
                 })
             )
         );

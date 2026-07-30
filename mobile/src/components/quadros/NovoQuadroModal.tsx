@@ -18,9 +18,6 @@ const BODY_MAX = Math.round(Dimensions.get("window").height * 0.56);
 
 const REGRAS_INFO: { key: keyof RegrasAutoPreenchimento; label: string; desc: string }[] = [
   { key: "respeitarIndisponibilidades", label: "Respeitar Indisponibilidades", desc: "Não designar irmãos em dias ocupados" },
-  { key: "evitarRepeticoes", label: "Evitar Repetições", desc: "Não colocar o mesmo irmão em dias seguidos" },
-  { key: "distribuicaoIgualitaria", label: "Distribuição Igualitária", desc: "Balancear a quantidade de designações" },
-  { key: "designarTodos", label: "Designar Todos", desc: "Garantir que todos tenham ao menos 1 designação" },
   { key: "regraAudioVideo", label: "Regra Áudio e Vídeo", desc: "1 experiente + 1 treinando" },
 ];
 
@@ -40,9 +37,6 @@ export function NovoQuadroModal({ visible, onClose, onCreated, existentes }: Pro
   const [auto, setAuto] = useState(true);
   const [regras, setRegras] = useState<RegrasAutoPreenchimento>({
     respeitarIndisponibilidades: true,
-    evitarRepeticoes: true,
-    distribuicaoIgualitaria: true,
-    designarTodos: true,
     regraAudioVideo: true,
   });
 

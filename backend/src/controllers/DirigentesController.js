@@ -32,6 +32,45 @@ const sanearRegras = (entrada) => {
     return regras;
 };
 
+/**
+ * Chave de ordenacao para datas "DD/MM" dentro de um quadro mensal.
+ *
+ * Um quadro pode conter dias do mes anterior, porque a escala comeca na segunda-feira da
+ * semana que contem o dia 1. Ordenar por `mes * 100 + dia` quebra na virada do ano: num
+ * quadro de JANEIRO, "29/12" daria 1229 e "01/01" daria 101, jogando dezembro para o fim.
+ * E a mesma funcao que a tela usa - as duas precisam concordar para "Semana N" bater.
+ */
+const chaveData = (data, mesQuadro) => {
+    const [dia, mes] = String(data).split('/').map(Number);
+    const mesRelativo = mes > mesQuadro ? mes - 12 : mes;
+    return mesRelativo * 100 + dia;
+};
+
+/**
+ * Reproduz o agrupamento visual da tabela: os dias em ordem cronologica, abrindo uma semana
+ * nova a cada Segunda-Feira. Devolve um array de arrays de datas "DD/MM" (indice 0 = Semana 1).
+ */
+const agruparEmSemanas = (escalas, mesQuadro) => {
+    const datas = [...new Set(escalas.map(e => e.data))]
+        .sort((a, b) => chaveData(a, mesQuadro) - chaveData(b, mesQuadro));
+
+    const diaDaData = new Map(escalas.map(e => [e.data, e.dia]));
+
+    const semanas = [];
+    let atual = [];
+    for (const data of datas) {
+        const ehSegunda = String(diaDaData.get(data) || '').startsWith('Segunda');
+        if (ehSegunda && atual.length > 0) {
+            semanas.push(atual);
+            atual = [];
+        }
+        atual.push(data);
+    }
+    if (atual.length > 0) semanas.push(atual);
+
+    return semanas;
+};
+
 class DirigentesController {
     // Listar todos os quadros de dirigentes
     async indexQuadros(req, res) {
@@ -218,18 +257,20 @@ class DirigentesController {
         }
     }
 
-    // Atualizar dirigente na escala (principal ou substituto)
+    // Atualizar o dirigente de um turno da escala
     async updateEscala(req, res) {
         try {
-            const { escalaId, campo, valor } = req.body; // campo pode ser 'principal' ou 'substituto'
+            // `campo` continua no contrato por compatibilidade com a tela, mas o unico papel
+            // que existe e o dirigente: o substituto foi extinto.
+            const { escalaId, campo = 'principal', valor } = req.body;
 
-            if (campo !== 'principal' && campo !== 'substituto') {
+            if (campo !== 'principal') {
                 return res.status(400).json({ error: 'Campo inválido' });
             }
 
             const atualizada = await prisma.escalaDirigente.update({
                 where: { id: parseInt(escalaId) },
-                data: { [campo]: valor }
+                data: { principal: valor }
             });
 
             return res.json(atualizada);
@@ -259,6 +300,84 @@ class DirigentesController {
             return res.json({ success: true, count: result.count });
         } catch (error) {
             console.error('Erro ao remover dia da escala:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
+
+    // Remover uma semana inteira da escala (todos os dias, com todas as saídas de cada dia)
+    //
+    // Mesmo mecanismo da exclusão de dia, um nível acima: marca removido = true, nunca apaga
+    // a linha, para o quadro poder ser regerado sem ressuscitar o que o usuário tirou.
+    //
+    // O corpo aceita as DUAS formas, e `datas` é a preferida:
+    //   { quadroId, datas: ["02/06", "03/06", ...] }  -> a tela já tem em mãos exatamente os
+    //       dias do bloco "Semana N" que ela mesma montou, então mandar as datas não depende
+    //       de o backend reproduzir o agrupamento visual (que ainda por cima é paginado: a
+    //       tabela recebe `semanaInicial` e desenha 2 semanas por página).
+    //   { quadroId, semana: 3 }  -> atalho para quem só tem o número exibido. Resolvido aqui
+    //       pelo mesmo critério da tabela: os dias em ordem cronológica, abrindo uma semana
+    //       nova a cada Segunda-Feira. A resposta devolve as datas resolvidas para o cliente
+    //       poder conferir o que foi removido.
+    async deleteSemana(req, res) {
+        try {
+            const { quadroId, semana, datas } = req.body || {};
+            const quadroIdNum = parseInt(quadroId);
+
+            if (!Number.isInteger(quadroIdNum)) {
+                return res.status(400).json({ error: 'Quadro inválido' });
+            }
+
+            const quadro = await prisma.quadroDirigente.findUnique({
+                where: { id: quadroIdNum },
+                include: { escalas: { where: { removido: false } } }
+            });
+
+            if (!quadro) {
+                return res.status(404).json({ error: 'Quadro não encontrado' });
+            }
+
+            let datasAlvo = null;
+            let criterio = null;
+
+            if (Array.isArray(datas) && datas.length > 0) {
+                datasAlvo = [...new Set(
+                    datas.map(d => String(d).trim()).filter(d => /^\d{2}\/\d{2}$/.test(d))
+                )];
+                criterio = 'datas informadas pela tela';
+                if (datasAlvo.length === 0) {
+                    return res.status(400).json({ error: 'Datas inválidas (esperado "DD/MM")' });
+                }
+            } else {
+                const semanaNum = parseInt(semana);
+                if (!Number.isInteger(semanaNum) || semanaNum < 1) {
+                    return res.status(400).json({ error: 'Informe as datas da semana ou o número da semana' });
+                }
+
+                const semanas = agruparEmSemanas(quadro.escalas, quadro.mes);
+                if (semanaNum > semanas.length) {
+                    return res.status(404).json({ error: `A escala tem ${semanas.length} semana(s)` });
+                }
+                datasAlvo = semanas[semanaNum - 1];
+                criterio = 'número da semana resolvido no servidor (nova semana a cada Segunda-Feira)';
+            }
+
+            const result = await prisma.escalaDirigente.updateMany({
+                where: {
+                    quadroId: quadroIdNum,
+                    data: { in: datasAlvo }
+                },
+                data: { removido: true }
+            });
+
+            return res.json({
+                success: true,
+                count: result.count,
+                datas: datasAlvo,
+                semana: semana !== undefined ? parseInt(semana) : null,
+                criterio
+            });
+        } catch (error) {
+            console.error('Erro ao remover semana da escala:', error);
             return res.status(500).json({ error: 'Erro interno' });
         }
     }
