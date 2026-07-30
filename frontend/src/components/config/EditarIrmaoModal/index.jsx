@@ -11,14 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from '../../../context/AuthContext';
 import { PRIVILEGIOS } from '../../../utils/privilegios';
-
-const FUNCOES = [
-  { id: "microfone", label: "Microfone", color: "#6E7B57" },
-  { id: "indicador", label: "Indicador", color: "#5E6B48" },
-  { id: "audioVideo", label: "Áudio e Vídeo", color: "#6E7B57" },
-  { id: "estacionamento", label: "Estacionamento", color: "#B06A43" },
-  { id: "dirigente", label: "Dirigente", color: "#A8503B" },
-];
+import { FUNCOES } from '../../../utils/funcoes';
 
 const MESES = [
   "Janeiro",
