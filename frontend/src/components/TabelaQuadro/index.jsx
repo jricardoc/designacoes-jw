@@ -256,7 +256,8 @@ export default function TabelaQuadro({
     }
     if (seguida) {
       return {
-        color: "#78532A",
+        // marrom fixo sobre --t-warning-bg some no tema escuro (fundo escuro)
+        color: "var(--t-warning-strong)",
         background: "var(--t-warning-bg)",
         borderRadius: "4px",
         padding: "2px 6px",
@@ -401,7 +402,7 @@ export default function TabelaQuadro({
                                 fontWeight = "bold";
                                 suffix = " (Indisponível)";
                               } else if (seguida) {
-                                color = "#78532A";
+                                color = "var(--t-warning-strong)";
                                 background = "var(--t-warning-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Seguida)";
@@ -495,7 +496,7 @@ export default function TabelaQuadro({
                                 fontWeight = "bold";
                                 suffix = " (Indisponível)";
                               } else if (seguida) {
-                                color = "#78532A";
+                                color = "var(--t-warning-strong)";
                                 background = "var(--t-warning-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Seguida)";

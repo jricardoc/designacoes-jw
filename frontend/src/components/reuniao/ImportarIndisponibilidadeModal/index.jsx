@@ -277,7 +277,9 @@ export default function ImportarIndisponibilidadeModal({
                                       : "1.5px solid var(--t-border-strong)",
                                   background: ativo ? "var(--t-success-bg)" : 'var(--t-surface)',
                                   color: ativo
-                                    ? "#2f6b1e"
+                                    // Sobre --t-success-bg, que no tema escuro e verde ESCURO:
+                                    // o verde fixo #2f6b1e dava 2,08:1. O token acompanha o fundo.
+                                    ? "var(--t-green-dark)"
                                     : sugestao
                                       ? "var(--t-warning-strong)"
                                       : "var(--t-text-2)",
@@ -349,7 +351,7 @@ export default function ImportarIndisponibilidadeModal({
                             gap: "0.6rem",
                             flexWrap: "wrap",
                             background: "var(--t-warning-bg)",
-                            border: "1px solid #E7CDA8",
+                            border: "1px solid var(--t-border-strong)",
                             borderRadius: "10px",
                             padding: "0.6rem 0.75rem",
                           }}
@@ -357,7 +359,7 @@ export default function ImportarIndisponibilidadeModal({
                           <span style={{ fontWeight: 600, color: "var(--t-warning-strong)" }}>
                             {a.nomeOriginal}
                           </span>
-                          <span style={{ color: "#a16207", fontSize: "0.82rem" }}>
+                          <span style={{ color: "var(--t-warning-strong)", fontSize: "0.82rem" }}>
                             {a.data}
                           </span>
                           <select
@@ -369,9 +371,10 @@ export default function ImportarIndisponibilidadeModal({
                               marginLeft: "auto",
                               padding: "0.45rem 0.6rem",
                               borderRadius: "8px",
-                              border: "1.5px solid #E7CDA8",
+                              border: "1.5px solid var(--t-muted)",
                               fontSize: "0.85rem",
                               background: "var(--t-surface)",
+                              color: "var(--t-text)",
                             }}
                           >
                             <option value="">Ignorar</option>

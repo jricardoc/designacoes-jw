@@ -131,7 +131,7 @@ function SaidaModal({ saida, onClose, onSaved, authFetch }) {
           {DIAS.map((d) => {
             const active = d.key === diaSemana;
             return (
-              <button key={d.key} onClick={() => setDiaSemana(d.key)} style={{ padding: "8px 14px", borderRadius: "12px", border: `1px solid ${active ? T.primary : T.border}`, background: active ? T.primary : T.surfaceMuted, color: active ? "var(--t-surface)" : T.textSec, fontWeight: 600, cursor: "pointer" }}>{d.label}</button>
+              <button key={d.key} onClick={() => setDiaSemana(d.key)} style={{ padding: "8px 14px", borderRadius: "12px", border: `1px solid ${active ? T.primary : T.border}`, background: active ? T.primary : T.surfaceMuted, color: active ? "var(--t-text-on-primary)" : T.textSec, fontWeight: 600, cursor: "pointer" }}>{d.label}</button>
             );
           })}
         </div>
@@ -155,7 +155,7 @@ function SaidaModal({ saida, onClose, onSaved, authFetch }) {
         <input value={local} onChange={(e) => setLocal(e.target.value)} placeholder="Ex-Combatentes - Casa do irmão João" style={input} />
 
         <div style={{ display: "flex", gap: "10px", marginTop: "1.5rem" }}>
-          <button onClick={onClose} style={{ flex: 1, height: "46px", border: `1px solid ${T.borderStrong}`, background: T.surface, borderRadius: "13px", color: "#7A7060", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
+          <button onClick={onClose} style={{ flex: 1, height: "46px", border: `1px solid ${T.borderStrong}`, background: T.surface, borderRadius: "13px", color: T.textSec, fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
           <button onClick={salvar} disabled={saving} style={{ ...primaryBtn, flex: 1.4, height: "46px" }}>{saving ? "Salvando..." : "Salvar"}</button>
         </div>
       </div>
@@ -275,13 +275,13 @@ export default function SistemaPanel() {
                   <div style={{ fontSize: "14.5px", fontWeight: 600, color: T.text }}>{group}</div>
                   {host ? <div style={{ fontSize: "12.5px", color: "var(--t-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{host}</div> : null}
                 </div>
-                <button onClick={() => setModal({ open: true, saida: o })} title="Editar" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "6px" }}><Pencil size={16} color="#C2B79D" /></button>
-                <button onClick={() => excluirSaida(o)} title="Excluir" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "6px" }}><Trash2 size={16} color="#C2877D" /></button>
+                <button onClick={() => setModal({ open: true, saida: o })} title="Editar" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "6px" }}><Pencil size={16} color={T.muted} /></button>
+                <button onClick={() => excluirSaida(o)} title="Excluir" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "6px" }}><Trash2 size={16} color="var(--t-red)" /></button>
               </div>
             );
           })}
           {saidas.length === 0 ? (
-            <div style={{ textAlign: "center", color: "#B0A48E", fontSize: "14px", padding: "20px 0" }}>Nenhuma saída cadastrada.</div>
+            <div style={{ textAlign: "center", color: T.muted, fontSize: "14px", padding: "20px 0" }}>Nenhuma saída cadastrada.</div>
           ) : null}
         </div>
       </div>
@@ -292,8 +292,8 @@ export default function SistemaPanel() {
       <div style={{ ...card, padding: 0, overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: `1px solid ${T.divider}` }}>
           <div style={{ fontSize: "15px", fontWeight: 500, color: T.text }}>Notificações</div>
-          <button onClick={toggleNotif} aria-label="Notificações" style={{ width: "46px", height: "28px", borderRadius: "999px", border: "none", cursor: "pointer", background: notif ? T.primary : "#D8CEBC", position: "relative", transition: "background .15s ease" }}>
-            <span style={{ position: "absolute", top: "3px", left: notif ? "21px" : "3px", width: "22px", height: "22px", borderRadius: "999px", background: "var(--t-surface)", transition: "left .15s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+          <button onClick={toggleNotif} aria-label="Notificações" style={{ width: "46px", height: "28px", borderRadius: "999px", border: "none", cursor: "pointer", background: notif ? T.primary : T.muted, position: "relative", transition: "background .15s ease" }}>
+            <span style={{ position: "absolute", top: "3px", left: notif ? "21px" : "3px", width: "22px", height: "22px", borderRadius: "999px", background: "var(--t-text-on-primary)", transition: "left .15s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
           </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px" }}>

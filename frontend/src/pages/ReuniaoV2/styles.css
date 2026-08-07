@@ -121,12 +121,17 @@
   gap: 16px;
   color: var(--t-text-2);
 }
+/* Os tres botoes da barra sao superficie solida de cor com rotulo sempre claro.
+   No tema escuro os tokens primary/red-dark/teal viram cores CLARAS (sao cores de
+   texto la), e o rotulo caia para 2,3-3,7:1. O fundo fica em hex fixo (a mesma cor
+   nos dois temas, como as faixas de secao do poster) e o rotulo em
+   var(--t-text-on-primary), que e claro nos dois. */
 .v2-btn-export {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--t-primary);
-  color: white;
+  background: #5e6b48;
+  color: var(--t-text-on-primary);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -137,7 +142,7 @@
   box-shadow: 0 2px 4px rgba(86, 98, 57, 0.2);
 }
 .v2-btn-export:hover {
-  background: var(--t-primary-dark);
+  background: #566239;
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(86, 98, 57, 0.3);
 }
@@ -146,8 +151,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--t-red-dark);
-  color: white;
+  background: #9a4632;
+  color: var(--t-text-on-primary);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -158,7 +163,7 @@
   box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
 }
 .v2-btn-pdf:hover {
-  background: var(--t-red-dark);
+  background: #9a4632;
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
 }
@@ -176,7 +181,7 @@
   justify-content: space-between;
   align-items: center;
   background: var(--t-ink);
-  color: white;
+  color: var(--t-text-on-primary);
   padding: 20px 30px;
   border-radius: 12px;
   margin-bottom: 24px;
@@ -197,7 +202,9 @@
   margin: 0;
   font-size: 1.6rem;
   font-weight: 800;
-  color: var(--t-border);
+  /* Sobre a faixa --t-ink (escura nos dois temas) o rotulo tem de ser claro
+     sempre: com var(--t-border) dava 1,38:1 no tema escuro. */
+  color: var(--t-text-on-primary);
   text-align: right;
 }
 .v2-poster-title h3 {
@@ -618,7 +625,9 @@
   transition: opacity 0.2s;
   background: none;
   border: none;
-  color: var(--t-red);
+  /* Vive dentro do poster, que e claro nos dois temas: var(--t-red) clareava e
+     dava 2,9:1 sobre o creme. */
+  color: #a8503b;
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -661,7 +670,8 @@
     top: 0;
     width: 100%;
     padding: 0;
-    background: var(--t-surface);
+    /* Papel: claro sempre, independente do tema da tela. */
+    background: #fbf7ef;
   }
 
   .v2-watermark,
@@ -692,8 +702,8 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: var(--t-teal);
-  color: white;
+  background: #2f6f7e;
+  color: var(--t-text-on-primary);
   border: none;
   padding: 8px 16px;
   border-radius: 6px;
@@ -704,7 +714,7 @@
   box-shadow: 0 2px 4px rgba(47, 111, 126, 0.2);
 }
 .v2-btn-imprimir:hover {
-  background: #255A66;
+  background: #255a66;
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(47, 111, 126, 0.3);
 }

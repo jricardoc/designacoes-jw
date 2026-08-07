@@ -13,7 +13,9 @@
 
 /* Header */
 .tabela-pagina-header {
-  background: linear-gradient(135deg, var(--t-primary) 0%, var(--t-primary-dark) 100%);
+  /* --t-primary-dark e token de TEXTO forte: no escuro ele CLAREIA e o fim do
+     gradiente virava verde claro, apagando o titulo branco. */
+  background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%);
   padding: 15px 20px;
   border-radius: 0;
   text-align: center;
@@ -37,7 +39,7 @@
 }
 
 .tabela-pagina-subtitulo {
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--t-text-on-primary);
   font-size: 0.9rem;
   margin: 5px 0 0 0;
   cursor: pointer;
@@ -135,14 +137,16 @@
   text-transform: uppercase;
 }
 
+/* Pilulas suaves: fundo *-bg + texto forte. A conversao tinha trocado o fundo
+   claro por uma cor de marca cheia, deixando texto e fundo no mesmo tom. */
 .dia-badge.domingo {
-  background: var(--t-terracotta);
-  color: var(--t-warning-strong);
+  background: var(--t-danger-bg);
+  color: var(--t-red-dark);
 }
 
 .dia-badge.quinta {
-  background: var(--t-primary);
-  color: #064e3b;
+  background: var(--t-success-bg);
+  color: var(--t-primary-dark);
 }
 
 /* Funcoes cell */
@@ -171,7 +175,7 @@
   padding: 0 10px;
   font-size: 0.8rem;
   font-weight: 800;
-  color: #000;
+  color: var(--t-text);
   font-family: "Roboto", sans-serif;
   text-transform: uppercase;
 }
@@ -203,7 +207,7 @@
 @media (min-width: 1050px) {
   .irmao-nome.editable:hover {
 
-  background: rgba(86, 98, 57, 0.1);
+  background: var(--t-sand);
 
   }
 }
@@ -394,13 +398,13 @@
   }
 
   .dia-badge-mobile.domingo {
-    background: var(--t-terracotta);
-    color: var(--t-warning-strong);
+    background: var(--t-danger-bg);
+    color: var(--t-red-dark);
   }
 
   .dia-badge-mobile.quinta {
-    background: var(--t-primary);
-    color: #064e3b;
+    background: var(--t-success-bg);
+    color: var(--t-primary-dark);
   }
 
   /* Esconder célula de dia separada */

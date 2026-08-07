@@ -270,7 +270,7 @@ export default function GerenciarIrmaos() {
               gap: '0.5rem',
               padding: '0.6rem 1.25rem',
               background: 'linear-gradient(135deg, var(--t-terracotta) 0%, var(--t-amber) 100%)',
-              color: 'white',
+              color: 'var(--t-text-on-primary)',
               border: 'none',
               borderRadius: '10px',
               fontWeight: '600',
@@ -358,7 +358,7 @@ export default function GerenciarIrmaos() {
                         borderRadius: '20px',
                         border: `1px solid ${marcado ? opcao.cor : 'var(--t-border-strong)'}`,
                         background: marcado ? opcao.cor : 'var(--t-surface)',
-                        color: marcado ? '#FFFFFF' : 'var(--t-text)',
+                        color: marcado ? 'var(--t-text-on-primary)' : 'var(--t-text)',
                         fontSize: '0.78rem',
                         fontWeight: marcado ? '600' : '500',
                         cursor: 'pointer',
@@ -374,7 +374,7 @@ export default function GerenciarIrmaos() {
                         padding: '0 0.3rem',
                         borderRadius: '8px',
                         background: marcado ? 'rgba(255,255,255,0.25)' : (opcao.fundo || 'var(--t-sand)'),
-                        color: marcado ? '#FFFFFF' : 'var(--t-text-2)'
+                        color: marcado ? 'var(--t-text-on-primary)' : 'var(--t-text-2)'
                       }}>
                         {total}
                       </span>
@@ -448,7 +448,7 @@ export default function GerenciarIrmaos() {
               justifyContent: 'center',
               flexShrink: 0
             }}>
-              <User size={18} color="white" />
+              <User size={18} color="var(--t-text-on-primary)" />
             </div>
 
             <div style={{ flex: 1, minWidth: 0 }}>

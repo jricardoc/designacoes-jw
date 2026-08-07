@@ -38,14 +38,14 @@
 
 .config-menu-btn.active {
   background: linear-gradient(135deg, var(--t-terracotta) 0%, var(--t-amber) 100%);
-  color: white;
+  color: var(--t-text-on-primary);
   box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 @media (min-width: 1050px) {
   .config-menu-btn:hover:not(.active) {
 
-  background: #FBF1E8;
+  background: var(--t-surface-muted);
   transform: translateX(4px);
 
   }
@@ -111,7 +111,7 @@
 }
 
 .sistema-danger-text {
-  color: #7A3D2C;
+  color: var(--t-red-dark);
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }
@@ -119,7 +119,7 @@
 .sistema-btn-danger {
   padding: 0.65rem 1.25rem;
   background: var(--t-red-dark);
-  color: white;
+  color: var(--t-text-on-primary);
   border: none;
   border-radius: 8px;
   font-weight: 600;

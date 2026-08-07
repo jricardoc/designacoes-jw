@@ -29,18 +29,25 @@
   /* PALETA — vinda da Reunião V1 (src/pages/Reuniao/styles.css).
      Do design Modernist ficou só a estrutura e a fonte Archivo; as cores são as
      que a congregação já reconhece do resto do sistema: base creme, texto marrom
-     escuro, terracota como acento e uma cor própria por seção. */
-  --p-text: var(--t-text);
-  --p-accent: var(--t-red);
-  --p-accent-400: var(--t-muted);
-  --p-accent-500: var(--t-terracotta);
-  --p-accent-700: #7A3D2C;
-  --p-n-100: var(--t-surface-muted);
-  --p-n-300: var(--t-border);
-  --p-n-400: var(--t-muted);
-  --p-n-500: var(--t-muted);
-  --p-n-600: var(--t-text-2);
-  --p-n-700: var(--t-text-2);
+     escuro, terracota como acento e uma cor própria por seção.
+
+     O pôster é peça de EXPORTAÇÃO (PNG, PDF e impressão): sai claro sempre, em
+     qualquer tema da tela. Por isso a paleta aqui é hex literal e não token —
+     com var(--t-*) a folha invertia junto com o tema e a exportação saía escura.
+     Um detalhe que a troca mecânica também comeu: --p-n-700 é um marrom PRÓPRIO
+     (#5C5446, 6,99:1 sobre o creme), não var(--t-text-2) (#8A8071, 3,63:1) — é
+     dele que depende a Sala B não sumir na impressão. */
+  --p-text: #2b2620;
+  --p-accent: #a8503b;
+  --p-accent-400: #c6baa0;
+  --p-accent-500: #b06a43;
+  --p-accent-700: #7a3d2c;
+  --p-n-100: #f6f0e4;
+  --p-n-300: #ece3d3;
+  --p-n-400: #c6baa0;
+  --p-n-500: #a2977f;
+  --p-n-600: #8a8071;
+  --p-n-700: #5c5446;
 
   /* Cor de cada seção, como na V1. */
   --p-tesouros: #558790;
@@ -57,7 +64,7 @@
   /* Respiro mínimo. Na tela o pôster fica dentro de um card, então não precisa de
      moldura própria; no papel, a margem quem dá é a folha. */
   padding: 12px 14px;
-  background: var(--t-surface);
+  background: #fbf7ef;
   color: var(--p-text);
   font-family: var(--p-font);
   display: flex;
@@ -197,7 +204,7 @@
 }
 .v2-exportable-poster .v2-badge-reading {
   background: var(--p-accent);
-  color: var(--t-text-on-primary);
+  color: #fbf7ef;
   padding: 5px 10px 4px;
   border-radius: 0;
   font: 800 13.5px/1.15 var(--p-font);
@@ -308,7 +315,7 @@
   align-items: center;
   gap: 8px;
   background: var(--p-text);
-  color: var(--t-text-on-primary);
+  color: #fbf7ef;
   padding: 6px 10px;
   font: 800 14px/1 var(--p-font);
   letter-spacing: 0.1em;
@@ -406,7 +413,7 @@
   border-radius: 0;
   padding: 0;
   font: 600 15.5px/1.25 var(--p-font);
-  /* Era --p-n-600 (var(--t-text-2)), que dá só 3,63:1 sobre o creme — abaixo do mínimo de
+  /* Era --p-n-600 (#8A8071), que dá só 3,63:1 sobre o creme — abaixo do mínimo de
      4,5:1 para texto normal, e some na impressão. Este marrom sobe para 6,99:1
      sem virar a cor do nome principal, então a reserva continua sendo reserva. */
   color: var(--p-n-700);
@@ -425,7 +432,7 @@
 .v2-exportable-poster .v2-dir,
 .v2-exportable-poster .v2-lei {
   background: transparent;
-  /* O `.v2-dir` do styles.css tinha `border: 1px solid var(--t-border)`, e zerar só o fundo
+  /* O `.v2-dir` do styles.css tinha `border: 1px solid #ECE3D3`, e zerar só o fundo
      deixava a moldura sozinha em volta do Dirigente — parecia um campo de formulário. */
   border: none;
   border-radius: 0;

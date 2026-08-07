@@ -250,7 +250,7 @@ export default function Conta() {
 
               <label className="t-label" style={{ marginTop: '1rem' }}>Nickname</label>
               <div className="t-field">
-                <span className="t-field-icon" style={{ fontSize: '1rem', fontWeight: 600, color: '#9DA882' }}>@</span>
+                <span className="t-field-icon" style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--t-muted)' }}>@</span>
                 <input value={nickname} onChange={(e) => setNickname(e.target.value)} className="t-input" style={{ paddingLeft: '40px' }} />
               </div>
 

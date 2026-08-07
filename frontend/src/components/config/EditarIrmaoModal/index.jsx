@@ -324,7 +324,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 justifyContent: "center",
               }}
             >
-              <User size={22} color="white" />
+              <User size={22} color="var(--t-text-on-primary)" />
             </div>
             <div>
               <h2 style={{ margin: 0, fontSize: "1.1rem" }}>
@@ -412,7 +412,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     background: funcoes.includes(funcao.id)
                       ? funcao.color
                       : 'var(--t-surface)',
-                    color: funcoes.includes(funcao.id) ? "white" : funcao.color,
+                    color: funcoes.includes(funcao.id) ? "var(--t-text-on-primary)" : funcao.color,
                     fontWeight: "500",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -478,7 +478,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       borderRadius: "20px",
                       border: `2px solid ${p.cor}`,
                       background: ativoChip ? p.cor : 'var(--t-surface)',
-                      color: ativoChip ? "white" : p.cor,
+                      color: ativoChip ? "var(--t-text-on-primary)" : p.cor,
                       fontWeight: "500",
                       cursor: "pointer",
                       transition: "all 0.2s",
@@ -540,7 +540,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     background:
                       nivelAudioVideo === "experiente" ? "var(--t-success-bg)" : 'var(--t-surface)',
                     color:
-                      nivelAudioVideo === "experiente" ? "var(--t-primary)" : "var(--t-text-2)",
+                      nivelAudioVideo === "experiente" ? "var(--t-green-dark)" : "var(--t-text-2)",
                     fontWeight: "600",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -562,7 +562,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     background:
                       nivelAudioVideo === "treinando" ? "var(--t-warning-bg)" : 'var(--t-surface)',
                     color:
-                      nivelAudioVideo === "treinando" ? "#78532A" : "var(--t-text-2)",
+                      nivelAudioVideo === "treinando" ? "var(--t-amber)" : "var(--t-text-2)",
                     fontWeight: "600",
                     cursor: "pointer",
                     transition: "all 0.2s",
@@ -583,7 +583,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                 padding: "1rem",
                 background: "var(--t-danger-bg)",
                 borderRadius: "12px",
-                border: "1px solid #F0DED3",
+                border: "1px solid var(--t-border-strong)",
               }}
             >
               <label
@@ -592,7 +592,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   marginBottom: "0.75rem",
                   fontWeight: "600",
                   fontSize: "0.9rem",
-                  color: "#7A3D2C",
+                  color: "var(--t-red-dark)",
                 }}
               >
                 Disponibilidade para Saídas de Campo
@@ -612,7 +612,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       padding: "0.75rem",
                       background: "var(--t-surface)",
                       borderRadius: "8px",
-                      border: "1px solid #E3C9C0",
+                      border: "1px solid var(--t-border-strong)",
                       cursor: "pointer",
                       transition: "all 0.2s"
                     }}
@@ -624,10 +624,10 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       style={{ transform: "scale(1.2)" }}
                     />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: "600", color: "#7A3D2C", textTransform: "capitalize" }}>
+                      <div style={{ fontWeight: "600", color: "var(--t-text)", textTransform: "capitalize" }}>
                         {saida.diaSemana} - {saida.horario}
                       </div>
-                      <div style={{ fontSize: "0.8rem", color: "#7A3D2C" }}>
+                      <div style={{ fontSize: "0.8rem", color: "var(--t-text-2)" }}>
                         {saida.local}
                       </div>
                     </div>
@@ -665,7 +665,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       width: "22px",
                       height: "22px",
                       borderRadius: "11px",
-                      background: "var(--t-surface)",
+                      background: "var(--t-text-on-primary)",
                       position: "absolute",
                       top: "2px",
                       left: ativo ? "24px" : "2px",
@@ -801,8 +801,8 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                         ? "transparent"
                         : isDiaIndisponivel(dia)
                           ? "linear-gradient(135deg, var(--t-red) 0%, var(--t-red-dark) 100%)"
-                          : "white",
-                      color: isDiaIndisponivel(dia) ? "white" : "var(--t-text)",
+                          : "var(--t-surface)",
+                      color: isDiaIndisponivel(dia) ? "var(--t-text-on-primary)" : "var(--t-text)",
                       fontWeight: "600",
                       fontSize: "0.8rem",
                       cursor: dia ? "pointer" : "default",
@@ -953,7 +953,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   background: salvando
                     ? "var(--t-muted)"
                     : "linear-gradient(135deg, var(--t-primary) 0%, var(--t-primary-dark) 100%)",
-                  color: "white",
+                  color: "var(--t-text-on-primary)",
                   border: "none",
                   borderRadius: "10px",
                   fontWeight: "600",

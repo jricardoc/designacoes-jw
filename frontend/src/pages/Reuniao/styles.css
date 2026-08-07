@@ -6,8 +6,15 @@
   color: var(--t-text);
 }
 
+/* A folha da programação é o que o html2canvas fotografa (e o que vai para o
+   papel): sai SEMPRE clara, como o pôster da V2. Por isso hex literal aqui —
+   e a cor de texto fica declarada no próprio bloco, para que tudo lá dentro
+   herde marrom escuro mesmo com o tema escuro ligado. As faixas coloridas
+   (#558790, #dbe4c6, #538d35...) já eram fixas; tokenizar só o texto era o
+   que deixava a folha ilegível. */
 .reuniao-wrapper {
-  background: var(--t-surface);
+  background: #fbf7ef;
+  color: #2b2620;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   overflow: hidden;
@@ -22,7 +29,7 @@
   justify-content: space-between;
   border-bottom: 2px solid #000;
   padding: 10px 16px;
-  background: var(--t-surface);
+  background: #fbf7ef;
   flex-wrap: wrap;
   gap: 10px;
 }
@@ -69,7 +76,7 @@
   font-size: 1.1rem;
 }
 .data-leitura strong {
-  color: var(--t-text);
+  color: #2b2620;
 }
 .canticos-iniciais {
   margin-top: 10px;
@@ -233,9 +240,11 @@
   padding: 20px 16px 40px;
 }
 
+/* Faixa sage fixa: o texto tem de ser escuro sempre (com var(--t-text) ele
+   clareava no tema escuro e ficava 1,07:1 sobre o verde claro). */
 .fim-semana-header {
   background-color: #dbe4c6;
-  color: var(--t-text);
+  color: #2b2620;
   font-size: 1.4rem;
   text-align: center;
   font-weight: bold;
@@ -267,7 +276,7 @@
 
 .valor-fim {
   font-weight: 600;
-  color: var(--t-text);
+  color: #2b2620;
 }
 
 /* =========================================
@@ -350,7 +359,7 @@
     text-align: left !important;
     margin-left: 0;
     padding-left: 52px; /* Identar o mesmo tamanho da hora */
-    color: var(--t-text-2);
+    color: #5c5446; /* dentro da folha clara: marrom fixo, nao o token de texto */
   }
   .linha-designacao .sala-b::before {
     content: "Sala B: ";
@@ -377,12 +386,16 @@
   gap: 1rem;
 }
 
+/* Os degrades destes botoes sao SUPERFICIE de marca, com rotulo sempre claro.
+   Os tokens de acento (terracota/amber/red) sao cores de TEXTO: no tema escuro
+   eles clareiam, e o rotulo caia para ~2,5:1. Logo, hex fixo no fundo e
+   var(--t-text-on-primary) (sempre claro) no rotulo. */
 .btn-v2 {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--t-terracotta) 0%, var(--t-amber) 100%);
-  color: white;
+  background: linear-gradient(135deg, #b06a43 0%, #9a5a38 100%);
+  color: var(--t-text-on-primary);
   border: none;
   padding: 10px 20px;
   border-radius: 12px;
@@ -396,15 +409,15 @@
 .btn-v2:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 15px rgba(217, 119, 6, 0.4);
-  color: white;
+  color: var(--t-text-on-primary);
 }
 
 .btn-import {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--t-ink) 0%, var(--t-olive) 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--t-ink) 0%, #6e7b57 100%);
+  color: var(--t-text-on-primary);
   border: none;
   padding: 10px 20px;
   border-radius: 12px;
@@ -421,7 +434,7 @@
 }
 
 .btn-import-pdf {
-  background: linear-gradient(135deg, #7A3D2C 0%, var(--t-red) 100%);
+  background: linear-gradient(135deg, #7a3d2c 0%, #a8503b 100%);
   box-shadow: 0 4px 12px rgba(153, 27, 27, 0.2);
 }
 
@@ -460,7 +473,7 @@
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--t-border);
   margin-bottom: 2rem;
 }
 
@@ -550,6 +563,8 @@
   background: var(--t-danger-bg);
 }
 
+/* Moldura da folha: e ESTE elemento que o html2canvas fotografa, entao o claro
+   fixo e proposital (a margem da imagem exportada sai clara em qualquer tema). */
 .week-content-wrapper {
   padding: 2rem;
   background: #fdfdfd;
@@ -641,6 +656,7 @@
 }
 
 .group-row { position: relative; }
-.btn-delete-row { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); opacity: 0; transition: opacity 0.2s; background: none; border: none; color: var(--t-red); cursor: pointer; padding: 4px; border-radius: 4px; }
+/* Fica dentro da folha clara: vermelho fixo (var(--t-red) clareia no escuro e da 2,9:1 sobre o creme). */
+.btn-delete-row { position: absolute; right: -25px; top: 50%; transform: translateY(-50%); opacity: 0; transition: opacity 0.2s; background: none; border: none; color: #a8503b; cursor: pointer; padding: 4px; border-radius: 4px; }
 .btn-delete-row:hover { background: rgba(239, 68, 68, 0.1); }
 .group-row:hover .btn-delete-row { opacity: 1; }

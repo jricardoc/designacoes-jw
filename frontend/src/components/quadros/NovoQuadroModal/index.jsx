@@ -384,7 +384,7 @@ export default function NovoQuadroModal({
                   borderRadius: "8px",
                   marginTop: "0.5rem",
                   background: regras.regraAudioVideo ? "var(--t-info-bg)" : 'var(--t-surface)',
-                  border: "1px solid #bfdbfe",
+                  border: "1px solid var(--t-border-strong)",
                 }}
               >
                 <div
@@ -481,7 +481,7 @@ export default function NovoQuadroModal({
                 background:
                   loading || jaExiste
                     ? "var(--t-border-strong)"
-                    : "linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)",
+                    : "linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%)",
                 color: "white",
                 fontWeight: "600",
                 cursor: loading || jaExiste ? "not-allowed" : "pointer",

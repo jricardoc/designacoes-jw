@@ -179,7 +179,9 @@ export default function Reuniao() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      cancelButtonColor: "var(--t-text-2)",
+      // O Swal escreve o rotulo em branco: o fundo tem de ser o mesmo cinza nos dois
+      // temas. Com var(--t-text-2) ele clareava no escuro e o "Cancelar" dava 2,2:1.
+      cancelButtonColor: "#8A8071",
       confirmButtonText: "Sim, excluir",
       cancelButtonText: "Cancelar",
     });
