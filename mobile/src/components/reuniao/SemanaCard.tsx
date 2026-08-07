@@ -3,7 +3,8 @@ import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import type { SemanaReuniao } from "@/api/types";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { canticoLegivel, datasDaSemana, parteTitulo } from "@/utils/semanaReuniao";
 
 // Sentinela gravada pela web para marcar uma linha como excluida.
@@ -27,6 +28,7 @@ function Parte({
   salaB?: string | null;
   rotulo?: string;
 }) {
+  const { styles } = useTema(criarEstilos);
   // O título vem com a hora colada ("19:36 1. Joias espirituais"); separada, ela vira a
   // marcação de horário e o texto fica legível.
   const t = parteTitulo(titulo);
@@ -58,6 +60,7 @@ function Parte({
 
 /** Linha simples "rótulo: valor". */
 function Linha({ label, value }: { label: string; value?: string | null }) {
+  const { styles } = useTema(criarEstilos);
   const conteudo = limpar(value);
   if (!conteudo) return null;
   return (
@@ -77,6 +80,7 @@ function Secao({
   cor: string;
   children: React.ReactNode;
 }) {
+  const { styles } = useTema(criarEstilos);
   return (
     <View style={styles.secao}>
       <View style={[styles.secaoBar, { backgroundColor: cor }]} />
@@ -100,6 +104,7 @@ function BlocoData({
   diaSemana: string;
   rotulo: string;
 }) {
+  const { styles } = useTema(criarEstilos);
   return (
     <View style={styles.blocoData}>
       <Text style={styles.blocoRotulo}>{rotulo}</Text>
@@ -119,6 +124,7 @@ function BlocoData({
 export function SemanaCard({
   semana,
   index = 0,
+  destaque = false,
   onCompartilhar,
   onPdf,
   compartilhando = false,
@@ -126,11 +132,14 @@ export function SemanaCard({
 }: {
   semana: SemanaReuniao;
   index?: number;
+  /** Semana atual hasteada no topo da tela: ganha borda viva na cor da marca. */
+  destaque?: boolean;
   onCompartilhar?: () => void;
   onPdf?: () => void;
   compartilhando?: boolean;
   gerandoPdf?: boolean;
 }) {
+  const { colors, styles } = useTema(criarEstilos);
   const [open, setOpen] = useState(false);
   const { meio, fds } = datasDaSemana(semana);
 
@@ -155,7 +164,7 @@ export function SemanaCard({
   return (
     <Animated.View
       entering={FadeInDown.delay(index * 55).duration(300)}
-      style={styles.card}
+      style={[styles.card, destaque && styles.cardDestaque]}
     >
       <Pressable style={styles.header} onPress={() => setOpen((o) => !o)}>
         {/* As datas vêm primeiro: é o que o irmão procura ao abrir a tela. O rótulo textual
@@ -342,89 +351,94 @@ export function SemanaCard({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    overflow: "hidden",
-    paddingBottom: 4,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    paddingBottom: 8,
-    gap: 8,
-  },
-  datas: { flex: 1, flexDirection: "row", gap: 18 },
-  blocoData: { gap: 2 },
-  blocoRotulo: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-  },
-  blocoLinha: { flexDirection: "row", alignItems: "center", gap: 6 },
-  blocoDia: { fontSize: 30, fontWeight: "700", color: colors.terracotta, lineHeight: 34 },
-  blocoMes: { fontSize: 10, fontWeight: "700", color: "#C2A98C", letterSpacing: 1 },
-  blocoPill: {
-    backgroundColor: colors.infoBg,
-    borderRadius: radius.sm,
-    paddingVertical: 2,
-    paddingHorizontal: 7,
-    marginTop: 2,
-  },
-  blocoPillTexto: { fontSize: 11, fontWeight: "700", color: colors.primaryDark },
-  faixa: { flex: 1, fontSize: 15, fontWeight: "700", color: colors.text },
-  leitura: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    paddingHorizontal: 14,
-    paddingBottom: 4,
-  },
-  acoes: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  acao: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: colors.infoBg,
-    borderRadius: radius.pill,
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-  },
-  acaoTexto: { fontSize: 12.5, fontWeight: "700", color: colors.primaryDark },
-  body: { padding: 14, paddingTop: 4, gap: 12 },
-  secao: { flexDirection: "row", gap: 10 },
-  secaoBar: { width: 4, borderRadius: 2 },
-  secaoBody: { flex: 1, paddingVertical: 2 },
-  secaoTitulo: { fontSize: 13, fontWeight: "800", marginBottom: 6 },
-  linha: { flexDirection: "row", gap: 8, paddingVertical: 2 },
-  linhaLabel: {
-    fontSize: 13,
-    color: colors.textMuted,
-    minWidth: 96,
-    fontWeight: "600",
-  },
-  linhaValue: { fontSize: 13, color: colors.text, flex: 1 },
-  parte: { paddingVertical: 5 },
-  parteTitulo: { fontSize: 13, color: colors.text, fontWeight: "600" },
-  parteHora: { color: colors.textMuted, fontWeight: "700" },
-  parteQuem: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
-  chip: {
-    backgroundColor: colors.slotBg,
-    borderWidth: 1,
-    borderColor: colors.slotBorder,
-    borderRadius: radius.pill,
-    paddingVertical: 3,
-    paddingHorizontal: 9,
-  },
-  chipTexto: { fontSize: 12, fontWeight: "600", color: colors.text },
-  chipSalaB: { backgroundColor: colors.surfaceMuted },
-  chipTextoSalaB: { color: colors.textSecondary },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      overflow: "hidden",
+      paddingBottom: 4,
+    },
+    cardDestaque: {
+      borderWidth: 2,
+      borderColor: colors.primary,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 14,
+      paddingBottom: 8,
+      gap: 8,
+    },
+    datas: { flex: 1, flexDirection: "row", gap: 18 },
+    blocoData: { gap: 2 },
+    blocoRotulo: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+    },
+    blocoLinha: { flexDirection: "row", alignItems: "center", gap: 6 },
+    blocoDia: { fontSize: 30, fontWeight: "700", color: colors.terracotta, lineHeight: 34 },
+    blocoMes: { fontSize: 10, fontWeight: "700", color: colors.mesEtiqueta, letterSpacing: 1 },
+    blocoPill: {
+      backgroundColor: colors.infoBg,
+      borderRadius: radius.sm,
+      paddingVertical: 2,
+      paddingHorizontal: 7,
+      marginTop: 2,
+    },
+    blocoPillTexto: { fontSize: 11, fontWeight: "700", color: colors.primaryDark },
+    faixa: { flex: 1, fontSize: 15, fontWeight: "700", color: colors.text },
+    leitura: {
+      fontSize: 13,
+      color: colors.textSecondary,
+      paddingHorizontal: 14,
+      paddingBottom: 4,
+    },
+    acoes: {
+      flexDirection: "row",
+      gap: 8,
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    acao: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.infoBg,
+      borderRadius: radius.pill,
+      paddingVertical: 7,
+      paddingHorizontal: 12,
+    },
+    acaoTexto: { fontSize: 12.5, fontWeight: "700", color: colors.primaryDark },
+    body: { padding: 14, paddingTop: 4, gap: 12 },
+    secao: { flexDirection: "row", gap: 10 },
+    secaoBar: { width: 4, borderRadius: 2 },
+    secaoBody: { flex: 1, paddingVertical: 2 },
+    secaoTitulo: { fontSize: 13, fontWeight: "800", marginBottom: 6 },
+    linha: { flexDirection: "row", gap: 8, paddingVertical: 2 },
+    linhaLabel: {
+      fontSize: 13,
+      color: colors.textMuted,
+      minWidth: 96,
+      fontWeight: "600",
+    },
+    linhaValue: { fontSize: 13, color: colors.text, flex: 1 },
+    parte: { paddingVertical: 5 },
+    parteTitulo: { fontSize: 13, color: colors.text, fontWeight: "600" },
+    parteHora: { color: colors.textMuted, fontWeight: "700" },
+    parteQuem: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4 },
+    chip: {
+      backgroundColor: colors.slotBg,
+      borderWidth: 1,
+      borderColor: colors.slotBorder,
+      borderRadius: radius.pill,
+      paddingVertical: 3,
+      paddingHorizontal: 9,
+    },
+    chipTexto: { fontSize: 12, fontWeight: "600", color: colors.text },
+    chipSalaB: { backgroundColor: colors.surfaceMuted },
+    chipTextoSalaB: { color: colors.textSecondary },
+  });

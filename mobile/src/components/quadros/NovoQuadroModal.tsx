@@ -12,7 +12,8 @@ import {
 import { useCriarQuadro } from "@/api/hooks/useQuadros";
 import type { QuadroResumo, RegrasAutoPreenchimento } from "@/api/types";
 import { Sheet, useToast } from "@/components/ui";
-import { colors, MESES, radius } from "@/theme";
+import { MESES, radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 const BODY_MAX = Math.round(Dimensions.get("window").height * 0.56);
 
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export function NovoQuadroModal({ visible, onClose, onCreated, existentes }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const criar = useCriarQuadro();
   const now = new Date();
@@ -160,7 +162,8 @@ export function NovoQuadroModal({ visible, onClose, onCreated, existentes }: Pro
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -213,14 +216,14 @@ const styles = StyleSheet.create({
   },
   anoValue: { fontSize: 32, fontWeight: "600", color: colors.text, minWidth: 90, textAlign: "center" },
   warnBox: { backgroundColor: colors.warningBg, borderRadius: radius.md, padding: 12, marginTop: 16 },
-  warnText: { color: "#92400e", fontSize: 14 },
+  warnText: { color: colors.warningStrong, fontSize: 14 },
   autoRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    backgroundColor: "#F3ECDD",
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: "#EAE0CC",
+    borderColor: colors.border,
     borderRadius: 16,
     padding: 15,
     marginTop: 22,
@@ -249,12 +252,12 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#E2D9C7",
+    borderColor: colors.handle,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
-  btnGhostText: { color: "#5C5446", fontSize: 15, fontWeight: "600" },
+  btnGhostText: { color: colors.text, fontSize: 15, fontWeight: "600" },
   btnPrimary: {
     flex: 1.3,
     height: 52,
@@ -265,4 +268,4 @@ const styles = StyleSheet.create({
   },
   btnPrimaryText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: "600" },
   flex: { flex: 1 },
-});
+  });

@@ -12,7 +12,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useNotificacoes } from "@/notifications/historicoNotificacoes";
-import { colors, motion, radius } from "@/theme";
+import { motion, radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 const CURVA = Easing.bezier(...motion.curvaSuave);
 
@@ -24,10 +25,11 @@ interface SinoNotificacoesProps {
 }
 
 /**
- * Sino da barra global. Com notificação não lida ganha um pontinho verde e um
+ * Sino da barra global. Com notificação não lida ganha um pontinho vermelho e um
  * balanço curto que se repete de longe em longe; sem nada por ler, fica parado.
  */
 export function SinoNotificacoes({ onPress }: SinoNotificacoesProps) {
+  const { colors, styles } = useTema(criarEstilos);
   const { naoLidas } = useNotificacoes();
   const temNaoLida = naoLidas > 0;
   const giro = useSharedValue(0);
@@ -83,24 +85,27 @@ export function SinoNotificacoes({ onPress }: SinoNotificacoesProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  botao: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surface,
-  },
-  ponto: {
-    position: "absolute",
-    top: 6,
-    right: 6,
-    width: 9,
-    height: 9,
-    borderRadius: radius.pill,
-    backgroundColor: colors.green,
-    borderWidth: 1.5,
-    borderColor: colors.surface,
-  },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    botao: {
+      width: 36,
+      height: 36,
+      borderRadius: radius.md,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surface,
+    },
+    ponto: {
+      position: "absolute",
+      top: 6,
+      right: 6,
+      width: 9,
+      height: 9,
+      borderRadius: radius.pill,
+      // Vermelho de propósito: o verde se misturava com o resto da marca e o
+      // aviso passava batido.
+      backgroundColor: colors.red,
+      borderWidth: 1.5,
+      borderColor: colors.surface,
+    },
+  });

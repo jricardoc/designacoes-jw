@@ -3,7 +3,8 @@ import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react
 import { useIrmaosDisponiveis, useVincularIrmao } from "@/api/hooks/useMinhasDesignacoes";
 import type { Usuario } from "@/api/types";
 import { Sheet, useToast } from "@/components/ui";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 const BODY_MAX = Math.round(Dimensions.get("window").height * 0.55);
 
@@ -18,6 +19,7 @@ interface Props {
  * É o vínculo que faz as designações do irmão aparecerem em "Minhas Designações".
  */
 export function VincularIrmaoSheet({ user, onClose, onVinculado }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const { data: irmaos, isLoading } = useIrmaosDisponiveis(user?.id, !!user);
   const vincular = useVincularIrmao();
@@ -91,39 +93,40 @@ export function VincularIrmaoSheet({ user, onClose, onVinculado }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 6,
-  },
-  title: { fontSize: 20, fontWeight: "600", color: colors.text },
-  closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  hint: { fontSize: 13, color: colors.textSecondary, marginBottom: 12, lineHeight: 19 },
-  linha: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 11,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    borderRadius: radius.md,
-    marginBottom: 6,
-    backgroundColor: colors.surfaceMuted,
-  },
-  linhaSelecionada: { backgroundColor: "#E9EFDC" },
-  linhaBloqueada: { opacity: 0.45 },
-  linhaRemover: { backgroundColor: "#F6E7E0" },
-  nome: { fontSize: 15, fontWeight: "500", color: colors.text },
-  ocupado: { fontSize: 11.5, color: colors.textMuted, marginTop: 1 },
-  flex: { flex: 1, minWidth: 0 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 6,
+    },
+    title: { fontSize: 20, fontWeight: "600", color: colors.text },
+    closeBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 11,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    hint: { fontSize: 13, color: colors.textSecondary, marginBottom: 12, lineHeight: 19 },
+    linha: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 11,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      borderRadius: radius.md,
+      marginBottom: 6,
+      backgroundColor: colors.surfaceMuted,
+    },
+    linhaSelecionada: { backgroundColor: colors.successBg },
+    linhaBloqueada: { opacity: 0.45 },
+    linhaRemover: { backgroundColor: colors.dangerBg },
+    nome: { fontSize: 15, fontWeight: "500", color: colors.text },
+    ocupado: { fontSize: 11.5, color: colors.textMuted, marginTop: 1 },
+    flex: { flex: 1, minWidth: 0 },
+  });

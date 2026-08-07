@@ -59,18 +59,19 @@ routes.put('/config', requireAdmin, ConfigController.updateConfig);
 routes.post('/config/reset', requireAdmin, ConfigController.resetDatabase);
 
 // ==================== QUADROS ====================
+// Leitura livre; toda escrita e admin — usuario comum ve os quadros, nao mexe.
 routes.get('/quadros', QuadroController.index);
-routes.post('/quadros', QuadroController.create);
+routes.post('/quadros', requireAdmin, QuadroController.create);
 
 // Designacoes dentro de um quadro (ANTES das rotas com :id)
-routes.put('/quadros/designacao', QuadroController.updateDesignacao);
-routes.put('/quadros/data', QuadroController.updateData);
-routes.put('/quadros/dia', QuadroController.updateDia);
-routes.delete('/quadros/dias', QuadroController.deleteDia);
+routes.put('/quadros/designacao', requireAdmin, QuadroController.updateDesignacao);
+routes.put('/quadros/data', requireAdmin, QuadroController.updateData);
+routes.put('/quadros/dia', requireAdmin, QuadroController.updateDia);
+routes.delete('/quadros/dias', requireAdmin, QuadroController.deleteDia);
 
 // Rotas com parametro :id (DEPOIS das rotas especificas)
 routes.get('/quadros/:id', QuadroController.show);
-routes.put('/quadros/:id', QuadroController.update);
+routes.put('/quadros/:id', requireAdmin, QuadroController.update);
 routes.delete('/quadros/:id', requireAdmin, QuadroController.delete);
 
 // ==================== CARRINHO DE PUBLICACOES ====================
@@ -99,6 +100,9 @@ routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
 // (AgendadorLembretes) so alcanca quem tem token gravado aqui.
 routes.post('/push/token', PushTokenController.registrar);
 routes.delete('/push/token', PushTokenController.remover);
+// A copia servidor de cada aviso enviado — e dela que a central do app se
+// reconstroi quando o push chegou com o aparelho fechado.
+routes.get('/push/historico', PushTokenController.historico);
 // Dispara o lembrete na hora, para conferir sem esperar o horario. Admin: manda push de verdade.
 routes.post('/push/testar', requireAdmin, PushTokenController.testar);
 
@@ -116,13 +120,14 @@ routes.get('/historico/estatisticas/:quadroId?', HistoricoController.estatistica
 routes.get('/estatisticas', EstatisticasController.getEstatisticasGlobais);
 
 // ==================== IRMAOS ====================
+// Leitura livre (o seletor de designacao precisa da lista); cadastro e admin.
 routes.get('/irmaos', IrmaoController.index);
 routes.get('/irmaos/:id', IrmaoController.show);
-routes.post('/irmaos', IrmaoController.create);
-routes.put('/irmaos/:id', IrmaoController.update);
+routes.post('/irmaos', requireAdmin, IrmaoController.create);
+routes.put('/irmaos/:id', requireAdmin, IrmaoController.update);
 routes.delete('/irmaos/:id', requireAdmin, IrmaoController.delete);
-routes.post('/irmaos/:id/funcao', IrmaoController.addFuncao);
-routes.delete('/irmaos/:id/funcao', IrmaoController.removeFuncao);
+routes.post('/irmaos/:id/funcao', requireAdmin, IrmaoController.addFuncao);
+routes.delete('/irmaos/:id/funcao', requireAdmin, IrmaoController.removeFuncao);
 routes.get('/irmaos/funcao/:funcao', IrmaoController.porFuncao);
 
 // ==================== INDISPONIBILIDADES ====================
@@ -130,39 +135,41 @@ routes.get('/indisponibilidades', IndisponibilidadeController.index);
 routes.get('/indisponibilidades/irmao/:irmaoId', IndisponibilidadeController.porIrmao);
 routes.get('/indisponibilidades/data/:data', IndisponibilidadeController.porData);
 routes.get('/indisponibilidades/verificar/:irmaoId/:data', IndisponibilidadeController.verificar);
-routes.post('/indisponibilidades', IndisponibilidadeController.create);
-routes.post('/indisponibilidades/batch', IndisponibilidadeController.createMany);
-routes.put('/indisponibilidades/:id', IndisponibilidadeController.update);
-routes.delete('/indisponibilidades/:id', IndisponibilidadeController.delete);
-routes.delete('/indisponibilidades/irmao/:irmaoId/data/:data', IndisponibilidadeController.deleteByIrmaoData);
-routes.delete('/indisponibilidades/irmao/:irmaoId/clear', IndisponibilidadeController.clearByIrmao);
+// Escrita e admin: indisponibilidade so e marcada no editor de irmao e na
+// importacao da programacao, ambos restritos.
+routes.post('/indisponibilidades', requireAdmin, IndisponibilidadeController.create);
+routes.post('/indisponibilidades/batch', requireAdmin, IndisponibilidadeController.createMany);
+routes.put('/indisponibilidades/:id', requireAdmin, IndisponibilidadeController.update);
+routes.delete('/indisponibilidades/:id', requireAdmin, IndisponibilidadeController.delete);
+routes.delete('/indisponibilidades/irmao/:irmaoId/data/:data', requireAdmin, IndisponibilidadeController.deleteByIrmaoData);
+routes.delete('/indisponibilidades/irmao/:irmaoId/clear', requireAdmin, IndisponibilidadeController.clearByIrmao);
 
 // ==================== REUNIOES (Import Excel/PDF) ====================
 routes.get('/reunioes', ReuniaoController.index);
-routes.post('/reunioes/import', upload.single('file'), ReuniaoController.import);
-routes.post('/reunioes/indisponibilidades', ReuniaoController.aplicarIndisponibilidades);
+routes.post('/reunioes/import', requireAdmin, upload.single('file'), ReuniaoController.import);
+routes.post('/reunioes/indisponibilidades', requireAdmin, ReuniaoController.aplicarIndisponibilidades);
 routes.delete('/reunioes/:id', requireAdmin, ReuniaoController.delete);
-routes.put('/reunioes/semanas/:id', ReuniaoController.updateSemana);
+routes.put('/reunioes/semanas/:id', requireAdmin, ReuniaoController.updateSemana);
 
 // ==================== SAÍDAS DE CAMPO ====================
 routes.get('/saidas-campo', SaidaCampoController.index);
-routes.post('/saidas-campo', SaidaCampoController.create);
-routes.put('/saidas-campo/:id', SaidaCampoController.update);
+routes.post('/saidas-campo', requireAdmin, SaidaCampoController.create);
+routes.put('/saidas-campo/:id', requireAdmin, SaidaCampoController.update);
 routes.delete('/saidas-campo/:id', requireAdmin, SaidaCampoController.delete);
 
 // ==================== ESCALA DE DIRIGENTES ====================
 routes.get('/dirigentes/quadros', DirigentesController.indexQuadros);
-routes.post('/dirigentes/quadros', DirigentesController.createQuadro);
+routes.post('/dirigentes/quadros', requireAdmin, DirigentesController.createQuadro);
 routes.get('/dirigentes/quadros/:id', DirigentesController.showQuadro);
 routes.delete('/dirigentes/quadros/:id', requireAdmin, DirigentesController.deleteQuadro);
-routes.put('/dirigentes/quadros/:id/status', DirigentesController.updateStatus);
-routes.post('/dirigentes/quadros/:id/regerar', DirigentesController.regerarQuadro);
+routes.put('/dirigentes/quadros/:id/status', requireAdmin, DirigentesController.updateStatus);
+routes.post('/dirigentes/quadros/:id/regerar', requireAdmin, DirigentesController.regerarQuadro);
 
-routes.put('/dirigentes/escala', DirigentesController.updateEscala);
-routes.delete('/dirigentes/escala/dia', DirigentesController.deleteDia);
-routes.delete('/dirigentes/escala/semana', DirigentesController.deleteSemana);
+routes.put('/dirigentes/escala', requireAdmin, DirigentesController.updateEscala);
+routes.delete('/dirigentes/escala/dia', requireAdmin, DirigentesController.deleteDia);
+routes.delete('/dirigentes/escala/semana', requireAdmin, DirigentesController.deleteSemana);
 
 routes.get('/dirigentes/disponibilidade/:irmaoId', DirigentesController.getDisponibilidade);
-routes.put('/dirigentes/disponibilidade', DirigentesController.updateDisponibilidade);
+routes.put('/dirigentes/disponibilidade', requireAdmin, DirigentesController.updateDisponibilidade);
 
 module.exports = routes;

@@ -4,6 +4,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const KEY = "notif_historico";
 
 /**
+ * Momento do último "Limpar tudo". Sem esta marca a sincronização com o servidor
+ * ressuscitaria tudo o que o irmão acabou de apagar — o servidor continua com a
+ * cópia, e limpar é uma decisão do aparelho.
+ */
+const KEY_LIMPO_ATE = "notif_limpo_ate";
+
+/**
  * Teto de registros guardados. Sem limite a lista cresceria para sempre no
  * aparelho de quem nunca limpa — e ela vive inteira na memória do AsyncStorage.
  */
@@ -16,6 +23,15 @@ export interface NotificacaoRegistrada {
   recebidaEm: string;
   lida: boolean;
   data?: Record<string, unknown>;
+}
+
+/** Uma linha de GET /push/historico — a cópia servidor de um push enviado. */
+export interface NotificacaoRemota {
+  id: number;
+  titulo: string;
+  corpo: string;
+  data?: Record<string, unknown> | null;
+  enviadaEm: string;
 }
 
 /**
@@ -71,9 +87,19 @@ async function gravar(itens: NotificacaoRegistrada[]): Promise<void> {
 }
 
 /**
+ * O id que o backend embutiu no payload (`data.notifId`) — é a ponte entre o
+ * registro local (capturado do push) e a cópia do servidor.
+ */
+function notifIdDe(data?: Record<string, unknown> | null): string | null {
+  const v = data?.notifId;
+  return typeof v === "number" || typeof v === "string" ? String(v) : null;
+}
+
+/**
  * Guarda uma notificação recebida. O `identifier` do sistema, quando existe,
  * vira o id: assim a mesma notificação entregue duas vezes (recebida e depois
- * tocada) não aparece duplicada na lista.
+ * tocada) não aparece duplicada na lista. O `notifId` do payload desduplica
+ * contra a cópia do servidor, que chega por outro caminho.
  */
 export async function registrarNotificacao(
   n: Omit<NotificacaoRegistrada, "id" | "lida">,
@@ -81,9 +107,79 @@ export async function registrarNotificacao(
 ): Promise<void> {
   const id = identifier?.trim() || `${Date.now()}-${++sequencia}`;
   return enfileirar(async () => {
+    // Mesmo guarda da sincronização remota: a varredura da bandeja não pode
+    // ressuscitar (como NÃO lida!) uma notificação que o irmão acabou de limpar.
+    try {
+      const limpoAte = await AsyncStorage.getItem(KEY_LIMPO_ATE);
+      if (limpoAte && n.recebidaEm <= limpoAte) return;
+    } catch {
+      // sem a marca, registra normalmente
+    }
     const itens = await ler();
     if (itens.some((item) => item.id === id)) return;
+    const notifId = notifIdDe(n.data);
+    if (notifId && itens.some((item) => notifIdDe(item.data) === notifId)) return;
     const atualizados = [{ ...n, id, lida: false }, ...itens].slice(0, MAX_REGISTROS);
+    await gravar(atualizados);
+    avisarOuvintes();
+  });
+}
+
+/**
+ * Chave frouxa para pushes de backend antigo, enviados sem `notifId`: mesmo
+ * título e corpo no mesmo dia é o mesmo aviso. Melhor engolir um duplicado
+ * legítimo raríssimo do que mostrar cada lembrete duas vezes.
+ */
+function chaveFrouxa(titulo: string, corpo: string, quando: string): string {
+  return `${titulo}|${corpo}|${quando.slice(0, 10)}`;
+}
+
+/**
+ * Junta a cópia do servidor ao histórico local. Itens que o aparelho não
+ * capturou entram JÁ LIDOS: o servidor não sabe se o irmão viu o push, e acender
+ * o sino para avisos antigos na primeira sincronização seria alarme falso — o
+ * não-lido continua sendo só o que o aparelho capturou de fato.
+ */
+export async function sincronizarRemotas(
+  remotas: NotificacaoRemota[],
+): Promise<void> {
+  return enfileirar(async () => {
+    let limpoAte: string | null = null;
+    try {
+      limpoAte = await AsyncStorage.getItem(KEY_LIMPO_ATE);
+    } catch {
+      // sem a marca, sincroniza tudo
+    }
+
+    const itens = await ler();
+    const idsLocais = new Set(itens.map((i) => i.id));
+    const notifIds = new Set(
+      itens.map((i) => notifIdDe(i.data)).filter((v): v is string => !!v),
+    );
+    const chaves = new Set(
+      itens.map((i) => chaveFrouxa(i.titulo, i.corpo, i.recebidaEm)),
+    );
+
+    const novas: NotificacaoRegistrada[] = [];
+    for (const r of remotas) {
+      if (limpoAte && r.enviadaEm <= limpoAte) continue; // apagado de propósito
+      const id = `srv-${r.id}`;
+      if (idsLocais.has(id) || notifIds.has(String(r.id))) continue;
+      if (chaves.has(chaveFrouxa(r.titulo, r.corpo ?? "", r.enviadaEm))) continue;
+      novas.push({
+        id,
+        titulo: r.titulo,
+        corpo: r.corpo ?? "",
+        recebidaEm: r.enviadaEm,
+        lida: true,
+        data: { ...(r.data ?? {}), notifId: r.id },
+      });
+    }
+    if (novas.length === 0) return;
+
+    const atualizados = [...novas, ...itens]
+      .sort((a, b) => (a.recebidaEm < b.recebidaEm ? 1 : -1))
+      .slice(0, MAX_REGISTROS);
     await gravar(atualizados);
     avisarOuvintes();
   });
@@ -107,6 +203,8 @@ export async function limparNotificacoes(): Promise<void> {
   return enfileirar(async () => {
     try {
       await AsyncStorage.removeItem(KEY);
+      // A marca impede a sincronização de trazer de volta o que foi apagado.
+      await AsyncStorage.setItem(KEY_LIMPO_ATE, new Date().toISOString());
     } catch {
       // ignora — histórico é local e descartável
     }

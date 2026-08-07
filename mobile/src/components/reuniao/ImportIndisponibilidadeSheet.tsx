@@ -4,7 +4,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { useAplicarIndisponibilidades } from "@/api/hooks/useReunioes";
 import type { IndisponibilidadePreview } from "@/api/types";
 import { Button, useToast } from "@/components/ui";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 interface Props {
   visible: boolean;
@@ -19,6 +20,7 @@ const chave = (irmaoId: number, data: string) => `${irmaoId}__${data}`;
  * O usuário confirma quem deve ficar indisponível e aplica em massa.
  */
 export function ImportIndisponibilidadeSheet({ visible, preview, onClose }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const aplicar = useAplicarIndisponibilidades();
   const confirmados = useMemo(() => preview?.confirmados ?? [], [preview]);
@@ -252,7 +254,8 @@ export function ImportIndisponibilidadeSheet({ visible, preview, onClose }: Prop
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
   card: {
     backgroundColor: colors.surface,
@@ -326,7 +329,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 8,
   },
-  ambNome: { fontWeight: "700", color: "#78350f", marginBottom: 8 },
+  ambNome: { fontWeight: "700", color: colors.warningStrong, marginBottom: 8 },
   footer: {
     flexDirection: "row",
     alignItems: "center",
@@ -338,4 +341,4 @@ const styles = StyleSheet.create({
   },
   footerCount: { color: colors.textSecondary, fontSize: 13, fontWeight: "600" },
   footerBtns: { flexDirection: "row", gap: 10 },
-});
+  });

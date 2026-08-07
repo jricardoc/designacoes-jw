@@ -10,6 +10,7 @@ import { apiRequest } from "@/api/client";
 import { removerPushToken } from "@/api/hooks/usePush";
 import { tokenStore } from "@/api/tokenStore";
 import type { LoginResponse, Usuario } from "@/api/types";
+import { queryClient } from "@/lib/queryClient";
 import {
   lerPushTokenAtual,
   setPushTokenAtual,
@@ -91,6 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Sair é mais importante do que descadastrar o aparelho.
     } finally {
       await tokenStore.clear();
+      // Descarta o cache do usuário que saiu: sem isto, quem logasse em seguida
+      // no mesmo aparelho herdaria dados pessoais dele (notificações remotas,
+      // minhas designações) até cada query revalidar.
+      queryClient.clear();
       setUsuarioState(null);
     }
   }, []);

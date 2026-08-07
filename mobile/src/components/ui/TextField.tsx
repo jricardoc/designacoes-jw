@@ -8,7 +8,8 @@ import {
   View,
   type TextInputProps,
 } from "react-native";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 interface TextFieldProps extends TextInputProps {
   label?: string;
@@ -23,6 +24,7 @@ export function TextField({
   style,
   ...rest
 }: TextFieldProps) {
+  const { colors, styles } = useTema(criarEstilos);
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(!!secure);
 
@@ -66,28 +68,29 @@ export function TextField({
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { gap: 6 },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
-  },
-  inputWrapperFocused: { borderColor: colors.primary },
-  input: {
-    flex: 1,
-    paddingVertical: 13,
-    fontSize: 16,
-    color: colors.text,
-  },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    wrapper: { gap: 6 },
+    label: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    inputWrapper: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      backgroundColor: colors.surface,
+      borderWidth: 2,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      paddingHorizontal: 14,
+    },
+    inputWrapperFocused: { borderColor: colors.primary },
+    input: {
+      flex: 1,
+      paddingVertical: 13,
+      fontSize: 16,
+      color: colors.text,
+    },
+  });

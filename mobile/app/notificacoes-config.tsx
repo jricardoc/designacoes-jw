@@ -17,7 +17,8 @@ import {
 import { GradientHeader, Loading, TextField, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifPref } from "@/notifications/notifPref";
-import { colors, radius, shadow, spacing } from "@/theme";
+import { radius, shadow, spacing, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 /**
  * O que o irmão recebe e quando.
@@ -36,6 +37,7 @@ function menosHoras(hora: string, horas: number): string {
 }
 
 export default function NotificacoesConfigScreen() {
+  const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const { usuario } = useAuth();
   const notif = useNotifPref();
@@ -212,7 +214,7 @@ export default function NotificacoesConfigScreen() {
                   style={[styles.caixa, marcada && styles.caixaMarcada]}
                 >
                   {marcada ? (
-                    <Ionicons name="checkmark" size={15} color="#fff" />
+                    <Ionicons name="checkmark" size={15} color={colors.textOnPrimary} />
                   ) : null}
                 </View>
                 <View style={styles.textos}>
@@ -263,7 +265,7 @@ export default function NotificacoesConfigScreen() {
               onPress={salvarHorarios}
             >
               {atualizarConfig.isPending ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.textOnPrimary} />
               ) : (
                 <Text style={styles.botaoSalvarTexto}>Salvar horários</Text>
               )}
@@ -289,84 +291,85 @@ export default function NotificacoesConfigScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 18, paddingBottom: 44, gap: spacing.md },
-  secao: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.textSecondary,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginTop: spacing.sm,
-  },
-  secaoAjuda: {
-    fontSize: 13,
-    color: colors.textMuted,
-    marginTop: -spacing.sm + 2,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 18,
-    padding: spacing.lg,
-    ...shadow.card,
-  },
-  linhaSwitch: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  linhaOpcao: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: spacing.md,
-  },
-  linhaInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: spacing.sm,
-  },
-  divisoria: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  textos: { flex: 1, gap: 2 },
-  titulo: { fontSize: 15, fontWeight: "600", color: colors.text },
-  descricao: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
-  valor: { fontSize: 15, fontWeight: "700", color: colors.text },
-  caixa: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: colors.borderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  caixaMarcada: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  aviso: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.sm,
-    backgroundColor: colors.warningBg,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-  },
-  avisoTexto: { flex: 1, fontSize: 13, color: colors.orangeDark, lineHeight: 18 },
-  botaoSalvar: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
-    paddingVertical: 13,
-    alignItems: "center",
-  },
-  botaoSalvarTexto: { color: "#fff", fontWeight: "700", fontSize: 15 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.background },
+    scroll: { padding: 18, paddingBottom: 44, gap: spacing.md },
+    secao: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.textSecondary,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      marginTop: spacing.sm,
+    },
+    secaoAjuda: {
+      fontSize: 13,
+      color: colors.textMuted,
+      marginTop: -spacing.sm + 2,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 18,
+      padding: spacing.lg,
+      ...shadow.card,
+    },
+    linhaSwitch: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    linhaOpcao: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      paddingVertical: spacing.md,
+    },
+    linhaInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: spacing.sm,
+    },
+    divisoria: {
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    textos: { flex: 1, gap: 2 },
+    titulo: { fontSize: 15, fontWeight: "600", color: colors.text },
+    descricao: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+    valor: { fontSize: 15, fontWeight: "700", color: colors.text },
+    caixa: {
+      width: 24,
+      height: 24,
+      borderRadius: 7,
+      borderWidth: 2,
+      borderColor: colors.borderStrong,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    caixaMarcada: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    aviso: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.sm,
+      backgroundColor: colors.warningBg,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+    },
+    avisoTexto: { flex: 1, fontSize: 13, color: colors.orangeDark, lineHeight: 18 },
+    botaoSalvar: {
+      marginTop: spacing.lg,
+      backgroundColor: colors.primary,
+      borderRadius: radius.lg,
+      paddingVertical: 13,
+      alignItems: "center",
+    },
+    botaoSalvarTexto: { color: colors.textOnPrimary, fontWeight: "700", fontSize: 15 },
+  });

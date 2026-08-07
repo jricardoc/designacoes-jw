@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { Button, TextField } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
-import { colors, radius, shadow } from "@/theme";
+import { radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 export default function LoginScreen() {
+  const { colors, styles } = useTema(criarEstilos);
   const { login } = useAuth();
   const router = useRouter();
   const [nickname, setNickname] = useState("");
@@ -48,7 +50,7 @@ export default function LoginScreen() {
         >
           <View style={[styles.card, shadow.raised]}>
             <View style={styles.logoBox}>
-              <Ionicons name="lock-closed" size={34} color="#fff" />
+              <Ionicons name="lock-closed" size={34} color={colors.textOnPrimary} />
             </View>
             <Text style={styles.title}>Quadro de Designações</Text>
             <Text style={styles.subtitle}>Acesse sua conta para continuar</Text>
@@ -97,7 +99,8 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   flex: { flex: 1 },
   scroll: {
     flexGrow: 1,
@@ -151,4 +154,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 26,
   },
-});
+  });

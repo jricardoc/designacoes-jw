@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Sheet } from "@/components/ui";
-import { colors } from "@/theme";
+import type { Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 function initials(name: string) {
   const p = name.trim().split(/\s+/);
@@ -27,6 +28,7 @@ const LIST_MAX = Math.round(Dimensions.get("window").height * 0.5);
 
 /** Picker do dirigente do turno (ordenado por carga), fiel ao design. */
 export function DirigentePickerSheet({ visible, title, sub, people, current, onSelect, onClose }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   return (
     <Sheet visible={visible} onClose={onClose} maxHeightPct={0.8} flush>
       <View style={styles.header}>
@@ -103,74 +105,75 @@ export function DirigentePickerSheet({ visible, title, sub, people, current, onS
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingHorizontal: 22,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1EAD9",
-  },
-  title: { fontSize: 22, fontWeight: "600", color: colors.text },
-  sub: { fontSize: 12.5, color: colors.textMuted, marginTop: 2 },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  hintRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 22, paddingTop: 10, paddingBottom: 2 },
-  hint: { fontSize: 11.5, color: "#A99E8B" },
-  list: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 13,
-  },
-  rowCurrent: { backgroundColor: colors.infoBg },
-  pressed: { backgroundColor: "#F3ECDD" },
-  clearIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    backgroundColor: "#F1EAD9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  clearText: { flex: 1, fontSize: 15, fontWeight: "500", color: colors.textSecondary },
-  avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 999,
-    backgroundColor: colors.sand,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { fontSize: 13, fontWeight: "700", color: colors.brown },
-  name: { flex: 1, fontSize: 15, fontWeight: "500", color: colors.text },
-  loadBadge: {
-    backgroundColor: colors.infoBg,
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-  },
-  loadText: { fontSize: 11.5, fontWeight: "700", color: colors.primaryDark },
-  empty: {
-    textAlign: "center",
-    color: "#B0A48E",
-    fontSize: 13.5,
-    paddingVertical: 22,
-    paddingHorizontal: 16,
-    lineHeight: 20,
-  },
-  flex: { flex: 1, minWidth: 0 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingHorizontal: 22,
+      paddingBottom: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: "#F1EAD9",
+    },
+    title: { fontSize: 22, fontWeight: "600", color: colors.text },
+    sub: { fontSize: 12.5, color: colors.textMuted, marginTop: 2 },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 11,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    hintRow: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 22, paddingTop: 10, paddingBottom: 2 },
+    hint: { fontSize: 11.5, color: "#A99E8B" },
+    list: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 8 },
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 13,
+    },
+    rowCurrent: { backgroundColor: colors.infoBg },
+    pressed: { backgroundColor: colors.surfaceMuted },
+    clearIcon: {
+      width: 38,
+      height: 38,
+      borderRadius: 999,
+      backgroundColor: "#F1EAD9",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    clearText: { flex: 1, fontSize: 15, fontWeight: "500", color: colors.textSecondary },
+    avatar: {
+      width: 38,
+      height: 38,
+      borderRadius: 999,
+      backgroundColor: colors.sand,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarText: { fontSize: 13, fontWeight: "700", color: colors.brown },
+    name: { flex: 1, fontSize: 15, fontWeight: "500", color: colors.text },
+    loadBadge: {
+      backgroundColor: colors.infoBg,
+      borderRadius: 999,
+      paddingHorizontal: 9,
+      paddingVertical: 3,
+    },
+    loadText: { fontSize: 11.5, fontWeight: "700", color: colors.primaryDark },
+    empty: {
+      textAlign: "center",
+      color: "#B0A48E",
+      fontSize: 13.5,
+      paddingVertical: 22,
+      paddingHorizontal: 16,
+      lineHeight: 20,
+    },
+    flex: { flex: 1, minWidth: 0 },
+  });

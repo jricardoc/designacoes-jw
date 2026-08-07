@@ -18,11 +18,13 @@ import {
 import { useSaidasCampo } from "@/api/hooks/useDirigentes";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
 import type { FuncaoId, SaidaCampo } from "@/api/types";
-import { GradientHeader, Loading, useToast } from "@/components/ui";
+import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { SaidaCampoModal } from "@/components/config/SaidaCampoModal";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
+import { useAuth } from "@/context/AuthContext";
 import { useNotifPref } from "@/notifications/notifPref";
-import { colors, radius, shadow } from "@/theme";
+import { radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { FUNCOES, funcaoColor, funcaoLabel } from "@/utils/funcoes";
 
 type Secao = "irmaos" | "sistema";
@@ -47,6 +49,8 @@ function splitLocal(local: string, turno: number) {
 }
 
 export default function ConfigScreen() {
+  const { colors, styles, esquema, daltonico } = useTema(criarEstilos);
+  const { usuario } = useAuth();
   const { data: irmaos, isLoading } = useIrmaos();
   const { data: config } = useConfig();
   const atualizarConfig = useAtualizarConfig();
@@ -76,6 +80,24 @@ export default function ConfigScreen() {
       }),
     [irmaos, busca, filtro],
   );
+
+  // O menu já esconde a entrada, mas a rota continua alcançável (deep link,
+  // rebaixamento com o app aberto). O backend também barra as escritas.
+  if (!usuario?.isAdmin) {
+    return (
+      <View style={styles.screen}>
+        <GradientHeader
+          title="Configurações"
+          description="Irmãos, funções e sistema"
+        />
+        <EmptyState
+          icon="lock-closed-outline"
+          title="Acesso restrito"
+          message="Somente administradores podem mexer no cadastro da congregação."
+        />
+      </View>
+    );
+  }
 
   const salvarCong = () => {
     const v = congName.trim();
@@ -291,7 +313,9 @@ export default function ConfigScreen() {
             </View>
             <View style={styles.prefRow}>
               <Text style={styles.prefLabel}>Tema</Text>
-              <Text style={styles.prefValue}>Terroso claro</Text>
+              <Text style={styles.prefValue}>
+                {`Terroso ${esquema}${daltonico ? " · daltônico" : ""}`}
+              </Text>
             </View>
           </View>
 
@@ -310,13 +334,14 @@ export default function ConfigScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   segmented: {
     flexDirection: "row",
     marginHorizontal: 18,
     marginTop: 2,
-    backgroundColor: "#EBE1CF",
+    backgroundColor: colors.sand,
     borderRadius: radius.md,
     padding: 5,
     gap: 5,
@@ -473,4 +498,4 @@ const styles = StyleSheet.create({
   prefValue: { fontSize: 13, color: colors.textMuted },
   version: { textAlign: "center", fontSize: 12, color: "#B7AC97", marginTop: 6 },
   flex: { flex: 1 },
-});
+  });

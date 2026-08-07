@@ -7,7 +7,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { Button } from "./Button";
 
 export interface ConfirmConfig {
@@ -26,11 +27,11 @@ interface ConfirmDialogProps {
   onClose: () => void;
 }
 
-const TYPE_COLOR = {
+const TYPE_COLOR = (colors: Cores) => ({
   danger: colors.redDark,
   warning: colors.amber,
   info: colors.primary,
-};
+});
 
 const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   danger: "warning",
@@ -39,6 +40,7 @@ const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export function ConfirmDialog({ config, onClose }: ConfirmDialogProps) {
+  const { colors, styles } = useTema(criarEstilos);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -51,7 +53,7 @@ export function ConfirmDialog({ config, onClose }: ConfirmDialogProps) {
 
   if (!config) return null;
   const type = config.type ?? "info";
-  const accent = TYPE_COLOR[type];
+  const accent = TYPE_COLOR(colors)[type];
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -106,59 +108,60 @@ export function ConfirmDialog({ config, onClose }: ConfirmDialogProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 24,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    padding: 24,
-    width: "100%",
-    maxWidth: 420,
-    alignItems: "center",
-    gap: 10,
-  },
-  iconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: colors.text,
-    textAlign: "center",
-  },
-  message: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  input: {
-    alignSelf: "stretch",
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: 12,
-    minHeight: 70,
-    textAlignVertical: "top",
-    color: colors.text,
-    marginTop: 4,
-  },
-  actions: {
-    flexDirection: "row",
-    gap: 10,
-    alignSelf: "stretch",
-    marginTop: 12,
-  },
-  flex: { flex: 1 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: colors.backdrop,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.xl,
+      padding: 24,
+      width: "100%",
+      maxWidth: 420,
+      alignItems: "center",
+      gap: 10,
+    },
+    iconCircle: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 4,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: "800",
+      color: colors.text,
+      textAlign: "center",
+    },
+    message: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: "center",
+      lineHeight: 20,
+    },
+    input: {
+      alignSelf: "stretch",
+      borderWidth: 2,
+      borderColor: colors.border,
+      borderRadius: radius.md,
+      padding: 12,
+      minHeight: 70,
+      textAlignVertical: "top",
+      color: colors.text,
+      marginTop: 4,
+    },
+    actions: {
+      flexDirection: "row",
+      gap: 10,
+      alignSelf: "stretch",
+      marginTop: 12,
+    },
+    flex: { flex: 1 },
+  });

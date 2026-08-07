@@ -9,7 +9,8 @@ import {
 import type { CarrinhoPonto } from "@/api/types";
 import { ConfirmDialog, Sheet, useConfirm, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 /** Cores das planilhas de origem, mais algumas para pontos novos. */
 const CORES = [
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function PontoSheet({ visible, ponto, onClose }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const confirm = useConfirm();
   const { usuario } = useAuth();
@@ -169,93 +171,94 @@ export function PontoSheet({ visible, ponto, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 18,
-  },
-  title: { fontSize: 23, fontWeight: "600", color: colors.text },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-  },
-  input: {
-    marginTop: 9,
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.md,
-    paddingHorizontal: 15,
-    fontSize: 15,
-    color: colors.text,
-  },
-  coresRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 11 },
-  corWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    borderColor: "transparent",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  corWrapActive: { borderColor: colors.text },
-  corBolha: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  ativoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: colors.surfaceMuted,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.md,
-    padding: 15,
-    marginTop: 20,
-  },
-  ativoTitle: { fontSize: 15, fontWeight: "600", color: colors.text },
-  ativoDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  footer: { flexDirection: "row", gap: 11, marginTop: 24 },
-  deleteBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#E7C9BC",
-    backgroundColor: colors.dangerBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveBtn: {
-    flex: 1,
-    height: 52,
-    borderRadius: 15,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveBtnDisabled: { opacity: 0.5 },
-  saveText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: "600" },
-  flex: { flex: 1 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 18,
+    },
+    title: { fontSize: 23, fontWeight: "600", color: colors.text },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 11,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    label: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+    },
+    input: {
+      marginTop: 9,
+      height: 48,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      paddingHorizontal: 15,
+      fontSize: 15,
+      color: colors.text,
+    },
+    coresRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 11 },
+    corWrap: {
+      width: 46,
+      height: 46,
+      borderRadius: radius.pill,
+      borderWidth: 2,
+      borderColor: "transparent",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    corWrapActive: { borderColor: colors.text },
+    corBolha: {
+      width: 34,
+      height: 34,
+      borderRadius: radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    ativoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      borderRadius: radius.md,
+      padding: 15,
+      marginTop: 20,
+    },
+    ativoTitle: { fontSize: 15, fontWeight: "600", color: colors.text },
+    ativoDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    footer: { flexDirection: "row", gap: 11, marginTop: 24 },
+    deleteBtn: {
+      width: 52,
+      height: 52,
+      borderRadius: 15,
+      borderWidth: 1,
+      borderColor: "#E7C9BC",
+      backgroundColor: colors.dangerBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    saveBtn: {
+      flex: 1,
+      height: 52,
+      borderRadius: 15,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    saveBtnDisabled: { opacity: 0.5 },
+    saveText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: "600" },
+    flex: { flex: 1 },
+  });

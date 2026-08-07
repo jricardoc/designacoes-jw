@@ -7,7 +7,8 @@ import Animated, {
   SlideInDown,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, motion } from "@/theme";
+import { motion, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -28,6 +29,7 @@ interface SheetProps {
  * cantos arredondados no topo e a alça (handle). Reaproveitada por todos os modais.
  */
 export function Sheet({ visible, onClose, children, maxHeightPct = 0.9, flush }: SheetProps) {
+  const { styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
 
   return (
@@ -66,23 +68,24 @@ export function Sheet({ visible, onClose, children, maxHeightPct = 0.9, flush }:
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, justifyContent: "flex-end" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(28,27,20,0.5)",
-  },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingTop: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -18 },
-    shadowOpacity: 0.2,
-    shadowRadius: 44,
-    elevation: 24,
-  },
-  handleWrap: { alignItems: "center", paddingVertical: 4, paddingBottom: 12 },
-  handle: { width: 42, height: 5, borderRadius: 999, backgroundColor: "#E2D9C7" },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    root: { flex: 1, justifyContent: "flex-end" },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.backdrop,
+    },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 28,
+      borderTopRightRadius: 28,
+      paddingTop: 10,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: -18 },
+      shadowOpacity: 0.2,
+      shadowRadius: 44,
+      elevation: 24,
+    },
+    handleWrap: { alignItems: "center", paddingVertical: 4, paddingBottom: 12 },
+    handle: { width: 42, height: 5, borderRadius: 999, backgroundColor: colors.handle },
+  });

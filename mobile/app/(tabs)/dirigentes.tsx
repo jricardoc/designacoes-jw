@@ -11,9 +11,14 @@ import { useDirigentesQuadros } from "@/api/hooks/useDirigentes";
 import { Button, EmptyState, GradientHeader, Loading } from "@/components/ui";
 import { MonthCard } from "@/components/quadros/MonthCard";
 import { NovaEscalaModal } from "@/components/dirigentes/NovaEscalaModal";
-import { colors } from "@/theme";
+import { useAuth } from "@/context/AuthContext";
+import { type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 export default function DirigentesScreen() {
+  const { styles } = useTema(criarEstilos);
+  const { usuario } = useAuth();
+  const isAdmin = !!usuario?.isAdmin;
   const { data: quadros, isLoading, refetch, isRefetching } = useDirigentesQuadros();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -41,7 +46,9 @@ export default function DirigentesScreen() {
                 {quadros?.length ?? 0} escalas criadas
               </Text>
             </View>
-            <Button label="Nova" icon="add" onPress={() => setModalOpen(true)} />
+            {isAdmin ? (
+              <Button label="Nova" icon="add" onPress={() => setModalOpen(true)} />
+            ) : null}
           </View>
 
           {quadros && quadros.length > 0 ? (
@@ -66,34 +73,43 @@ export default function DirigentesScreen() {
             <EmptyState
               icon="compass-outline"
               title="Nenhuma escala criada"
-              message='Toque em "Nova" para criar a primeira'
+              message={
+                isAdmin
+                  ? 'Toque em "Nova" para criar a primeira'
+                  : "Quando um administrador criar uma escala, ela aparece aqui."
+              }
             >
-              <Button label="Criar Primeira Escala" onPress={() => setModalOpen(true)} />
+              {isAdmin ? (
+                <Button label="Criar Primeira Escala" onPress={() => setModalOpen(true)} />
+              ) : null}
             </EmptyState>
           )}
         </ScrollView>
       )}
 
-      <NovaEscalaModal
-        visible={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={(q) => router.push(`/escala/${q.id}`)}
-        existentes={quadros ?? []}
-      />
+      {isAdmin ? (
+        <NovaEscalaModal
+          visible={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onCreated={(q) => router.push(`/escala/${q.id}`)}
+          existentes={quadros ?? []}
+        />
+      ) : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16, paddingBottom: 40 },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 16,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
-  sectionSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  list: { gap: 12 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    scroll: { padding: 16, paddingBottom: 40 },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 16,
+    },
+    sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
+    sectionSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    list: { gap: 12 },
+  });

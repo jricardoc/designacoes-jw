@@ -7,14 +7,47 @@ import type { Compromisso, TipoCompromisso } from "@/api/types";
 import { GradientHeader, Loading } from "@/components/ui";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
-import { colors, MESES, radius, shadow } from "@/theme";
+import { MESES, radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { funcaoColor, funcaoLabel } from "@/utils/funcoes";
 
-const TIPOS: Record<TipoCompromisso, { label: string; curto: string; icon: keyof typeof Ionicons.glyphMap; color: string; bg: string }> = {
-  designacao: { label: "Quadro de designações", curto: "Quadro", icon: "document-text", color: "#6E7B57", bg: "#E9EFDC" },
-  dirigente: { label: "Saída de campo", curto: "Saída de campo", icon: "compass", color: "#9A5A38", bg: "#F1E1D2" },
-  reuniao: { label: "Reunião", curto: "Reunião", icon: "people", color: "#2F6F7E", bg: "#E4EFF2" },
-};
+interface VisualTipo {
+  label: string;
+  curto: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  bg: string;
+}
+
+/**
+ * As cores de categoria vêm do tema, não de hexes fixos: eram justamente elas
+ * que ignoravam o modo daltônico. Oliva (quadro) × marrom (saída de campo) é o
+ * par que colapsa em protanopia/deuteranopia — no daltônico viram azul × âmbar,
+ * e o teal da reunião vira azul-esverdeado.
+ */
+const tiposDe = (colors: Cores): Record<TipoCompromisso, VisualTipo> => ({
+  designacao: {
+    label: "Quadro de designações",
+    curto: "Quadro",
+    icon: "document-text",
+    color: colors.oliveSoft,
+    bg: colors.infoBg,
+  },
+  dirigente: {
+    label: "Saída de campo",
+    curto: "Saída de campo",
+    icon: "compass",
+    color: colors.amber,
+    bg: colors.warningBg,
+  },
+  reuniao: {
+    label: "Reunião",
+    curto: "Reunião",
+    icon: "people",
+    color: colors.greenDark,
+    bg: colors.successBg,
+  },
+});
 
 const ORDEM_TIPOS: TipoCompromisso[] = ["designacao", "dirigente", "reuniao"];
 
@@ -51,6 +84,15 @@ function primeiroNome(nome: string | null | undefined): string {
 }
 
 export default function InicioScreen() {
+  const { colors, styles, statusConfig } = useTema(criarEstilos);
+  const TIPOS = tiposDe(colors);
+  // O número do painel fica direto sobre o cartão (colors.surface), não sobre o
+  // chip claro — por isso usa o tom forte da categoria, não o `color` dela.
+  const corNumero: Record<TipoCompromisso, string> = {
+    designacao: colors.primaryDark,
+    dirigente: colors.amber,
+    reuniao: colors.greenDark,
+  };
   const { usuario } = useAuth();
   const [filtro, setFiltro] = useState<"proximas" | "todas">("proximas");
   // Uma chamada só: "todas" traz o histórico inteiro e as próximas saem daqui por
@@ -165,7 +207,7 @@ export default function InicioScreen() {
                           <Ionicons name={tipo.icon} size={15} color={tipo.color} />
                         </View>
                         <Text style={styles.painelTexto}>{tipo.label}</Text>
-                        <Text style={[styles.painelNumero, { color: tipo.color }]}>
+                        <Text style={[styles.painelNumero, { color: corNumero[id] }]}>
                           {resumo.porTipo[id]}
                         </Text>
                       </View>
@@ -289,8 +331,8 @@ export default function InicioScreen() {
                                 </View>
                               ) : null}
                               {rascunho ? (
-                                <View style={[styles.tag, { backgroundColor: "#F1E1D2" }]}>
-                                  <Text style={[styles.tagTexto, { color: "#9A5A38" }]}>Rascunho</Text>
+                                <View style={[styles.tag, { backgroundColor: statusConfig.rascunho.bg }]}>
+                                  <Text style={[styles.tagTexto, { color: statusConfig.rascunho.color }]}>Rascunho</Text>
                                 </View>
                               ) : null}
                             </View>
@@ -317,142 +359,143 @@ export default function InicioScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16, paddingBottom: 32 },
-  flex: { flex: 1, minWidth: 0 },
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.background },
+    scroll: { padding: 16, paddingBottom: 32 },
+    flex: { flex: 1, minWidth: 0 },
 
-  secaoLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-    marginBottom: 10,
-    marginTop: 6,
-  },
+    secaoLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+      marginBottom: 10,
+      marginTop: 6,
+    },
 
-  destaques: { flexDirection: "row", gap: 10, marginBottom: 10 },
-  destaque: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 14,
-    gap: 2,
-    ...shadow.card,
-  },
-  destaqueIcone: {
-    width: 30,
-    height: 30,
-    borderRadius: 9,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
-  },
-  destaqueNumero: { fontSize: 26, fontWeight: "700", color: colors.text, letterSpacing: -0.6 },
-  destaqueLabel: { fontSize: 12, color: colors.textSecondary, lineHeight: 16 },
+    destaques: { flexDirection: "row", gap: 10, marginBottom: 10 },
+    destaque: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      gap: 2,
+      ...shadow.card,
+    },
+    destaqueIcone: {
+      width: 30,
+      height: 30,
+      borderRadius: 9,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 8,
+    },
+    destaqueNumero: { fontSize: 26, fontWeight: "700", color: colors.text, letterSpacing: -0.6 },
+    destaqueLabel: { fontSize: 12, color: colors.textSecondary, lineHeight: 16 },
 
-  painel: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    marginBottom: 10,
-  },
-  painelLinha: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 11 },
-  painelLinhaBorda: { borderTopWidth: 1, borderTopColor: colors.border },
-  painelTexto: { flex: 1, fontSize: 13.5, color: colors.textSecondary },
-  painelNumero: { fontSize: 16, fontWeight: "700" },
-  painelUltima: { flexDirection: "row", alignItems: "flex-start", gap: 11, paddingVertical: 13 },
-  ultimaLabel: {
-    fontSize: 10.5,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-  },
-  ultimaValor: { fontSize: 14.5, fontWeight: "600", color: colors.text, marginTop: 3 },
+    painel: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 14,
+      paddingVertical: 4,
+      marginBottom: 10,
+    },
+    painelLinha: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 11 },
+    painelLinhaBorda: { borderTopWidth: 1, borderTopColor: colors.border },
+    painelTexto: { flex: 1, fontSize: 13.5, color: colors.textSecondary },
+    painelNumero: { fontSize: 16, fontWeight: "700" },
+    painelUltima: { flexDirection: "row", alignItems: "flex-start", gap: 11, paddingVertical: 13 },
+    ultimaLabel: {
+      fontSize: 10.5,
+      fontWeight: "700",
+      letterSpacing: 0.8,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+    },
+    ultimaValor: { fontSize: 14.5, fontWeight: "600", color: colors.text, marginTop: 3 },
 
-  irmaoLinha: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 11 },
-  irmaoNome: { flex: 1, fontSize: 14.5, fontWeight: "600", color: colors.text },
-  chips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    paddingTop: 11,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  chipPonto: { width: 7, height: 7, borderRadius: 999 },
-  chipTexto: { fontSize: 12, fontWeight: "600", color: colors.textSecondary },
+    irmaoLinha: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 11 },
+    irmaoNome: { flex: 1, fontSize: 14.5, fontWeight: "600", color: colors.text },
+    chips: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 6,
+      paddingTop: 11,
+      paddingBottom: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      backgroundColor: colors.surfaceMuted,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+    },
+    chipPonto: { width: 7, height: 7, borderRadius: 999 },
+    chipTexto: { fontSize: 12, fontWeight: "600", color: colors.textSecondary },
 
-  filtros: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
-  filtro: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
-  },
-  filtroAtivo: { backgroundColor: colors.primary, borderColor: colors.primary },
-  filtroTexto: { fontSize: 13, fontWeight: "600", color: colors.textSecondary },
-  filtroTextoAtivo: { color: colors.textOnPrimary },
+    filtros: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+    filtro: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 999,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surface,
+    },
+    filtroAtivo: { backgroundColor: colors.primary, borderColor: colors.primary },
+    filtroTexto: { fontSize: 13, fontWeight: "600", color: colors.textSecondary },
+    filtroTextoAtivo: { color: colors.textOnPrimary },
 
-  mesLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-    marginBottom: 8,
-  },
+    mesLabel: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+      marginBottom: 8,
+    },
 
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 11,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: "#EFE7D8",
-    padding: 12,
-    marginBottom: 8,
-  },
-  dataBox: {
-    width: 42,
-    alignItems: "center",
-    borderRightWidth: 1,
-    borderRightColor: "#ECE3D3",
-    paddingRight: 10,
-  },
-  dataDia: { fontSize: 17, fontWeight: "700", color: colors.text },
-  dataSemana: { fontSize: 9.5, color: colors.textMuted, textTransform: "uppercase" },
-  iconeBox: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
+    card: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 11,
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: "#EFE7D8",
+      padding: 12,
+      marginBottom: 8,
+    },
+    dataBox: {
+      width: 42,
+      alignItems: "center",
+      borderRightWidth: 1,
+      borderRightColor: "#ECE3D3",
+      paddingRight: 10,
+    },
+    dataDia: { fontSize: 17, fontWeight: "700", color: colors.text },
+    dataSemana: { fontSize: 9.5, color: colors.textMuted, textTransform: "uppercase" },
+    iconeBox: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
 
-  tituloLinha: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
-  titulo: { fontSize: 14.5, fontWeight: "600", color: colors.text, flexShrink: 1 },
-  tag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
-  tagTexto: { fontSize: 10, fontWeight: "700" },
-  detalhe: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
-  aproximada: { fontSize: 11, color: "#9A5A38", marginTop: 3 },
+    tituloLinha: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
+    titulo: { fontSize: 14.5, fontWeight: "600", color: colors.text, flexShrink: 1 },
+    tag: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
+    tagTexto: { fontSize: 10, fontWeight: "700" },
+    detalhe: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+    aproximada: { fontSize: 11, color: colors.amber, marginTop: 3 },
 
-  aviso: { alignItems: "center", paddingVertical: 46, paddingHorizontal: 24, gap: 8 },
-  avisoTitulo: { fontSize: 16, fontWeight: "600", color: colors.text, marginTop: 4 },
-  avisoTexto: { fontSize: 13.5, color: colors.textSecondary, textAlign: "center", lineHeight: 20 },
-});
+    aviso: { alignItems: "center", paddingVertical: 46, paddingHorizontal: 24, gap: 8 },
+    avisoTitulo: { fontSize: 16, fontWeight: "600", color: colors.text, marginTop: 4 },
+    avisoTexto: { fontSize: 13.5, color: colors.textSecondary, textAlign: "center", lineHeight: 20 },
+  });

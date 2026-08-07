@@ -24,9 +24,11 @@ import {
   useIrmaos,
 } from "@/api/hooks/useIrmaos";
 import type { FuncaoId, NivelAudioVideo, PrivilegioId } from "@/api/types";
-import { ConfirmDialog, useConfirm, useToast } from "@/components/ui";
+import { ConfirmDialog, EmptyState, GradientHeader, useConfirm, useToast } from "@/components/ui";
 import { CalendarioIndisponibilidade } from "@/components/config/CalendarioIndisponibilidade";
-import { colors } from "@/theme";
+import { useAuth } from "@/context/AuthContext";
+import { type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { FUNCOES, PRIVILEGIOS, privilegioLabel } from "@/utils/funcoes";
 
 const WD_LABEL: Record<string, string> = {
@@ -45,6 +47,8 @@ function initials(name: string) {
 }
 
 export default function IrmaoScreen() {
+  const { colors, styles } = useTema(criarEstilos);
+  const { usuario } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const irmaoId = id ? Number(id) : undefined;
   const insets = useSafeAreaInsets();
@@ -109,6 +113,21 @@ export default function IrmaoScreen() {
   ]
     .filter(Boolean)
     .join(" · ");
+
+  // Editor do cadastro: a única porta é a tela de Configurações (já restrita),
+  // mas a rota aceita deep link — barra aqui também. O backend nega as escritas.
+  if (!usuario?.isAdmin) {
+    return (
+      <View style={styles.screen}>
+        <GradientHeader title="Cadastro de irmão" showBack />
+        <EmptyState
+          icon="lock-closed-outline"
+          title="Acesso restrito"
+          message="Somente administradores podem editar o cadastro dos irmãos."
+        />
+      </View>
+    );
+  }
 
   const handleSave = async () => {
     if (!nome.trim()) {
@@ -329,7 +348,8 @@ export default function IrmaoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   headerWrap: { paddingHorizontal: 20, paddingBottom: 12 },
   back: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 4 },
@@ -389,7 +409,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 6,
     marginTop: 10,
-    backgroundColor: "#EBE1CF",
+    backgroundColor: colors.sand,
     borderRadius: 13,
     padding: 5,
   },
@@ -489,4 +509,4 @@ const styles = StyleSheet.create({
   },
   saveText: { color: colors.textOnPrimary, fontSize: 16, fontWeight: "600" },
   flex: { flex: 1, minWidth: 0 },
-});
+  });

@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Notifications from "expo-notifications";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
@@ -14,7 +15,8 @@ import {
   useNotificacoes,
   type NotificacaoRegistrada,
 } from "@/notifications/historicoNotificacoes";
-import { colors, radius, shadow, spacing } from "@/theme";
+import { radius, shadow, spacing, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 const MINUTO = 60_000;
 const HORA = 60 * MINUTO;
@@ -36,6 +38,7 @@ function quando(iso: string): string {
 }
 
 export default function NotificacoesScreen() {
+  const { colors, styles } = useTema(criarEstilos);
   const { itens, carregando, limpar } = useNotificacoes();
   const { config, confirm, close } = useConfirm();
   // Quais estavam por ler quando chegaram à tela. A leitura é marcada na hora,
@@ -63,6 +66,9 @@ export default function NotificacoesScreen() {
       confirmText: "Limpar tudo",
       onConfirm: async () => {
         await limpar();
+        // O que ainda estiver na bandeja do sistema sai junto: senão a varredura
+        // do retorno ao app tentaria trazer de volta o que acabou de ser limpo.
+        Notifications.dismissAllNotificationsAsync().catch(() => {});
         setNovas(new Set());
         close();
       },
@@ -96,7 +102,7 @@ export default function NotificacoesScreen() {
     <View style={styles.screen}>
       <GradientHeader
         title="Notificações"
-        description="O que chegou neste aparelho"
+        description="Os avisos enviados para você"
         showBack
         right={
           // A engrenagem fica sempre; "Limpar tudo" só quando há o que limpar. Sem histórico
@@ -140,53 +146,56 @@ export default function NotificacoesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.background },
-  lista: { padding: 18, paddingBottom: 44, gap: 11 },
-  acoes: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
-  limpar: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radius.pill,
-    backgroundColor: colors.dangerBg,
-  },
-  configurar: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: radius.pill,
-    backgroundColor: colors.infoBg,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 18,
-    padding: spacing.lg,
-    ...shadow.card,
-  },
-  cardNaoLida: { borderColor: colors.green },
-  linhaTopo: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.sm,
-  },
-  titulo: { flex: 1, fontSize: 15.5, fontWeight: "700", color: colors.text },
-  ponto: {
-    width: 9,
-    height: 9,
-    borderRadius: radius.pill,
-    backgroundColor: colors.green,
-    marginTop: 5,
-  },
-  corpo: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: colors.textSecondary,
-    marginTop: spacing.xs + 2,
-  },
-  quando: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    screen: { flex: 1, backgroundColor: colors.background },
+    lista: { padding: 18, paddingBottom: 44, gap: 11 },
+    acoes: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+    limpar: {
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: radius.pill,
+      backgroundColor: colors.dangerBg,
+    },
+    configurar: {
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: radius.pill,
+      backgroundColor: colors.infoBg,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 18,
+      padding: spacing.lg,
+      ...shadow.card,
+    },
+    // Vermelho, não verde: o destaque de "tem coisa nova" precisa gritar
+    // diferente do resto da marca (e o vermelho vira laranja no modo daltônico).
+    cardNaoLida: { borderColor: colors.red },
+    linhaTopo: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: spacing.sm,
+    },
+    titulo: { flex: 1, fontSize: 15.5, fontWeight: "700", color: colors.text },
+    ponto: {
+      width: 9,
+      height: 9,
+      borderRadius: radius.pill,
+      backgroundColor: colors.red,
+      marginTop: 5,
+    },
+    corpo: {
+      fontSize: 14,
+      lineHeight: 20,
+      color: colors.textSecondary,
+      marginTop: spacing.xs + 2,
+    },
+    quando: { fontSize: 12, color: colors.textMuted, marginTop: spacing.sm },
+  });

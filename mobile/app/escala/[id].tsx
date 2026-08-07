@@ -34,7 +34,9 @@ import {
   DirigentePickerSheet,
   type PickerPerson,
 } from "@/components/dirigentes/DirigentePickerSheet";
-import { colors, MESES, MESES_CURTO, radius, statusConfig } from "@/theme";
+import { useAuth } from "@/context/AuthContext";
+import { MESES, MESES_CURTO, radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { compareDataBR } from "@/utils/date";
 import { exportarPdf } from "@/utils/exportPdf";
 import { gerarHtmlDirigentes, type GrupoEscalaPdf } from "@/utils/pdfHtml";
@@ -46,6 +48,10 @@ interface GrupoEscala {
 }
 
 export default function EscalaScreen() {
+  const { colors, styles, statusConfig } = useTema(criarEstilos);
+  // Sem admin, a escala é só leitura — o backend nega as escritas de todo modo.
+  const { usuario } = useAuth();
+  const isAdmin = !!usuario?.isAdmin;
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
   const qc = useQueryClient();
@@ -192,7 +198,7 @@ export default function EscalaScreen() {
         <View style={styles.actionsCard}>
           <Badge label={sc.label} color={sc.color} bg={sc.bg} />
           <View style={styles.actionsRow}>
-            {quadro.status === "rascunho" ? (
+            {!isAdmin ? null : quadro.status === "rascunho" ? (
               <Button
                 label="Publicar"
                 icon="checkmark"
@@ -235,6 +241,7 @@ export default function EscalaScreen() {
                 handleDownloadPDF();
               }}
             />
+            {isAdmin ? (
             <Button
               label="Excluir"
               icon="trash"
@@ -258,6 +265,7 @@ export default function EscalaScreen() {
                 })
               }
             />
+            ) : null}
           </View>
         </View>
 
@@ -270,6 +278,7 @@ export default function EscalaScreen() {
               <View style={styles.diaBadge}>
                 <Text style={styles.diaBadgeText}>{grupo.dia}</Text>
               </View>
+              {isAdmin ? (
               <Pressable
                 hitSlop={8}
                 style={styles.deleteDia}
@@ -294,6 +303,8 @@ export default function EscalaScreen() {
               >
                 <Ionicons name="calendar-clear-outline" size={16} color={colors.redDark} />
               </Pressable>
+              ) : null}
+              {isAdmin ? (
               <Pressable
                 hitSlop={8}
                 style={styles.deleteDia}
@@ -317,6 +328,7 @@ export default function EscalaScreen() {
               >
                 <Ionicons name="trash-outline" size={16} color={colors.redDark} />
               </Pressable>
+              ) : null}
             </View>
 
             {grupo.escalas.map((e) => (
@@ -328,6 +340,7 @@ export default function EscalaScreen() {
                 <View style={styles.cellsRow}>
                   <Pressable
                     style={styles.cell}
+                    disabled={!isAdmin}
                     onPress={() =>
                       setEditing({
                         escalaId: e.id,
@@ -388,85 +401,86 @@ export default function EscalaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16, paddingBottom: 48, gap: 12 },
-  actionsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: 14,
-    gap: 12,
-  },
-  actionsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  diaCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 14 },
-  diaHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 8,
-  },
-  diaDate: { minWidth: 52 },
-  diaNumero: { fontSize: 20, fontWeight: "600", color: colors.terracotta },
-  diaBadge: {
-    flex: 1,
-    backgroundColor: colors.infoBg,
-    borderRadius: radius.sm,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  diaBadgeText: { color: colors.primaryDark, fontWeight: "700" },
-  deleteDia: {
-    width: 32,
-    height: 32,
-    borderRadius: radius.sm,
-    backgroundColor: colors.dangerBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saidaRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: 10,
-    marginTop: 6,
-    gap: 8,
-  },
-  saidaLocal: { fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
-  cellsRow: { flexDirection: "row", gap: 8 },
-  cell: {
-    flex: 1,
-    backgroundColor: colors.slotBg,
-    borderRadius: 12,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: colors.slotBorder,
-  },
-  cellTag: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: colors.textMuted,
-    textTransform: "uppercase",
-  },
-  cellText: { fontSize: 14, fontWeight: "600", color: colors.text, marginTop: 2 },
-  cellEmpty: { color: colors.textMuted, fontWeight: "400" },
-  panel: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16 },
-  panelTitle: { fontSize: 15, fontWeight: "700", color: colors.text },
-  panelEmpty: { color: colors.textSecondary, marginTop: 8 },
-  statRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    marginTop: 4,
-  },
-  statNome: { color: colors.text, fontWeight: "500", flex: 1 },
-  statBadge: {
-    backgroundColor: colors.infoBg,
-    borderRadius: radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  statBadgeText: { color: colors.primaryDark, fontWeight: "700", fontSize: 12 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    scroll: { padding: 16, paddingBottom: 48, gap: 12 },
+    actionsCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 14,
+      gap: 12,
+    },
+    actionsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+    diaCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 14 },
+    diaHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 8,
+    },
+    diaDate: { minWidth: 52 },
+    diaNumero: { fontSize: 20, fontWeight: "600", color: colors.terracotta },
+    diaBadge: {
+      flex: 1,
+      backgroundColor: colors.infoBg,
+      borderRadius: radius.sm,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    diaBadgeText: { color: colors.primaryDark, fontWeight: "700" },
+    deleteDia: {
+      width: 32,
+      height: 32,
+      borderRadius: radius.sm,
+      backgroundColor: colors.dangerBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    saidaRow: {
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      paddingTop: 10,
+      marginTop: 6,
+      gap: 8,
+    },
+    saidaLocal: { fontSize: 12, color: colors.textSecondary, lineHeight: 17 },
+    cellsRow: { flexDirection: "row", gap: 8 },
+    cell: {
+      flex: 1,
+      backgroundColor: colors.slotBg,
+      borderRadius: 12,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderWidth: 1,
+      borderColor: colors.slotBorder,
+    },
+    cellTag: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: colors.textMuted,
+      textTransform: "uppercase",
+    },
+    cellText: { fontSize: 14, fontWeight: "600", color: colors.text, marginTop: 2 },
+    cellEmpty: { color: colors.textMuted, fontWeight: "400" },
+    panel: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16 },
+    panelTitle: { fontSize: 15, fontWeight: "700", color: colors.text },
+    panelEmpty: { color: colors.textSecondary, marginTop: 8 },
+    statRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingVertical: 8,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      marginTop: 4,
+    },
+    statNome: { color: colors.text, fontWeight: "500", flex: 1 },
+    statBadge: {
+      backgroundColor: colors.infoBg,
+      borderRadius: radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 3,
+    },
+    statBadgeText: { color: colors.primaryDark, fontWeight: "700", fontSize: 12 },
+  });

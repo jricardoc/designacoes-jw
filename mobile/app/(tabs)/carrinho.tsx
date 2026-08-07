@@ -24,12 +24,14 @@ import {
   GradientHeader,
   Loading,
 } from "@/components/ui";
-import { colors, DIAS_CURTOS, radius, shadow } from "@/theme";
+import { DIAS_CURTOS, radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 /** O turno não carrega o ponto dono, mas a leitura por dia mistura todos os pontos. */
 type TurnoDoDia = { turno: CarrinhoTurno; ponto: CarrinhoPonto };
 
 export default function CarrinhoScreen() {
+  const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading, isError, refetch, isRefetching } = useCarrinho();
 
   const [dia, setDia] = useState(() => new Date().getDay());
@@ -87,7 +89,7 @@ export default function CarrinhoScreen() {
         color: colors.red,
       },
     ],
-    [totais],
+    [totais, colors],
   );
 
   const turnosPorDia = useMemo(() => {
@@ -455,7 +457,8 @@ export default function CarrinhoScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
   erroWrap: { padding: 16 },
@@ -581,4 +584,4 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   esmaecido: { opacity: 0.62 },
-});
+  });

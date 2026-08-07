@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Badge, Card } from "@/components/ui";
-import { colors, MESES, statusConfig } from "@/theme";
+import { MESES, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { formatDateBR } from "@/utils/date";
 
 interface MonthCardProps {
@@ -27,6 +28,7 @@ export function MonthCard({
   onPress,
   index = 0,
 }: MonthCardProps) {
+  const { colors, styles, statusConfig } = useTema(criarEstilos);
   const sc = statusConfig[status] ?? statusConfig.rascunho;
 
   return (
@@ -65,7 +67,8 @@ export function MonthCard({
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   headerRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -101,4 +104,4 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   footerText: { fontSize: 12, color: "#AEA28C" },
-});
+  });

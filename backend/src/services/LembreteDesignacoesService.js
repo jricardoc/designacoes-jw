@@ -229,6 +229,28 @@ async function processarLembretes({
             }
 
             const body = montarCorpo(doTipo, dia, idRegra);
+
+            // Copia do aviso para a central do app, criada ANTES do envio para o id
+            // viajar no payload. Se o push falhar depois, sobra um registro de algo
+            // que nao chegou — preferivel ao contrario (aviso entregue sem registro,
+            // que era exatamente o bug da central vazia).
+            let notifId = null;
+            try {
+                const registro = await prisma.notificacaoEnviada.create({
+                    data: {
+                        usuarioId: usuario.id,
+                        titulo: regra.titulo,
+                        corpo: body,
+                        data: { screen: 'minhas', dataISO: dia, regra: idRegra },
+                    },
+                });
+                notifId = registro.id;
+            } catch (erro) {
+                // Sem a copia o push continua valendo: a central perde este item,
+                // o lembrete nao.
+                console.error('[lembretes] Nao gravei o historico da notificacao:', erro.message);
+            }
+
             // Um irmao pode ter mais de um aparelho, e cada token e um destino separado.
             for (const { token } of usuario.pushTokens) {
                 mensagens.push({
@@ -236,7 +258,12 @@ async function processarLembretes({
                     title: regra.titulo,
                     body,
                     // `screen` e o que faz o toque abrir a aba certa em vez de so a home.
-                    data: { screen: 'minhas', dataISO: dia, regra: idRegra },
+                    data: {
+                        screen: 'minhas',
+                        dataISO: dia,
+                        regra: idRegra,
+                        ...(notifId ? { notifId } : {}),
+                    },
                 });
             }
             marcar.push({ usuarioId: usuario.id, dataISO: dia, regra: idRegra });

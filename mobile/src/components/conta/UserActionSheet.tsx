@@ -2,7 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Usuario } from "@/api/types";
 import { Sheet } from "@/components/ui";
-import { colors } from "@/theme";
+import type { Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { privilegioLabel } from "@/utils/funcoes";
 
 function initials(name?: string | null) {
@@ -22,6 +23,7 @@ interface Props {
 
 /** Bottom sheet de ações de um usuário (Conta → Usuários), fiel ao design. */
 export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, onExcluir, onVincular }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   return (
     <Sheet visible={!!user} onClose={onClose}>
       {user ? (
@@ -102,6 +104,7 @@ function Action({
   onPress: () => void;
   last?: boolean;
 }) {
+  const { styles } = useTema(criarEstilos);
   return (
     <Pressable
       onPress={onPress}
@@ -118,43 +121,44 @@ function Action({
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 13,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1EAD9",
-  },
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 999,
-    backgroundColor: colors.sand,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { fontSize: 15, fontWeight: "700", color: colors.brown },
-  name: { fontSize: 18, fontWeight: "600", color: colors.text },
-  sub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
-  action: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-  },
-  actionBorder: { borderBottomWidth: 1, borderBottomColor: "#F1EAD9" },
-  pressed: { backgroundColor: "#F8F3E9" },
-  actionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  actionTitle: { fontSize: 15, fontWeight: "600", color: colors.text },
-  actionSub: { fontSize: 12.5, color: colors.textMuted, marginTop: 1 },
-  flex: { flex: 1, minWidth: 0 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 13,
+      paddingBottom: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    avatar: {
+      width: 46,
+      height: 46,
+      borderRadius: 999,
+      backgroundColor: colors.sand,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarText: { fontSize: 15, fontWeight: "700", color: colors.brown },
+    name: { fontSize: 18, fontWeight: "600", color: colors.text },
+    sub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+    action: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 4,
+    },
+    actionBorder: { borderBottomWidth: 1, borderBottomColor: colors.border },
+    pressed: { backgroundColor: colors.surfaceMuted },
+    actionIcon: {
+      width: 40,
+      height: 40,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    actionTitle: { fontSize: 15, fontWeight: "600", color: colors.text },
+    actionSub: { fontSize: 12.5, color: colors.textMuted, marginTop: 1 },
+    flex: { flex: 1, minWidth: 0 },
+  });

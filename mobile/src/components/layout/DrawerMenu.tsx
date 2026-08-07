@@ -20,7 +20,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
-import { colors, radius, shadow, spacing, motion } from "@/theme";
+import { radius, shadow, spacing, motion, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { MarcaServirMais } from "./MarcaServirMais";
 
 const CURVA = Easing.bezier(...motion.curvaSuave);
@@ -31,6 +32,8 @@ interface ItemMenu {
   rotulo: string;
   icone: keyof typeof Ionicons.glyphMap;
   href: Href;
+  /** Some do menu para quem não é administrador. */
+  somenteAdmin?: boolean;
 }
 
 const ITENS: ItemMenu[] = [
@@ -40,7 +43,9 @@ const ITENS: ItemMenu[] = [
   { chave: "reuniao", rotulo: "Reunião", icone: "people-outline", href: "/(tabs)/reuniao" },
   { chave: "carrinho", rotulo: "Carrinho", icone: "book-outline", href: "/(tabs)/carrinho" },
   { chave: "conta", rotulo: "Conta", icone: "person-outline", href: "/(tabs)/conta" },
-  { chave: "config", rotulo: "Configurações", icone: "options-outline", href: "/(tabs)/config" },
+  // Cadastro da congregação (irmãos, saídas de campo): só administradores.
+  { chave: "config", rotulo: "Configurações", icone: "options-outline", href: "/(tabs)/config", somenteAdmin: true },
+  { chave: "ajustes", rotulo: "Ajustes", icone: "settings-outline", href: "/(tabs)/ajustes" },
 ];
 
 interface DrawerMenuProps {
@@ -54,6 +59,7 @@ interface DrawerMenuProps {
  * navegador mudaria o formato das rotas.
  */
 export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
+  const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { usuario } = useAuth();
@@ -133,7 +139,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           </View>
 
           <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
-            {ITENS.map((item) => {
+            {ITENS.filter((item) => !item.somenteAdmin || usuario?.isAdmin).map((item) => {
               const ativo = item.chave === atual;
               return (
                 <Pressable
@@ -180,78 +186,79 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, flexDirection: "row" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(28,27,20,0.5)",
-  },
-  painel: {
-    backgroundColor: colors.surface,
-    borderTopRightRadius: 26,
-    borderBottomRightRadius: 26,
-    paddingHorizontal: spacing.lg,
-  },
-  topo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  topoTexto: { flex: 1 },
-  topoNome: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "700",
-    letterSpacing: -0.3,
-  },
-  topoTag: { color: colors.textSecondary, fontSize: 11.5, marginTop: 2 },
-  fechar: {
-    width: 30,
-    height: 30,
-    borderRadius: radius.pill,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: colors.surfaceMuted,
-  },
-  lista: { paddingTop: spacing.lg, gap: 4, paddingBottom: spacing.lg },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingVertical: 12,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-  },
-  itemAtivo: { backgroundColor: colors.infoBg },
-  itemTexto: { flex: 1, color: colors.textSecondary, fontSize: 15.5, fontWeight: "500" },
-  itemTextoAtivo: { color: colors.primaryDark, fontWeight: "700" },
-  marcador: {
-    width: 6,
-    height: 6,
-    borderRadius: radius.pill,
-    backgroundColor: colors.primary,
-  },
-  rodape: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  avatar: {
-    width: 38,
-    height: 38,
-    borderRadius: radius.pill,
-    backgroundColor: colors.sand,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarTexto: { color: colors.primaryDark, fontSize: 16, fontWeight: "700" },
-  rodapeTexto: { flex: 1 },
-  rodapeNome: { color: colors.text, fontSize: 14.5, fontWeight: "600" },
-  rodapeNick: { color: colors.textMuted, fontSize: 12.5, marginTop: 1 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    root: { flex: 1, flexDirection: "row" },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: colors.backdrop,
+    },
+    painel: {
+      backgroundColor: colors.surface,
+      borderTopRightRadius: 26,
+      borderBottomRightRadius: 26,
+      paddingHorizontal: spacing.lg,
+    },
+    topo: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      paddingBottom: spacing.lg,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    topoTexto: { flex: 1 },
+    topoNome: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: "700",
+      letterSpacing: -0.3,
+    },
+    topoTag: { color: colors.textSecondary, fontSize: 11.5, marginTop: 2 },
+    fechar: {
+      width: 30,
+      height: 30,
+      borderRadius: radius.pill,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: colors.surfaceMuted,
+    },
+    lista: { paddingTop: spacing.lg, gap: 4, paddingBottom: spacing.lg },
+    item: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      paddingVertical: 12,
+      paddingHorizontal: spacing.md,
+      borderRadius: radius.md,
+    },
+    itemAtivo: { backgroundColor: colors.infoBg },
+    itemTexto: { flex: 1, color: colors.textSecondary, fontSize: 15.5, fontWeight: "500" },
+    itemTextoAtivo: { color: colors.primaryDark, fontWeight: "700" },
+    marcador: {
+      width: 6,
+      height: 6,
+      borderRadius: radius.pill,
+      backgroundColor: colors.primary,
+    },
+    rodape: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      paddingTop: spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    avatar: {
+      width: 38,
+      height: 38,
+      borderRadius: radius.pill,
+      backgroundColor: colors.sand,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarTexto: { color: colors.primaryDark, fontSize: 16, fontWeight: "700" },
+    rodapeTexto: { flex: 1 },
+    rodapeNome: { color: colors.text, fontSize: 14.5, fontWeight: "600" },
+    rodapeNick: { color: colors.textMuted, fontSize: 12.5, marginTop: 1 },
+  });

@@ -34,7 +34,9 @@ import {
 } from "@/components/ui";
 import { DiaShareCard } from "@/components/quadros/DiaShareCard";
 import { HistoricoList } from "@/components/quadros/HistoricoList";
-import { colors, MESES, MESES_CURTO, radius, statusConfig } from "@/theme";
+import { useAuth } from "@/context/AuthContext";
+import { MESES, MESES_CURTO, radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import {
   agruparPorData,
   getIrmaosParaFuncao,
@@ -55,6 +57,12 @@ interface EditingCell {
 }
 
 export default function QuadroScreen() {
+  const { colors, styles, statusConfig } = useTema(criarEstilos);
+  // Quem não é admin só lê: sem publicar/arquivar/excluir e sem editar célula.
+  // O backend nega essas escritas de qualquer forma; aqui é para a tela não
+  // oferecer o que vai dar "Acesso negado".
+  const { usuario } = useAuth();
+  const isAdmin = !!usuario?.isAdmin;
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
   const qc = useQueryClient();
@@ -73,6 +81,8 @@ export default function QuadroScreen() {
     (EditingCell & { valor: string }) | null
   >(null);
   const [showHistorico, setShowHistorico] = useState(false);
+  // Mesmo padrão do Histórico: a lista de estatísticas é longa e nem sempre interessa.
+  const [showStats, setShowStats] = useState(false);
   const [downloading, setDownloading] = useState(false);
   // Dia sendo compartilhado: montar o cartao e o que dispara a captura (ver o onLayout abaixo).
   const [diaShare, setDiaShare] = useState<GrupoDia | null>(null);
@@ -198,7 +208,7 @@ export default function QuadroScreen() {
         color = colors.redDark;
         badge = "Indisponível";
       } else if (seguida) {
-        color = "#b45309";
+        color = colors.warningStrong;
         badge = "Seguida";
       }
       return {
@@ -218,7 +228,7 @@ export default function QuadroScreen() {
     if (isIndisponivel(irmaos, nome, data))
       return { color: colors.redDark, strike: true };
     if (isDesignacaoSeguida(grupos, nome, data))
-      return { color: "#b45309", bg: colors.warningBg };
+      return { color: colors.warningStrong, bg: colors.warningBg };
     return undefined;
   };
 
@@ -239,7 +249,7 @@ export default function QuadroScreen() {
         <View style={styles.actionsCard}>
           <Badge label={sc.label} color={sc.color} bg={sc.bg} />
           <View style={styles.actionsRow}>
-            {quadro.status === "rascunho" ? (
+            {!isAdmin ? null : quadro.status === "rascunho" ? (
               <Button
                 label="Publicar"
                 icon="checkmark"
@@ -282,6 +292,7 @@ export default function QuadroScreen() {
                 handleDownloadPDF();
               }}
             />
+            {isAdmin ? (
             <Button
               label="Excluir"
               icon="trash"
@@ -305,6 +316,7 @@ export default function QuadroScreen() {
                 })
               }
             />
+            ) : null}
           </View>
         </View>
 
@@ -335,6 +347,7 @@ export default function QuadroScreen() {
                   />
                 )}
               </Pressable>
+              {isAdmin ? (
               <Pressable
                 hitSlop={8}
                 style={styles.deleteDia}
@@ -360,6 +373,7 @@ export default function QuadroScreen() {
               >
                 <Ionicons name="trash-outline" size={16} color={colors.redDark} />
               </Pressable>
+              ) : null}
             </View>
 
             {ordenarFuncoes(grupo.funcoes).map((f) => (
@@ -376,6 +390,7 @@ export default function QuadroScreen() {
                           styles.cell,
                           st?.bg ? { backgroundColor: st.bg } : null,
                         ]}
+                        disabled={!isAdmin}
                         onPress={() =>
                           setEditing({ data: grupo.data, funcao: f.funcao, campo })
                         }
@@ -401,28 +416,47 @@ export default function QuadroScreen() {
         ))}
 
         {/* Estatísticas */}
-        <View style={styles.panel}>
+        <Pressable
+          style={styles.accordionHeader}
+          onPress={() => setShowStats((s) => !s)}
+        >
           <Text style={styles.panelTitle}>📊 Estatísticas do Mês</Text>
-          {stats.length === 0 ? (
-            <Text style={styles.panelEmpty}>Nenhuma designação definida</Text>
-          ) : (
-            stats.map(([nome, count], i) => (
-              <View key={nome} style={styles.statRow}>
-                <Text style={styles.statNome}>{nome}</Text>
-                <View
-                  style={[
-                    styles.statBadge,
-                    i === 0 && { backgroundColor: colors.green },
-                  ]}
-                >
-                  <Text style={[styles.statBadgeText, i === 0 && { color: "#fff" }]}>
-                    {count}x
-                  </Text>
+          <Ionicons
+            name={showStats ? "chevron-up" : "chevron-down"}
+            size={20}
+            color={colors.textSecondary}
+          />
+        </Pressable>
+        {showStats ? (
+          <View style={styles.panel}>
+            {stats.length === 0 ? (
+              <Text style={styles.panelEmpty}>Nenhuma designação definida</Text>
+            ) : (
+              stats.map(([nome, count], i) => (
+                <View key={nome} style={styles.statRow}>
+                  <Text style={styles.statNome}>{nome}</Text>
+                  <View
+                    style={[
+                      styles.statBadge,
+                      i === 0 && { backgroundColor: colors.green },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statBadgeText,
+                        // surface, não textOnPrimary: no escuro colors.green
+                        // clareia e o texto precisa escurecer junto.
+                        i === 0 && { color: colors.surface },
+                      ]}
+                    >
+                      {count}x
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))
-          )}
-        </View>
+              ))
+            )}
+          </View>
+        ) : null}
 
         {/* Histórico */}
         <Pressable
@@ -487,7 +521,7 @@ export default function QuadroScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) => StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 16, paddingBottom: 48, gap: 12 },
   actionsCard: {
@@ -510,7 +544,7 @@ const styles = StyleSheet.create({
   },
   diaDate: { alignItems: "center", minWidth: 44 },
   diaNumero: { fontSize: 28, fontWeight: "600", color: colors.terracotta },
-  diaMes: { fontSize: 10, fontWeight: "700", color: "#C2A98C", letterSpacing: 1 },
+  diaMes: { fontSize: 10, fontWeight: "700", color: colors.mesEtiqueta, letterSpacing: 1 },
   diaBadge: {
     flex: 1,
     backgroundColor: colors.infoBg,

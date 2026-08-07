@@ -10,7 +10,8 @@ import React, {
 } from "react";
 import { Animated, Easing, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, motion, radius, shadow } from "@/theme";
+import { motion, radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 type ToastType = "success" | "error" | "info";
 
@@ -26,16 +27,16 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
-const TYPE_STYLE: Record<
-  ToastType,
-  { bg: string; icon: keyof typeof Ionicons.glyphMap }
-> = {
+const TYPE_STYLE = (
+  colors: Cores,
+): Record<ToastType, { bg: string; icon: keyof typeof Ionicons.glyphMap }> => ({
   success: { bg: colors.greenDark, icon: "checkmark-circle" },
   error: { bg: colors.redDark, icon: "alert-circle" },
   info: { bg: colors.primaryDark, icon: "information-circle" },
-};
+});
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { styles } = useTema(criarEstilos);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const counter = useRef(0);
   const insets = useSafeAreaInsets();
@@ -68,8 +69,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 }
 
 function ToastView({ toast }: { toast: ToastItem }) {
+  const { colors, styles } = useTema(criarEstilos);
   const anim = useRef(new Animated.Value(0)).current;
-  const conf = TYPE_STYLE[toast.type];
+  const conf = TYPE_STYLE(colors)[toast.type];
 
   useEffect(() => {
     Animated.timing(anim, {
@@ -99,7 +101,7 @@ function ToastView({ toast }: { toast: ToastItem }) {
         },
       ]}
     >
-      <Ionicons name={conf.icon} size={20} color="#fff" />
+      <Ionicons name={conf.icon} size={20} color={colors.surface} />
       <Text style={styles.text}>{toast.message}</Text>
     </Animated.View>
   );
@@ -111,24 +113,27 @@ export function useToast() {
   return ctx;
 }
 
-const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    alignItems: "center",
-    gap: 8,
-    zIndex: 1000,
-  },
-  toast: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: radius.md,
-    maxWidth: 480,
-    width: "100%",
-  },
-  text: { color: "#fff", fontWeight: "600", flex: 1 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    container: {
+      position: "absolute",
+      left: 16,
+      right: 16,
+      alignItems: "center",
+      gap: 8,
+      zIndex: 1000,
+    },
+    toast: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      borderRadius: radius.md,
+      maxWidth: 480,
+      width: "100%",
+    },
+    // colors.surface, não textOnPrimary: no escuro os fundos do toast (tokens
+    // *Dark) clareiam, e o texto precisa escurecer junto para manter contraste.
+    text: { color: colors.surface, fontWeight: "600", flex: 1 },
+  });

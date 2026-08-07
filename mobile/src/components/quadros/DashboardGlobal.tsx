@@ -2,9 +2,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
 import { useEstatisticas } from "@/api/hooks/useMisc";
 import { Card } from "@/components/ui";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 export function DashboardGlobal() {
+  const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading } = useEstatisticas();
 
   if (isLoading || !data) return null;
@@ -54,7 +56,8 @@ export function DashboardGlobal() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   container: { marginTop: 24 },
   sectionTitle: {
     fontSize: 16,
@@ -92,4 +95,4 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   rankBadgeText: { color: colors.primaryDark, fontWeight: "700", fontSize: 12 },
-});
+  });

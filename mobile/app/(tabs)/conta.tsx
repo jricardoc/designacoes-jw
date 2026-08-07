@@ -26,7 +26,8 @@ import { UserActionSheet } from "@/components/conta/UserActionSheet";
 import { VincularIrmaoSheet } from "@/components/conta/VincularIrmaoSheet";
 import { useIrmaosDisponiveis } from "@/api/hooks/useMinhasDesignacoes";
 import { useAuth } from "@/context/AuthContext";
-import { colors, radius, shadow } from "@/theme";
+import { radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 function initials(name?: string | null) {
   if (!name) return "?";
@@ -56,6 +57,7 @@ function Field({
   secure?: boolean;
   autoCapitalize?: "none" | "sentences";
 }) {
+  const { colors, styles } = useTema(criarEstilos);
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(!!secure);
   return (
@@ -86,6 +88,7 @@ function Field({
 }
 
 export default function ContaScreen() {
+  const { colors, styles } = useTema(criarEstilos);
   const { usuario, logout, refreshUsuario } = useAuth();
   const toast = useToast();
   const confirm = useConfirm();
@@ -191,7 +194,7 @@ export default function ContaScreen() {
             </View>
             {isAdmin ? (
               <View style={styles.adminBadge}>
-                <Ionicons name="shield-checkmark" size={12} color="#54622F" />
+                <Ionicons name="shield-checkmark" size={12} color={colors.greenDark} />
                 <Text style={styles.adminBadgeText}>Admin</Text>
               </View>
             ) : null}
@@ -365,7 +368,7 @@ export default function ContaScreen() {
                   </View>
                   {u.isAdmin ? (
                     <View style={styles.adminBadgeSm}>
-                      <Ionicons name="shield-checkmark" size={10} color="#54622F" />
+                      <Ionicons name="shield-checkmark" size={10} color={colors.greenDark} />
                       <Text style={styles.adminBadgeSmText}>Admin</Text>
                     </View>
                   ) : null}
@@ -421,7 +424,8 @@ export default function ContaScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 18, paddingTop: 4, paddingBottom: 40 },
 
@@ -478,7 +482,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  adminBadgeText: { color: "#54622F", fontWeight: "700", fontSize: 11.5 },
+  adminBadgeText: { color: colors.greenDark, fontWeight: "700", fontSize: 11.5 },
   divider: { height: 1, backgroundColor: "#EFE7D7", marginVertical: 17 },
 
   fieldLabel: {
@@ -509,7 +513,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 46,
     borderWidth: 1,
-    borderColor: "#E2D9C7",
+    borderColor: colors.handle,
     backgroundColor: colors.surface,
     borderRadius: 13,
     alignItems: "center",
@@ -571,7 +575,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 4,
   },
-  adminBadgeSmText: { color: "#54622F", fontWeight: "700", fontSize: 10.5 },
+  adminBadgeSmText: { color: colors.greenDark, fontWeight: "700", fontSize: 10.5 },
   voce: { fontSize: 11.5, fontWeight: "600", color: "#B0A488" },
   menuBtn: {
     width: 34,
@@ -613,8 +617,8 @@ const styles = StyleSheet.create({
     height: 52,
     marginTop: 12,
     borderWidth: 1,
-    borderColor: "#E3C9C0",
-    backgroundColor: "#F6EAE4",
+    borderColor: colors.border,
+    backgroundColor: colors.dangerBg,
     borderRadius: 16,
   },
   logoutText: { color: colors.redDark, fontSize: 15, fontWeight: "600" },

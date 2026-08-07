@@ -8,7 +8,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 export interface SelectOption {
   value: string;
@@ -38,6 +39,7 @@ export function SelectSheet({
   onClose,
   allowClear = true,
 }: SelectSheetProps) {
+  const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
 
   return (
@@ -120,48 +122,49 @@ export function SelectSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: "rgba(0,0,0,0.45)" },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingTop: 8,
-    maxHeight: "75%",
-  },
-  handle: {
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    alignSelf: "center",
-    marginBottom: 8,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  title: { fontSize: 17, fontWeight: "700", color: colors.text },
-  list: { paddingHorizontal: 12 },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: radius.md,
-  },
-  optionSelected: { backgroundColor: colors.infoBg },
-  optionPressed: { backgroundColor: colors.surfaceMuted },
-  optionDisabled: { opacity: 0.5 },
-  optionLabel: { flex: 1, fontSize: 16, color: colors.text },
-  optionLabelDisabled: { color: colors.textMuted },
-  clearText: { fontSize: 15, color: colors.textSecondary, fontStyle: "italic" },
-  badge: { fontSize: 12, fontWeight: "700" },
-  empty: { padding: 20, color: colors.textSecondary, textAlign: "center" },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: colors.backdrop },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      paddingTop: 8,
+      maxHeight: "75%",
+    },
+    handle: {
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      alignSelf: "center",
+      marginBottom: 8,
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: 20,
+      paddingBottom: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    title: { fontSize: 17, fontWeight: "700", color: colors.text },
+    list: { paddingHorizontal: 12 },
+    option: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingVertical: 14,
+      paddingHorizontal: 12,
+      borderRadius: radius.md,
+    },
+    optionSelected: { backgroundColor: colors.infoBg },
+    optionPressed: { backgroundColor: colors.surfaceMuted },
+    optionDisabled: { opacity: 0.5 },
+    optionLabel: { flex: 1, fontSize: 16, color: colors.text },
+    optionLabelDisabled: { color: colors.textMuted },
+    clearText: { fontSize: 15, color: colors.textSecondary, fontStyle: "italic" },
+    badge: { fontSize: 12, fontWeight: "700" },
+    empty: { padding: 20, color: colors.textSecondary, textAlign: "center" },
+  });

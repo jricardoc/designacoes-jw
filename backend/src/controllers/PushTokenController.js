@@ -59,6 +59,35 @@ class PushTokenController {
     }
 
     /**
+     * GET /push/historico - o que o sistema mandou para ESTE usuario, do mais novo
+     * para o mais antigo. E o espelho servidor da central de notificacoes: o app
+     * junta esta lista com o que capturou localmente, porque push que chegou com o
+     * app fechado e foi dispensado da bandeja nao deixa rastro no aparelho.
+     */
+    async historico(req, res) {
+        try {
+            const itens = await prisma.notificacaoEnviada.findMany({
+                where: { usuarioId: req.user.id },
+                orderBy: { createdAt: 'desc' },
+                take: 50,
+            });
+
+            return res.json({
+                historico: itens.map(n => ({
+                    id: n.id,
+                    titulo: n.titulo,
+                    corpo: n.corpo,
+                    data: n.data,
+                    enviadaEm: n.createdAt,
+                })),
+            });
+        } catch (error) {
+            console.error('Erro ao listar historico de notificacoes:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
+
+    /**
      * Dispara o lembrete sob demanda, para conferir a corrente inteira sem esperar as 19h.
      *
      * Manda so para QUEM PEDIU por padrao: uma conferencia nao pode virar push na congregacao

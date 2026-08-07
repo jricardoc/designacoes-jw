@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, View, type ViewProps } from "react-native";
-import { colors, radius, shadow } from "@/theme";
+import { radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 interface CardProps extends ViewProps {
   onPress?: () => void;
@@ -13,6 +14,7 @@ export function Card({
   accentColor,
   ...rest
 }: CardProps) {
+  const { styles } = useTema(criarEstilos);
   const content = (
     <View style={[styles.card, shadow.card, style]} {...rest}>
       {accentColor ? (
@@ -35,21 +37,22 @@ export function Card({
   return content;
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    overflow: "hidden",
-  },
-  accent: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-  },
-  pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 16,
+      overflow: "hidden",
+    },
+    accent: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 4,
+    },
+    pressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
+  });

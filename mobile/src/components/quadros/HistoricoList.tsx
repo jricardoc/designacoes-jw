@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { useHistoricoQuadro } from "@/api/hooks/useMisc";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { formatDateTimeBR } from "@/utils/date";
 
 const ACAO_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -13,6 +14,7 @@ const ACAO_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export function HistoricoList({ quadroId }: { quadroId: string }) {
+  const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading } = useHistoricoQuadro(quadroId);
 
   if (isLoading) {
@@ -53,7 +55,8 @@ export function HistoricoList({ quadroId }: { quadroId: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   box: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
@@ -65,4 +68,4 @@ const styles = StyleSheet.create({
   desc: { color: colors.text, fontSize: 14, lineHeight: 19 },
   meta: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
   empty: { color: colors.textSecondary, textAlign: "center" },
-});
+  });

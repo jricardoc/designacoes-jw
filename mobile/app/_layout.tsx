@@ -9,7 +9,7 @@ import { SplashAnimated } from "@/components/SplashAnimated";
 import { Loading, ToastProvider } from "@/components/ui";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { queryClient } from "@/lib/queryClient";
-import { colors } from "@/theme";
+import { TemaProvider, useTema } from "@/theme/TemaContext";
 
 // Mantém a splash nativa (oliva + S+) até a JS estar pronta; aí entra a animada.
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -17,6 +17,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 /** Redirects between the login screen and the authenticated app. */
 function AuthGate() {
   const { isAuthenticated, initializing } = useAuth();
+  const { colors } = useTema();
   const segments = useSegments();
   const router = useRouter();
 
@@ -46,6 +47,12 @@ function AuthGate() {
   );
 }
 
+/** A barra de status acompanha o tema: texto claro no escuro e vice-versa. */
+function BarraStatus() {
+  const { esquema } = useTema();
+  return <StatusBar style={esquema === "escuro" ? "light" : "dark"} />;
+}
+
 export default function RootLayout() {
   const [splashDone, setSplashDone] = useState(false);
 
@@ -59,11 +66,16 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ToastProvider>
-              <StatusBar style="dark" />
-              <AuthGate />
-              {!splashDone ? <SplashAnimated onDone={() => setSplashDone(true)} /> : null}
-            </ToastProvider>
+            {/* A splash fica FORA do TemaProvider: ele segura a primeira pintura
+                enquanto lê a preferência do AsyncStorage, e é ela que cobre esse
+                instante. */}
+            <TemaProvider>
+              <ToastProvider>
+                <BarraStatus />
+                <AuthGate />
+              </ToastProvider>
+            </TemaProvider>
+            {!splashDone ? <SplashAnimated onDone={() => setSplashDone(true)} /> : null}
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

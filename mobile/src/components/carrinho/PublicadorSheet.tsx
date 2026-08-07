@@ -18,7 +18,8 @@ import {
 import type { CarrinhoPonto, CarrinhoPublicador } from "@/api/types";
 import { ConfirmDialog, Sheet, useConfirm, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
-import { colors, DIAS_CURTOS, radius } from "@/theme";
+import { DIAS_CURTOS, radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 const TURNOS_MAX = Math.round(Dimensions.get("window").height * 0.3);
 
@@ -34,6 +35,7 @@ interface Props {
  * a maioria são irmãs e o vínculo não tem relação com funções de reunião.
  */
 export function PublicadorSheet({ visible, publicador, pontos, onClose }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const confirm = useConfirm();
   const { usuario } = useAuth();
@@ -234,102 +236,103 @@ export function PublicadorSheet({ visible, publicador, pontos, onClose }: Props)
   );
 }
 
-const styles = StyleSheet.create({
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 18,
-  },
-  title: { fontSize: 23, fontWeight: "600", color: colors.text },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-  },
-  labelEspacado: { marginTop: 18 },
-  input: {
-    marginTop: 9,
-    height: 48,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: radius.md,
-    paddingHorizontal: 15,
-    fontSize: 15,
-    color: colors.text,
-  },
-  ajuda: { fontSize: 12.5, color: colors.textSecondary, marginTop: 7, lineHeight: 18 },
-  ativaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: colors.surfaceMuted,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    borderRadius: radius.md,
-    padding: 14,
-    marginTop: 18,
-  },
-  ativaTitulo: { fontSize: 15, fontWeight: "600", color: colors.text },
-  ativaDesc: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
-  turnosBox: {
-    maxHeight: TURNOS_MAX,
-    // Em tela baixa a folha bate no teto: só a lista encolhe, para o Salvar
-    // continuar visível em vez de ser empurrado para fora.
-    flexShrink: 1,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.slotBg,
-    borderRadius: radius.md,
-  },
-  turnosConteudo: { padding: 12, gap: 14 },
-  pontoBloco: { gap: 8 },
-  pontoNomeWrap: { borderLeftWidth: 3, paddingLeft: 9 },
-  pontoNome: { fontSize: 14, fontWeight: "600", color: colors.text },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surface,
-  },
-  chipText: { fontSize: 12.5, fontWeight: "600", color: colors.textSecondary },
-  chipTextOn: { color: colors.textOnPrimary },
-  footer: { flexDirection: "row", gap: 11, marginTop: 20 },
-  deleteBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#E7C9BC",
-    backgroundColor: colors.dangerBg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveBtn: {
-    flex: 1,
-    height: 52,
-    borderRadius: 15,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: "600" },
-  flex: { flex: 1 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 18,
+    },
+    title: { fontSize: 23, fontWeight: "600", color: colors.text },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 11,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    label: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+    },
+    labelEspacado: { marginTop: 18 },
+    input: {
+      marginTop: 9,
+      height: 48,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      paddingHorizontal: 15,
+      fontSize: 15,
+      color: colors.text,
+    },
+    ajuda: { fontSize: 12.5, color: colors.textSecondary, marginTop: 7, lineHeight: 18 },
+    ativaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      borderRadius: radius.md,
+      padding: 14,
+      marginTop: 18,
+    },
+    ativaTitulo: { fontSize: 15, fontWeight: "600", color: colors.text },
+    ativaDesc: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
+    turnosBox: {
+      maxHeight: TURNOS_MAX,
+      // Em tela baixa a folha bate no teto: só a lista encolhe, para o Salvar
+      // continuar visível em vez de ser empurrado para fora.
+      flexShrink: 1,
+      marginTop: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.slotBg,
+      borderRadius: radius.md,
+    },
+    turnosConteudo: { padding: 12, gap: 14 },
+    pontoBloco: { gap: 8 },
+    pontoNomeWrap: { borderLeftWidth: 3, paddingLeft: 9 },
+    pontoNome: { fontSize: 14, fontWeight: "600", color: colors.text },
+    chips: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+    chip: {
+      paddingHorizontal: 12,
+      paddingVertical: 7,
+      borderRadius: radius.pill,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surface,
+    },
+    chipText: { fontSize: 12.5, fontWeight: "600", color: colors.textSecondary },
+    chipTextOn: { color: colors.textOnPrimary },
+    footer: { flexDirection: "row", gap: 11, marginTop: 20 },
+    deleteBtn: {
+      width: 52,
+      height: 52,
+      borderRadius: 15,
+      borderWidth: 1,
+      borderColor: "#E7C9BC",
+      backgroundColor: colors.dangerBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    saveBtn: {
+      flex: 1,
+      height: 52,
+      borderRadius: 15,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    saveText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: "600" },
+    flex: { flex: 1 },
+  });

@@ -1,6 +1,7 @@
 import * as Notifications from "expo-notifications";
 import { useRootNavigationState, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 import { registrarNotificacao } from "./historicoNotificacoes";
 import { getNotifEnabled } from "./notifPref";
 import { sincronizarPushToken } from "./sincronizarPush";
@@ -38,6 +39,25 @@ function guardarNoHistorico(notificacao: Notifications.Notification) {
     },
     request.identifier,
   ).catch(() => {});
+}
+
+/**
+ * Varre a bandeja do sistema e copia para a central o que ainda está lá.
+ *
+ * Era o buraco da central vazia: com o app fechado ou em segundo plano o
+ * listener de recebimento NÃO roda — só o toque na notificação registrava. Quem
+ * abria o app pelo ícone nunca via o aviso na central. A varredura no retorno ao
+ * primeiro plano cobre exatamente esse caminho.
+ */
+async function varrerBandeja() {
+  try {
+    const apresentadas = await Notifications.getPresentedNotificationsAsync();
+    for (const notificacao of apresentadas) {
+      guardarNoHistorico(notificacao);
+    }
+  } catch {
+    // bandeja inacessível (permissão revogada, plataforma sem suporte) — segue o jogo
+  }
 }
 
 /**
@@ -83,11 +103,18 @@ export function usePushNotifications() {
     const inicial = Notifications.getLastNotificationResponse();
     if (inicial) tratarResposta(inicial);
 
+    // O que chegou com o app fechado e ainda está na bandeja entra agora...
+    varrerBandeja();
+    // ...e o que chegar enquanto o app estiver em segundo plano entra na volta.
+    const appState = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") varrerBandeja();
+    });
+
     receivedRef.current = Notifications.addNotificationReceivedListener(
       (notificacao) => {
         // Notificação recebida com o app aberto (já exibida pelo handler): fica
-        // no histórico local, a única memória do que chegou — o backend não
-        // guarda o que enviou.
+        // no histórico local. O backend também guarda uma cópia do que enviou
+        // (GET /push/historico), sincronizada em useSincronizarNotificacoes.
         guardarNoHistorico(notificacao);
       },
     );
@@ -96,6 +123,7 @@ export function usePushNotifications() {
 
     return () => {
       mounted = false;
+      appState.remove();
       receivedRef.current?.remove();
       responseRef.current?.remove();
     };

@@ -12,9 +12,14 @@ import { Button, EmptyState, GradientHeader, Loading } from "@/components/ui";
 import { DashboardGlobal } from "@/components/quadros/DashboardGlobal";
 import { MonthCard } from "@/components/quadros/MonthCard";
 import { NovoQuadroModal } from "@/components/quadros/NovoQuadroModal";
-import { colors } from "@/theme";
+import { useAuth } from "@/context/AuthContext";
+import { type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 export default function DesignacoesScreen() {
+  const { styles } = useTema(criarEstilos);
+  const { usuario } = useAuth();
+  const isAdmin = !!usuario?.isAdmin;
   const { data: quadros, isLoading, refetch, isRefetching } = useQuadros();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -42,11 +47,13 @@ export default function DesignacoesScreen() {
                 {quadros?.length ?? 0} quadros criados
               </Text>
             </View>
-            <Button
-              label="Novo"
-              icon="add"
-              onPress={() => setModalOpen(true)}
-            />
+            {isAdmin ? (
+              <Button
+                label="Novo"
+                icon="add"
+                onPress={() => setModalOpen(true)}
+              />
+            ) : null}
           </View>
 
           {quadros && quadros.length > 0 ? (
@@ -72,9 +79,15 @@ export default function DesignacoesScreen() {
             <EmptyState
               icon="calendar-outline"
               title="Nenhum quadro criado"
-              message='Toque em "Novo" para criar o primeiro'
+              message={
+                isAdmin
+                  ? 'Toque em "Novo" para criar o primeiro'
+                  : "Quando um administrador criar um quadro, ele aparece aqui."
+              }
             >
-              <Button label="Criar Primeiro Quadro" onPress={() => setModalOpen(true)} />
+              {isAdmin ? (
+                <Button label="Criar Primeiro Quadro" onPress={() => setModalOpen(true)} />
+              ) : null}
             </EmptyState>
           )}
 
@@ -82,26 +95,29 @@ export default function DesignacoesScreen() {
         </ScrollView>
       )}
 
-      <NovoQuadroModal
-        visible={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onCreated={(q) => router.push(`/quadro/${q.id}`)}
-        existentes={quadros ?? []}
-      />
+      {isAdmin ? (
+        <NovoQuadroModal
+          visible={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onCreated={(q) => router.push(`/quadro/${q.id}`)}
+          existentes={quadros ?? []}
+        />
+      ) : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 16, paddingBottom: 40 },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 16,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
-  sectionSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  list: { gap: 12 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    flex: { flex: 1, backgroundColor: colors.background },
+    scroll: { padding: 16, paddingBottom: 40 },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      marginBottom: 16,
+    },
+    sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
+    sectionSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    list: { gap: 12 },
+  });

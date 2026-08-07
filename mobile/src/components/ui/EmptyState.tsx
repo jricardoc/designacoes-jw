@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
-import { colors, radius, shadow } from "@/theme";
+import { radius, shadow, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 interface EmptyStateProps {
   icon: keyof typeof Ionicons.glyphMap;
@@ -10,6 +11,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ icon, title, message, children }: EmptyStateProps) {
+  const { colors, styles } = useTema(criarEstilos);
   return (
     <View style={[styles.box, shadow.card]}>
       <Ionicons name={icon} size={48} color={colors.textMuted} />
@@ -20,25 +22,26 @@ export function EmptyState({ icon, title, message, children }: EmptyStateProps) 
   );
 }
 
-const styles = StyleSheet.create({
-  box: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    paddingVertical: 40,
-    paddingHorizontal: 24,
-    alignItems: "center",
-    gap: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.text,
-    marginTop: 8,
-  },
-  message: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    box: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingVertical: 40,
+      paddingHorizontal: 24,
+      alignItems: "center",
+      gap: 8,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.text,
+      marginTop: 8,
+    },
+    message: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+  });

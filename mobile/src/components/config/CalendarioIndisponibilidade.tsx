@@ -6,11 +6,13 @@ import {
   useExcluirIndisponibilidade,
   useIndisponibilidadesIrmao,
 } from "@/api/hooks/useIndisponibilidades";
-import { colors, MESES } from "@/theme";
+import { MESES, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 const SEMANA = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 export function CalendarioIndisponibilidade({ irmaoId }: { irmaoId: number }) {
+  const { colors, styles } = useTema(criarEstilos);
   const hoje = new Date();
   const [mes, setMes] = useState(hoje.getMonth());
   const [ano, setAno] = useState(hoje.getFullYear());
@@ -115,7 +117,8 @@ export function CalendarioIndisponibilidade({ irmaoId }: { irmaoId: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   box: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -142,7 +145,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  navLabel: { fontWeight: "600", fontSize: 13.5, color: "#3A352D", minWidth: 96, textAlign: "center" },
+  navLabel: { fontWeight: "600", fontSize: 13.5, color: colors.text, minWidth: 96, textAlign: "center" },
   grid: { flexDirection: "row", flexWrap: "wrap" },
   weekday: {
     width: "14.2857%",
@@ -160,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   dayCellOn: { backgroundColor: "#A8503B" },
-  dayText: { color: "#3A352D", fontWeight: "600", fontSize: 13 },
+  dayText: { color: colors.text, fontWeight: "600", fontSize: 13 },
   dayTextOn: { color: "#fff" },
   footer: {
     flexDirection: "row",
@@ -174,4 +177,4 @@ const styles = StyleSheet.create({
   legendFree: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: "#DCD0B9" },
   legendText: { fontSize: 12, color: "#9A8F7D" },
   clearText: { color: "#9A4632", fontSize: 12.5, fontWeight: "600" },
-});
+  });

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SinoNotificacoes } from "@/components/layout/SinoNotificacoes";
-import { colors, radius, spacing } from "@/theme";
+import { radius, spacing, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import { DrawerMenu } from "./DrawerMenu";
 import { MarcaServirMais } from "./MarcaServirMais";
 
@@ -14,6 +15,7 @@ import { MarcaServirMais } from "./MarcaServirMais";
  * continua sendo o GradientHeader de cada tela.
  */
 export function AppHeader() {
+  const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const [menuAberto, setMenuAberto] = useState(false);
 
@@ -43,7 +45,8 @@ export function AppHeader() {
   );
 }
 
-const styles = StyleSheet.create({
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
   barra: {
     flexDirection: "row",
     alignItems: "center",
@@ -67,4 +70,4 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.3,
   },
-});
+  });

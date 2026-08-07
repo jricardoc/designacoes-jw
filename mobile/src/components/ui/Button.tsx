@@ -8,7 +8,8 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import { colors, radius } from "@/theme";
+import { radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 type Variant = "primary" | "secondary" | "danger" | "success" | "ghost";
 
@@ -23,13 +24,13 @@ interface ButtonProps {
   fullWidth?: boolean;
 }
 
-const FILL: Record<Variant, string> = {
+const fillDe = (colors: Cores): Record<Variant, string> => ({
   primary: colors.primary,
   success: colors.primary,
   danger: colors.red,
   secondary: colors.surface,
   ghost: "transparent",
-};
+});
 
 export function Button({
   label,
@@ -41,8 +42,9 @@ export function Button({
   style,
   fullWidth,
 }: ButtonProps) {
+  const { colors, styles } = useTema(criarEstilos);
   const isDisabled = disabled || loading;
-  const tint = textColor(variant);
+  const tint = textColor(variant, colors);
 
   return (
     <Pressable
@@ -50,7 +52,7 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
-        { backgroundColor: FILL[variant] },
+        { backgroundColor: fillDe(colors)[variant] },
         variant === "secondary" && styles.secondary,
         variant === "ghost" && styles.ghost,
         isDisabled && styles.disabled,
@@ -71,33 +73,34 @@ export function Button({
   );
 }
 
-function textColor(variant: Variant): string {
-  if (variant === "secondary") return "#5C5446";
+function textColor(variant: Variant, colors: Cores): string {
+  if (variant === "secondary") return colors.text;
   if (variant === "ghost") return colors.primary;
   return colors.textOnPrimary;
 }
 
-const styles = StyleSheet.create({
-  base: {
-    borderRadius: radius.md,
-    paddingVertical: 13,
-    paddingHorizontal: 18,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fullWidth: { alignSelf: "stretch" },
-  inner: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-  },
-  label: { fontWeight: "600", fontSize: 15 },
-  secondary: {
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-  },
-  ghost: { paddingVertical: 8 },
-  disabled: { opacity: 0.5 },
-  pressed: { opacity: 0.88, transform: [{ scale: 0.985 }] },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    base: {
+      borderRadius: radius.md,
+      paddingVertical: 13,
+      paddingHorizontal: 18,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fullWidth: { alignSelf: "stretch" },
+    inner: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+    },
+    label: { fontWeight: "600", fontSize: 15 },
+    secondary: {
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+    },
+    ghost: { paddingVertical: 8 },
+    disabled: { opacity: 0.5 },
+    pressed: { opacity: 0.88, transform: [{ scale: 0.985 }] },
+  });

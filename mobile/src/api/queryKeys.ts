@@ -20,5 +20,8 @@ export const qk = {
   minhasDesignacoes: (escopo: string) => ["minhas-designacoes", escopo] as const,
   config: ["config"] as const,
   preferenciasNotificacao: ["preferencias-notificacao"] as const,
+  // Por usuário: dois logins no mesmo aparelho não podem compartilhar cache.
+  notificacoesRemotas: (usuarioId: number | string) =>
+    ["notificacoes-remotas", String(usuarioId)] as const,
   carrinho: ["carrinho"] as const,
 };

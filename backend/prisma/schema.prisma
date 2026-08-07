@@ -82,6 +82,7 @@ model Usuario {
   historicos Historico[]
   pushTokens PushToken[]
   prefNotificacao PreferenciaNotificacao?
+  notificacoesEnviadas NotificacaoEnviada[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }
@@ -356,6 +357,23 @@ model LembreteEnviado {
   createdAt DateTime @default(now())
 
   @@unique([usuarioId, dataISO, regra])
+}
+
+// Copia de cada push enviado, POR USUARIO (nao por aparelho). E daqui que o app
+// reconstroi a central de notificacoes: o listener local so roda com o app aberto
+// ou quando o irmao TOCA na notificacao — um push que chega com o app fechado e e
+// dispensado da bandeja sumiria sem esta tabela. Criada ANTES do envio para o id
+// viajar no payload (`data.notifId`) e o app desduplicar com o registro local.
+model NotificacaoEnviada {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  titulo    String
+  corpo     String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId, createdAt])
 }
 
 // O que cada irmao quer receber. Sem linha aqui vale o padrao (todos os tipos, so "1 dia

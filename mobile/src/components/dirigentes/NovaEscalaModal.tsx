@@ -12,7 +12,8 @@ import {
 import { useCriarDirigenteQuadro } from "@/api/hooks/useDirigentes";
 import type { QuadroDirigenteResumo, RegrasEscala } from "@/api/types";
 import { Sheet, useToast } from "@/components/ui";
-import { colors, MESES, radius } from "@/theme";
+import { MESES, radius, type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 import {
   REGRAS_ESSENCIAIS,
   REGRAS_PADRAO,
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Props) {
+  const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const criar = useCriarDirigenteQuadro();
   const now = new Date();
@@ -66,7 +68,7 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
       style={[styles.regraRow, regras[regra.chave] && styles.regraRowAtiva]}
     >
       <View style={[styles.check, regras[regra.chave] && styles.checkAtivo]}>
-        {regras[regra.chave] ? <Ionicons name="checkmark" size={14} color="#fff" /> : null}
+        {regras[regra.chave] ? <Ionicons name="checkmark" size={14} color={colors.textOnPrimary} /> : null}
       </View>
       <View style={styles.flex}>
         <Text style={styles.regraLabel}>{regra.label}</Text>
@@ -163,133 +165,134 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 14,
-  },
-  title: { fontSize: 25, fontWeight: "600", color: colors.text },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  body: { paddingBottom: 8 },
-  label: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-  },
-  mesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 11 },
-  mesChip: {
-    width: "15.1%",
-    height: 44,
-    borderRadius: radius.md,
-    backgroundColor: colors.surfaceMuted,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  mesChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  mesChipText: { color: colors.textSecondary, fontWeight: "600", fontSize: 12 },
-  mesChipTextActive: { color: colors.textOnPrimary },
-  anoRow: { flexDirection: "row", alignItems: "center", gap: 18, marginTop: 11 },
-  stepBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.borderStrong,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  anoValue: { fontSize: 32, fontWeight: "600", color: colors.text, minWidth: 90, textAlign: "center" },
-  warnBox: { backgroundColor: colors.warningBg, borderRadius: radius.md, padding: 12, marginTop: 16 },
-  warnText: { color: "#92400e", fontSize: 14 },
-  autoRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: "#F3ECDD",
-    borderWidth: 1,
-    borderColor: "#EAE0CC",
-    borderRadius: 16,
-    padding: 15,
-    marginTop: 22,
-  },
-  autoTitle: { fontWeight: "600", color: colors.text, fontSize: 15 },
-  autoDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-  regrasBox: {
-    backgroundColor: "#F3ECDD",
-    borderWidth: 1,
-    borderColor: "#EAE0CC",
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 12,
-  },
-  regrasTitulo: {
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    color: colors.textMuted,
-    marginBottom: 10,
-  },
-  regraRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 11,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 11,
-    marginBottom: 7,
-  },
-  regraRowAtiva: { backgroundColor: "#E9EFDC" },
-  check: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
-    borderWidth: 2,
-    borderColor: "#DCD0B9",
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 1,
-  },
-  checkAtivo: { borderColor: "#5E6B48", backgroundColor: "#5E6B48" },
-  regraLabel: { fontSize: 14, fontWeight: "600", color: colors.text },
-  regraDesc: { fontSize: 12, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
-  footer: { flexDirection: "row", gap: 11, marginTop: 18 },
-  btnGhost: {
-    flex: 1,
-    height: 52,
-    borderRadius: 15,
-    borderWidth: 1,
-    borderColor: "#E2D9C7",
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnGhostText: { color: "#5C5446", fontSize: 15, fontWeight: "600" },
-  btnPrimary: {
-    flex: 1.3,
-    height: 52,
-    borderRadius: 15,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  btnPrimaryText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: "600" },
-  flex: { flex: 1 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 14,
+    },
+    title: { fontSize: 25, fontWeight: "600", color: colors.text },
+    closeBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 11,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    body: { paddingBottom: 8 },
+    label: {
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+    },
+    mesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 11 },
+    mesChip: {
+      width: "15.1%",
+      height: 44,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    mesChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    mesChipText: { color: colors.textSecondary, fontWeight: "600", fontSize: 12 },
+    mesChipTextActive: { color: colors.textOnPrimary },
+    anoRow: { flexDirection: "row", alignItems: "center", gap: 18, marginTop: 11 },
+    stepBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: 14,
+      borderWidth: 1,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surfaceMuted,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    anoValue: { fontSize: 32, fontWeight: "600", color: colors.text, minWidth: 90, textAlign: "center" },
+    warnBox: { backgroundColor: colors.warningBg, borderRadius: radius.md, padding: 12, marginTop: 16 },
+    warnText: { color: colors.warningStrong, fontSize: 14 },
+    autoRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      padding: 15,
+      marginTop: 22,
+    },
+    autoTitle: { fontWeight: "600", color: colors.text, fontSize: 15 },
+    autoDesc: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+    regrasBox: {
+      backgroundColor: colors.surfaceMuted,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 16,
+      padding: 12,
+      marginTop: 12,
+    },
+    regrasTitulo: {
+      fontSize: 12,
+      fontWeight: "700",
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+      marginBottom: 10,
+    },
+    regraRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 11,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      padding: 11,
+      marginBottom: 7,
+    },
+    regraRowAtiva: { backgroundColor: colors.infoBg },
+    check: {
+      width: 20,
+      height: 20,
+      borderRadius: 5,
+      borderWidth: 2,
+      borderColor: "#DCD0B9",
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 1,
+    },
+    checkAtivo: { borderColor: "#5E6B48", backgroundColor: "#5E6B48" },
+    regraLabel: { fontSize: 14, fontWeight: "600", color: colors.text },
+    regraDesc: { fontSize: 12, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
+    footer: { flexDirection: "row", gap: 11, marginTop: 18 },
+    btnGhost: {
+      flex: 1,
+      height: 52,
+      borderRadius: 15,
+      borderWidth: 1,
+      borderColor: colors.handle,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    btnGhostText: { color: colors.text, fontSize: 15, fontWeight: "600" },
+    btnPrimary: {
+      flex: 1.3,
+      height: 52,
+      borderRadius: 15,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    btnPrimaryText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: "600" },
+    flex: { flex: 1 },
+  });

@@ -3,7 +3,8 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTemBarraGlobal } from "@/components/layout/contextoBarra";
-import { colors } from "@/theme";
+import { type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
 
 interface GradientHeaderProps {
   title: string;
@@ -27,6 +28,7 @@ export function GradientHeader({
   onBack,
   right,
 }: GradientHeaderProps) {
+  const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   // Nas telas do menu a barra global já consumiu o safe area do topo; repetir o
   // recuo aqui empilharia dois blocos altos antes do conteúdo.
@@ -62,36 +64,37 @@ export function GradientHeader({
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    backgroundColor: colors.background,
-    paddingHorizontal: 22,
-    paddingBottom: 14,
-  },
-  back: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    marginBottom: 10,
-  },
-  backText: { color: colors.textSecondary, fontSize: 15, fontWeight: "500" },
-  row: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  titleText: { flex: 1 },
-  title: {
-    color: colors.text,
-    fontSize: 31,
-    fontWeight: "600",
-    letterSpacing: -0.6,
-  },
-  description: {
-    color: colors.textSecondary,
-    fontSize: 15,
-    marginTop: 6,
-  },
-  right: { paddingBottom: 4 },
-});
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    header: {
+      backgroundColor: colors.background,
+      paddingHorizontal: 22,
+      paddingBottom: 14,
+    },
+    back: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 5,
+      marginBottom: 10,
+    },
+    backText: { color: colors.textSecondary, fontSize: 15, fontWeight: "500" },
+    row: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      justifyContent: "space-between",
+      gap: 12,
+    },
+    titleText: { flex: 1 },
+    title: {
+      color: colors.text,
+      fontSize: 31,
+      fontWeight: "600",
+      letterSpacing: -0.6,
+    },
+    description: {
+      color: colors.textSecondary,
+      fontSize: 15,
+      marginTop: 6,
+    },
+    right: { paddingBottom: 4 },
+  });
