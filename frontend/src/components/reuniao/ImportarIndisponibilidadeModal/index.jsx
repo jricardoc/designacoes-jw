@@ -134,7 +134,7 @@ export default function ImportarIndisponibilidadeModal({
   };
 
   const sheet = {
-    background: "#FBF7EF",
+    background: "var(--t-surface)",
     borderRadius: "20px",
     width: "100%",
     maxWidth: "640px",
@@ -145,13 +145,13 @@ export default function ImportarIndisponibilidadeModal({
 
   const headerBar = {
     padding: "1.25rem 1.75rem",
-    borderBottom: "1px solid #E6DCC9",
+    borderBottom: "1px solid var(--t-border-strong)",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     position: "sticky",
     top: 0,
-    background: "#FBF7EF",
+    background: "var(--t-surface)",
     zIndex: 10,
   };
 
@@ -172,7 +172,7 @@ export default function ImportarIndisponibilidadeModal({
               <CalendarClock size={22} color="#538d35" />
               Atualizar indisponibilidades
             </h2>
-            <p style={{ margin: "0.3rem 0 0", color: "#8A8071", fontSize: "0.88rem" }}>
+            <p style={{ margin: "0.3rem 0 0", color: "var(--t-text-2)", fontSize: "0.88rem" }}>
               Irmãos com partes na programação importada. Confirme quem deve ficar
               indisponível nessas datas.
             </p>
@@ -180,21 +180,21 @@ export default function ImportarIndisponibilidadeModal({
           <button
             onClick={onClose}
             style={{
-              background: "#F6F0E4",
+              background: "var(--t-surface-muted)",
               border: "none",
               borderRadius: "10px",
               padding: "0.5rem",
               cursor: "pointer",
             }}
           >
-            <X size={22} color="#8A8071" />
+            <X size={22} color="var(--t-text-2)" />
           </button>
         </div>
 
         <div style={{ padding: "1.25rem 1.75rem" }}>
           {confirmados.length === 0 && ambiguos.length === 0 ? (
-            <div style={{ textAlign: "center", color: "#8A8071", padding: "1.5rem 0" }}>
-              <Users size={40} color="#C6BAA0" />
+            <div style={{ textAlign: "center", color: "var(--t-text-2)", padding: "1.5rem 0" }}>
+              <Users size={40} color="var(--t-muted)" />
               <p style={{ marginTop: "0.75rem" }}>
                 Nenhum irmão cadastrado foi encontrado na programação importada.
               </p>
@@ -214,7 +214,7 @@ export default function ImportarIndisponibilidadeModal({
                     <span
                       style={{
                         fontWeight: 700,
-                        color: "#2B2620",
+                        color: "var(--t-text)",
                         display: "flex",
                         alignItems: "center",
                         gap: "0.4rem",
@@ -232,9 +232,9 @@ export default function ImportarIndisponibilidadeModal({
                       </button>
                     </div>
                   </div>
-                  <p style={{ margin: "0 0 0.6rem", color: "#8A8071", fontSize: "0.78rem" }}>
+                  <p style={{ margin: "0 0 0.6rem", color: "var(--t-text-2)", fontSize: "0.78rem" }}>
                     Verdes já vêm marcados (nome bateu certinho). As{" "}
-                    <span style={{ color: "#92400e", fontWeight: 600 }}>sugestões</span>{" "}
+                    <span style={{ color: "var(--t-warning-strong)", fontWeight: 600 }}>sugestões</span>{" "}
                     (tracejado) bateram por parte do nome — passe o mouse para ver o nome
                     da programação e confirme as corretas.
                   </p>
@@ -244,12 +244,12 @@ export default function ImportarIndisponibilidadeModal({
                       <div
                         key={c.irmaoId}
                         style={{
-                          border: "1px solid #E6DCC9",
+                          border: "1px solid var(--t-border-strong)",
                           borderRadius: "12px",
                           padding: "0.75rem 0.9rem",
                         }}
                       >
-                        <div style={{ fontWeight: 600, color: "#2B2620", marginBottom: "0.5rem" }}>
+                        <div style={{ fontWeight: 600, color: "var(--t-text)", marginBottom: "0.5rem" }}>
                           {c.nome}
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
@@ -273,14 +273,14 @@ export default function ImportarIndisponibilidadeModal({
                                   border: ativo
                                     ? "1.5px solid #538d35"
                                     : sugestao
-                                      ? "1.5px dashed #9A5A38"
-                                      : "1.5px solid #E6DCC9",
-                                  background: ativo ? "#eef7ea" : "white",
+                                      ? "1.5px dashed var(--t-amber)"
+                                      : "1.5px solid var(--t-border-strong)",
+                                  background: ativo ? "var(--t-success-bg)" : 'var(--t-surface)',
                                   color: ativo
                                     ? "#2f6b1e"
                                     : sugestao
-                                      ? "#92400e"
-                                      : "#8A8071",
+                                      ? "var(--t-warning-strong)"
+                                      : "var(--t-text-2)",
                                   fontWeight: 600,
                                   fontSize: "0.82rem",
                                   cursor: "pointer",
@@ -295,8 +295,8 @@ export default function ImportarIndisponibilidadeModal({
                                       height: 14,
                                       borderRadius: "50%",
                                       border: sugestao
-                                        ? "1.5px solid #9A5A38"
-                                        : "1.5px solid #C6BAA0",
+                                        ? "1.5px solid var(--t-amber)"
+                                        : "1.5px solid var(--t-muted)",
                                     }}
                                   />
                                 )}
@@ -323,17 +323,17 @@ export default function ImportarIndisponibilidadeModal({
                   <span
                     style={{
                       fontWeight: 700,
-                      color: "#92400e",
+                      color: "var(--t-warning-strong)",
                       display: "flex",
                       alignItems: "center",
                       gap: "0.4rem",
                       marginBottom: "0.6rem",
                     }}
                   >
-                    <AlertTriangle size={18} color="#9A5A38" />
+                    <AlertTriangle size={18} color="var(--t-amber)" />
                     Precisa de atenção ({ambiguos.length})
                   </span>
-                  <p style={{ margin: "0 0 0.6rem", color: "#92400e", fontSize: "0.82rem" }}>
+                  <p style={{ margin: "0 0 0.6rem", color: "var(--t-warning-strong)", fontSize: "0.82rem" }}>
                     Nomes que combinam com mais de um irmão. Escolha o correto (ou deixe
                     em branco para ignorar).
                   </p>
@@ -354,7 +354,7 @@ export default function ImportarIndisponibilidadeModal({
                             padding: "0.6rem 0.75rem",
                           }}
                         >
-                          <span style={{ fontWeight: 600, color: "#78350f" }}>
+                          <span style={{ fontWeight: 600, color: "var(--t-warning-strong)" }}>
                             {a.nomeOriginal}
                           </span>
                           <span style={{ color: "#a16207", fontSize: "0.82rem" }}>
@@ -371,7 +371,7 @@ export default function ImportarIndisponibilidadeModal({
                               borderRadius: "8px",
                               border: "1.5px solid #E7CDA8",
                               fontSize: "0.85rem",
-                              background: "#FBF7EF",
+                              background: "var(--t-surface)",
                             }}
                           >
                             <option value="">Ignorar</option>
@@ -394,16 +394,16 @@ export default function ImportarIndisponibilidadeModal({
         <div
           style={{
             padding: "1rem 1.75rem",
-            borderTop: "1px solid #E6DCC9",
+            borderTop: "1px solid var(--t-border-strong)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             position: "sticky",
             bottom: 0,
-            background: "#FBF7EF",
+            background: "var(--t-surface)",
           }}
         >
-          <span style={{ color: "#8A8071", fontSize: "0.85rem" }}>
+          <span style={{ color: "var(--t-text-2)", fontSize: "0.85rem" }}>
             {totalSelecionados} data(s) selecionada(s)
           </span>
           <div style={{ display: "flex", gap: "0.6rem" }}>
@@ -413,9 +413,9 @@ export default function ImportarIndisponibilidadeModal({
               style={{
                 padding: "0.65rem 1.1rem",
                 borderRadius: "10px",
-                border: "1.5px solid #E6DCC9",
-                background: "#FBF7EF",
-                color: "#5C5446",
+                border: "1.5px solid var(--t-border-strong)",
+                background: "var(--t-surface)",
+                color: "var(--t-text)",
                 fontWeight: 600,
                 cursor: "pointer",
               }}
@@ -456,9 +456,9 @@ export default function ImportarIndisponibilidadeModal({
 const miniBtn = {
   padding: "0.35rem 0.7rem",
   borderRadius: "8px",
-  border: "1.5px solid #E6DCC9",
-  background: "#FBF7EF",
-  color: "#5C5446",
+  border: "1.5px solid var(--t-border-strong)",
+  background: "var(--t-surface)",
+  color: "var(--t-text)",
   fontWeight: 600,
   fontSize: "0.78rem",
   cursor: "pointer",

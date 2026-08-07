@@ -23,7 +23,7 @@ export function LogoMark({ size = 40, radius }) {
         fontSize="60"
         fontWeight="800"
         letterSpacing="-2.4"
-        fill="#FBF7EF"
+        fill="var(--t-surface)"
         textAnchor="middle"
       >
         S
@@ -34,7 +34,7 @@ export function LogoMark({ size = 40, radius }) {
         fontFamily={FONT}
         fontSize="28"
         fontWeight="800"
-        fill="#FBF7EF"
+        fill="var(--t-surface)"
         textAnchor="middle"
       >
         +
@@ -43,7 +43,7 @@ export function LogoMark({ size = 40, radius }) {
   );
 }
 
-export default function Logo({ size = 40, wordmark = false, color = "#2B2620", gap = "0.65rem" }) {
+export default function Logo({ size = 40, wordmark = false, color = "var(--t-text)", gap = "0.65rem" }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap }}>
       <LogoMark size={size} />

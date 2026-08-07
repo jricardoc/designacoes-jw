@@ -94,7 +94,10 @@ export function PontoSheet({ visible, ponto, onClose }: Props) {
   };
 
   // O DELETE do ponto é restrito a admin no servidor; sem isso o botão só entregaria 403.
-  const podeExcluir = editando && podeGerenciar(usuario, "carrinho");
+  // Sem o escopo do carrinho a folha é só consulta: o backend recusa POST/PUT/
+  // DELETE, então oferecer Salvar só entregaria "Acesso negado".
+  const podeEditar = podeGerenciar(usuario, "carrinho");
+  const podeExcluir = editando && podeEditar;
 
   return (
     <Sheet visible={visible} onClose={onClose}>
@@ -159,8 +162,8 @@ export function PontoSheet({ visible, ponto, onClose }: Props) {
           </Pressable>
         ) : null}
         <Pressable
-          onPress={salvar}
-          disabled={salvando}
+          onPress={podeEditar ? salvar : undefined}
+          disabled={salvando || !podeEditar}
           style={[styles.saveBtn, salvando && styles.saveBtnDisabled]}
         >
           <Text style={styles.saveText}>{salvando ? "Salvando..." : "Salvar"}</Text>

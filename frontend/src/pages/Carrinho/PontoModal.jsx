@@ -3,7 +3,7 @@ import { X, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 /** Cores das planilhas de origem, mais algumas para pontos novos. */
-const CORES = ['#D9822B', '#8064A2', '#C0504D', '#77933C', '#2F6F7E', '#9A5A38', '#5E6B48', '#B06A43'];
+const CORES = ['#D9822B', '#8064A2', '#C0504D', '#77933C', 'var(--t-teal)', 'var(--t-amber)', 'var(--t-primary)', 'var(--t-terracotta)'];
 
 export default function PontoModal({ ponto, onClose }) {
   const { authFetch } = useAuth();

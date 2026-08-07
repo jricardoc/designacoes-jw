@@ -20,8 +20,8 @@ export const PRIVILEGIOS = [
     id: 'servoMinisterial',
     label: 'Servo Ministerial',
     abreviacao: 'Servo Min.',
-    cor: '#2F6F7E',
-    fundo: '#E4EFF2',
+    cor: 'var(--t-teal)',
+    fundo: 'var(--t-teal-bg)',
   },
 ];
 

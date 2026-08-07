@@ -3,10 +3,10 @@ import { Clock, Edit2, Plus, Archive, FileText, ChevronDown, ChevronUp } from 'l
 import { useAuth } from '../../../context/AuthContext';
 
 const ACAO_CONFIG = {
-  criou: { label: 'Criou', icon: Plus, color: '#5E6B48' },
-  editou: { label: 'Editou', icon: Edit2, color: '#6E7B57' },
-  publicou: { label: 'Publicou', icon: FileText, color: '#6E7B57' },
-  arquivou: { label: 'Arquivou', icon: Archive, color: '#8A8071' }
+  criou: { label: 'Criou', icon: Plus, color: 'var(--t-primary)' },
+  editou: { label: 'Editou', icon: Edit2, color: 'var(--t-olive)' },
+  publicou: { label: 'Publicou', icon: FileText, color: 'var(--t-olive)' },
+  arquivou: { label: 'Arquivou', icon: Archive, color: 'var(--t-text-2)' }
 };
 
 const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
@@ -71,7 +71,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
 
   if (loading) {
     return (
-      <div style={{ padding: '1rem', textAlign: 'center', color: '#8A8071' }}>
+      <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--t-text-2)' }}>
         Carregando historico...
       </div>
     );
@@ -79,7 +79,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
 
   return (
     <div style={{
-      background: '#FBF7EF',
+      background: 'var(--t-surface)',
       borderRadius: '16px',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       overflow: 'hidden'
@@ -93,33 +93,33 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
           justifyContent: 'space-between',
           alignItems: 'center',
           cursor: 'pointer',
-          background: '#F3EDE2',
-          borderBottom: expandido ? '1px solid #E6DCC9' : 'none'
+          background: 'var(--t-bg)',
+          borderBottom: expandido ? '1px solid var(--t-border-strong)' : 'none'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Clock size={18} color="#8A8071" />
-          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: '#3A352D' }}>
+          <Clock size={18} color="var(--t-text-2)" />
+          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '600', color: 'var(--t-text)' }}>
             Historico
           </h3>
           <span style={{
-            background: '#E6DCC9',
+            background: 'var(--t-border-strong)',
             padding: '0.15rem 0.5rem',
             borderRadius: '10px',
             fontSize: '0.75rem',
-            color: '#8A8071'
+            color: 'var(--t-text-2)'
           }}>
             {historicos.length}
           </span>
         </div>
-        {expandido ? <ChevronUp size={18} color="#8A8071" /> : <ChevronDown size={18} color="#8A8071" />}
+        {expandido ? <ChevronUp size={18} color="var(--t-text-2)" /> : <ChevronDown size={18} color="var(--t-text-2)" />}
       </div>
 
       {/* Conteudo */}
       {expandido && (
         <div style={{ maxHeight: '400px', overflow: 'auto' }}>
           {historicos.length === 0 ? (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#8A8071' }}>
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--t-text-2)' }}>
               Nenhuma modificacao registrada
             </div>
           ) : (
@@ -128,10 +128,10 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                 {/* Data Header */}
                 <div style={{
                   padding: '0.5rem 1.25rem',
-                  background: '#F3EDE2',
+                  background: 'var(--t-bg)',
                   fontSize: '0.75rem',
                   fontWeight: '600',
-                  color: '#8A8071',
+                  color: 'var(--t-text-2)',
                   textTransform: 'capitalize',
                   position: 'sticky',
                   top: 0
@@ -153,7 +153,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                       key={h.id}
                       style={{
                         padding: '0.875rem 1.25rem',
-                        borderBottom: '1px solid #F6F0E4',
+                        borderBottom: '1px solid var(--t-surface-muted)',
                         display: 'flex',
                         gap: '0.75rem'
                       }}
@@ -189,7 +189,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                             <span style={{ 
                               fontWeight: '600', 
                               fontSize: '0.85rem',
-                              color: '#2B2620'
+                              color: 'var(--t-text)'
                             }}>
                               {h.usuario?.nome || 'Usuario'}
                             </span>
@@ -205,7 +205,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                             </span>
                           </div>
                           <span style={{ 
-                            color: '#A2977F', 
+                            color: 'var(--t-muted)', 
                             fontSize: '0.75rem',
                             flexShrink: 0
                           }}>
@@ -216,7 +216,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                         <p style={{ 
                           margin: '0.25rem 0 0', 
                           fontSize: '0.85rem', 
-                          color: '#5C5446',
+                          color: 'var(--t-text)',
                           lineHeight: 1.4
                         }}>
                           {h.descricao}
@@ -227,10 +227,10 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                             display: 'inline-block',
                             marginTop: '0.35rem',
                             padding: '0.2rem 0.5rem',
-                            background: '#F6F0E4',
+                            background: 'var(--t-surface-muted)',
                             borderRadius: '4px',
                             fontSize: '0.75rem',
-                            color: '#8A8071'
+                            color: 'var(--t-text-2)'
                           }}>
                             {h.designacaoInfo}
                           </span>

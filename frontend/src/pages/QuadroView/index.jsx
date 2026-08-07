@@ -38,9 +38,9 @@ const MESES = [
 ];
 
 const STATUS_CONFIG = {
-  rascunho: { label: "Rascunho", color: "#B06A43", bg: "#F1E1D2" },
-  publicado: { label: "Publicado", color: "#5E6B48", bg: "#E2E7D2" },
-  arquivado: { label: "Arquivado", color: "#8A8071", bg: "#F6F0E4" },
+  rascunho: { label: "Rascunho", color: "var(--t-terracotta)", bg: "var(--t-warning-bg)" },
+  publicado: { label: "Publicado", color: "var(--t-primary)", bg: "var(--t-success-bg)" },
+  arquivado: { label: "Arquivado", color: "var(--t-text-2)", bg: "var(--t-surface-muted)" },
 };
 
 export default function QuadroView() {
@@ -184,7 +184,7 @@ export default function QuadroView() {
           const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
-            backgroundColor: "#FBF7EF",
+            backgroundColor: "var(--t-surface)",
             logging: false,
           });
 
@@ -299,7 +299,7 @@ export default function QuadroView() {
             marginLeft: "70px",
             padding: "3rem",
             textAlign: "center",
-            color: "#8A8071",
+            color: "var(--t-text-2)",
           }}
         >
           Carregando quadro...
@@ -534,9 +534,9 @@ export default function QuadroView() {
                         <div
                           className="estatistica-footer"
                           style={{
-                            color: "#5E6B48",
+                            color: "var(--t-primary)",
                             fontWeight: "600",
-                            borderTop: "1px solid #E6DCC9",
+                            borderTop: "1px solid var(--t-border-strong)",
                             paddingTop: "0.75rem",
                             marginTop: "0.5rem",
                           }}
@@ -553,7 +553,7 @@ export default function QuadroView() {
                             gap: "8px",
                             alignItems: "flex-start",
                             textAlign: "left",
-                            borderTop: "1px solid #E6DCC9",
+                            borderTop: "1px solid var(--t-border-strong)",
                             paddingTop: "0.75rem",
                             marginTop: "0.5rem",
                           }}
@@ -566,7 +566,7 @@ export default function QuadroView() {
                           <div
                             style={{
                               fontSize: "0.85rem",
-                              color: "#8A8071",
+                              color: "var(--t-text-2)",
                               lineHeight: "1.4",
                             }}
                           >

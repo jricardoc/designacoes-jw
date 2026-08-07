@@ -110,7 +110,7 @@ export default function ReuniaoV2() {
       const canvas = await html2canvas(element, {
         scale: 4, // Quadruplica a resolução nativa da tela para hiper qualidade
         useCORS: true,
-        backgroundColor: "#FBF7EF",
+        backgroundColor: "var(--t-surface)",
       });
       element.classList.remove("v2-export");
       element.style.width = originalWidth;
@@ -182,7 +182,7 @@ export default function ReuniaoV2() {
         // limite, e com 2 (o valor original) dava ~190 e borrava de verdade.
         scale: 4,
         useCORS: true,
-        backgroundColor: "#FBF7EF",
+        backgroundColor: "var(--t-surface)",
       });
 
       // Restaura o estilo depois que a foto for batida

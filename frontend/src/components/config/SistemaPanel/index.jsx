@@ -11,16 +11,16 @@ import { useAuth } from "../../../context/AuthContext";
 import Swal from "sweetalert2";
 
 const T = {
-  surface: "#FBF7EF",
-  surfaceMuted: "#F6F0E4",
-  border: "#ECE3D3",
-  borderStrong: "#E6DCC9",
-  text: "#2B2620",
-  textSec: "#8A8071",
-  muted: "#A2977F",
-  primary: "#5E6B48",
-  olive: "#6E7B57",
-  divider: "#F1EAD9",
+  surface: "var(--t-surface)",
+  surfaceMuted: "var(--t-surface-muted)",
+  border: "var(--t-border)",
+  borderStrong: "var(--t-border-strong)",
+  text: "var(--t-text)",
+  textSec: "var(--t-text-2)",
+  muted: "var(--t-muted)",
+  primary: "var(--t-primary)",
+  olive: "var(--t-olive)",
+  divider: "var(--t-border)",
 };
 
 const DIAS = [
@@ -85,7 +85,7 @@ const primaryBtn = {
   border: "none",
   borderRadius: "13px",
   background: T.primary,
-  color: "#FBF7EF",
+  color: "var(--t-surface)",
   fontWeight: 600,
   cursor: "pointer",
 };
@@ -123,7 +123,7 @@ function SaidaModal({ saida, onClose, onSaved, authFetch }) {
       <div style={{ background: T.surface, borderRadius: "20px", width: "100%", maxWidth: "460px", padding: "1.5rem 1.75rem", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" }}>
           <h2 style={{ margin: 0, fontSize: "1.2rem", color: T.text }}>{editando ? "Editar Saída" : "Nova Saída de Campo"}</h2>
-          <button onClick={onClose} style={{ background: "#F1EAD9", border: "none", borderRadius: "10px", padding: "0.4rem", cursor: "pointer" }}><X size={20} color={T.textSec} /></button>
+          <button onClick={onClose} style={{ background: "var(--t-border)", border: "none", borderRadius: "10px", padding: "0.4rem", cursor: "pointer" }}><X size={20} color={T.textSec} /></button>
         </div>
 
         <label style={label}>Dia da semana</label>
@@ -131,7 +131,7 @@ function SaidaModal({ saida, onClose, onSaved, authFetch }) {
           {DIAS.map((d) => {
             const active = d.key === diaSemana;
             return (
-              <button key={d.key} onClick={() => setDiaSemana(d.key)} style={{ padding: "8px 14px", borderRadius: "12px", border: `1px solid ${active ? T.primary : T.border}`, background: active ? T.primary : T.surfaceMuted, color: active ? "#FBF7EF" : T.textSec, fontWeight: 600, cursor: "pointer" }}>{d.label}</button>
+              <button key={d.key} onClick={() => setDiaSemana(d.key)} style={{ padding: "8px 14px", borderRadius: "12px", border: `1px solid ${active ? T.primary : T.border}`, background: active ? T.primary : T.surfaceMuted, color: active ? "var(--t-surface)" : T.textSec, fontWeight: 600, cursor: "pointer" }}>{d.label}</button>
             );
           })}
         </div>
@@ -216,8 +216,8 @@ export default function SistemaPanel() {
       text: s.local,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#9A4632",
-      cancelButtonColor: "#8A8071",
+      confirmButtonColor: "var(--t-red-dark)",
+      cancelButtonColor: "var(--t-text-2)",
       confirmButtonText: "Excluir",
       cancelButtonText: "Cancelar",
     });
@@ -268,12 +268,12 @@ export default function SistemaPanel() {
             return (
               <div key={o.id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 2px", borderTop: `1px solid ${T.divider}` }}>
                 <div style={{ width: "48px", textAlign: "center", flexShrink: 0 }}>
-                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#566239" }}>{DIA_ABBR[o.diaSemana] || o.diaSemana}</div>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--t-primary-dark)" }}>{DIA_ABBR[o.diaSemana] || o.diaSemana}</div>
                   <div style={{ fontSize: "11px", color: T.muted, marginTop: "1px" }}>{o.horario}</div>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "14.5px", fontWeight: 600, color: T.text }}>{group}</div>
-                  {host ? <div style={{ fontSize: "12.5px", color: "#9A8F7D", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{host}</div> : null}
+                  {host ? <div style={{ fontSize: "12.5px", color: "var(--t-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{host}</div> : null}
                 </div>
                 <button onClick={() => setModal({ open: true, saida: o })} title="Editar" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "6px" }}><Pencil size={16} color="#C2B79D" /></button>
                 <button onClick={() => excluirSaida(o)} title="Excluir" style={{ background: "transparent", border: "none", cursor: "pointer", padding: "6px" }}><Trash2 size={16} color="#C2877D" /></button>
@@ -293,7 +293,7 @@ export default function SistemaPanel() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: `1px solid ${T.divider}` }}>
           <div style={{ fontSize: "15px", fontWeight: 500, color: T.text }}>Notificações</div>
           <button onClick={toggleNotif} aria-label="Notificações" style={{ width: "46px", height: "28px", borderRadius: "999px", border: "none", cursor: "pointer", background: notif ? T.primary : "#D8CEBC", position: "relative", transition: "background .15s ease" }}>
-            <span style={{ position: "absolute", top: "3px", left: notif ? "21px" : "3px", width: "22px", height: "22px", borderRadius: "999px", background: "#FBF7EF", transition: "left .15s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+            <span style={{ position: "absolute", top: "3px", left: notif ? "21px" : "3px", width: "22px", height: "22px", borderRadius: "999px", background: "var(--t-surface)", transition: "left .15s ease", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
           </button>
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px" }}>
@@ -302,7 +302,7 @@ export default function SistemaPanel() {
         </div>
       </div>
 
-      <div style={{ textAlign: "center", fontSize: "12px", color: "#B7AC97", marginTop: "20px" }}>
+      <div style={{ textAlign: "center", fontSize: "12px", color: "var(--t-muted)", marginTop: "20px" }}>
         Quadro de Designações · Versão 2.4.0
       </div>
       </div>

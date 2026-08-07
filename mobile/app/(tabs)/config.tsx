@@ -22,7 +22,7 @@ import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { SaidaCampoModal } from "@/components/config/SaidaCampoModal";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
-import { ehAdminGeral } from "@/utils/permissoes";
+import { ehAdminGeral, podeGerenciar } from "@/utils/permissoes";
 import { useNotifPref } from "@/notifications/notifPref";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -59,7 +59,11 @@ export default function ConfigScreen() {
   const notif = useNotifPref();
   const toast = useToast();
 
-  const [secao, setSecao] = useState<Secao>("irmaos");
+  // Quem entrou só pelo escopo de dirigentes não tem a aba "Irmãos": abrir nela
+  // deixaria a tela vazia.
+  const [secao, setSecao] = useState<Secao>(
+    ehAdminGeral(usuario) ? "irmaos" : "sistema",
+  );
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FuncaoId | "todos">("todos");
   const [congName, setCongName] = useState("");
@@ -82,9 +86,15 @@ export default function ConfigScreen() {
     [irmaos, busca, filtro],
   );
 
+  // Cadastro de irmãos é do admin geral; as saídas de campo são da área de
+  // dirigentes (o backend concorda: /saidas-campo exige o escopo `dirigentes`).
+  // Quem tem só o escopo entra e vê apenas a aba Sistema.
+  const geral = ehAdminGeral(usuario);
+  const podeSaidas = podeGerenciar(usuario, "dirigentes");
+
   // O menu já esconde a entrada, mas a rota continua alcançável (deep link,
   // rebaixamento com o app aberto). O backend também barra as escritas.
-  if (!ehAdminGeral(usuario)) {
+  if (!geral && !podeSaidas) {
     return (
       <View style={styles.screen}>
         <GradientHeader
@@ -120,7 +130,9 @@ export default function ConfigScreen() {
       />
 
       <View style={styles.segmented}>
-        {(["irmaos", "sistema"] as const).map((s) => {
+        {(["irmaos", "sistema"] as const)
+          .filter((s) => (s === "irmaos" ? geral : podeSaidas))
+          .map((s) => {
           const active = secao === s;
           return (
             <Pressable
@@ -141,7 +153,7 @@ export default function ConfigScreen() {
         })}
       </View>
 
-      {secao === "irmaos" ? (
+      {secao === "irmaos" && geral ? (
         isLoading ? (
           <Loading />
         ) : (

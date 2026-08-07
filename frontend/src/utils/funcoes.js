@@ -7,11 +7,11 @@
  */
 
 export const FUNCOES = [
-  { id: 'microfone', label: 'Microfone', color: '#6E7B57' },
-  { id: 'indicador', label: 'Indicador', color: '#5E6B48' },
-  { id: 'audioVideo', label: 'Áudio e Vídeo', color: '#6E7B57' },
-  { id: 'estacionamento', label: 'Estacionamento', color: '#B06A43' },
-  { id: 'dirigente', label: 'Dirigente', color: '#A8503B' },
+  { id: 'microfone', label: 'Microfone', color: 'var(--t-olive)' },
+  { id: 'indicador', label: 'Indicador', color: 'var(--t-primary)' },
+  { id: 'audioVideo', label: 'Áudio e Vídeo', color: 'var(--t-olive)' },
+  { id: 'estacionamento', label: 'Estacionamento', color: 'var(--t-terracotta)' },
+  { id: 'dirigente', label: 'Dirigente', color: 'var(--t-red)' },
 ];
 
 /** Devolve a definição da função, ou null se o id não for conhecido. */

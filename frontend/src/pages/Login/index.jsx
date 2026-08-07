@@ -61,13 +61,13 @@ export default function Login() {
           <h1 style={{
             fontSize: '1.9rem',
             fontWeight: '700',
-            color: '#2B2620',
+            color: 'var(--t-text)',
             marginBottom: '0.4rem',
             letterSpacing: '-0.02em'
           }}>
             Servir Mais
           </h1>
-          <p style={{ color: '#8A8071', fontSize: '0.95rem' }}>
+          <p style={{ color: 'var(--t-text-2)', fontSize: '0.95rem' }}>
             Acesse sua conta para continuar
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function Login() {
               display: 'block', 
               marginBottom: '0.5rem',
               fontWeight: '500',
-              color: '#3A352D',
+              color: 'var(--t-text)',
               fontSize: '0.9rem'
             }}>
               Nickname
@@ -88,7 +88,7 @@ export default function Login() {
             <div style={{ position: 'relative' }}>
               <User 
                 size={20} 
-                color="#A2977F" 
+                color="var(--t-muted)" 
                 style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <input
@@ -102,14 +102,14 @@ export default function Login() {
                   width: '100%',
                   padding: '0.875rem 1rem 0.875rem 2.75rem',
                   borderRadius: '12px',
-                  border: '2px solid #E6DCC9',
+                  border: '2px solid var(--t-border-strong)',
                   fontSize: '1rem',
                   transition: 'all 0.2s',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#6E7B57'}
-                onBlur={(e) => e.target.style.borderColor = '#E6DCC9'}
+                onFocus={(e) => e.target.style.borderColor = 'var(--t-olive)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--t-border-strong)'}
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function Login() {
               display: 'block', 
               marginBottom: '0.5rem',
               fontWeight: '500',
-              color: '#3A352D',
+              color: 'var(--t-text)',
               fontSize: '0.9rem'
             }}>
               Senha
@@ -128,7 +128,7 @@ export default function Login() {
             <div style={{ position: 'relative' }}>
               <Lock 
                 size={20} 
-                color="#A2977F" 
+                color="var(--t-muted)" 
                 style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }}
               />
               <input
@@ -142,14 +142,14 @@ export default function Login() {
                   width: '100%',
                   padding: '0.875rem 3rem 0.875rem 2.75rem',
                   borderRadius: '12px',
-                  border: '2px solid #E6DCC9',
+                  border: '2px solid var(--t-border-strong)',
                   fontSize: '1rem',
                   transition: 'all 0.2s',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#6E7B57'}
-                onBlur={(e) => e.target.style.borderColor = '#E6DCC9'}
+                onFocus={(e) => e.target.style.borderColor = 'var(--t-olive)'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--t-border-strong)'}
               />
               <button
                 type="button"
@@ -165,7 +165,7 @@ export default function Login() {
                   padding: '4px'
                 }}
               >
-                {mostrarSenha ? <EyeOff size={20} color="#A2977F" /> : <Eye size={20} color="#A2977F" />}
+                {mostrarSenha ? <EyeOff size={20} color="var(--t-muted)" /> : <Eye size={20} color="var(--t-muted)" />}
               </button>
             </div>
           </div>
@@ -177,13 +177,13 @@ export default function Login() {
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.875rem',
-              background: '#F8EDE8',
+              background: 'var(--t-danger-bg)',
               borderRadius: '10px',
               marginBottom: '1.25rem',
               border: '1px solid #F0DED3'
             }}>
-              <AlertCircle size={20} color="#A8503B" />
-              <span style={{ color: '#9A4632', fontSize: '0.9rem' }}>{erro}</span>
+              <AlertCircle size={20} color="var(--t-red)" />
+              <span style={{ color: 'var(--t-red-dark)', fontSize: '0.9rem' }}>{erro}</span>
             </div>
           )}
 
@@ -195,8 +195,8 @@ export default function Login() {
               width: '100%',
               padding: '1rem',
               background: carregando 
-                ? '#A2977F' 
-                : 'linear-gradient(135deg, #6E7B57 0%, #566239 100%)',
+                ? 'var(--t-muted)' 
+                : 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '12px',
@@ -215,7 +215,7 @@ export default function Login() {
         <p style={{ 
           textAlign: 'center', 
           marginTop: '2rem',
-          color: '#A2977F',
+          color: 'var(--t-muted)',
           fontSize: '0.85rem'
         }}>
           Congregação Norte de Itapuã

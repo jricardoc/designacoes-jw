@@ -3,23 +3,152 @@
    Paleta quente (creme / oliva / terracota), cartões suaves,
    tipografia limpa. Classes utilitárias reaproveitáveis (.t-*).
    ============================================================ */
-:root {
+/* ------------------------------------------------------------------
+   Tokens — os mesmos do app mobile (mobile/src/theme/index.ts).
+
+   Tudo que é cor passa por aqui. Componente NÃO escreve hex: escreve
+   var(--t-*). É isso que permite trocar tema claro/escuro e ligar o modo
+   daltônico sem tocar em nenhum componente.
+
+   Os temas são aplicados por atributo no <html>:
+     data-tema="claro|escuro"   e   data-daltonico="1"
+   ------------------------------------------------------------------ */
+:root,
+:root[data-tema="claro"] {
   --t-bg: #f3ede2;
   --t-surface: #fbf7ef;
   --t-surface-muted: #f6f0e4;
+  --t-slot-bg: #f8f3e9;
+  --t-slot-border: #e7decd;
   --t-border: #ece3d3;
   --t-border-strong: #e6dcc9;
   --t-text: #2b2620;
   --t-text-2: #8a8071;
   --t-muted: #a2977f;
+  --t-text-on-primary: #fbf7ef;
   --t-primary: #5e6b48;
   --t-primary-dark: #566239;
   --t-olive: #6e7b57;
   --t-sand: #ede6d5;
   --t-brown: #9a7e55;
-  --t-terra: #a8503b;
+  --t-terracotta: #b06a43;
+  --t-orange: #9a7e55;
+  --t-orange-dark: #7a6340;
+  --t-green: #5e6b48;
+  --t-green-dark: #566239;
+  --t-red: #a8503b;
+  --t-red-dark: #9a4632;
+  --t-amber: #9a5a38;
+  --t-warning-strong: #b45309;
+  --t-teal: #2f6f7e;
+  --t-teal-bg: #e4eff2;
+  --t-success-bg: #e2e7d2;
+  --t-warning-bg: #f1e1d2;
+  --t-danger-bg: #f8ede8;
+  --t-info-bg: #eef0e3;
+  --t-mes-etiqueta: #c2a98c;
+  --t-backdrop: rgba(28, 27, 20, 0.5);
+  /* Alias histórico: era o vermelho, não a terracota. Mantido para não
+     quebrar quem já usa. */
+  --t-terra: var(--t-red);
   --t-shadow: 0 1px 2px rgba(43, 38, 32, 0.04);
   --t-shadow-lg: 0 12px 28px rgba(43, 38, 32, 0.1);
+}
+
+/* ---------- Tema escuro: o mesmo terroso, invertido ----------
+   Tokens com sufixo "-dark" são TEXTO FORTE sobre os fundos suaves; no
+   escuro eles precisam CLAREAR, não escurecer, senão somem no fundo. */
+:root[data-tema="escuro"] {
+  --t-bg: #1a1712;
+  --t-surface: #242019;
+  --t-surface-muted: #2b261d;
+  --t-slot-bg: #2b261d;
+  --t-slot-border: #3c3528;
+  --t-border: #332d22;
+  --t-border-strong: #413a2c;
+  --t-text: #ede7da;
+  --t-text-2: #a89d88;
+  --t-muted: #8a7f6b;
+  --t-text-on-primary: #fbf7ef;
+  --t-primary: #77855a;
+  --t-primary-dark: #96a578;
+  --t-olive: #8c9a6f;
+  --t-sand: #38321f;
+  --t-brown: #b7a077;
+  --t-terracotta: #ce8f66;
+  --t-orange: #b7a077;
+  --t-orange-dark: #d3b385;
+  --t-green: #8ca268;
+  --t-green-dark: #a5ba82;
+  --t-red: #d07b63;
+  --t-red-dark: #de9179;
+  --t-amber: #ce9166;
+  --t-warning-strong: #d9a05b;
+  --t-teal: #6fa9b8;
+  --t-teal-bg: #1e2e33;
+  --t-success-bg: #2a3120;
+  --t-warning-bg: #3b2f1e;
+  --t-danger-bg: #3c271f;
+  --t-info-bg: #2d3223;
+  --t-mes-etiqueta: #8f805f;
+  --t-backdrop: rgba(0, 0, 0, 0.62);
+  --t-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --t-shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+/* ---------- Modo daltônico ----------
+   O terroso inteiro é construído sobre oliva × terracota, que é exatamente o
+   eixo vermelho-verde que protanopia e deuteranopia colapsam: simulados, os
+   dois viram o mesmo marrom acinzentado. Por isso a paleta vai para o eixo
+   AZUL × LARANJA (base Okabe-Ito), que sobrevive aos três tipos. */
+:root[data-daltonico="1"],
+:root[data-daltonico="1"][data-tema="claro"] {
+  --t-primary: #1f6fa8;
+  --t-primary-dark: #17557f;
+  --t-olive: #2e7fb5;
+  --t-green: #0f7b63;
+  --t-green-dark: #0b6350;
+  --t-success-bg: #d6ebe5;
+  --t-red: #c2410c;
+  --t-red-dark: #9c3306;
+  --t-danger-bg: #fbe6da;
+  --t-terracotta: #b45309;
+  --t-orange: #b45309;
+  --t-orange-dark: #92400e;
+  --t-amber: #8f5706;
+  --t-warning-strong: #8f5706;
+  --t-warning-bg: #fbefd4;
+  --t-teal: #0f7b63;
+  --t-teal-bg: #d6ebe5;
+  --t-info-bg: #dceaf4;
+  --t-sand: #dceaf4;
+  --t-brown: #17557f;
+  --t-mes-etiqueta: #8fa9bd;
+}
+
+:root[data-daltonico="1"][data-tema="escuro"] {
+  --t-primary: #276e9e;
+  --t-primary-dark: #7fb6e0;
+  --t-olive: #5ea3d2;
+  --t-green: #3e9c84;
+  --t-green-dark: #6fc2ab;
+  --t-success-bg: #17332c;
+  --t-red: #c2410c;
+  --t-red-dark: #f0975f;
+  --t-danger-bg: #3a2416;
+  --t-terracotta: #e0954f;
+  --t-orange: #e0954f;
+  --t-orange-dark: #efae6b;
+  --t-amber: #e0a94c;
+  --t-warning-strong: #e0a94c;
+  --t-warning-bg: #3a2e17;
+  --t-teal: #6fc2ab;
+  --t-teal-bg: #17332c;
+  --t-info-bg: #1d3040;
+  --t-sand: #1d3040;
+  --t-brown: #7fb6e0;
+  --t-mes-etiqueta: #6e90a8;
 }
 
 /* ---------- Layout helpers ---------- */

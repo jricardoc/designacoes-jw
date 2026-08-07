@@ -20,7 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
-import { ehAdminGeral } from "@/utils/permissoes";
+import { ehAdminGeral, podeGerenciar } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { MarcaServirMais } from "./MarcaServirMais";
@@ -33,7 +33,7 @@ interface ItemMenu {
   rotulo: string;
   icone: keyof typeof Ionicons.glyphMap;
   href: Href;
-  /** Some do menu para quem não é administrador. */
+  /** Some do menu para quem não pode entrar na tela. */
   somenteAdmin?: boolean;
 }
 
@@ -140,7 +140,14 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           </View>
 
           <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
-            {ITENS.filter((item) => !item.somenteAdmin || ehAdminGeral(usuario)).map((item) => {
+            {ITENS.filter(
+              (item) =>
+                !item.somenteAdmin ||
+                ehAdminGeral(usuario) ||
+                // As saídas de campo vivem em Configurações e são da área de
+                // dirigentes — quem tem esse escopo precisa alcançar a tela.
+                podeGerenciar(usuario, "dirigentes"),
+            ).map((item) => {
               const ativo = item.chave === atual;
               return (
                 <Pressable

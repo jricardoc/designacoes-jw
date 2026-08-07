@@ -47,7 +47,7 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
         cursor: 'pointer',
         borderRadius: '8px',
         marginBottom: '0.45rem',
-        background: regras[chave] ? '#E9EFDC' : 'white',
+        background: regras[chave] ? 'var(--t-success-bg)' : 'var(--t-surface)',
       }}
     >
       <div
@@ -55,8 +55,8 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
           width: '20px',
           height: '20px',
           borderRadius: '4px',
-          border: regras[chave] ? '2px solid #5E6B48' : '2px solid #DCD0B9',
-          background: regras[chave] ? '#5E6B48' : 'white',
+          border: regras[chave] ? '2px solid var(--t-primary)' : '2px solid var(--t-border-strong)',
+          background: regras[chave] ? 'var(--t-primary)' : 'var(--t-surface)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -73,8 +73,8 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
         style={{ display: 'none' }}
       />
       <div>
-        <div style={{ fontWeight: 500, color: '#2B2620' }}>{label}</div>
-        <div style={{ fontSize: '0.8rem', color: '#8A8071', lineHeight: 1.4 }}>{desc}</div>
+        <div style={{ fontWeight: 500, color: 'var(--t-text)' }}>{label}</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--t-text-2)', lineHeight: 1.4 }}>{desc}</div>
       </div>
     </label>
   );
@@ -94,7 +94,7 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
     >
       <div
         style={{
-          background: '#FBF7EF',
+          background: 'var(--t-surface)',
           borderRadius: '16px',
           width: '100%',
           maxWidth: '480px',
@@ -106,28 +106,28 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
         <div
           style={{
             padding: '1.25rem 1.5rem',
-            borderBottom: '1px solid #E6DCC9',
+            borderBottom: '1px solid var(--t-border-strong)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: '#2B2620' }}>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: 'var(--t-text)' }}>
             Regerar Escala
           </h2>
           <button
             onClick={onClose}
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.5rem' }}
           >
-            <X size={20} color="#8A8071" />
+            <X size={20} color="var(--t-text-2)" />
           </button>
         </div>
 
         <div style={{ padding: '1.25rem 1.5rem', overflow: 'auto' }}>
           <div
             style={{
-              background: '#F1E1D2',
-              color: '#92400e',
+              background: 'var(--t-warning-bg)',
+              color: 'var(--t-warning-strong)',
               borderRadius: '10px',
               padding: '0.75rem',
               fontSize: '0.85rem',
@@ -147,10 +147,10 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
             <div
               style={{
                 padding: '0.75rem',
-                background: '#F6E7E0',
+                background: 'var(--t-danger-bg)',
                 borderRadius: '8px',
                 marginTop: '1rem',
-                color: '#9A4632',
+                color: 'var(--t-red-dark)',
                 fontSize: '0.9rem',
               }}
             >
@@ -159,7 +159,7 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', padding: '1rem 1.5rem', borderTop: '1px solid #E6DCC9' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', padding: '1rem 1.5rem', borderTop: '1px solid var(--t-border-strong)' }}>
           <button
             type="button"
             onClick={onClose}
@@ -167,11 +167,11 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
               flex: 1,
               padding: '0.85rem',
               borderRadius: '10px',
-              border: '1px solid #DCD0B9',
-              background: '#FBF7EF',
+              border: '1px solid var(--t-border-strong)',
+              background: 'var(--t-surface)',
               fontWeight: 600,
               cursor: 'pointer',
-              color: '#3A352D',
+              color: 'var(--t-text)',
             }}
           >
             Cancelar
@@ -185,7 +185,7 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
               padding: '0.85rem',
               borderRadius: '10px',
               border: 'none',
-              background: loading ? '#DCD0B9' : 'linear-gradient(135deg, #6E7B57 0%, #566239 100%)',
+              background: loading ? 'var(--t-border-strong)' : 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
               color: 'white',
               fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',

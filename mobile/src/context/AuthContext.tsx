@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { AppState } from "react-native";
 import { apiRequest } from "@/api/client";
 import { removerPushToken } from "@/api/hooks/usePush";
 import { tokenStore } from "@/api/tokenStore";
@@ -108,6 +109,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // ignore
     }
   }, []);
+
+  /**
+   * Relê o usuário ao voltar ao primeiro plano.
+   *
+   * O backend revalida a permissão a cada requisição, mas o APP só sabia dela
+   * no login: quem recebia uma área nova continuava sem os botões até reiniciar
+   * o app, e quem tinha uma área revogada continuava vendo botões que já davam
+   * 403. Uma leitura de /auth/me na volta resolve os dois casos.
+   */
+  useEffect(() => {
+    if (!usuario) return undefined;
+    const sub = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") refreshUsuario();
+    });
+    return () => sub.remove();
+  }, [usuario, refreshUsuario]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

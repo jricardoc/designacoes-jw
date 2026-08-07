@@ -233,8 +233,10 @@ export default function CarrinhoScreen() {
                     key={turno.id}
                     accentColor={ponto.cor}
                     style={[styles.turnoCard, !ponto.ativo && styles.esmaecido]}
-                    onPress={() =>
-                      setTurnoSheet({ open: true, turno, ponto })
+                    onPress={
+                      podeEditar
+                        ? () => setTurnoSheet({ open: true, turno, ponto })
+                        : undefined
                     }
                   >
                     <View style={styles.turnoTopo}>
@@ -334,7 +336,11 @@ export default function CarrinhoScreen() {
                 {pontos.map((ponto, i) => (
                   <Pressable
                     key={ponto.id}
-                    onPress={() => setPontoSheet({ open: true, ponto })}
+                    onPress={
+                      podeEditar
+                        ? () => setPontoSheet({ open: true, ponto })
+                        : undefined
+                    }
                     style={[
                       styles.linha,
                       i > 0 && styles.linhaDivisor,
@@ -375,12 +381,14 @@ export default function CarrinhoScreen() {
                   {publicadores.length} cadastrada(s)
                 </Text>
               </View>
-              <Button
-                label="Pessoa"
-                icon="add"
-                variant="secondary"
-                onPress={() => setPessoaSheet({ open: true, publicador: null })}
-              />
+              {podeEditar ? (
+                <Button
+                  label="Pessoa"
+                  icon="add"
+                  variant="secondary"
+                  onPress={() => setPessoaSheet({ open: true, publicador: null })}
+                />
+              ) : null}
             </View>
 
             {publicadores.length > 0 ? (
@@ -388,8 +396,10 @@ export default function CarrinhoScreen() {
                 {publicadores.map((p, i) => (
                   <Pressable
                     key={p.id}
-                    onPress={() =>
-                      setPessoaSheet({ open: true, publicador: p })
+                    onPress={
+                      podeEditar
+                        ? () => setPessoaSheet({ open: true, publicador: p })
+                        : undefined
                     }
                     style={[
                       styles.linha,
@@ -432,12 +442,14 @@ export default function CarrinhoScreen() {
                 title="Nenhuma pessoa cadastrada"
                 message="Cadastre quem serve no carrinho para montar os turnos."
               >
-                <Button
-                  label="Cadastrar Pessoa"
-                  onPress={() =>
-                    setPessoaSheet({ open: true, publicador: null })
-                  }
-                />
+                {podeEditar ? (
+                  <Button
+                    label="Cadastrar Pessoa"
+                    onPress={() =>
+                      setPessoaSheet({ open: true, publicador: null })
+                    }
+                  />
+                ) : null}
               </EmptyState>
             )}
           </View>

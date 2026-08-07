@@ -140,7 +140,7 @@ export default function Reuniao() {
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
-        backgroundColor: "#FBF7EF",
+        backgroundColor: "var(--t-surface)",
       });
       const link = document.createElement("a");
       link.download = `programacao-semana-${weekId}.png`;
@@ -179,7 +179,7 @@ export default function Reuniao() {
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
-      cancelButtonColor: "#8A8071",
+      cancelButtonColor: "var(--t-text-2)",
       confirmButtonText: "Sim, excluir",
       cancelButtonText: "Cancelar",
     });

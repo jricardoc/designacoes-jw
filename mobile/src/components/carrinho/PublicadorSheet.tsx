@@ -70,7 +70,10 @@ export function PublicadorSheet({ visible, publicador, pontos, onClose }: Props)
 
   const editando = !!publicador;
   const salvando = criar.isPending || atualizar.isPending;
-  const podeExcluir = editando && podeGerenciar(usuario, "carrinho");
+  // Sem o escopo do carrinho a folha é só consulta: o backend recusa POST/PUT/
+  // DELETE, então oferecer Salvar só entregaria "Acesso negado".
+  const podeEditar = podeGerenciar(usuario, "carrinho");
+  const podeExcluir = editando && podeEditar;
 
   const alternarTurno = (id: number) =>
     setTurnoIds((prev) =>
@@ -227,7 +230,7 @@ export function PublicadorSheet({ visible, publicador, pontos, onClose }: Props)
             <Ionicons name="trash-outline" size={18} color={colors.red} />
           </Pressable>
         ) : null}
-        <Pressable onPress={salvar} disabled={salvando} style={styles.saveBtn}>
+        <Pressable onPress={podeEditar ? salvar : undefined} disabled={salvando || !podeEditar} style={styles.saveBtn}>
           <Text style={styles.saveText}>{salvando ? "Salvando..." : "Salvar"}</Text>
         </Pressable>
       </View>

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { TemaProvider } from "./context/TemaContext";
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
 import Designacoes from "./pages/Designacoes";
@@ -72,6 +73,7 @@ function RotaProtegida({ children, usarLayout = true }) {
 function App() {
   return (
     <BrowserRouter>
+      <TemaProvider>
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -173,6 +175,7 @@ function App() {
           <Route path="*" element={<Navigate to="/designacoes" replace />} />
         </Routes>
       </AuthProvider>
+      </TemaProvider>
     </BrowserRouter>
   );
 }

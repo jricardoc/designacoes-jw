@@ -52,9 +52,9 @@ function chaveData(data, mesQuadro) {
 }
 
 const STATUS_CONFIG = {
-  rascunho: { label: "Rascunho", color: "#B06A43", bg: "#F1E1D2" },
-  publicado: { label: "Publicado", color: "#5E6B48", bg: "#E2E7D2" },
-  arquivado: { label: "Arquivado", color: "#8A8071", bg: "#F6F0E4" },
+  rascunho: { label: "Rascunho", color: "var(--t-terracotta)", bg: "var(--t-warning-bg)" },
+  publicado: { label: "Publicado", color: "var(--t-primary)", bg: "var(--t-success-bg)" },
+  arquivado: { label: "Arquivado", color: "var(--t-text-2)", bg: "var(--t-surface-muted)" },
 };
 
 export default function DirigentesQuadroView() {
@@ -190,7 +190,7 @@ export default function DirigentesQuadroView() {
           const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
-            backgroundColor: "#FBF7EF",
+            backgroundColor: "var(--t-surface)",
             logging: false,
           });
 
@@ -318,7 +318,7 @@ export default function DirigentesQuadroView() {
     return (
       <div style={{ display: "flex", minHeight: "100vh" }}>
         <Sidebar />
-        <div style={{ flex: 1, marginLeft: "70px", padding: "3rem", textAlign: "center", color: "#8A8071" }}>
+        <div style={{ flex: 1, marginLeft: "70px", padding: "3rem", textAlign: "center", color: "var(--t-text-2)" }}>
           Carregando escala...
         </div>
       </div>
@@ -412,7 +412,7 @@ export default function DirigentesQuadroView() {
 
           <div className="header-actions-row">
             <div className="header-title-group">
-              <div className="header-icon-box" style={{ background: 'linear-gradient(135deg, #6E7B57 0%, #5E6B48 100%)' }}>
+              <div className="header-icon-box" style={{ background: 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%)' }}>
                 <Compass size={28} />
               </div>
               <div className="header-info-content">

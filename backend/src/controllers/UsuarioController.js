@@ -1,7 +1,7 @@
 const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 const PrivilegioService = require('../services/PrivilegioService');
-const { sanearEscopos, CATALOGO_ESCOPOS } = require('../middleware/escopos');
+const { sanearEscopos, CATALOGO_ESCOPOS, ESCOPOS_VALIDOS } = require('../middleware/escopos');
 
 const SENHA_PADRAO = 'jw1010';
 
@@ -216,20 +216,21 @@ class UsuarioController {
 
             const atualizado = await prisma.usuario.update({
                 where: { id: targetId },
-                data: {
-                    isAdmin: virandoGeral,
-                    // Admin geral contempla tudo: guardar escopo junto so criaria
-                    // duas fontes de verdade e um estado confuso na tela ("geral
-                    // + designacoes"). Ao rebaixar, ele fica sem escopo nenhum —
-                    // devolver acesso e uma decisao consciente de quem promove.
-                    escopos: [],
-                },
+                // Os escopos NAO sao apagados ao promover/rebaixar.
+                //
+                // Enquanto a pessoa e geral eles ficam inertes — `temEscopo` checa
+                // `isAdmin` antes de olhar a lista, e a tela ramifica em `isAdmin`
+                // em todo lugar, entao nada aparece duplicado. Zera-los aqui fazia
+                // um toque acidental em "Tornar admin" apagar, em silencio e sem
+                // volta, as areas que alguem tinha concedido: a lista nao existe em
+                // nenhum outro lugar. Preservando, promover e desfazer devolve o
+                // estado anterior.
+                data: { isAdmin: virandoGeral },
                 select: {
                     id: true,
                     nickname: true,
                     nome: true,
                     isAdmin: true,
-                    escopos: true,
                     escopos: true
                 }
             });
@@ -291,7 +292,20 @@ class UsuarioController {
                 });
             }
 
-            const escopos = sanearEscopos(req.body && req.body.escopos);
+            // Corpo invalido nao pode ser tratado como "remover tudo": um erro de
+            // digitacao no cliente apagaria as areas do irmao devolvendo 200. Lista
+            // vazia continua valendo como "sem area", mas so quando VEM como lista.
+            const bruto = req.body && req.body.escopos;
+            if (!Array.isArray(bruto)) {
+                return res.status(400).json({ error: 'Informe `escopos` como lista.' });
+            }
+            const escopos = sanearEscopos(bruto);
+            if (escopos.length !== new Set(bruto).size) {
+                return res.status(400).json({
+                    error: 'Alguma área informada não existe.',
+                    escoposValidos: ESCOPOS_VALIDOS
+                });
+            }
 
             const atualizado = await prisma.usuario.update({
                 where: { id: targetId },
@@ -301,7 +315,6 @@ class UsuarioController {
                     nickname: true,
                     nome: true,
                     isAdmin: true,
-                    escopos: true,
                     escopos: true
                 }
             });

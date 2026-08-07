@@ -81,7 +81,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
         cursor: 'pointer',
         borderRadius: '8px',
         marginBottom: '0.5rem',
-        background: regras[chave] ? '#E9EFDC' : 'white'
+        background: regras[chave] ? 'var(--t-success-bg)' : 'var(--t-surface)'
       }}
     >
       <div
@@ -89,8 +89,8 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
           width: '20px',
           height: '20px',
           borderRadius: '4px',
-          border: regras[chave] ? '2px solid #5E6B48' : '2px solid #DCD0B9',
-          background: regras[chave] ? '#5E6B48' : 'white',
+          border: regras[chave] ? '2px solid var(--t-primary)' : '2px solid var(--t-border-strong)',
+          background: regras[chave] ? 'var(--t-primary)' : 'var(--t-surface)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -107,8 +107,8 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
         style={{ display: 'none' }}
       />
       <div>
-        <div style={{ fontWeight: '500', color: '#2B2620' }}>{label}</div>
-        <div style={{ fontSize: '0.8rem', color: '#8A8071', lineHeight: 1.4 }}>{desc}</div>
+        <div style={{ fontWeight: '500', color: 'var(--t-text)' }}>{label}</div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--t-text-2)', lineHeight: 1.4 }}>{desc}</div>
       </div>
     </label>
   );
@@ -125,7 +125,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
       padding: '1rem'
     }}>
       <div style={{
-        background: '#FBF7EF',
+        background: 'var(--t-surface)',
         borderRadius: '16px',
         width: '100%',
         maxWidth: '480px',
@@ -135,12 +135,12 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
         {/* Header */}
         <div style={{
           padding: '1.25rem 1.5rem',
-          borderBottom: '1px solid #E6DCC9',
+          borderBottom: '1px solid var(--t-border-strong)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
         }}>
-          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: '#2B2620' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: 'var(--t-text)' }}>
             Nova Escala de Dirigentes
           </h2>
           <button
@@ -153,7 +153,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
               borderRadius: '8px'
             }}
           >
-            <X size={20} color="#8A8071" />
+            <X size={20} color="var(--t-text-2)" />
           </button>
         </div>
 
@@ -162,7 +162,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
           {/* Mes e Ano */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#3A352D' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--t-text)' }}>
                 Mês
               </label>
               <select
@@ -172,7 +172,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: '8px',
-                  border: '1px solid #DCD0B9',
+                  border: '1px solid var(--t-border-strong)',
                   fontSize: '1rem'
                 }}
               >
@@ -182,7 +182,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#3A352D' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: 'var(--t-text)' }}>
                 Ano
               </label>
               <input
@@ -195,7 +195,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
                   width: '100%',
                   padding: '0.75rem',
                   borderRadius: '8px',
-                  border: '1px solid #DCD0B9',
+                  border: '1px solid var(--t-border-strong)',
                   fontSize: '1rem'
                 }}
               />
@@ -205,10 +205,10 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
           {jaExiste && (
             <div style={{
               padding: '0.75rem',
-              background: '#F1E1D2',
+              background: 'var(--t-warning-bg)',
               borderRadius: '8px',
               marginBottom: '1rem',
-              color: '#92400e',
+              color: 'var(--t-warning-strong)',
               fontSize: '0.9rem'
             }}>
               ⚠️ Já existe uma escala para esse mês/ano
@@ -218,7 +218,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
           {/* Toggle Auto-preenchimento */}
           <div style={{
             padding: '1rem',
-            background: autoPreenchimento ? '#E9EFDC' : '#F3EDE2',
+            background: autoPreenchimento ? 'var(--t-success-bg)' : 'var(--t-bg)',
             borderRadius: '12px',
             marginBottom: '1rem'
           }}>
@@ -232,7 +232,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
                 width: '48px',
                 height: '28px',
                 borderRadius: '14px',
-                background: autoPreenchimento ? '#5E6B48' : '#DCD0B9',
+                background: autoPreenchimento ? 'var(--t-primary)' : 'var(--t-border-strong)',
                 position: 'relative',
                 transition: 'background 0.2s'
               }}>
@@ -240,7 +240,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
                   width: '24px',
                   height: '24px',
                   borderRadius: '12px',
-                  background: '#FBF7EF',
+                  background: 'var(--t-surface)',
                   position: 'absolute',
                   top: '2px',
                   left: autoPreenchimento ? '22px' : '2px',
@@ -255,11 +255,11 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
                 style={{ display: 'none' }}
               />
               <div>
-                <div style={{ fontWeight: '600', color: '#2B2620', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Wand2 size={18} color={autoPreenchimento ? '#5E6B48' : '#8A8071'} />
+                <div style={{ fontWeight: '600', color: 'var(--t-text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Wand2 size={18} color={autoPreenchimento ? 'var(--t-primary)' : 'var(--t-text-2)'} />
                   Preenchimento Automático
                 </div>
-                <div style={{ fontSize: '0.85rem', color: '#8A8071' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--t-text-2)' }}>
                   Distribui os dirigentes automaticamente considerando disponibilidade
                 </div>
               </div>
@@ -270,11 +270,11 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
           {autoPreenchimento && (
             <div style={{
               padding: '1rem',
-              background: '#F3EDE2',
+              background: 'var(--t-bg)',
               borderRadius: '12px',
               marginBottom: '1.5rem'
             }}>
-              <h4 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: '#8A8071', fontWeight: '600' }}>
+              <h4 style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--t-text-2)', fontWeight: '600' }}>
                 Regras de Preenchimento
               </h4>
 
@@ -287,10 +287,10 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
           {erro && (
             <div style={{
               padding: '0.75rem',
-              background: '#F6E7E0',
+              background: 'var(--t-danger-bg)',
               borderRadius: '8px',
               marginBottom: '1rem',
-              color: '#9A4632',
+              color: 'var(--t-red-dark)',
               fontSize: '0.9rem'
             }}>
               {erro}
@@ -306,11 +306,11 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
                 flex: 1,
                 padding: '0.875rem',
                 borderRadius: '10px',
-                border: '1px solid #DCD0B9',
-                background: '#FBF7EF',
+                border: '1px solid var(--t-border-strong)',
+                background: 'var(--t-surface)',
                 fontWeight: '600',
                 cursor: 'pointer',
-                color: '#3A352D'
+                color: 'var(--t-text)'
               }}
             >
               Cancelar
@@ -323,7 +323,7 @@ export default function NovoDirigenteModal({ isOpen, onClose, onSuccess, quadros
                 padding: '0.875rem',
                 borderRadius: '10px',
                 border: 'none',
-                background: loading || jaExiste ? '#DCD0B9' : 'linear-gradient(135deg, #6E7B57 0%, #566239 100%)',
+                background: loading || jaExiste ? 'var(--t-border-strong)' : 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
                 color: 'white',
                 fontWeight: '600',
                 cursor: loading || jaExiste ? 'not-allowed' : 'pointer'

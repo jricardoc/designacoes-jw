@@ -7,12 +7,12 @@ export default function PageHeader({
 }) {
   // Tom do "chip" do ícone — variações quentes do tema terroso.
   const tints = {
-    blue: { bg: "#EAEFDC", fg: "#5E6B48" },
-    olive: { bg: "#EAEFDC", fg: "#5E6B48" },
-    green: { bg: "#E2E7D2", fg: "#54622F" },
-    purple: { bg: "#EAEFDC", fg: "#6E7B57" },
-    orange: { bg: "#F3E2CD", fg: "#9A5A38" },
-    sand: { bg: "#EDE6D5", fg: "#9A7E55" },
+    blue: { bg: "var(--t-success-bg)", fg: "var(--t-primary)" },
+    olive: { bg: "var(--t-success-bg)", fg: "var(--t-primary)" },
+    green: { bg: "var(--t-success-bg)", fg: "var(--t-green-dark)" },
+    purple: { bg: "var(--t-success-bg)", fg: "var(--t-olive)" },
+    orange: { bg: "#F3E2CD", fg: "var(--t-amber)" },
+    sand: { bg: "var(--t-sand)", fg: "var(--t-brown)" },
   };
   const tint = tints[color] || tints.olive;
 
@@ -22,7 +22,7 @@ export default function PageHeader({
         background: "transparent",
         padding: "2.2rem 2.5rem 1.2rem",
         marginBottom: "0.5rem",
-        color: "#2B2620",
+        color: "var(--t-text)",
       }}
     >
       <div
@@ -59,7 +59,7 @@ export default function PageHeader({
                 fontSize: "2rem",
                 fontWeight: 600,
                 letterSpacing: "-0.02em",
-                color: "#2B2620",
+                color: "var(--t-text)",
               }}
             >
               {title}
@@ -68,7 +68,7 @@ export default function PageHeader({
               <p
                 style={{
                   margin: "0.4rem 0 0",
-                  color: "#8A8071",
+                  color: "var(--t-text-2)",
                   fontSize: "1rem",
                   fontWeight: 400,
                 }}

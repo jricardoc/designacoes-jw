@@ -20,7 +20,10 @@ const FAIXAS_PADRAO = [
 ];
 
 export default function Carrinho() {
-  const { authFetch } = useAuth();
+  const { authFetch, usuario } = useAuth();
+  // Sem o escopo do carrinho a tela é só consulta — o backend recusa as escritas
+  // (ver backend/src/middleware/escopos.js). Espelha o gating do app mobile.
+  const podeEditar = !!usuario?.isAdmin || !!usuario?.escopos?.includes('carrinho');
   const [dados, setDados] = useState({ pontos: [], publicadores: [] });
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -78,12 +81,12 @@ export default function Carrinho() {
         icon={BookOpen}
       >
         <div className="crr-acoes-topo">
-          <button onClick={() => setModalPonto({})} className="crr-btn crr-btn-neutro">
+          {podeEditar && <button onClick={() => setModalPonto({})} className="crr-btn crr-btn-neutro">
             <MapPin size={16} /> Novo ponto
-          </button>
-          <button onClick={() => setModalPublicador({})} className="crr-btn crr-btn-primario">
+          </button>}
+          {podeEditar && <button onClick={() => setModalPublicador({})} className="crr-btn crr-btn-primario">
             <Plus size={16} /> Nova pessoa
-          </button>
+          </button>}
         </div>
       </PageHeader>
 
@@ -96,10 +99,10 @@ export default function Carrinho() {
           <>
             <div className="crr-kpis">
               {[
-                { icone: MapPin, rotulo: 'Pontos ativos', valor: totais.pontos, cor: '#2F6F7E' },
-                { icone: Clock, rotulo: 'Turnos na semana', valor: totais.turnos, cor: '#9A5A38' },
-                { icone: Users, rotulo: 'Pessoas', valor: totais.pessoas, cor: '#5E6B48' },
-                { icone: PhoneOff, rotulo: 'Sem telefone', valor: totais.semTelefone, cor: '#A8503B' },
+                { icone: MapPin, rotulo: 'Pontos ativos', valor: totais.pontos, cor: 'var(--t-teal)' },
+                { icone: Clock, rotulo: 'Turnos na semana', valor: totais.turnos, cor: 'var(--t-amber)' },
+                { icone: Users, rotulo: 'Pessoas', valor: totais.pessoas, cor: 'var(--t-primary)' },
+                { icone: PhoneOff, rotulo: 'Sem telefone', valor: totais.semTelefone, cor: 'var(--t-red)' },
               ].map((k) => (
                 <div key={k.rotulo} className="crr-kpi">
                   <div className="crr-kpi-icone" style={{ background: `${k.cor}1a`, color: k.cor }}>
@@ -126,7 +129,7 @@ export default function Carrinho() {
             {/* ---- grade por ponto, no mesmo formato da planilha ---- */}
             {dados.pontos.length === 0 ? (
               <div className="crr-vazio">
-                <MapPin size={40} color="#C6BAA0" />
+                <MapPin size={40} color="var(--t-muted)" />
                 <h3>Nenhum ponto cadastrado</h3>
                 <p>Crie o primeiro ponto para montar a grade de turnos.</p>
               </div>
@@ -139,17 +142,19 @@ export default function Carrinho() {
                       {ponto.nome}
                       {!ponto.ativo && <span className="crr-tag-inativo">inativo</span>}
                     </div>
-                    <div className="crr-ponto-acoes">
-                      <button
-                        onClick={() => setModalTurno({ ponto, turno: null })}
-                        title="Adicionar turno"
-                      >
-                        <Plus size={16} /> Turno
-                      </button>
-                      <button onClick={() => setModalPonto(ponto)} title="Editar ponto">
-                        <Pencil size={15} />
-                      </button>
-                    </div>
+                    {podeEditar && (
+                      <div className="crr-ponto-acoes">
+                        <button
+                          onClick={() => setModalTurno({ ponto, turno: null })}
+                          title="Adicionar turno"
+                        >
+                          <Plus size={16} /> Turno
+                        </button>
+                        <button onClick={() => setModalPonto(ponto)} title="Editar ponto">
+                          <Pencil size={15} />
+                        </button>
+                      </div>
+                    )}
                   </header>
 
                   <div className="crr-grade-rolagem">
@@ -178,8 +183,8 @@ export default function Carrinho() {
                                   {turno ? (
                                     <button
                                       className="crr-celula"
-                                      onClick={() => setModalTurno({ ponto, turno })}
-                                      title="Editar turno"
+                                      onClick={podeEditar ? () => setModalTurno({ ponto, turno }) : undefined}
+                                      title={podeEditar ? 'Editar turno' : undefined}
                                     >
                                       {turno.publicadores.length === 0 ? (
                                         <span className="crr-celula-vazia-txt">definir</span>
@@ -194,7 +199,7 @@ export default function Carrinho() {
                                         ))
                                       )}
                                     </button>
-                                  ) : (
+                                  ) : podeEditar ? (
                                     <button
                                       className="crr-celula crr-celula-vazia"
                                       onClick={() =>
@@ -207,7 +212,7 @@ export default function Carrinho() {
                                     >
                                       <Plus size={13} />
                                     </button>
-                                  )}
+                                  ) : null}
                                 </td>
                               );
                             })}
@@ -231,7 +236,7 @@ export default function Carrinho() {
                   <button
                     key={p.id}
                     className={`crr-pessoa-card ${p.ativo ? '' : 'inativa'}`}
-                    onClick={() => setModalPublicador(p)}
+                    onClick={podeEditar ? () => setModalPublicador(p) : undefined}
                   >
                     <div className="crr-pessoa-nome">{p.nome}</div>
                     <div className={`crr-pessoa-tel ${p.telefone ? '' : 'faltando'}`}>

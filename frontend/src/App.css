@@ -1,23 +1,26 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
+/* Esta paleta antiga agora APONTA para os tokens de theme.css, em vez de
+   repetir os hex. Sem isso ela ficava congelada no claro e qualquer regra que
+   a usasse furava o tema escuro e o modo daltônico. */
 :root {
-  --primary: #5E6B48;
-  --primary-dark: #566239;
-  --primary-light: #6E7B57;
-  --secondary: #566239;
-  --success: #5E6B48;
-  --warning: #B06A43;
+  --primary: var(--t-primary);
+  --primary-dark: var(--t-primary-dark);
+  --primary-light: var(--t-olive);
+  --secondary: var(--t-primary-dark);
+  --success: var(--t-green);
+  --warning: var(--t-terracotta);
 
-  --gray-50: #F6F0E4;
-  --gray-100: #F6F0E4;
-  --gray-200: #E6DCC9;
-  --gray-300: #DCD0B9;
-  --gray-400: #A2977F;
-  --gray-500: #8A8071;
-  --gray-600: #5C5446;
-  --gray-700: #3A352D;
-  --gray-800: #2B2620;
-  --gray-900: #2B2620;
+  --gray-50: var(--t-surface-muted);
+  --gray-100: var(--t-surface-muted);
+  --gray-200: var(--t-border-strong);
+  --gray-300: var(--t-border-strong);
+  --gray-400: var(--t-muted);
+  --gray-500: var(--t-text-2);
+  --gray-600: var(--t-text-2);
+  --gray-700: var(--t-text);
+  --gray-800: var(--t-text);
+  --gray-900: var(--t-text);
 
   --radius: 12px;
   --radius-sm: 8px;
@@ -46,7 +49,7 @@ body {
     "Segoe UI",
     Roboto,
     sans-serif;
-  background-color: #F3EDE2;
+  background-color: var(--t-bg);
   min-height: 100vh;
   color: var(--gray-800);
   line-height: 1.6;
@@ -76,7 +79,7 @@ body {
 }
 
 .site-titulo {
-  color: #2B2620;
+  color: var(--t-text);
   font-size: 2.5rem;
   font-weight: 800;
   text-shadow: none;
@@ -84,7 +87,7 @@ body {
 }
 
 .site-descricao {
-  color: #5C5446;
+  color: var(--t-text-2);
   font-size: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -95,7 +98,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 2rem;
-  background: #FBF7EF;
+  background: var(--t-surface);
   color: var(--primary);
   border: none;
   border-radius: var(--radius);
@@ -153,7 +156,7 @@ body {
 .page-divider {
   text-align: center;
   padding: 1.5rem;
-  color: #2B2620;
+  color: var(--t-text);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -162,7 +165,7 @@ body {
   background: rgba(0, 0, 0, 0.1);
   padding: 0.5rem 1.5rem;
   border-radius: 9999px;
-  color: #2B2620;
+  color: var(--t-text);
 }
 
 /* Footer */
@@ -235,7 +238,7 @@ body {
 /* Print styles */
 @media print {
   body {
-    background: #FBF7EF;
+    background: var(--t-surface);
   }
 
   .app {

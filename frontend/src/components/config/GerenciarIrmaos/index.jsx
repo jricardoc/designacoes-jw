@@ -31,7 +31,7 @@ const FILTROS_VAZIOS = {
   niveis: [],
 };
 
-const COR_NEUTRA = '#8A8071';
+const COR_NEUTRA = 'var(--t-text-2)';
 
 /** Achata o irmão nos campos que o filtro compara, para não repetir isso a cada chip. */
 function indexar(irmao) {
@@ -124,22 +124,22 @@ export default function GerenciarIrmaos() {
       {
         chave: 'dias',
         rotulo: 'Dia de dirigente',
-        opcoes: DIAS_DIRIGENTE.map((d) => ({ id: d.id, label: d.label, cor: '#A8503B' })),
+        opcoes: DIAS_DIRIGENTE.map((d) => ({ id: d.id, label: d.label, cor: 'var(--t-red)' })),
       },
       {
         chave: 'status',
         rotulo: 'Status',
         opcoes: [
-          { id: 'ativo', label: 'Ativos', cor: '#5E6B48' },
-          { id: 'inativo', label: 'Inativos', cor: '#A8503B' },
+          { id: 'ativo', label: 'Ativos', cor: 'var(--t-primary)' },
+          { id: 'inativo', label: 'Inativos', cor: 'var(--t-red)' },
         ],
       },
       {
         chave: 'niveis',
         rotulo: 'Áudio e vídeo',
         opcoes: [
-          { id: 'experiente', label: 'Experiente', cor: '#6E7B57' },
-          { id: 'treinando', label: 'Treinando', cor: '#B06A43' },
+          { id: 'experiente', label: 'Experiente', cor: 'var(--t-olive)' },
+          { id: 'treinando', label: 'Treinando', cor: 'var(--t-terracotta)' },
         ],
       },
     ],
@@ -215,9 +215,9 @@ export default function GerenciarIrmaos() {
         gap: '0.35rem',
         padding: '0.35rem 0.75rem',
         borderRadius: '20px',
-        border: '1px solid #E6DCC9',
-        background: '#FBF7EF',
-        color: '#8A8071',
+        border: '1px solid var(--t-border-strong)',
+        background: 'var(--t-surface)',
+        color: 'var(--t-text-2)',
         fontSize: '0.78rem',
         fontWeight: '600',
         cursor: 'pointer'
@@ -232,7 +232,7 @@ export default function GerenciarIrmaos() {
     <div>
       {/* Header */}
       <div style={{
-        background: '#FBF7EF',
+        background: 'var(--t-surface)',
         borderRadius: '16px',
         padding: '1.25rem 1.5rem',
         marginBottom: '1rem',
@@ -254,10 +254,10 @@ export default function GerenciarIrmaos() {
               alignItems: 'center',
               gap: '0.5rem'
             }}>
-              <Users size={22} color="#B06A43" />
+              <Users size={22} color="var(--t-terracotta)" />
               Gerenciar Irmãos
             </h2>
-            <p style={{ color: '#8A8071', margin: '0.25rem 0 0', fontSize: '0.85rem' }}>
+            <p style={{ color: 'var(--t-text-2)', margin: '0.25rem 0 0', fontSize: '0.85rem' }}>
               {irmaos.length} irmãos cadastrados
             </p>
           </div>
@@ -269,7 +269,7 @@ export default function GerenciarIrmaos() {
               alignItems: 'center',
               gap: '0.5rem',
               padding: '0.6rem 1.25rem',
-              background: 'linear-gradient(135deg, #B06A43 0%, #9A5A38 100%)',
+              background: 'linear-gradient(135deg, var(--t-terracotta) 0%, var(--t-amber) 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
@@ -296,7 +296,7 @@ export default function GerenciarIrmaos() {
         <div style={{ position: 'relative', marginTop: '1rem' }}>
           <Search
             size={18}
-            color="#A2977F"
+            color="var(--t-muted)"
             style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
           />
           <input
@@ -309,13 +309,13 @@ export default function GerenciarIrmaos() {
               maxWidth: '350px',
               padding: '0.6rem 1rem 0.6rem 2.5rem',
               borderRadius: '10px',
-              border: '2px solid #E6DCC9',
+              border: '2px solid var(--t-border-strong)',
               fontSize: '0.9rem',
               boxSizing: 'border-box',
               transition: 'border-color 0.2s'
             }}
-            onFocus={(e) => e.target.style.borderColor = '#B06A43'}
-            onBlur={(e) => e.target.style.borderColor = '#E6DCC9'}
+            onFocus={(e) => e.target.style.borderColor = 'var(--t-terracotta)'}
+            onBlur={(e) => e.target.style.borderColor = 'var(--t-border-strong)'}
           />
         </div>
 
@@ -326,7 +326,7 @@ export default function GerenciarIrmaos() {
           gap: '1rem 1.75rem',
           marginTop: '1rem',
           paddingTop: '1rem',
-          borderTop: '1px solid #E6DCC9'
+          borderTop: '1px solid var(--t-border-strong)'
         }}>
           {grupos.map((grupo) => (
             <div key={grupo.chave} style={{ minWidth: 0 }}>
@@ -335,7 +335,7 @@ export default function GerenciarIrmaos() {
                 fontWeight: '700',
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: '#A2977F',
+                color: 'var(--t-muted)',
                 marginBottom: '0.4rem'
               }}>
                 {grupo.rotulo}
@@ -356,9 +356,9 @@ export default function GerenciarIrmaos() {
                         gap: '0.35rem',
                         padding: '0.3rem 0.65rem',
                         borderRadius: '20px',
-                        border: `1px solid ${marcado ? opcao.cor : '#E6DCC9'}`,
+                        border: `1px solid ${marcado ? opcao.cor : 'var(--t-border-strong)'}`,
                         background: marcado ? opcao.cor : '#FFFFFF',
-                        color: marcado ? '#FFFFFF' : '#2B2620',
+                        color: marcado ? '#FFFFFF' : 'var(--t-text)',
                         fontSize: '0.78rem',
                         fontWeight: marcado ? '600' : '500',
                         cursor: 'pointer',
@@ -373,8 +373,8 @@ export default function GerenciarIrmaos() {
                         fontWeight: '700',
                         padding: '0 0.3rem',
                         borderRadius: '8px',
-                        background: marcado ? 'rgba(255,255,255,0.25)' : (opcao.fundo || '#EBE1CF'),
-                        color: marcado ? '#FFFFFF' : '#8A8071'
+                        background: marcado ? 'rgba(255,255,255,0.25)' : (opcao.fundo || 'var(--t-sand)'),
+                        color: marcado ? '#FFFFFF' : 'var(--t-text-2)'
                       }}>
                         {total}
                       </span>
@@ -394,8 +394,8 @@ export default function GerenciarIrmaos() {
             gap: '0.75rem',
             marginTop: '0.85rem'
           }}>
-            <span style={{ fontSize: '0.82rem', color: '#8A8071' }}>
-              <strong style={{ color: '#2B2620' }}>{irmaosFiltrados.length}</strong> de {irmaos.length} irmãos
+            <span style={{ fontSize: '0.82rem', color: 'var(--t-text-2)' }}>
+              <strong style={{ color: 'var(--t-text)' }}>{irmaosFiltrados.length}</strong> de {irmaos.length} irmãos
             </span>
             {botaoLimpar}
           </div>
@@ -413,7 +413,7 @@ export default function GerenciarIrmaos() {
             key={irmao.id}
             onClick={() => editarIrmao(irmao)}
             style={{
-              background: '#FBF7EF',
+              background: 'var(--t-surface)',
               borderRadius: '10px',
               padding: '0.875rem 1rem',
               boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
@@ -426,7 +426,7 @@ export default function GerenciarIrmaos() {
               border: '2px solid transparent'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#B06A43';
+              e.currentTarget.style.borderColor = 'var(--t-terracotta)';
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 4px 12px rgba(249, 115, 22, 0.15)';
             }}
@@ -441,8 +441,8 @@ export default function GerenciarIrmaos() {
               height: '36px',
               borderRadius: '10px',
               background: irmao.ativo
-                ? 'linear-gradient(135deg, #B06A43 0%, #9A5A38 100%)'
-                : '#C6BAA0',
+                ? 'linear-gradient(135deg, var(--t-terracotta) 0%, var(--t-amber) 100%)'
+                : 'var(--t-muted)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -455,7 +455,7 @@ export default function GerenciarIrmaos() {
               <div style={{
                 fontWeight: '600',
                 fontSize: '0.9rem',
-                color: irmao.ativo ? '#2B2620' : '#A2977F',
+                color: irmao.ativo ? 'var(--t-text)' : 'var(--t-muted)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
@@ -466,7 +466,7 @@ export default function GerenciarIrmaos() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
                   <PrivilegioBadge privilegio={irmao.privilegio} tamanho="sm" abreviado />
                   {!irmao.ativo && (
-                    <span style={{ fontSize: '0.7rem', color: '#A8503B' }}>Inativo</span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--t-red)' }}>Inativo</span>
                   )}
                 </div>
               )}
@@ -474,7 +474,7 @@ export default function GerenciarIrmaos() {
 
             <Edit2
               size={16}
-              color="#A2977F"
+              color="var(--t-muted)"
               style={{ flexShrink: 0 }}
             />
           </div>
@@ -485,7 +485,7 @@ export default function GerenciarIrmaos() {
         <div style={{
           textAlign: 'center',
           padding: '2rem',
-          color: '#8A8071'
+          color: 'var(--t-text-2)'
         }}>
           {irmaos.length === 0 ? (
             'Nenhum irmão cadastrado'

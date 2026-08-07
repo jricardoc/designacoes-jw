@@ -252,12 +252,12 @@ export default function TabelaQuadro({
       };
     }
     if (indisponivel) {
-      return { color: "#9A4632", textDecoration: "line-through" };
+      return { color: "var(--t-red-dark)", textDecoration: "line-through" };
     }
     if (seguida) {
       return {
         color: "#78532A",
-        background: "#F1E1D2",
+        background: "var(--t-warning-bg)",
         borderRadius: "4px",
         padding: "2px 6px",
       };
@@ -386,23 +386,23 @@ export default function TabelaQuadro({
                               );
 
                               let color = "inherit";
-                              let background = "white";
+                              let background = "var(--t-surface)";
                               let fontWeight = "normal";
                               let suffix = "";
 
                               if (mesmoDia) {
-                                color = "#566239";
-                                background = "#EAEFDC";
+                                color = "var(--t-primary-dark)";
+                                background = "var(--t-success-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Já Hoje)";
                               } else if (indisponivel) {
-                                color = "#9A4632";
-                                background = "#F6E7E0";
+                                color = "var(--t-red-dark)";
+                                background = "var(--t-danger-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Indisponível)";
                               } else if (seguida) {
                                 color = "#78532A";
-                                background = "#F1E1D2";
+                                background = "var(--t-warning-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Seguida)";
                               }
@@ -480,23 +480,23 @@ export default function TabelaQuadro({
                               );
 
                               let color = "inherit";
-                              let background = "white";
+                              let background = "var(--t-surface)";
                               let fontWeight = "normal";
                               let suffix = "";
 
                               if (mesmoDia) {
-                                color = "#566239";
-                                background = "#EAEFDC";
+                                color = "var(--t-primary-dark)";
+                                background = "var(--t-success-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Já Hoje)";
                               } else if (indisponivel) {
-                                color = "#9A4632";
-                                background = "#F6E7E0";
+                                color = "var(--t-red-dark)";
+                                background = "var(--t-danger-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Indisponível)";
                               } else if (seguida) {
                                 color = "#78532A";
-                                background = "#F1E1D2";
+                                background = "var(--t-warning-bg)";
                                 fontWeight = "bold";
                                 suffix = " (Seguida)";
                               }

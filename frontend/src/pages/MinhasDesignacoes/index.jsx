@@ -5,9 +5,9 @@ import PageHeader from '../../components/PageHeader';
 import PrivilegioBadge from '../../components/PrivilegioBadge';
 
 const TIPOS = {
-  designacao: { label: 'Quadro de designações', icon: FileText, cor: '#6E7B57', fundo: '#E9EFDC' },
-  dirigente: { label: 'Saída de campo', icon: Compass, cor: '#9A5A38', fundo: '#F1E1D2' },
-  reuniao: { label: 'Reunião', icon: Users, cor: '#2F6F7E', fundo: '#E4EFF2' },
+  designacao: { label: 'Quadro de designações', icon: FileText, cor: 'var(--t-olive)', fundo: 'var(--t-success-bg)' },
+  dirigente: { label: 'Saída de campo', icon: Compass, cor: 'var(--t-amber)', fundo: 'var(--t-warning-bg)' },
+  reuniao: { label: 'Reunião', icon: Users, cor: 'var(--t-teal)', fundo: 'var(--t-teal-bg)' },
 };
 
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -85,13 +85,13 @@ export default function MinhasDesignacoes() {
           <div className="t-loading">Carregando seus compromissos...</div>
         ) : !dados?.vinculado ? (
           <div className="t-empty">
-            <Link2Off size={46} color="#C6BAA0" />
+            <Link2Off size={46} color="var(--t-muted)" />
             <h3>Conta ainda não vinculada</h3>
             <p style={{ maxWidth: '30rem', margin: '0 auto' }}>{dados?.mensagem}</p>
           </div>
         ) : compromissos.length === 0 ? (
           <div className="t-empty">
-            <CalendarCheck size={46} color="#C6BAA0" />
+            <CalendarCheck size={46} color="var(--t-muted)" />
             <h3>{escopo === 'proximas' ? 'Nenhum compromisso à frente' : 'Nenhuma designação encontrada'}</h3>
             <p>
               {escopo === 'proximas'
@@ -122,7 +122,7 @@ export default function MinhasDesignacoes() {
                     fontWeight: 700,
                     letterSpacing: '0.08em',
                     textTransform: 'uppercase',
-                    color: '#A2977F',
+                    color: 'var(--t-muted)',
                     margin: '0 0 0.7rem',
                   }}
                 >
@@ -146,14 +146,14 @@ export default function MinhasDesignacoes() {
                             width: '46px',
                             flexShrink: 0,
                             textAlign: 'center',
-                            borderRight: '1px solid #ECE3D3',
+                            borderRight: '1px solid var(--t-border)',
                             paddingRight: '0.75rem',
                           }}
                         >
-                          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: '#2B2620', lineHeight: 1.1 }}>
+                          <div style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--t-text)', lineHeight: 1.1 }}>
                             {c.data ? c.data.split('/')[0] : '—'}
                           </div>
-                          <div style={{ fontSize: '0.64rem', color: '#A2977F', textTransform: 'uppercase' }}>
+                          <div style={{ fontSize: '0.64rem', color: 'var(--t-muted)', textTransform: 'uppercase' }}>
                             {(c.diaSemana || '').slice(0, 3)}
                           </div>
                         </div>
@@ -177,7 +177,7 @@ export default function MinhasDesignacoes() {
                           <div
                             style={{
                               fontWeight: 600,
-                              color: '#2B2620',
+                              color: 'var(--t-text)',
                               display: 'flex',
                               alignItems: 'center',
                               gap: '0.45rem',
@@ -204,8 +204,8 @@ export default function MinhasDesignacoes() {
                                 style={{
                                   fontSize: '0.66rem',
                                   fontWeight: 700,
-                                  color: '#9A5A38',
-                                  background: '#F1E1D2',
+                                  color: 'var(--t-amber)',
+                                  background: 'var(--t-warning-bg)',
                                   borderRadius: '999px',
                                   padding: '2px 8px',
                                 }}
@@ -215,7 +215,7 @@ export default function MinhasDesignacoes() {
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: '0.8rem', color: '#8A8071', marginTop: '2px' }}>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--t-text-2)', marginTop: '2px' }}>
                             {[tipo.label, c.detalhe, c.local, c.horario].filter(Boolean).join(' · ')}
                           </div>
                           {c.dataAproximada && (
@@ -225,7 +225,7 @@ export default function MinhasDesignacoes() {
                                 alignItems: 'center',
                                 gap: '4px',
                                 fontSize: '0.72rem',
-                                color: '#9A5A38',
+                                color: 'var(--t-amber)',
                                 marginTop: '3px',
                               }}
                             >

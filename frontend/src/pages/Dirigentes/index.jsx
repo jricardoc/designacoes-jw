@@ -10,9 +10,9 @@ const MESES = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 const STATUS = {
-  rascunho: { label: 'Rascunho', color: '#9A5A38', bg: '#F1E1D2' },
-  publicado: { label: 'Publicado', color: '#54622F', bg: '#E2E7D2' },
-  arquivado: { label: 'Arquivado', color: '#8A8071', bg: '#EAE3D6' },
+  rascunho: { label: 'Rascunho', color: 'var(--t-amber)', bg: 'var(--t-warning-bg)' },
+  publicado: { label: 'Publicado', color: 'var(--t-green-dark)', bg: 'var(--t-success-bg)' },
+  arquivado: { label: 'Arquivado', color: 'var(--t-text-2)', bg: '#EAE3D6' },
 };
 
 export default function Dirigentes() {
@@ -71,7 +71,7 @@ export default function Dirigentes() {
           <div className="t-loading">Carregando escalas...</div>
         ) : quadros.length === 0 ? (
           <div className="t-empty">
-            <Compass size={46} color="#C6BAA0" />
+            <Compass size={46} color="var(--t-muted)" />
             <h3>Nenhuma escala criada</h3>
             <p>Clique em "Nova Escala" para criar a primeira.</p>
             <button onClick={() => setModalAberto(true)} className="t-btn t-btn-primary" style={{ marginTop: '1rem' }}>
@@ -87,7 +87,7 @@ export default function Dirigentes() {
                 <button key={q.id} onClick={() => navigate(`/dirigentes/quadro/${q.id}`)} className="t-card t-card-btn">
                   <div className="t-card-top">
                     <div className="t-icon-box">
-                      <Compass size={22} color="#9A7E55" />
+                      <Compass size={22} color="var(--t-brown)" />
                     </div>
                     <span className="t-chip" style={{ background: sc.bg, color: sc.color }}>{sc.label}</span>
                   </div>
@@ -95,7 +95,7 @@ export default function Dirigentes() {
                   <div className="t-card-meta">{q._count?.escalas || 0} saídas</div>
                   <div className="t-card-foot">
                     <span>Criado em {data}</span>
-                    <ChevronRight size={16} color="#C6BAA0" />
+                    <ChevronRight size={16} color="var(--t-muted)" />
                   </div>
                 </button>
               );

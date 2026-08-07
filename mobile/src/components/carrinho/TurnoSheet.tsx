@@ -28,6 +28,8 @@ import {
   type SelectOption,
 } from "@/components/ui";
 import { DIAS_CURTOS, radius, type Cores } from "@/theme";
+import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { useTema } from "@/theme/TemaContext";
 
 /** Faixas que a planilha da congregação já usava — servem de atalho para não digitar. */
@@ -140,6 +142,10 @@ export function TurnoSheet({
       else novo.add(id);
       return novo;
     });
+
+  // Mesma regra das outras folhas do carrinho: sem escopo, só consulta.
+  const { usuario } = useAuth();
+  const podeEditar = podeGerenciar(usuario, "carrinho");
 
   const salvar = async () => {
     if (!editando && !pontoId) {
@@ -378,12 +384,12 @@ export function TurnoSheet({
       </View>
 
       <View style={styles.footer}>
-        {editando ? (
+        {editando && podeEditar ? (
           <Pressable onPress={remover} style={styles.deleteBtn}>
             <Ionicons name="trash-outline" size={18} color={colors.red} />
           </Pressable>
         ) : null}
-        <Pressable onPress={salvar} disabled={salvando} style={styles.saveBtn}>
+        <Pressable onPress={podeEditar ? salvar : undefined} disabled={salvando || !podeEditar} style={styles.saveBtn}>
           <Text style={styles.saveText}>{salvando ? "Salvando..." : "Salvar"}</Text>
         </Pressable>
       </View>

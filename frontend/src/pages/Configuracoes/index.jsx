@@ -28,7 +28,7 @@ export default function Configuracoes() {
           style={{
             display: 'flex',
             gap: '5px',
-            background: '#EBE1CF',
+            background: 'var(--t-sand)',
             borderRadius: '14px',
             padding: '5px',
             maxWidth: '360px',
@@ -53,8 +53,8 @@ export default function Configuracoes() {
                   cursor: 'pointer',
                   fontWeight: 600,
                   fontSize: '14.5px',
-                  background: active ? '#FBF7EF' : 'transparent',
-                  color: active ? '#566239' : '#8A8071',
+                  background: active ? 'var(--t-surface)' : 'transparent',
+                  color: active ? 'var(--t-primary-dark)' : 'var(--t-text-2)',
                   boxShadow: active ? '0 1px 2px rgba(43,38,32,0.06)' : 'none',
                 }}
               >
