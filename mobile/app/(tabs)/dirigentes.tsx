@@ -12,13 +12,14 @@ import { Button, EmptyState, GradientHeader, Loading } from "@/components/ui";
 import { MonthCard } from "@/components/quadros/MonthCard";
 import { NovaEscalaModal } from "@/components/dirigentes/NovaEscalaModal";
 import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
 export default function DirigentesScreen() {
   const { styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
-  const isAdmin = !!usuario?.isAdmin;
+  const podeEditar = podeGerenciar(usuario, "dirigentes");
   const { data: quadros, isLoading, refetch, isRefetching } = useDirigentesQuadros();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -46,7 +47,7 @@ export default function DirigentesScreen() {
                 {quadros?.length ?? 0} escalas criadas
               </Text>
             </View>
-            {isAdmin ? (
+            {podeEditar ? (
               <Button label="Nova" icon="add" onPress={() => setModalOpen(true)} />
             ) : null}
           </View>
@@ -74,12 +75,12 @@ export default function DirigentesScreen() {
               icon="compass-outline"
               title="Nenhuma escala criada"
               message={
-                isAdmin
+                podeEditar
                   ? 'Toque em "Nova" para criar a primeira'
                   : "Quando um administrador criar uma escala, ela aparece aqui."
               }
             >
-              {isAdmin ? (
+              {podeEditar ? (
                 <Button label="Criar Primeira Escala" onPress={() => setModalOpen(true)} />
               ) : null}
             </EmptyState>
@@ -87,7 +88,7 @@ export default function DirigentesScreen() {
         </ScrollView>
       )}
 
-      {isAdmin ? (
+      {podeEditar ? (
         <NovaEscalaModal
           visible={modalOpen}
           onClose={() => setModalOpen(false)}

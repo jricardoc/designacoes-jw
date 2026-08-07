@@ -3,6 +3,7 @@ const { parseExcel } = require('../services/ExcelReuniaoParser');
 const { parsePdf } = require('../services/PdfReuniaoParser');
 const { buildIndisponibilidadePreview } = require('../services/MatchIrmaosService');
 const { reconciliarSemanas } = require('../utils/semanaReuniao');
+const ConviteReuniaoService = require('../services/ConviteReuniaoService');
 
 // Campos editaveis de SemanaReuniao (whitelist para o updateSemana).
 // Bloqueia mass assignment em id/reuniaoId/timestamps e colunas nao editaveis.
@@ -199,6 +200,34 @@ class ReuniaoController {
         } catch (error) {
             console.error('Erro ao atualizar semana:', error);
             return res.status(500).json({ error: 'Erro ao atualizar campo da semana' });
+        }
+    }
+
+    /**
+     * GET /reunioes/semanas/:id/compartilhamentos
+     *
+     * Os textos prontos para compartilhar (os convites de Zoom), ja formatados.
+     * O app so exibe e manda para a folha de compartilhamento — nao monta nada.
+     * E por isso que mexer no texto ou no negrito nao pede build novo do app.
+     *
+     * Leitura: qualquer irmao logado compartilha, nao so administrador.
+     */
+    async compartilhamentos(req, res) {
+        try {
+            const id = parseInt(req.params.id, 10);
+            if (!Number.isInteger(id)) {
+                return res.status(400).json({ error: 'Semana inválida' });
+            }
+
+            const semana = await prisma.semanaReuniao.findUnique({ where: { id } });
+            if (!semana) {
+                return res.status(404).json({ error: 'Semana não encontrada' });
+            }
+
+            return res.json({ opcoes: ConviteReuniaoService.montarOpcoes(semana) });
+        } catch (error) {
+            console.error('Erro ao montar textos de compartilhamento:', error);
+            return res.status(500).json({ error: 'Erro ao montar os textos' });
         }
     }
 }

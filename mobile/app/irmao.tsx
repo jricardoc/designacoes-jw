@@ -27,6 +27,7 @@ import type { FuncaoId, NivelAudioVideo, PrivilegioId } from "@/api/types";
 import { ConfirmDialog, EmptyState, GradientHeader, useConfirm, useToast } from "@/components/ui";
 import { CalendarioIndisponibilidade } from "@/components/config/CalendarioIndisponibilidade";
 import { useAuth } from "@/context/AuthContext";
+import { ehAdminGeral } from "@/utils/permissoes";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { FUNCOES, PRIVILEGIOS, privilegioLabel } from "@/utils/funcoes";
@@ -116,7 +117,7 @@ export default function IrmaoScreen() {
 
   // Editor do cadastro: a única porta é a tela de Configurações (já restrita),
   // mas a rota aceita deep link — barra aqui também. O backend nega as escritas.
-  if (!usuario?.isAdmin) {
+  if (!ehAdminGeral(usuario)) {
     return (
       <View style={styles.screen}>
         <GradientHeader title="Cadastro de irmão" showBack />
@@ -426,9 +427,9 @@ const criarEstilos = (colors: Cores) =>
   segTextOn: { color: colors.text },
 
   dirCard: {
-    backgroundColor: "#FBF1EC",
+    backgroundColor: colors.dangerBg,
     borderWidth: 1,
-    borderColor: "#F0DED3",
+    borderColor: colors.border,
     borderRadius: 20,
     padding: 18,
     paddingBottom: 12,
@@ -441,8 +442,8 @@ const criarEstilos = (colors: Cores) =>
     paddingHorizontal: 11,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#E7C9BC",
-    backgroundColor: "#FBF1EC",
+    borderColor: `${colors.red}44`,
+    backgroundColor: colors.dangerBg,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -453,14 +454,14 @@ const criarEstilos = (colors: Cores) =>
     gap: 12,
     paddingVertical: 11,
     borderTopWidth: 1,
-    borderTopColor: "#F2E2D9",
+    borderTopColor: colors.border,
   },
   checkBox: {
     width: 22,
     height: 22,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: "#E0C7BB",
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",

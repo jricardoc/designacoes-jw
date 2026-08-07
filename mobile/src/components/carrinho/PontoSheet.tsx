@@ -9,6 +9,7 @@ import {
 import type { CarrinhoPonto } from "@/api/types";
 import { ConfirmDialog, Sheet, useConfirm, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
@@ -93,7 +94,7 @@ export function PontoSheet({ visible, ponto, onClose }: Props) {
   };
 
   // O DELETE do ponto é restrito a admin no servidor; sem isso o botão só entregaria 403.
-  const podeExcluir = editando && !!usuario?.isAdmin;
+  const podeExcluir = editando && podeGerenciar(usuario, "carrinho");
 
   return (
     <Sheet visible={visible} onClose={onClose}>
@@ -245,7 +246,7 @@ const criarEstilos = (colors: Cores) =>
       height: 52,
       borderRadius: 15,
       borderWidth: 1,
-      borderColor: "#E7C9BC",
+      borderColor: `${colors.red}44`,
       backgroundColor: colors.dangerBg,
       alignItems: "center",
       justifyContent: "center",

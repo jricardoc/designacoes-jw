@@ -528,7 +528,7 @@ const criarEstilos = (colors: Cores) =>
       height: 52,
       borderRadius: 15,
       borderWidth: 1,
-      borderColor: "#E7C9BC",
+      borderColor: `${colors.red}44`,
       backgroundColor: colors.dangerBg,
       alignItems: "center",
       justifyContent: "center",

@@ -16,12 +16,14 @@ import {
   useCriarUsuario,
   useExcluirUsuario,
   useResetSenhaUsuario,
+  useAtualizarEscopos,
   useToggleAdmin,
   useUsuarios,
 } from "@/api/hooks/useMisc";
-import type { Usuario } from "@/api/types";
+import type { EscopoAdmin, Usuario } from "@/api/types";
 import { ConfirmDialog, GradientHeader, useConfirm, useToast } from "@/components/ui";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
+import { EscoposSheet } from "@/components/conta/EscoposSheet";
 import { UserActionSheet } from "@/components/conta/UserActionSheet";
 import { VincularIrmaoSheet } from "@/components/conta/VincularIrmaoSheet";
 import { useIrmaosDisponiveis } from "@/api/hooks/useMinhasDesignacoes";
@@ -102,6 +104,7 @@ export default function ContaScreen() {
   const [novoNickname, setNovoNickname] = useState("");
   const [menuUser, setMenuUser] = useState<Usuario | null>(null);
   const [vinculandoUser, setVinculandoUser] = useState<Usuario | null>(null);
+  const [escoposUser, setEscoposUser] = useState<Usuario | null>(null);
   const [novoIrmaoId, setNovoIrmaoId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -116,6 +119,7 @@ export default function ContaScreen() {
   const { data: usuarios } = useUsuarios(isAdmin);
   const criarUsuario = useCriarUsuario();
   const toggleAdmin = useToggleAdmin();
+  const salvarEscopos = useAtualizarEscopos();
   const resetSenha = useResetSenhaUsuario();
   const excluirUsuario = useExcluirUsuario();
   const { data: irmaosLivres } = useIrmaosDisponiveis(null, isAdmin && showNovo);
@@ -143,6 +147,15 @@ export default function ContaScreen() {
   const doToggleAdmin = (u: Usuario) => {
     setMenuUser(null);
     run(() => toggleAdmin.mutateAsync(u.id), "Permissões alteradas!");
+  };
+
+  const doSalvarEscopos = async (escopos: EscopoAdmin[]) => {
+    if (!escoposUser) return;
+    await run(
+      () => salvarEscopos.mutateAsync({ id: escoposUser.id, escopos }),
+      "Áreas de acesso atualizadas!",
+    );
+    setEscoposUser(null);
   };
 
   const doReset = (u: Usuario) => {
@@ -410,9 +423,16 @@ export default function ContaScreen() {
         user={menuUser}
         onClose={() => setMenuUser(null)}
         onToggleAdmin={doToggleAdmin}
+        onEscopos={(u) => { setMenuUser(null); setEscoposUser(u); }}
         onResetSenha={doReset}
         onExcluir={doExcluir}
         onVincular={(u) => { setMenuUser(null); setVinculandoUser(u); }}
+      />
+      <EscoposSheet
+        user={escoposUser}
+        salvando={salvarEscopos.isPending}
+        onClose={() => setEscoposUser(null)}
+        onSalvar={doSalvarEscopos}
       />
       <VincularIrmaoSheet
         user={vinculandoUser}
@@ -553,7 +573,7 @@ const criarEstilos = (colors: Cores) =>
     gap: 12,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: "#F1EAD9",
+    borderTopColor: colors.border,
   },
   userAvatar: {
     width: 40,

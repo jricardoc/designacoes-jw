@@ -20,6 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
+import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { MarcaServirMais } from "./MarcaServirMais";
@@ -139,7 +140,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           </View>
 
           <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
-            {ITENS.filter((item) => !item.somenteAdmin || usuario?.isAdmin).map((item) => {
+            {ITENS.filter((item) => !item.somenteAdmin || ehAdminGeral(usuario)).map((item) => {
               const ativo = item.chave === atual;
               return (
                 <Pressable

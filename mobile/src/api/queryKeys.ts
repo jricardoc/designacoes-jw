@@ -14,7 +14,10 @@ export const qk = {
   dirigentesQuadro: (id: number | string) =>
     ["dirigentes-quadros", String(id)] as const,
   reunioes: ["reunioes"] as const,
+  compartilhamentosSemana: (semanaId: number | string) =>
+    ["compartilhamentos-semana", String(semanaId)] as const,
   usuarios: ["usuarios"] as const,
+  catalogoEscopos: ["catalogo-escopos"] as const,
   irmaosDisponiveis: (usuarioId?: number | null) =>
     ["irmaos-disponiveis", String(usuarioId ?? "todos")] as const,
   minhasDesignacoes: (escopo: string) => ["minhas-designacoes", escopo] as const,

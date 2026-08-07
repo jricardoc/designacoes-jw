@@ -13,13 +13,14 @@ import { DashboardGlobal } from "@/components/quadros/DashboardGlobal";
 import { MonthCard } from "@/components/quadros/MonthCard";
 import { NovoQuadroModal } from "@/components/quadros/NovoQuadroModal";
 import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
 export default function DesignacoesScreen() {
   const { styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
-  const isAdmin = !!usuario?.isAdmin;
+  const podeEditar = podeGerenciar(usuario, "designacoes");
   const { data: quadros, isLoading, refetch, isRefetching } = useQuadros();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -47,7 +48,7 @@ export default function DesignacoesScreen() {
                 {quadros?.length ?? 0} quadros criados
               </Text>
             </View>
-            {isAdmin ? (
+            {podeEditar ? (
               <Button
                 label="Novo"
                 icon="add"
@@ -80,12 +81,12 @@ export default function DesignacoesScreen() {
               icon="calendar-outline"
               title="Nenhum quadro criado"
               message={
-                isAdmin
+                podeEditar
                   ? 'Toque em "Novo" para criar o primeiro'
                   : "Quando um administrador criar um quadro, ele aparece aqui."
               }
             >
-              {isAdmin ? (
+              {podeEditar ? (
                 <Button label="Criar Primeiro Quadro" onPress={() => setModalOpen(true)} />
               ) : null}
             </EmptyState>
@@ -95,7 +96,7 @@ export default function DesignacoesScreen() {
         </ScrollView>
       )}
 
-      {isAdmin ? (
+      {podeEditar ? (
         <NovoQuadroModal
           visible={modalOpen}
           onClose={() => setModalOpen(false)}

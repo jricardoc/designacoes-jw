@@ -17,6 +17,7 @@ import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { CompartilharReuniaoSheet } from "@/components/reuniao/CompartilharReuniaoSheet";
 import { ImportIndisponibilidadeSheet } from "@/components/reuniao/ImportIndisponibilidadeSheet";
 import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { SemanaCard } from "@/components/reuniao/SemanaCard";
 import { SemanaShareCard } from "@/components/reuniao/SemanaShareCard";
 import { MESES, radius, type Cores } from "@/theme";
@@ -56,7 +57,7 @@ export default function ReuniaoScreen() {
   // Importar programação muda dados da congregação inteira: só admin. PDF e
   // compartilhar continuam para todos — são exportações de leitura.
   const { usuario } = useAuth();
-  const isAdmin = !!usuario?.isAdmin;
+  const podeEditar = podeGerenciar(usuario, "reunioes");
   const { data: reunioes, isLoading, refetch, isRefetching } = useReunioes();
   const importar = useImportarReuniao();
   const toast = useToast();
@@ -168,7 +169,7 @@ export default function ReuniaoScreen() {
         icon="people"
         colorsGradient={[colors.purple, colors.purpleDark]}
         right={
-          isAdmin ? (
+          podeEditar ? (
             <Pressable
               style={styles.importBtn}
               onPress={handleImport}
@@ -232,7 +233,7 @@ export default function ReuniaoScreen() {
               icon="calendar-outline"
               title="Nenhuma reunião importada"
               message={
-                isAdmin
+                podeEditar
                   ? 'Toque em "Importar PDF" no topo para enviar a programação.'
                   : "Quando um administrador importar a programação, ela aparece aqui."
               }

@@ -72,7 +72,14 @@ model Usuario {
   nickname   String      @unique
   senha      String
   nome       String
+  // Admin GERAL: contempla tudo. Continua sendo o campo historico — nao foi
+  // convertido em escopo para nao precisar migrar dado de usuario ja existente
+  // num banco em producao (o EasyPanel roda `db push`, que nao move dado).
   isAdmin    Boolean     @default(false)
+  // Escopos de admin por area, para quem NAO e admin geral. Um usuario pode ter
+  // varios. Valores validos em src/middleware/escopos.js.
+  // Aditivo com default: seguro para o `db push` do deploy.
+  escopos    String[]    @default([])
   // Vinculo com o cadastro da congregacao. E o que permite ao irmao ver as proprias
   // designacoes: sem ele so restaria casar por nome, que falha em silencio quando o nome do
   // login difere do cadastro ("Henzel D. Almeida" vs "Henzel Almeida").

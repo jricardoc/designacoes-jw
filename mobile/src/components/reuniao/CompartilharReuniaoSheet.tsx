@@ -1,13 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Share, StyleSheet, Text, View } from "react-native";
+import { useCompartilhamentosSemana } from "@/api/hooks/useReunioes";
 import type { SemanaReuniao } from "@/api/types";
 import { Sheet } from "@/components/ui";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import {
-  conviteZoomFimDeSemana,
-  conviteZoomMeioSemana,
-} from "@/utils/conviteZoom";
 import { faixaSemana } from "@/utils/semanaReuniao";
 
 interface CompartilharReuniaoSheetProps {
@@ -18,9 +15,14 @@ interface CompartilharReuniaoSheetProps {
 }
 
 /**
- * O botão Compartilhar deixou de mandar direto a imagem: primeiro pergunta O QUE
- * compartilhar — a programação inteira em imagem ou um dos convites de Zoom em
- * texto, prontos para colar no WhatsApp.
+ * O botão Compartilhar pergunta O QUE compartilhar: a programação inteira em
+ * imagem ou um dos convites de Zoom em texto.
+ *
+ * Os textos NÃO são montados aqui — vêm prontos de
+ * `GET /reunioes/semanas/:id/compartilhamentos`, junto da própria lista de
+ * opções. O app não tem EAS Update, então tudo que ele montasse sozinho ficaria
+ * preso ao build instalado; do jeito que está, mudar uma palavra do convite é
+ * um deploy do backend.
  */
 export function CompartilharReuniaoSheet({
   semana,
@@ -28,6 +30,7 @@ export function CompartilharReuniaoSheet({
   onImagem,
 }: CompartilharReuniaoSheetProps) {
   const { colors, styles } = useTema(criarEstilos);
+  const { data, isLoading, isError } = useCompartilhamentosSemana(semana?.id ?? null);
 
   /**
    * Fecha a folha ANTES de abrir o share do sistema: no iOS apresentar o share
@@ -41,35 +44,6 @@ export function CompartilharReuniaoSheet({
     }, 350);
   };
 
-  const opcoes = semana
-    ? ([
-        {
-          chave: "imagem",
-          titulo: "Reunião completa",
-          descricao: "Imagem com toda a programação da semana",
-          icone: "image-outline" as const,
-          acao: () => {
-            onClose();
-            onImagem();
-          },
-        },
-        {
-          chave: "zoom-meio",
-          titulo: "Zoom — meio de semana",
-          descricao: "Convite em texto com o link e a leitura da semana",
-          icone: "videocam-outline" as const,
-          acao: () => compartilharTexto(conviteZoomMeioSemana(semana)),
-        },
-        {
-          chave: "zoom-fds",
-          titulo: "Zoom — fim de semana",
-          descricao: "Convite em texto com orador, tema e link",
-          icone: "videocam-outline" as const,
-          acao: () => compartilharTexto(conviteZoomFimDeSemana(semana)),
-        },
-      ] as const)
-    : [];
-
   return (
     <Sheet visible={!!semana} onClose={onClose}>
       {semana ? (
@@ -77,18 +51,61 @@ export function CompartilharReuniaoSheet({
           <Text style={styles.titulo}>Compartilhar</Text>
           <Text style={styles.subtitulo}>Semana de {faixaSemana(semana)}</Text>
 
-          {opcoes.map((opcao) => (
-            <Pressable key={opcao.chave} style={styles.opcao} onPress={opcao.acao}>
-              <View style={styles.icone}>
-                <Ionicons name={opcao.icone} size={20} color={colors.primaryDark} />
-              </View>
-              <View style={styles.textos}>
-                <Text style={styles.opcaoTitulo}>{opcao.titulo}</Text>
-                <Text style={styles.opcaoDescricao}>{opcao.descricao}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </Pressable>
-          ))}
+          {/* A imagem é capacidade do próprio app (view-shot), então fica aqui
+              mesmo — as opções de TEXTO é que vêm do servidor. */}
+          <Pressable
+            style={styles.opcao}
+            onPress={() => {
+              onClose();
+              onImagem();
+            }}
+          >
+            <View style={styles.icone}>
+              <Ionicons name="image-outline" size={20} color={colors.primaryDark} />
+            </View>
+            <View style={styles.textos}>
+              <Text style={styles.opcaoTitulo}>Reunião completa</Text>
+              <Text style={styles.opcaoDescricao}>
+                Imagem com toda a programação da semana
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+
+          {isLoading ? (
+            <View style={styles.estado}>
+              <ActivityIndicator color={colors.primary} />
+              <Text style={styles.estadoTexto}>Carregando os convites...</Text>
+            </View>
+          ) : isError || !data?.opcoes?.length ? (
+            <View style={styles.estado}>
+              <Ionicons name="cloud-offline-outline" size={20} color={colors.textMuted} />
+              <Text style={styles.estadoTexto}>
+                Não consegui carregar os convites de Zoom. Confira a conexão e tente de novo.
+              </Text>
+            </View>
+          ) : (
+            data.opcoes.map((opcao) => (
+              <Pressable
+                key={opcao.id}
+                style={styles.opcao}
+                onPress={() => compartilharTexto(opcao.texto)}
+              >
+                <View style={styles.icone}>
+                  <Ionicons
+                    name={opcao.icone as keyof typeof Ionicons.glyphMap}
+                    size={20}
+                    color={colors.primaryDark}
+                  />
+                </View>
+                <View style={styles.textos}>
+                  <Text style={styles.opcaoTitulo}>{opcao.titulo}</Text>
+                  <Text style={styles.opcaoDescricao}>{opcao.descricao}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              </Pressable>
+            ))
+          )}
         </View>
       ) : null}
     </Sheet>
@@ -124,4 +141,13 @@ const criarEstilos = (colors: Cores) =>
     textos: { flex: 1, gap: 2 },
     opcaoTitulo: { fontSize: 15.5, fontWeight: "700", color: colors.text },
     opcaoDescricao: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+    estado: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing.md,
+      paddingVertical: spacing.lg,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    estadoTexto: { flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
   });

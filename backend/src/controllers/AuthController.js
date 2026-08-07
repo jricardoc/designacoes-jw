@@ -39,6 +39,7 @@ class AuthController {
                     nickname: usuario.nickname,
                     nome: usuario.nome,
                     isAdmin: usuario.isAdmin,
+                    escopos: usuario.escopos || [],
                     irmaoId: usuario.irmaoId
                 })
             });
@@ -58,6 +59,7 @@ class AuthController {
                     nickname: true,
                     nome: true,
                     isAdmin: true,
+                    escopos: true,
                     irmaoId: true,
                     createdAt: true
                 }
@@ -117,7 +119,7 @@ class AuthController {
             const atualizado = await prisma.usuario.update({
                 where: { id: req.user.id },
                 data: { nome: nome.trim() },
-                select: { id: true, nome: true, nickname: true, isAdmin: true, irmaoId: true }
+                select: { id: true, nome: true, nickname: true, isAdmin: true, escopos: true, irmaoId: true }
             });
 
             // Trocar o nome pode passar a casar (ou deixar de casar) com um irmao cadastrado,

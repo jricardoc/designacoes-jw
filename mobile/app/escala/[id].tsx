@@ -35,6 +35,7 @@ import {
   type PickerPerson,
 } from "@/components/dirigentes/DirigentePickerSheet";
 import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { MESES, MESES_CURTO, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { compareDataBR } from "@/utils/date";
@@ -51,7 +52,7 @@ export default function EscalaScreen() {
   const { colors, styles, statusConfig } = useTema(criarEstilos);
   // Sem admin, a escala é só leitura — o backend nega as escritas de todo modo.
   const { usuario } = useAuth();
-  const isAdmin = !!usuario?.isAdmin;
+  const podeEditar = podeGerenciar(usuario, "dirigentes");
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
   const qc = useQueryClient();
@@ -198,7 +199,7 @@ export default function EscalaScreen() {
         <View style={styles.actionsCard}>
           <Badge label={sc.label} color={sc.color} bg={sc.bg} />
           <View style={styles.actionsRow}>
-            {!isAdmin ? null : quadro.status === "rascunho" ? (
+            {!podeEditar ? null : quadro.status === "rascunho" ? (
               <Button
                 label="Publicar"
                 icon="checkmark"
@@ -241,7 +242,7 @@ export default function EscalaScreen() {
                 handleDownloadPDF();
               }}
             />
-            {isAdmin ? (
+            {podeEditar ? (
             <Button
               label="Excluir"
               icon="trash"
@@ -278,7 +279,7 @@ export default function EscalaScreen() {
               <View style={styles.diaBadge}>
                 <Text style={styles.diaBadgeText}>{grupo.dia}</Text>
               </View>
-              {isAdmin ? (
+              {podeEditar ? (
               <Pressable
                 hitSlop={8}
                 style={styles.deleteDia}
@@ -304,7 +305,7 @@ export default function EscalaScreen() {
                 <Ionicons name="calendar-clear-outline" size={16} color={colors.redDark} />
               </Pressable>
               ) : null}
-              {isAdmin ? (
+              {podeEditar ? (
               <Pressable
                 hitSlop={8}
                 style={styles.deleteDia}
@@ -340,7 +341,7 @@ export default function EscalaScreen() {
                 <View style={styles.cellsRow}>
                   <Pressable
                     style={styles.cell}
-                    disabled={!isAdmin}
+                    disabled={!podeEditar}
                     onPress={() =>
                       setEditing({
                         escalaId: e.id,

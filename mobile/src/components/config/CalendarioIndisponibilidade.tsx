@@ -174,7 +174,7 @@ const criarEstilos = (colors: Cores) =>
   legend: { flexDirection: "row", gap: 14 },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   legendDot: { width: 13, height: 13, borderRadius: 4 },
-  legendFree: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: "#DCD0B9" },
+  legendFree: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.borderStrong },
   legendText: { fontSize: 12, color: "#9A8F7D" },
   clearText: { color: "#9A4632", fontSize: 12.5, fontWeight: "600" },
   });

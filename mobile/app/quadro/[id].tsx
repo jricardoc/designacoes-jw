@@ -35,6 +35,7 @@ import {
 import { DiaShareCard } from "@/components/quadros/DiaShareCard";
 import { HistoricoList } from "@/components/quadros/HistoricoList";
 import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { MESES, MESES_CURTO, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import {
@@ -62,7 +63,7 @@ export default function QuadroScreen() {
   // O backend nega essas escritas de qualquer forma; aqui é para a tela não
   // oferecer o que vai dar "Acesso negado".
   const { usuario } = useAuth();
-  const isAdmin = !!usuario?.isAdmin;
+  const podeEditar = podeGerenciar(usuario, "designacoes");
   const { id } = useLocalSearchParams<{ id: string }>();
   const toast = useToast();
   const qc = useQueryClient();
@@ -249,7 +250,7 @@ export default function QuadroScreen() {
         <View style={styles.actionsCard}>
           <Badge label={sc.label} color={sc.color} bg={sc.bg} />
           <View style={styles.actionsRow}>
-            {!isAdmin ? null : quadro.status === "rascunho" ? (
+            {!podeEditar ? null : quadro.status === "rascunho" ? (
               <Button
                 label="Publicar"
                 icon="checkmark"
@@ -292,7 +293,7 @@ export default function QuadroScreen() {
                 handleDownloadPDF();
               }}
             />
-            {isAdmin ? (
+            {podeEditar ? (
             <Button
               label="Excluir"
               icon="trash"
@@ -347,7 +348,7 @@ export default function QuadroScreen() {
                   />
                 )}
               </Pressable>
-              {isAdmin ? (
+              {podeEditar ? (
               <Pressable
                 hitSlop={8}
                 style={styles.deleteDia}
@@ -390,7 +391,7 @@ export default function QuadroScreen() {
                           styles.cell,
                           st?.bg ? { backgroundColor: st.bg } : null,
                         ]}
-                        disabled={!isAdmin}
+                        disabled={!podeEditar}
                         onPress={() =>
                           setEditing({ data: grupo.data, funcao: f.funcao, campo })
                         }

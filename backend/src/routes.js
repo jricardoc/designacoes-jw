@@ -16,6 +16,13 @@ const CarrinhoController = require('./controllers/CarrinhoController');
 const PushTokenController = require('./controllers/PushTokenController');
 const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
 const requireAdmin = require('./middleware/requireAdmin');
+const { ESCOPOS, requireEscopo } = require('./middleware/escopos');
+// Leitura e livre para qualquer irmao logado; escrita exige o escopo da area
+// (ou admin geral, que contempla todos). Ver src/middleware/escopos.js.
+const podeDesignacoes = requireEscopo(ESCOPOS.DESIGNACOES);
+const podeDirigentes = requireEscopo(ESCOPOS.DIRIGENTES);
+const podeReunioes = requireEscopo(ESCOPOS.REUNIOES);
+const podeCarrinho = requireEscopo(ESCOPOS.CARRINHO);
 const multer = require('multer');
 
 // Limite de 5MB no upload da programacao para evitar exaustao de memoria (memoryStorage).
@@ -50,6 +57,11 @@ routes.post('/usuarios', requireAdmin, UsuarioController.create);
 routes.put('/usuarios/:id/irmao', requireAdmin, UsuarioController.vincularIrmao);
 routes.put('/usuarios/nickname', UsuarioController.updateNickname);
 routes.put('/usuarios/:id/admin', requireAdmin, UsuarioController.toggleAdmin);
+// Niveis de admin por area (designacoes, dirigentes, reunioes, carrinho). Quem
+// concede e sempre o admin geral. Ver src/middleware/escopos.js.
+routes.put('/usuarios/:id/escopos', requireAdmin, UsuarioController.atualizarEscopos);
+// Catalogo dos escopos, para a tela desenhar as opcoes sem duplicar os textos.
+routes.get('/usuarios/escopos/catalogo', requireAdmin, UsuarioController.catalogoEscopos);
 routes.put('/usuarios/:id/reset-senha', requireAdmin, UsuarioController.resetSenha);
 routes.delete('/usuarios/:id', requireAdmin, UsuarioController.delete);
 
@@ -61,18 +73,18 @@ routes.post('/config/reset', requireAdmin, ConfigController.resetDatabase);
 // ==================== QUADROS ====================
 // Leitura livre; toda escrita e admin — usuario comum ve os quadros, nao mexe.
 routes.get('/quadros', QuadroController.index);
-routes.post('/quadros', requireAdmin, QuadroController.create);
+routes.post('/quadros', podeDesignacoes, QuadroController.create);
 
 // Designacoes dentro de um quadro (ANTES das rotas com :id)
-routes.put('/quadros/designacao', requireAdmin, QuadroController.updateDesignacao);
-routes.put('/quadros/data', requireAdmin, QuadroController.updateData);
-routes.put('/quadros/dia', requireAdmin, QuadroController.updateDia);
-routes.delete('/quadros/dias', requireAdmin, QuadroController.deleteDia);
+routes.put('/quadros/designacao', podeDesignacoes, QuadroController.updateDesignacao);
+routes.put('/quadros/data', podeDesignacoes, QuadroController.updateData);
+routes.put('/quadros/dia', podeDesignacoes, QuadroController.updateDia);
+routes.delete('/quadros/dias', podeDesignacoes, QuadroController.deleteDia);
 
 // Rotas com parametro :id (DEPOIS das rotas especificas)
 routes.get('/quadros/:id', QuadroController.show);
-routes.put('/quadros/:id', requireAdmin, QuadroController.update);
-routes.delete('/quadros/:id', requireAdmin, QuadroController.delete);
+routes.put('/quadros/:id', podeDesignacoes, QuadroController.update);
+routes.delete('/quadros/:id', podeDesignacoes, QuadroController.delete);
 
 // ==================== CARRINHO DE PUBLICACOES ====================
 routes.get('/carrinho', CarrinhoController.index);
@@ -80,17 +92,17 @@ routes.get('/carrinho', CarrinhoController.index);
 // (n8n + Evolution API) consome.
 routes.get('/carrinho/agenda', CarrinhoController.agenda);
 
-routes.post('/carrinho/pontos', CarrinhoController.criarPonto);
-routes.put('/carrinho/pontos/:id', CarrinhoController.atualizarPonto);
-routes.delete('/carrinho/pontos/:id', requireAdmin, CarrinhoController.excluirPonto);
+routes.post('/carrinho/pontos', podeCarrinho, CarrinhoController.criarPonto);
+routes.put('/carrinho/pontos/:id', podeCarrinho, CarrinhoController.atualizarPonto);
+routes.delete('/carrinho/pontos/:id', podeCarrinho, CarrinhoController.excluirPonto);
 
-routes.post('/carrinho/turnos', CarrinhoController.criarTurno);
-routes.put('/carrinho/turnos/:id', CarrinhoController.atualizarTurno);
-routes.delete('/carrinho/turnos/:id', CarrinhoController.excluirTurno);
+routes.post('/carrinho/turnos', podeCarrinho, CarrinhoController.criarTurno);
+routes.put('/carrinho/turnos/:id', podeCarrinho, CarrinhoController.atualizarTurno);
+routes.delete('/carrinho/turnos/:id', podeCarrinho, CarrinhoController.excluirTurno);
 
-routes.post('/carrinho/publicadores', CarrinhoController.criarPublicador);
-routes.put('/carrinho/publicadores/:id', CarrinhoController.atualizarPublicador);
-routes.delete('/carrinho/publicadores/:id', requireAdmin, CarrinhoController.excluirPublicador);
+routes.post('/carrinho/publicadores', podeCarrinho, CarrinhoController.criarPublicador);
+routes.put('/carrinho/publicadores/:id', podeCarrinho, CarrinhoController.atualizarPublicador);
+routes.delete('/carrinho/publicadores/:id', podeCarrinho, CarrinhoController.excluirPublicador);
 
 // ==================== MINHAS DESIGNACOES ====================
 routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
@@ -146,30 +158,34 @@ routes.delete('/indisponibilidades/irmao/:irmaoId/clear', requireAdmin, Indispon
 
 // ==================== REUNIOES (Import Excel/PDF) ====================
 routes.get('/reunioes', ReuniaoController.index);
-routes.post('/reunioes/import', requireAdmin, upload.single('file'), ReuniaoController.import);
-routes.post('/reunioes/indisponibilidades', requireAdmin, ReuniaoController.aplicarIndisponibilidades);
-routes.delete('/reunioes/:id', requireAdmin, ReuniaoController.delete);
-routes.put('/reunioes/semanas/:id', requireAdmin, ReuniaoController.updateSemana);
+routes.post('/reunioes/import', podeReunioes, upload.single('file'), ReuniaoController.import);
+routes.post('/reunioes/indisponibilidades', podeReunioes, ReuniaoController.aplicarIndisponibilidades);
+routes.delete('/reunioes/:id', podeReunioes, ReuniaoController.delete);
+routes.put('/reunioes/semanas/:id', podeReunioes, ReuniaoController.updateSemana);
+// Os textos de compartilhamento sao montados no servidor (ver ConviteReuniaoService):
+// assim mudar o texto ou o negrito nao exige build novo do app. Leitura, nao admin —
+// compartilhar o convite e coisa de qualquer irmao.
+routes.get('/reunioes/semanas/:id/compartilhamentos', ReuniaoController.compartilhamentos);
 
 // ==================== SAÍDAS DE CAMPO ====================
 routes.get('/saidas-campo', SaidaCampoController.index);
-routes.post('/saidas-campo', requireAdmin, SaidaCampoController.create);
-routes.put('/saidas-campo/:id', requireAdmin, SaidaCampoController.update);
-routes.delete('/saidas-campo/:id', requireAdmin, SaidaCampoController.delete);
+routes.post('/saidas-campo', podeDirigentes, SaidaCampoController.create);
+routes.put('/saidas-campo/:id', podeDirigentes, SaidaCampoController.update);
+routes.delete('/saidas-campo/:id', podeDirigentes, SaidaCampoController.delete);
 
 // ==================== ESCALA DE DIRIGENTES ====================
 routes.get('/dirigentes/quadros', DirigentesController.indexQuadros);
-routes.post('/dirigentes/quadros', requireAdmin, DirigentesController.createQuadro);
+routes.post('/dirigentes/quadros', podeDirigentes, DirigentesController.createQuadro);
 routes.get('/dirigentes/quadros/:id', DirigentesController.showQuadro);
-routes.delete('/dirigentes/quadros/:id', requireAdmin, DirigentesController.deleteQuadro);
-routes.put('/dirigentes/quadros/:id/status', requireAdmin, DirigentesController.updateStatus);
-routes.post('/dirigentes/quadros/:id/regerar', requireAdmin, DirigentesController.regerarQuadro);
+routes.delete('/dirigentes/quadros/:id', podeDirigentes, DirigentesController.deleteQuadro);
+routes.put('/dirigentes/quadros/:id/status', podeDirigentes, DirigentesController.updateStatus);
+routes.post('/dirigentes/quadros/:id/regerar', podeDirigentes, DirigentesController.regerarQuadro);
 
-routes.put('/dirigentes/escala', requireAdmin, DirigentesController.updateEscala);
-routes.delete('/dirigentes/escala/dia', requireAdmin, DirigentesController.deleteDia);
-routes.delete('/dirigentes/escala/semana', requireAdmin, DirigentesController.deleteSemana);
+routes.put('/dirigentes/escala', podeDirigentes, DirigentesController.updateEscala);
+routes.delete('/dirigentes/escala/dia', podeDirigentes, DirigentesController.deleteDia);
+routes.delete('/dirigentes/escala/semana', podeDirigentes, DirigentesController.deleteSemana);
 
 routes.get('/dirigentes/disponibilidade/:irmaoId', DirigentesController.getDisponibilidade);
-routes.put('/dirigentes/disponibilidade', requireAdmin, DirigentesController.updateDisponibilidade);
+routes.put('/dirigentes/disponibilidade', podeDirigentes, DirigentesController.updateDisponibilidade);
 
 module.exports = routes;

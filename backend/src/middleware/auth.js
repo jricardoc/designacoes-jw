@@ -36,7 +36,9 @@ async function authMiddleware(req, res, next) {
             where: { id: decoded.id },
             // irmaoId entra aqui porque /minhas-designacoes precisa saber de quem sao as
             // designacoes ja no proprio request, sem uma consulta extra.
-            select: { id: true, nickname: true, nome: true, isAdmin: true, irmaoId: true }
+            // `escopos` entra aqui porque requireEscopo decide por ele a cada
+            // requisicao: assim revogar um escopo tem efeito na hora.
+            select: { id: true, nickname: true, nome: true, isAdmin: true, escopos: true, irmaoId: true }
         });
 
         if (!usuario) {

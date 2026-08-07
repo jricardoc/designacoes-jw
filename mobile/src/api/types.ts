@@ -16,11 +16,27 @@ export type NivelAudioVideo = "experiente" | "treinando";
 /** Privilégio de serviço do irmão. Informativo por enquanto; ausente/null = nenhum. */
 export type PrivilegioId = "servoMinisterial" | "anciao";
 
+/**
+ * Área que um usuário pode administrar sem ser admin geral. Espelha
+ * backend/src/middleware/escopos.js.
+ */
+export type EscopoAdmin = "designacoes" | "dirigentes" | "reunioes" | "carrinho";
+
+/** Uma área do catálogo de permissões, como o backend a descreve. */
+export interface OpcaoEscopo {
+  id: EscopoAdmin;
+  label: string;
+  descricao: string;
+}
+
 export interface Usuario {
   id: number;
   nickname: string;
   nome: string;
+  /** Admin geral: contempla todos os escopos. */
   isAdmin: boolean;
+  /** Áreas administráveis de quem não é admin geral. */
+  escopos?: EscopoAdmin[];
   createdAt?: string;
   /**
    * Cargo resolvido no backend cruzando o nome do usuário com o cadastro de irmãos.
@@ -306,6 +322,21 @@ export interface NomeAmbiguo {
 export interface IndisponibilidadePreview {
   confirmados: IrmaoConfirmado[];
   ambiguos: NomeAmbiguo[];
+}
+
+/**
+ * Uma opção de texto pronta para compartilhar, montada pelo backend
+ * (ConviteReuniaoService). O app só desenha e envia — inclusive a LISTA vem de
+ * lá, então acrescentar uma opção nova não exige build do app.
+ */
+export interface OpcaoCompartilhamento {
+  id: string;
+  titulo: string;
+  descricao: string;
+  /** Nome de um ícone do Ionicons. */
+  icone: string;
+  /** Texto final, já formatado (negrito do WhatsApp incluso). */
+  texto: string;
 }
 
 export interface ImportarReuniaoResponse {

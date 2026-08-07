@@ -17,6 +17,8 @@ import type {
 import { PontoSheet } from "@/components/carrinho/PontoSheet";
 import { PublicadorSheet } from "@/components/carrinho/PublicadorSheet";
 import { TurnoSheet } from "@/components/carrinho/TurnoSheet";
+import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import {
   Button,
   Card,
@@ -32,6 +34,9 @@ type TurnoDoDia = { turno: CarrinhoTurno; ponto: CarrinhoPonto };
 
 export default function CarrinhoScreen() {
   const { colors, styles } = useTema(criarEstilos);
+  // O carrinho passou a ter dono: sem o escopo, a tela é só consulta da escala.
+  const { usuario } = useAuth();
+  const podeEditar = podeGerenciar(usuario, "carrinho");
   const { data, isLoading, isError, refetch, isRefetching } = useCarrinho();
 
   const [dia, setDia] = useState(() => new Date().getDay());
@@ -211,12 +216,14 @@ export default function CarrinhoScreen() {
                 <Text style={styles.secaoTitulo}>Turnos</Text>
                 <Text style={styles.secaoSub}>{nomeDoDia}</Text>
               </View>
-              <Button
-                label="Turno"
-                icon="add"
-                onPress={novoTurno}
-                disabled={semPontos}
-              />
+              {podeEditar ? (
+                <Button
+                  label="Turno"
+                  icon="add"
+                  onPress={novoTurno}
+                  disabled={semPontos}
+                />
+              ) : null}
             </View>
 
             {turnosDoDia.length > 0 ? (
@@ -284,7 +291,7 @@ export default function CarrinhoScreen() {
                     : undefined
                 }
               >
-                {semPontos ? null : (
+                {semPontos || !podeEditar ? null : (
                   <Button label="Adicionar turno" onPress={novoTurno} />
                 )}
               </EmptyState>
@@ -299,12 +306,14 @@ export default function CarrinhoScreen() {
                   {pontos.length} cadastrado(s)
                 </Text>
               </View>
-              <Button
-                label="Ponto"
-                icon="add"
-                variant="secondary"
-                onPress={() => setPontoSheet({ open: true, ponto: null })}
-              />
+              {podeEditar ? (
+                <Button
+                  label="Ponto"
+                  icon="add"
+                  variant="secondary"
+                  onPress={() => setPontoSheet({ open: true, ponto: null })}
+                />
+              ) : null}
             </View>
 
             {semPontos ? (
@@ -313,10 +322,12 @@ export default function CarrinhoScreen() {
                 title="Nenhum ponto cadastrado"
                 message="Crie o primeiro ponto para montar a grade de turnos."
               >
-                <Button
-                  label="Criar Primeiro Ponto"
-                  onPress={() => setPontoSheet({ open: true, ponto: null })}
-                />
+                {podeEditar ? (
+                  <Button
+                    label="Criar Primeiro Ponto"
+                    onPress={() => setPontoSheet({ open: true, ponto: null })}
+                  />
+                ) : null}
               </EmptyState>
             ) : (
               <View style={styles.listaCard}>

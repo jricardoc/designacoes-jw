@@ -32,6 +32,13 @@ export interface Cores {
   red: string;
   redDark: string;
   amber: string;
+  /**
+   * Terceira cor de categoria (a "Reunião" na lista de compromissos). O terroso
+   * é todo quente — sem um tom frio, quadro e reunião viram o mesmo oliva. Não
+   * é decoração: é o que deixa a lista legível de relance.
+   */
+  teal: string;
+  tealBg: string;
 
   // Superfícies
   background: string;
@@ -87,6 +94,8 @@ const claro: Cores = {
   red: "#A8503B", // terracota (excluir)
   redDark: "#9A4632",
   amber: "#9A5A38",
+  teal: "#2F6F7E",
+  tealBg: "#E4EFF2",
 
   background: "#F3EDE2", // fundo do app
   surface: "#FBF7EF", // cartões
@@ -138,6 +147,8 @@ const escuro: Cores = {
   red: "#D07B63",
   redDark: "#DE9179",
   amber: "#CE9166",
+  teal: "#6FA9B8",
+  tealBg: "#1E2E33",
 
   background: "#1A1712",
   surface: "#242019",
@@ -192,6 +203,8 @@ const daltonicoClaro: Partial<Cores> = {
   green: "#0F7B63",
   greenDark: "#0B6350",
   successBg: "#D6EBE5",
+  teal: "#0F7B63",
+  tealBg: "#D6EBE5",
 
   // Perigo: laranja-vermelho franco
   red: "#C2410C",
@@ -226,6 +239,8 @@ const daltonicoEscuro: Partial<Cores> = {
   green: "#3E9C84",
   greenDark: "#6FC2AB",
   successBg: "#17332C",
+  teal: "#6FC2AB",
+  tealBg: "#17332C",
 
   red: "#C2410C",
   redDark: "#F0975F",

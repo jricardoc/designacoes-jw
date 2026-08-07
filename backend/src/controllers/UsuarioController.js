@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 const PrivilegioService = require('../services/PrivilegioService');
+const { sanearEscopos, CATALOGO_ESCOPOS } = require('../middleware/escopos');
 
 const SENHA_PADRAO = 'jw1010';
 
@@ -46,6 +47,7 @@ class UsuarioController {
                     nickname: true,
                     nome: true,
                     isAdmin: true,
+                    escopos: true,
                     irmaoId: true,
                     createdAt: true
                 },
@@ -85,7 +87,7 @@ class UsuarioController {
             const atualizado = await prisma.usuario.update({
                 where: { id },
                 data: { irmaoId: vinculo.irmaoId },
-                select: { id: true, nickname: true, nome: true, isAdmin: true, irmaoId: true, createdAt: true }
+                select: { id: true, nickname: true, nome: true, isAdmin: true, escopos: true, irmaoId: true, createdAt: true }
             });
 
             return res.json(await PrivilegioService.anotarUsuario(atualizado));
@@ -173,6 +175,7 @@ class UsuarioController {
                     nickname: true,
                     nome: true,
                     isAdmin: true,
+                    escopos: true,
                     irmaoId: true,
                     createdAt: true
                 }
@@ -209,20 +212,103 @@ class UsuarioController {
                 return res.status(404).json({ error: 'Usuario nao encontrado' });
             }
 
+            const virandoGeral = !usuario.isAdmin;
+
             const atualizado = await prisma.usuario.update({
                 where: { id: targetId },
-                data: { isAdmin: !usuario.isAdmin },
+                data: {
+                    isAdmin: virandoGeral,
+                    // Admin geral contempla tudo: guardar escopo junto so criaria
+                    // duas fontes de verdade e um estado confuso na tela ("geral
+                    // + designacoes"). Ao rebaixar, ele fica sem escopo nenhum —
+                    // devolver acesso e uma decisao consciente de quem promove.
+                    escopos: [],
+                },
                 select: {
                     id: true,
                     nickname: true,
                     nome: true,
-                    isAdmin: true
+                    isAdmin: true,
+                    escopos: true,
+                    escopos: true
                 }
             });
 
             return res.json(atualizado);
         } catch (error) {
             console.error('Erro ao alterar admin:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
+
+    /**
+     * GET /usuarios/escopos/catalogo - as areas que podem ser concedidas.
+     *
+     * A tela desenha a partir daqui em vez de manter a propria lista: uma area
+     * nova passa a aparecer no app sem precisar de build novo.
+     */
+    async catalogoEscopos(req, res) {
+        return res.json({ escopos: CATALOGO_ESCOPOS });
+    }
+
+    /**
+     * PUT /usuarios/:id/escopos - define os niveis de admin por area.
+     *
+     * Body: { escopos: ['designacoes', 'dirigentes', ...] }
+     *
+     * Substitui a lista inteira (nao e incremental): a tela manda o estado final
+     * das caixas marcadas, entao um PUT idempotente evita divergir se dois
+     * administradores mexerem quase ao mesmo tempo.
+     *
+     * Quem ja e admin GERAL nao recebe escopo: ele ja contempla tudo, e gravar
+     * os dois deixaria a permissao ambigua na hora de rebaixar.
+     */
+    async atualizarEscopos(req, res) {
+        try {
+            if (!req.user.isAdmin) {
+                return res.status(403).json({ error: 'Acesso negado. Apenas admin geral pode alterar permissoes.' });
+            }
+
+            const targetId = parseInt(req.params.id, 10);
+            if (!Number.isInteger(targetId)) {
+                return res.status(400).json({ error: 'Usuario invalido' });
+            }
+
+            // Mesma trava do toggleAdmin: ninguem mexe na propria permissao, para
+            // nao existir o caminho de se trancar fora por acidente.
+            if (targetId === req.user.id) {
+                return res.status(400).json({ error: 'Voce nao pode alterar suas proprias permissoes' });
+            }
+
+            const usuario = await prisma.usuario.findUnique({ where: { id: targetId } });
+            if (!usuario) {
+                return res.status(404).json({ error: 'Usuario nao encontrado' });
+            }
+
+            if (usuario.isAdmin) {
+                return res.status(400).json({
+                    error: 'Este usuario e admin geral e ja tem acesso a tudo. Remova o admin geral antes de definir areas.'
+                });
+            }
+
+            const escopos = sanearEscopos(req.body && req.body.escopos);
+
+            const atualizado = await prisma.usuario.update({
+                where: { id: targetId },
+                data: { escopos },
+                select: {
+                    id: true,
+                    nickname: true,
+                    nome: true,
+                    isAdmin: true,
+                    escopos: true,
+                    escopos: true
+                }
+            });
+
+            return res.json(atualizado);
+        } catch (error) {
+            console.error('Erro ao alterar escopos:', error);
             return res.status(500).json({ error: 'Erro interno' });
         }
     }
@@ -285,7 +371,8 @@ class UsuarioController {
                     id: true,
                     nickname: true,
                     nome: true,
-                    isAdmin: true
+                    isAdmin: true,
+                    escopos: true
                 }
             });
 

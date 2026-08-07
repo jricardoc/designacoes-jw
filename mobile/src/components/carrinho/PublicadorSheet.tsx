@@ -18,6 +18,7 @@ import {
 import type { CarrinhoPonto, CarrinhoPublicador } from "@/api/types";
 import { ConfirmDialog, Sheet, useConfirm, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
 import { DIAS_CURTOS, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
@@ -69,7 +70,7 @@ export function PublicadorSheet({ visible, publicador, pontos, onClose }: Props)
 
   const editando = !!publicador;
   const salvando = criar.isPending || atualizar.isPending;
-  const podeExcluir = editando && !!usuario?.isAdmin;
+  const podeExcluir = editando && podeGerenciar(usuario, "carrinho");
 
   const alternarTurno = (id: number) =>
     setTurnoIds((prev) =>
@@ -320,7 +321,7 @@ const criarEstilos = (colors: Cores) =>
       height: 52,
       borderRadius: 15,
       borderWidth: 1,
-      borderColor: "#E7C9BC",
+      borderColor: `${colors.red}44`,
       backgroundColor: colors.dangerBg,
       alignItems: "center",
       justifyContent: "center",

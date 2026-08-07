@@ -22,6 +22,7 @@ import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { SaidaCampoModal } from "@/components/config/SaidaCampoModal";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
+import { ehAdminGeral } from "@/utils/permissoes";
 import { useNotifPref } from "@/notifications/notifPref";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -83,7 +84,7 @@ export default function ConfigScreen() {
 
   // O menu já esconde a entrada, mas a rota continua alcançável (deep link,
   // rebaixamento com o app aberto). O backend também barra as escritas.
-  if (!usuario?.isAdmin) {
+  if (!ehAdminGeral(usuario)) {
     return (
       <View style={styles.screen}>
         <GradientHeader
@@ -479,7 +480,7 @@ const criarEstilos = (colors: Cores) =>
     gap: 12,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: "#F1EAD9",
+    borderTopColor: colors.border,
   },
   outingWhen: { width: 46, alignItems: "center" },
   outingWd: { fontSize: 13, fontWeight: "700", color: colors.primaryDark },
@@ -493,7 +494,7 @@ const criarEstilos = (colors: Cores) =>
     justifyContent: "space-between",
     padding: 16,
   },
-  prefDivider: { borderBottomWidth: 1, borderBottomColor: "#F1EAD9" },
+  prefDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
   prefLabel: { fontSize: 15, fontWeight: "500", color: colors.text },
   prefValue: { fontSize: 13, color: colors.textMuted },
   version: { textAlign: "center", fontSize: 12, color: "#B7AC97", marginTop: 6 },

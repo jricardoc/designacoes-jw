@@ -7,8 +7,10 @@ import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
 import type {
   Config,
+  EscopoAdmin,
   EstatisticasGlobais,
   Historico,
+  OpcaoEscopo,
   Reuniao,
   Usuario,
 } from "@/api/types";
@@ -75,6 +77,33 @@ export function useToggleAdmin() {
     mutationFn: (id: number) =>
       apiRequest(`/usuarios/${id}/admin`, { method: "PUT" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.usuarios }),
+  });
+}
+
+/**
+ * Define as áreas que o usuário administra. Substitui a lista inteira — a tela
+ * manda o estado final das caixas marcadas.
+ */
+export function useAtualizarEscopos() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, escopos }: { id: number; escopos: EscopoAdmin[] }) =>
+      apiRequest(`/usuarios/${id}/escopos`, { method: "PUT", body: { escopos } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.usuarios }),
+  });
+}
+
+/**
+ * O catálogo de áreas vem do backend, não de uma lista aqui: uma área nova
+ * aparece no app sem precisar de build.
+ */
+export function useCatalogoEscopos(enabled = true) {
+  return useQuery({
+    queryKey: qk.catalogoEscopos,
+    queryFn: () =>
+      apiRequest<{ escopos: OpcaoEscopo[] }>("/usuarios/escopos/catalogo"),
+    enabled,
+    staleTime: 30 * 60_000,
   });
 }
 

@@ -16,13 +16,14 @@ interface Props {
   user: Usuario | null;
   onClose: () => void;
   onToggleAdmin: (u: Usuario) => void;
+  onEscopos: (u: Usuario) => void;
   onResetSenha: (u: Usuario) => void;
   onExcluir: (u: Usuario) => void;
   onVincular: (u: Usuario) => void;
 }
 
 /** Bottom sheet de ações de um usuário (Conta → Usuários), fiel ao design. */
-export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, onExcluir, onVincular }: Props) {
+export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onResetSenha, onExcluir, onVincular }: Props) {
   const { colors, styles } = useTema(criarEstilos);
   return (
     <Sheet visible={!!user} onClose={onClose}>
@@ -37,7 +38,12 @@ export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, on
                 {user.nome}
               </Text>
               <Text style={styles.sub}>
-                @{user.nickname} · {user.isAdmin ? "Administrador" : "Membro"}
+                @{user.nickname} ·{" "}
+                {user.isAdmin
+                  ? "Admin geral"
+                  : user.escopos?.length
+                    ? `Admin de ${user.escopos.length} área(s)`
+                    : "Membro"}
                 {user.privilegio ? ` · ${privilegioLabel(user.privilegio)}` : ""}
               </Text>
             </View>
@@ -59,6 +65,20 @@ export function UserActionSheet({ user, onClose, onToggleAdmin, onResetSenha, on
               title={user.isAdmin ? "Remover admin" : "Tornar admin"}
               sub={user.isAdmin ? "Remove o acesso de administrador" : "Concede acesso de administrador"}
               onPress={() => onToggleAdmin(user)}
+            />
+            <Action
+              iconBg={colors.infoBg}
+              icon="options-outline"
+              iconColor={colors.primaryDark}
+              title="Áreas de acesso"
+              sub={
+                user.isAdmin
+                  ? "Admin geral já administra tudo"
+                  : user.escopos?.length
+                    ? user.escopos.join(", ")
+                    : "Nenhuma área — só leitura"
+              }
+              onPress={() => onEscopos(user)}
             />
             <Action
               iconBg={colors.sand}

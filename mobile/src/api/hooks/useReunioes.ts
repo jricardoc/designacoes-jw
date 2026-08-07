@@ -1,7 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
-import type { ImportarReuniaoResponse } from "@/api/types";
+import type { ImportarReuniaoResponse, OpcaoCompartilhamento } from "@/api/types";
 
 /** Arquivo escolhido pelo DocumentPicker. */
 export interface ArquivoSelecionado {
@@ -37,6 +37,28 @@ export function useImportarReuniao() {
       });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.reunioes }),
+  });
+}
+
+/**
+ * Os textos prontos de compartilhamento da semana (os convites de Zoom).
+ *
+ * O app NÃO monta esses textos: eles vêm montados de
+ * backend/src/services/ConviteReuniaoService.js. É o que permite mudar o texto,
+ * o negrito ou os dados do Zoom com um deploy do backend, sem build novo — o
+ * app não tem EAS Update, então tudo que ele monta sozinho fica preso ao build.
+ */
+export function useCompartilhamentosSemana(semanaId: number | null) {
+  return useQuery({
+    queryKey: qk.compartilhamentosSemana(semanaId ?? 0),
+    queryFn: () =>
+      apiRequest<{ opcoes: OpcaoCompartilhamento[] }>(
+        `/reunioes/semanas/${semanaId}/compartilhamentos`,
+      ),
+    enabled: semanaId !== null,
+    // O texto muda quando a programação é reimportada ou editada; enquanto a
+    // folha está aberta não precisa reconsultar.
+    staleTime: 5 * 60_000,
   });
 }
 
