@@ -9,6 +9,13 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "backgroundColor": "#F3EDE2",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/fb0e366c-d0bf-441a-8faa-b70bd7c34242",
+      "fallbackToCacheTimeout": 0
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -57,7 +64,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://api.designacoes.jricardodev.com.br",
+      "apiUrl": "https://api.servirmais.site",
       "router": {},
       "eas": {
         "projectId": "fb0e366c-d0bf-441a-8faa-b70bd7c34242"

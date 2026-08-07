@@ -190,7 +190,7 @@ export default function DirigentesQuadroView() {
           const canvas = await html2canvas(element, {
             scale: 2,
             useCORS: true,
-            backgroundColor: "var(--t-surface)",
+            backgroundColor: "#FBF7EF", // literal: html2canvas nao resolve var() e estoura; alem disso o PDF impresso deve sair claro sempre
             logging: false,
           });
 

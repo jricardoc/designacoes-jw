@@ -418,20 +418,20 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                     transition: "all 0.2s",
                     fontSize: "0.85rem",
                     boxShadow: funcoes.includes(funcao.id)
-                      ? `0 4px 12px ${funcao.color}40`
+                      ? `0 4px 12px color-mix(in srgb, ${funcao.color} 25%, transparent)`
                       : "none",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform =
                       "translateY(-2px) scale(1.05)";
-                    e.currentTarget.style.boxShadow = `0 6px 16px ${funcao.color}50`;
+                    e.currentTarget.style.boxShadow = `0 6px 16px color-mix(in srgb, ${funcao.color} 31%, transparent)`;
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = "translateY(0) scale(1)";
                     e.currentTarget.style.boxShadow = funcoes.includes(
                       funcao.id,
                     )
-                      ? `0 4px 12px ${funcao.color}40`
+                      ? `0 4px 12px color-mix(in srgb, ${funcao.color} 25%, transparent)`
                       : "none";
                   }}
                 >
@@ -483,16 +483,16 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                       cursor: "pointer",
                       transition: "all 0.2s",
                       fontSize: "0.85rem",
-                      boxShadow: ativoChip ? `0 4px 12px ${p.cor}40` : "none",
+                      boxShadow: ativoChip ? `0 4px 12px color-mix(in srgb, ${p.cor} 25%, transparent)` : "none",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-2px) scale(1.05)";
-                      e.currentTarget.style.boxShadow = `0 6px 16px ${p.cor}50`;
+                      e.currentTarget.style.boxShadow = `0 6px 16px color-mix(in srgb, ${p.cor} 31%, transparent)`;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "translateY(0) scale(1)";
                       e.currentTarget.style.boxShadow = ativoChip
-                        ? `0 4px 12px ${p.cor}40`
+                        ? `0 4px 12px color-mix(in srgb, ${p.cor} 25%, transparent)`
                         : "none";
                     }}
                   >

@@ -105,7 +105,7 @@ export default function Carrinho() {
                 { icone: PhoneOff, rotulo: 'Sem telefone', valor: totais.semTelefone, cor: 'var(--t-red)' },
               ].map((k) => (
                 <div key={k.rotulo} className="crr-kpi">
-                  <div className="crr-kpi-icone" style={{ background: `${k.cor}1a`, color: k.cor }}>
+                  <div className="crr-kpi-icone" style={{ background: `color-mix(in srgb, ${k.cor} 10%, transparent)`, color: k.cor }}>
                     <k.icone size={20} />
                   </div>
                   <div>

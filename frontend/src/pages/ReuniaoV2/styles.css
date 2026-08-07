@@ -10,7 +10,7 @@
     "Inter",
     -apple-system,
     sans-serif;
-  color: #2B2620;
+  color: var(--t-text);
 }
 
 .v2-actions-bar {
@@ -23,9 +23,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: #F6F0E4;
-  color: #3A352D;
-  border: 1px solid #C6BAA0;
+  background-color: var(--t-surface-muted);
+  color: var(--t-text);
+  border: 1px solid var(--t-muted);
   padding: 10px 18px;
   border-radius: 8px;
   font-weight: 600;
@@ -34,28 +34,28 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .v2-btn-back:hover {
-  background-color: #ECE3D3;
+  background-color: var(--t-border);
   transform: translateY(-1px);
 }
 
 .v2-empty-state {
   text-align: center;
   padding: 80px 20px;
-  background: #FBF7EF;
+  background: var(--t-surface);
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
 }
 .v2-empty-icon {
-  color: #A2977F;
+  color: var(--t-muted);
   margin-bottom: 20px;
 }
 .v2-empty-state p {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3A352D;
+  color: var(--t-text);
 }
 .v2-empty-state span {
-  color: #8A8071;
+  color: var(--t-text-2);
 }
 
 .v2-month-group {
@@ -64,13 +64,13 @@
 .v2-month-title {
   font-size: 2.2rem;
   font-weight: 800;
-  color: #2B2620;
+  color: var(--t-text);
   margin-bottom: 20px;
-  border-left: 6px solid #5E6B48;
+  border-left: 6px solid var(--t-primary);
   padding-left: 16px;
 }
 .v2-year-highlight {
-  color: #6E7B57;
+  color: var(--t-olive);
 }
 
 .v2-weeks-container {
@@ -80,13 +80,13 @@
 }
 
 .v2-week-card {
-  background: #FBF7EF;
+  background: var(--t-surface);
   border-radius: 16px;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 2px 4px -1px rgba(0, 0, 0, 0.03);
   overflow: hidden;
-  border: 1px solid #ECE3D3;
+  border: 1px solid var(--t-border);
 }
 
 .v2-week-toggle {
@@ -95,37 +95,37 @@
   align-items: center;
   padding: 20px 24px;
   cursor: pointer;
-  background: #F3EDE2;
+  background: var(--t-bg);
   transition: background 0.2s;
 }
 .v2-week-toggle:hover {
-  background: #F6F0E4;
+  background: var(--t-surface-muted);
 }
 .v2-week-toggle.active {
-  background: #FBF7EF;
-  border-bottom: 1px solid #ECE3D3;
+  background: var(--t-surface);
+  border-bottom: 1px solid var(--t-border);
 }
 .v2-week-dates {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 1.25rem;
-  color: #2B2620;
+  color: var(--t-text);
 }
 .v2-icon-date {
-  color: #5E6B48;
+  color: var(--t-primary);
 }
 .v2-controls {
   display: flex;
   align-items: center;
   gap: 16px;
-  color: #8A8071;
+  color: var(--t-text-2);
 }
 .v2-btn-export {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #5E6B48;
+  background: var(--t-primary);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -137,7 +137,7 @@
   box-shadow: 0 2px 4px rgba(86, 98, 57, 0.2);
 }
 .v2-btn-export:hover {
-  background: #566239;
+  background: var(--t-primary-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(86, 98, 57, 0.3);
 }
@@ -146,7 +146,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #9A4632;
+  background: var(--t-red-dark);
   color: white;
   border: none;
   padding: 8px 16px;
@@ -158,7 +158,7 @@
   box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
 }
 .v2-btn-pdf:hover {
-  background: #9A4632;
+  background: var(--t-red-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(220, 38, 38, 0.3);
 }
@@ -175,7 +175,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #2B2620;
+  background: var(--t-text);
   color: white;
   padding: 20px 30px;
   border-radius: 12px;
@@ -197,13 +197,13 @@
   margin: 0;
   font-size: 1.6rem;
   font-weight: 800;
-  color: #ECE3D3;
+  color: var(--t-border);
   text-align: right;
 }
 .v2-poster-title h3 {
   margin: 4px 0 0 0;
   font-size: 1rem;
-  color: #A2977F;
+  color: var(--t-muted);
   text-align: right;
   font-weight: 500;
 }
@@ -225,7 +225,7 @@
 
 /* COLUNAS */
 .v2-col {
-  background: #FBF7EF;
+  background: var(--t-surface);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
@@ -253,14 +253,14 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  border-bottom: 2px solid #F6F0E4;
+  border-bottom: 2px solid var(--t-surface-muted);
   padding-bottom: 12px;
 }
 .v2-split-title {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 800;
-  color: #2B2620;
+  color: var(--t-text);
 }
 .v2-split-header.fim .v2-split-title {
   color: #538d35; /* Verde FDS */
@@ -271,12 +271,12 @@
 }
 .v2-badge-date,
 .v2-badge-reading {
-  background: #F6F0E4;
+  background: var(--t-surface-muted);
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 1.35rem; /* Aumentado */
   font-weight: 900;
-  color: #2B2620;
+  color: var(--t-text);
   letter-spacing: 0.5px;
 }
 .v2-badge-reading {
@@ -289,8 +289,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  background: #F3EDE2;
-  border: 1px solid #ECE3D3;
+  background: var(--t-bg);
+  border: 1px solid var(--t-border);
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 20px;
@@ -303,22 +303,22 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   font-weight: 700;
-  color: #8A8071;
+  color: var(--t-text-2);
   margin-bottom: 4px;
 }
 .v2-pres-value {
   font-weight: 700;
   font-size: 1.15rem;
-  color: #2B2620;
+  color: var(--t-text);
 }
 
 .v2-cantico-row,
 .v2-cantico-meio {
-  background: #F6F0E4;
+  background: var(--t-surface-muted);
   padding: 10px 16px;
   border-radius: 8px;
   font-weight: 600;
-  color: #3A352D;
+  color: var(--t-text);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -331,7 +331,7 @@
 .v2-cantico-meio.final {
   margin-top: 20px;
   margin-bottom: 0;
-  border: 1px solid #C6BAA0;
+  border: 1px solid var(--t-muted);
 }
 
 /* SEÇÕES */
@@ -376,7 +376,7 @@
 
 .v2-sec-body {
   padding: 12px;
-  background: #FBF7EF;
+  background: var(--t-surface);
 }
 
 /* LINHAS DAS PARTES */
@@ -384,14 +384,14 @@
   display: flex;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid #F6F0E4;
+  border-bottom: 1px solid var(--t-surface-muted);
 }
 .v2-part-row:last-child {
   border-bottom: none;
 }
 .v2-time {
   font-weight: 800;
-  color: #5C5446;
+  color: var(--t-text-2);
   width: 68px; /* Mais longo para evitar encostar */
   min-width: 68px;
   flex-shrink: 0;
@@ -403,7 +403,7 @@
   flex: 1 1 42%;
   min-width: 0;
   font-weight: 600;
-  color: #2B2620;
+  color: var(--t-text);
   font-size: 1.1rem;
   padding-right: 12px;
   line-height: 1.3;
@@ -419,11 +419,11 @@
 }
 .v2-principal {
   font-weight: 700;
-  color: #2B2620;
-  background: #F3EDE2;
+  color: var(--t-text);
+  background: var(--t-bg);
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #ECE3D3;
+  border: 1px solid var(--t-border);
   font-size: 1.05rem;
   /* `nowrap` era a causa do transbordamento: a caixa se recusava a quebrar e crescia sem
      limite. Nomes duplos ("Fulana / Beltrana") agora quebram em duas linhas. */
@@ -442,8 +442,8 @@
 .v2-salab,
 .v2-lei {
   font-weight: 600;
-  color: #8A8071;
-  background: #F6F0E4;
+  color: var(--t-text-2);
+  background: var(--t-surface-muted);
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.95rem;
@@ -453,11 +453,11 @@
 }
 .v2-dir {
   font-weight: 700;
-  color: #2B2620;
-  background: #F3EDE2;
+  color: var(--t-text);
+  background: var(--t-bg);
   padding: 6px 12px;
   border-radius: 6px;
-  border: 1px solid #ECE3D3;
+  border: 1px solid var(--t-border);
   font-size: 1.05rem;
   white-space: nowrap;
 }
@@ -483,7 +483,7 @@
    COLUNA FIM DE SEMANA (DIREITA)
    ==================================== */
 .v2-col-fim {
-  background: linear-gradient(180deg, #FBF7EF 0%, #fefefe 100%);
+  background: linear-gradient(180deg, var(--t-surface) 0%, #fefefe 100%);
   display: flex;
   flex-direction: column;
 }
@@ -494,19 +494,19 @@
   gap: 16px;
 }
 .v2-fim-card {
-  background: #F3EDE2;
-  border: 1px solid #ECE3D3;
+  background: var(--t-bg);
+  border: 1px solid var(--t-border);
   padding: 16px;
   border-radius: 12px;
-  border-left: 4px solid #A2977F;
+  border-left: 4px solid var(--t-muted);
 }
 .v2-fim-card.theme {
-  border-left-color: #6E7B57;
-  background: #EEF0E3;
+  border-left-color: var(--t-olive);
+  background: var(--t-info-bg);
   border-color: #bfdbfe;
 }
 .v2-fim-card.theme .v2-f-value {
-  color: #3A382C;
+  color: var(--t-text);
 }
 .v2-fim-card.orador {
   border-left-color: #538d35;
@@ -515,21 +515,21 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   font-weight: 700;
-  color: #8A8071;
+  color: var(--t-text-2);
   margin-bottom: 6px;
 }
 .v2-f-value {
   font-size: 1.15rem;
   font-weight: 800;
-  color: #2B2620;
+  color: var(--t-text);
 }
 .v2-f-value.highlight {
   font-size: 1.3rem;
-  color: #54622F;
+  color: var(--t-green-dark);
 }
 .v2-f-sub {
   font-size: 0.9rem;
-  color: #8A8071;
+  color: var(--t-text-2);
   margin-top: 4px;
   font-weight: 500;
 }
@@ -537,13 +537,13 @@
 /* LIMPEZA */
 .v2-limpeza-card {
   margin-top: 24px;
-  background: #E9EFDC;
+  background: var(--t-success-bg);
   border: 1px solid #CDD6B3;
   border-radius: 12px;
   overflow: hidden;
 }
 .v2-limp-header {
-  background: #6E7B57;
+  background: var(--t-olive);
   color: white;
   font-weight: 800;
   padding: 12px 16px;
@@ -553,7 +553,7 @@
 .v2-limp-body {
   padding: 16px;
   font-size: 1.2rem;
-  color: #54622F;
+  color: var(--t-green-dark);
   text-align: center;
 }
 .v2-limp-body strong {
@@ -571,7 +571,7 @@
   justify-content: center;
   align-items: center; /* Centralizada e fluida no espaço livre do grid direito */
   opacity: 0.2;
-  color: #2B2620;
+  color: var(--t-text);
   /* transform: rotate(-10deg); */
   pointer-events: none;
   user-select: none;
@@ -618,7 +618,7 @@
   transition: opacity 0.2s;
   background: none;
   border: none;
-  color: #A8503B;
+  color: var(--t-red);
   cursor: pointer;
   padding: 4px;
   border-radius: 4px;
@@ -661,7 +661,7 @@
     top: 0;
     width: 100%;
     padding: 0;
-    background: #FFFFFF;
+    background: var(--t-surface);
   }
 
   .v2-watermark,
@@ -692,7 +692,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #2F6F7E;
+  background: var(--t-teal);
   color: white;
   border: none;
   padding: 8px 16px;

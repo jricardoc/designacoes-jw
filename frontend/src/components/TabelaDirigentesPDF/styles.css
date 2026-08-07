@@ -2,7 +2,7 @@
   width: 210mm; /* A4 width */
   min-height: 297mm; /* A4 height */
   padding: 15mm;
-  background-color: #FBF7EF;
+  background-color: var(--t-surface);
   box-sizing: border-box;
   font-family: Arial, Helvetica, sans-serif;
   color: black;
@@ -11,7 +11,7 @@
 .pdf-header {
   text-align: center;
   margin-bottom: 20px;
-  border-bottom: 2px solid #3A382C;
+  border-bottom: 2px solid var(--t-text);
   padding-bottom: 12px;
 }
 
@@ -20,13 +20,13 @@
   font-weight: bold;
   margin: 0;
   text-transform: uppercase;
-  color: #3A382C;
+  color: var(--t-text);
 }
 
 .pdf-subtitle {
   font-size: 18px;
   margin: 8px 0 0 0;
-  color: #5E6B48;
+  color: var(--t-primary);
 }
 
 .tabela-pdf {
@@ -44,8 +44,8 @@
 }
 
 .tabela-pdf th {
-  background-color: #EAEFDC;
-  color: #3A382C;
+  background-color: var(--t-success-bg);
+  color: var(--t-text);
   font-weight: bold;
   text-align: center;
   font-size: 13px;
@@ -56,24 +56,24 @@
   text-align: center;
   font-weight: bold;
   font-size: 16px;
-  color: #566239;
+  color: var(--t-primary-dark);
 }
 
 .semana-title-row {
-  background-color: #566239 !important;
+  background-color: var(--t-primary-dark) !important;
   color: white !important;
   font-weight: bold;
   text-align: center !important;
   padding: 10px !important;
   font-size: 14px !important;
   letter-spacing: 2px;
-  border-bottom: 2px solid #3A382C !important;
+  border-bottom: 2px solid var(--t-text) !important;
 }
 
 .cell-dia {
   font-weight: bold;
   text-align: center;
-  color: #566239;
+  color: var(--t-primary-dark);
   font-size: 14px;
 }
 
@@ -97,5 +97,5 @@
 
 /* Separador visual entre semanas - borda grossa dupla */
 .border-bottom-semana td {
-  border-bottom: 4px double #5E6B48;
+  border-bottom: 4px double var(--t-primary);
 }

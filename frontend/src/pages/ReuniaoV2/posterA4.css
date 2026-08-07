@@ -30,17 +30,17 @@
      Do design Modernist ficou só a estrutura e a fonte Archivo; as cores são as
      que a congregação já reconhece do resto do sistema: base creme, texto marrom
      escuro, terracota como acento e uma cor própria por seção. */
-  --p-text: #2B2620;
-  --p-accent: #A8503B;
-  --p-accent-400: #C6BAA0;
-  --p-accent-500: #B06A43;
+  --p-text: var(--t-text);
+  --p-accent: var(--t-red);
+  --p-accent-400: var(--t-muted);
+  --p-accent-500: var(--t-terracotta);
   --p-accent-700: #7A3D2C;
-  --p-n-100: #F6F0E4;
-  --p-n-300: #ECE3D3;
-  --p-n-400: #C6BAA0;
-  --p-n-500: #A2977F;
-  --p-n-600: #8A8071;
-  --p-n-700: #5C5446;
+  --p-n-100: var(--t-surface-muted);
+  --p-n-300: var(--t-border);
+  --p-n-400: var(--t-muted);
+  --p-n-500: var(--t-muted);
+  --p-n-600: var(--t-text-2);
+  --p-n-700: var(--t-text-2);
 
   /* Cor de cada seção, como na V1. */
   --p-tesouros: #558790;
@@ -57,7 +57,7 @@
   /* Respiro mínimo. Na tela o pôster fica dentro de um card, então não precisa de
      moldura própria; no papel, a margem quem dá é a folha. */
   padding: 12px 14px;
-  background: #FBF7EF;
+  background: var(--t-surface);
   color: var(--p-text);
   font-family: var(--p-font);
   display: flex;
@@ -197,7 +197,7 @@
 }
 .v2-exportable-poster .v2-badge-reading {
   background: var(--p-accent);
-  color: #FBF7EF;
+  color: var(--t-surface);
   padding: 5px 10px 4px;
   border-radius: 0;
   font: 800 13.5px/1.15 var(--p-font);
@@ -308,7 +308,7 @@
   align-items: center;
   gap: 8px;
   background: var(--p-text);
-  color: #FBF7EF;
+  color: var(--t-surface);
   padding: 6px 10px;
   font: 800 14px/1 var(--p-font);
   letter-spacing: 0.1em;
@@ -406,7 +406,7 @@
   border-radius: 0;
   padding: 0;
   font: 600 15.5px/1.25 var(--p-font);
-  /* Era --p-n-600 (#8A8071), que dá só 3,63:1 sobre o creme — abaixo do mínimo de
+  /* Era --p-n-600 (var(--t-text-2)), que dá só 3,63:1 sobre o creme — abaixo do mínimo de
      4,5:1 para texto normal, e some na impressão. Este marrom sobe para 6,99:1
      sem virar a cor do nome principal, então a reserva continua sendo reserva. */
   color: var(--p-n-700);
@@ -425,7 +425,7 @@
 .v2-exportable-poster .v2-dir,
 .v2-exportable-poster .v2-lei {
   background: transparent;
-  /* O `.v2-dir` do styles.css tinha `border: 1px solid #ECE3D3`, e zerar só o fundo
+  /* O `.v2-dir` do styles.css tinha `border: 1px solid var(--t-border)`, e zerar só o fundo
      deixava a moldura sozinha em volta do Dirigente — parecia um campo de formulário. */
   border: none;
   border-radius: 0;

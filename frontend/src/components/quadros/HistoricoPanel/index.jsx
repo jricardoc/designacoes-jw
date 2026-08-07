@@ -163,7 +163,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                         width: '32px',
                         height: '32px',
                         borderRadius: '8px',
-                        background: `${config.color}15`,
+                        background: `color-mix(in srgb, ${config.color} 8%, transparent)`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -196,7 +196,7 @@ const HistoricoPanel = forwardRef(function HistoricoPanel({ quadroId }, ref) {
                             <span style={{
                               padding: '0.15rem 0.5rem',
                               borderRadius: '4px',
-                              background: `${config.color}15`,
+                              background: `color-mix(in srgb, ${config.color} 8%, transparent)`,
                               color: config.color,
                               fontSize: '0.7rem',
                               fontWeight: '600'

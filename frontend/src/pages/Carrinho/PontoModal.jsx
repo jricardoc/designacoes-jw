@@ -2,8 +2,15 @@ import { useState } from 'react';
 import { X, Check, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-/** Cores das planilhas de origem, mais algumas para pontos novos. */
-const CORES = ['#D9822B', '#8064A2', '#C0504D', '#77933C', 'var(--t-teal)', 'var(--t-amber)', 'var(--t-primary)', 'var(--t-terracotta)'];
+/**
+ * Cores das planilhas de origem, mais algumas para pontos novos.
+ *
+ * Estes valores NÃO são tema: são DADO. O escolhido aqui vai no corpo do
+ * POST/PUT de /carrinho/pontos e fica gravado na coluna `cor` do ponto, e o app
+ * mobile lê essa mesma coluna — React Native não resolve variável CSS. Por isso
+ * têm de continuar hexadecimais literais.
+ */
+const CORES = ['#D9822B', '#8064A2', '#C0504D', '#77933C', '#2F6F7E', '#9A5A38', '#5E6B48', '#B06A43'];
 
 export default function PontoModal({ ponto, onClose }) {
   const { authFetch } = useAuth();

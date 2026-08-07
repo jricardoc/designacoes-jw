@@ -24,7 +24,7 @@ export default function PrivilegioBadge({ privilegio, tamanho = 'md', abreviado 
         alignItems: 'center',
         background: info.fundo,
         color: info.cor,
-        border: `1px solid ${info.cor}33`,
+        border: `1px solid color-mix(in srgb, ${info.cor} 20%, transparent)`,
         borderRadius: '999px',
         padding: pequeno ? '4px 9px' : '5px 11px',
         fontSize: pequeno ? '0.66rem' : '0.72rem',

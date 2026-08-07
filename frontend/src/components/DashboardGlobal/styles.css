@@ -45,24 +45,24 @@
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  background: #FBF7EF;
+  background: var(--t-surface);
   border-radius: 24px;
-  border: 1px solid #ECE3D3;
+  border: 1px solid var(--t-border);
   margin-top: 2rem;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #F6F0E4;
-  border-top-color: #6E7B57;
+  border: 4px solid var(--t-surface-muted);
+  border-top-color: var(--t-olive);
   border-radius: 50%;
   animation: spinLoader 1s linear infinite;
   margin-bottom: 1rem;
 }
 
 .dashboard-global-loader p {
-  color: #8A8071;
+  color: var(--t-text-2);
   font-weight: 500;
   font-size: 0.95rem;
 }
@@ -93,14 +93,14 @@
   gap: 0.75rem;
   font-size: 1.75rem;
   font-weight: 800;
-  color: #2B2620;
+  color: var(--t-text);
   margin: 0 0 0.25rem 0;
   letter-spacing: -0.02em;
 }
 
 .dashboard-icon {
-  color: #6E7B57;
-  background: #EAEFDC;
+  color: var(--t-olive);
+  background: var(--t-success-bg);
   padding: 6px;
   border-radius: 12px;
 }
@@ -110,7 +110,7 @@
 }
 
 .dashboard-subtitle {
-  color: #8A8071;
+  color: var(--t-text-2);
   font-size: 0.95rem;
   margin: 0;
   font-weight: 500;
@@ -120,18 +120,18 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #F3EDE2;
-  border: 1px solid #ECE3D3;
+  background: var(--t-bg);
+  border: 1px solid var(--t-border);
   padding: 0.5rem 1rem;
   border-radius: 20px;
-  color: #3A352D;
+  color: var(--t-text);
   font-weight: 600;
   font-size: 0.9rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .dashboard-badge svg {
-  color: #6E7B57;
+  color: var(--t-olive);
 }
 
 /* Grid Layout */
@@ -165,18 +165,18 @@
 }
 
 .primary-card {
-  background: linear-gradient(145deg, #FBF7EF 0%, #F3EDE2 100%);
-  border: 1px solid #ECE3D3;
+  background: linear-gradient(145deg, var(--t-surface) 0%, var(--t-bg) 100%);
+  border: 1px solid var(--t-border);
 }
 
 .secondary-card {
-  background: linear-gradient(145deg, #FBF7EF 0%, #fefce8 100%);
+  background: linear-gradient(145deg, var(--t-surface) 0%, #fefce8 100%);
   border: 1px solid #fef08a;
 }
 
 .danger-card {
-  background: linear-gradient(145deg, #FBF7EF 0%, #F8EDE8 100%);
-  border: 1px solid #F0DED3;
+  background: linear-gradient(145deg, var(--t-surface) 0%, var(--t-danger-bg) 100%);
+  border: 1px solid var(--t-danger-bg);
 }
 
 /* Headers */
@@ -191,17 +191,17 @@
   margin: 0;
   font-size: 1.15rem;
   font-weight: 700;
-  color: #2B2620;
+  color: var(--t-text);
 }
 
 .card-icon.trophy {
-  color: #B06A43;
+  color: var(--t-terracotta);
 }
 .card-icon.function {
-  color: #6E7B57;
+  color: var(--t-olive);
 }
 .card-icon.arrow-down {
-  color: #A8503B;
+  color: var(--t-red);
 }
 
 /* Stat Rows (Progress Bars) */
@@ -222,7 +222,7 @@
 
 .stat-rank {
   font-weight: 700;
-  color: #8A8071;
+  color: var(--t-text-2);
   margin-right: 0.5rem;
   font-size: 0.85rem;
   width: 24px;
@@ -230,7 +230,7 @@
 
 .stat-name {
   font-weight: 600;
-  color: #2B2620;
+  color: var(--t-text);
   flex: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -240,27 +240,27 @@
 .stat-count {
   font-weight: 700;
   color: #4f46e5;
-  background: #EAEFDC;
+  background: var(--t-success-bg);
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 0.8rem;
 }
 
 .low-count {
-  color: #9A4632;
-  background: #F6E7E0;
+  color: var(--t-red-dark);
+  background: var(--t-danger-bg);
 }
 
 .progress-bar-bg {
   width: 100%;
   height: 8px;
-  background: #F6F0E4;
+  background: var(--t-surface-muted);
   border-radius: 4px;
   overflow: hidden;
 }
 
 .danger-bg {
-  background: #F8EDE8;
+  background: var(--t-danger-bg);
 }
 
 .progress-bar-fill {
@@ -270,21 +270,21 @@
 }
 
 .rank-1 {
-  background: linear-gradient(90deg, #B06A43 0%, #C68A4F 100%);
+  background: linear-gradient(90deg, var(--t-terracotta) 0%, #C68A4F 100%);
 }
 .rank-2 {
-  background: linear-gradient(90deg, #A2977F 0%, #C6BAA0 100%);
+  background: linear-gradient(90deg, var(--t-muted) 0%, var(--t-muted) 100%);
 }
 .rank-3 {
-  background: linear-gradient(90deg, #78532A 0%, #9A5A38 100%);
+  background: linear-gradient(90deg, var(--t-warning-strong) 0%, var(--t-amber) 100%);
 }
 .rank-4,
 .rank-5 {
-  background: linear-gradient(90deg, #6E7B57 0%, #8B9A6F 100%);
+  background: linear-gradient(90deg, var(--t-olive) 0%, #8B9A6F 100%);
 }
 
 .danger-fill {
-  background: linear-gradient(90deg, #A8503B 0%, #C2877D 100%);
+  background: linear-gradient(90deg, var(--t-red) 0%, #C2877D 100%);
 }
 
 /* Roles Grid */
@@ -295,8 +295,8 @@
 }
 
 .role-card {
-  background: #FBF7EF;
-  border: 1px solid #ECE3D3;
+  background: var(--t-surface);
+  border: 1px solid var(--t-border);
   border-radius: 16px;
   padding: 1rem;
   display: flex;
@@ -309,7 +309,7 @@
 @media (min-width: 1050px) {
   .role-card:hover {
 
-  border-color: #C6BAA0;
+  border-color: var(--t-muted);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 
@@ -328,16 +328,16 @@
 }
 
 .role-icon-wrapper.mic {
-  background: linear-gradient(135deg, #6E7B57 0%, #5E6B48 100%);
+  background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%);
 }
 .role-icon-wrapper.ind {
-  background: linear-gradient(135deg, #5E6B48 0%, #566239 100%);
+  background: linear-gradient(135deg, var(--t-primary) 0%, var(--t-primary-dark) 100%);
 }
 .role-icon-wrapper.av {
-  background: linear-gradient(135deg, #6E7B57 0%, #6d28d9 100%);
+  background: linear-gradient(135deg, var(--t-olive) 0%, #6d28d9 100%);
 }
 .role-icon-wrapper.car {
-  background: linear-gradient(135deg, #B06A43 0%, #9A5A38 100%);
+  background: linear-gradient(135deg, var(--t-terracotta) 0%, var(--t-amber) 100%);
 }
 
 .role-details {
@@ -348,7 +348,7 @@
 
 .role-title {
   font-size: 0.75rem;
-  color: #8A8071;
+  color: var(--t-text-2);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -358,7 +358,7 @@
 .role-winner {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #2B2620;
+  color: var(--t-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -366,7 +366,7 @@
 
 .role-count {
   font-size: 0.8rem;
-  color: #6E7B57;
+  color: var(--t-olive);
   font-weight: 600;
 }
 

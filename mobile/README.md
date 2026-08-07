@@ -75,7 +75,7 @@ Por padrão o app já aponta para a **API de produção** (Easypanel), configura
 em `expo.extra.apiUrl` no `app.json`:
 
 ```
-https://api.designacoes.jricardodev.com.br
+https://api.servirmais.site
 ```
 
 Não é preciso configurar nada para usar produção. Para apontar para outro

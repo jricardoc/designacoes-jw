@@ -4,7 +4,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #6E7B57 0%, #5E6B48 100%);
+  background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%);
   color: white;
   border: none;
   border-radius: 12px;
@@ -22,12 +22,12 @@
 .loading-state {
   text-align: center;
   padding: 4rem;
-  color: #8A8071;
+  color: var(--t-text-2);
   font-size: 1.1rem;
 }
 
 .empty-state {
-  background: #FBF7EF;
+  background: var(--t-surface);
   border-radius: 16px;
   padding: 4rem 2rem;
   text-align: center;
@@ -35,23 +35,23 @@
 }
 
 .empty-icon {
-  color: #C6BAA0;
+  color: var(--t-muted);
   margin-bottom: 1rem;
 }
 
 .empty-state h3 {
   margin: 0 0 0.5rem;
-  color: #3A352D;
+  color: var(--t-text);
 }
 
 .empty-state p {
-  color: #8A8071;
+  color: var(--t-text-2);
   margin-bottom: 1.5rem;
 }
 
 .btn-primary {
   padding: 0.75rem 1.5rem;
-  background: #6E7B57;
+  background: var(--t-olive);
   color: white;
   border: none;
   border-radius: 10px;
@@ -61,7 +61,7 @@
 }
 
 .btn-primary:hover {
-  background: #5E6B48;
+  background: var(--t-primary);
 }
 
 .quadros-grid {
@@ -71,7 +71,7 @@
 }
 
 .quadro-card {
-  background: #FBF7EF;
+  background: var(--t-surface);
   border-radius: 16px;
   padding: 1.25rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -83,7 +83,7 @@
 }
 
 .quadro-card:hover {
-  border-color: #6E7B57;
+  border-color: var(--t-olive);
   transform: translateY(-4px);
   box-shadow: 0 8px 25px rgba(94, 107, 72, 0.15);
 }
@@ -107,7 +107,7 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #6E7B57 0%, #5E6B48 100%);
+  background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -124,13 +124,13 @@
   margin: 0 0 0.5rem;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #2B2620;
+  color: var(--t-text);
 }
 
 .quadro-card-info {
   display: flex;
   gap: 1rem;
-  color: #8A8071;
+  color: var(--t-text-2);
   font-size: 0.85rem;
   margin-bottom: 1rem;
 }
@@ -146,8 +146,8 @@
   justify-content: space-between;
   align-items: center;
   padding-top: 1rem;
-  border-top: 1px solid #F6F0E4;
-  color: #A2977F;
+  border-top: 1px solid var(--t-surface-muted);
+  color: var(--t-muted);
   font-size: 0.8rem;
 }
 
