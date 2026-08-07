@@ -77,8 +77,8 @@
 }
 
 .badge-horario {
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: var(--t-teal-bg);
+  color: var(--t-teal);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-weight: 600;
@@ -104,8 +104,8 @@
 }
 
 .select-irmao.empty {
-  border-color: #fecdd3;
-  background-color: #fff1f2;
+  border-color: var(--t-red);
+  background-color: var(--t-danger-bg);
 }
 
 .view-only-name {

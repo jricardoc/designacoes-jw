@@ -29,7 +29,7 @@
 
 .jw-logo-box {
   background-color: #4a6da7; /* Azul JW */
-  color: var(--t-surface);
+  color: var(--t-text-on-primary);
   font-weight: bold;
   font-size: 1rem;
   padding: 8px 12px;
@@ -276,7 +276,7 @@
 
 .limpeza-header {
   background-color: #538d35;
-  color: var(--t-surface) !important;
+  color: var(--t-text-on-primary) !important;
   font-size: 1.4rem;
   text-align: center;
   font-weight: bold;
@@ -403,7 +403,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--t-text) 0%, var(--t-olive) 100%);
+  background: linear-gradient(135deg, var(--t-ink) 0%, var(--t-olive) 100%);
   color: white;
   border: none;
   padding: 10px 20px;

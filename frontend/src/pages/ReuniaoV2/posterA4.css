@@ -197,7 +197,7 @@
 }
 .v2-exportable-poster .v2-badge-reading {
   background: var(--p-accent);
-  color: var(--t-surface);
+  color: var(--t-text-on-primary);
   padding: 5px 10px 4px;
   border-radius: 0;
   font: 800 13.5px/1.15 var(--p-font);
@@ -308,7 +308,7 @@
   align-items: center;
   gap: 8px;
   background: var(--p-text);
-  color: var(--t-surface);
+  color: var(--t-text-on-primary);
   padding: 6px 10px;
   font: 800 14px/1 var(--p-font);
   letter-spacing: 0.1em;

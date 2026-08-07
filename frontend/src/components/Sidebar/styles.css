@@ -2,7 +2,7 @@
 .sidebar {
   width: 70px;
   height: 100vh;
-  background-color: var(--t-text); /* Azul JW */
+  background-color: var(--t-ink); /* Azul JW */
   color: white;
   position: fixed;
   left: 0;
@@ -37,7 +37,7 @@
   width: 40px;
   height: 40px;
   background: var(--t-olive);
-  color: var(--t-surface);
+  color: var(--t-text-on-primary);
   border-radius: 11px;
   display: flex;
   align-items: center;
@@ -93,8 +93,8 @@
 }
 
 .nav-item.active {
-  background-color: var(--t-olive); /* Azul highlight */
-  color: white;
+  background-color: var(--t-primary); /* Pílula da aba ativa */
+  color: var(--t-text-on-primary);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -150,7 +150,9 @@
 
 .footer-version {
   font-size: 0.65rem;
-  color: var(--t-text-2);
+  /* A sidebar é sempre escura (--t-ink): aqui vale o token que fica claro nos
+     dois temas, não --t-text-2, que escurece no claro e some. */
+  color: var(--t-muted);
   font-weight: 600;
 }
 
@@ -177,7 +179,9 @@
 @media (min-width: 1050px) {
   .logout-btn:hover {
     background-color: rgba(239, 68, 68, 0.2); /* Vermelho suave */
-    color: var(--t-danger-bg);
+    /* Texto sobre a faixa vermelha na sidebar escura: precisa ser claro nos
+       dois temas. --t-danger-bg é FUNDO e no escuro é quase preto. */
+    color: var(--t-text-on-primary);
   }
 }
 

@@ -99,7 +99,7 @@ export default function TabelaPDF({ dados, quadro, id }) {
         style={{
           display: "grid",
           gridTemplateColumns: "25mm 25mm 1fr 1fr 1fr",
-          background: "var(--t-text)",
+          background: "#2B2620",
           color: "white",
           fontWeight: 600,
           fontSize: "3.5mm",

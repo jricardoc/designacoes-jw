@@ -13,7 +13,7 @@
 }
 
 .quadro-header {
-  background: linear-gradient(135deg, var(--t-text) 0%, #29281D 100%);
+  background: linear-gradient(135deg, var(--t-ink) 0%, #29281D 100%);
   padding: 1.5rem 2rem;
   color: white;
 }
@@ -105,13 +105,15 @@
 @media (min-width: 1050px) {
   .btn-publicar:hover {
 
-  background: var(--t-primary-dark);
+  background: var(--t-olive);
 
   }
 }
 
 .btn-pdf {
-  background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%);
+  /* --t-primary-dark e token de TEXTO forte: no escuro ele CLAREIA, entao usado
+     como fundo invertia o botao e apagava o rotulo branco. */
+  background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%);
   color: white;
 }
 .btn-pdf:disabled {
@@ -120,7 +122,9 @@
 
 .btn-excluir {
   background: rgba(239, 68, 68, 0.2);
-  color: var(--t-danger-bg);
+  /* texto sobre faixa colorida: --t-danger-bg e FUNDO (escuro no tema escuro) e
+     sumia aqui; o token de texto claro nos dois temas e --t-text-on-primary. */
+  color: var(--t-text-on-primary);
   border: 1px solid rgba(239, 68, 68, 0.3);
 }
 

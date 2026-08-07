@@ -85,7 +85,7 @@ const primaryBtn = {
   border: "none",
   borderRadius: "13px",
   background: T.primary,
-  color: "var(--t-surface)",
+  color: "var(--t-text-on-primary)",
   fontWeight: 600,
   cursor: "pointer",
 };

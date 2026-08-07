@@ -9,7 +9,7 @@ const MESES = ['', 'Janeiro', 'Fevereiro', 'Marco', 'Abril', 'Maio', 'Junho',
 
 const STATUS_CONFIG = {
   rascunho: { label: 'Rascunho', color: 'var(--t-terracotta)', bg: 'var(--t-warning-bg)' },
-  publicado: { label: 'Publicado', color: 'var(--t-primary)', bg: 'var(--t-success-bg)' },
+  publicado: { label: 'Publicado', color: 'var(--t-primary-dark)', bg: 'var(--t-success-bg)' },
   arquivado: { label: 'Arquivado', color: 'var(--t-text-2)', bg: 'var(--t-surface-muted)' }
 };
 

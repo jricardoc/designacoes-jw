@@ -12,7 +12,7 @@ const MESES = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 const STATUS = {
   rascunho: { label: 'Rascunho', color: 'var(--t-amber)', bg: 'var(--t-warning-bg)' },
   publicado: { label: 'Publicado', color: 'var(--t-green-dark)', bg: 'var(--t-success-bg)' },
-  arquivado: { label: 'Arquivado', color: 'var(--t-text-2)', bg: '#EAE3D6' },
+  arquivado: { label: 'Arquivado', color: 'var(--t-text-2)', bg: 'var(--t-surface-muted)' },
 };
 
 export default function Dirigentes() {

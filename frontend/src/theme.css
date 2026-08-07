@@ -47,6 +47,11 @@
   --t-danger-bg: #f8ede8;
   --t-info-bg: #eef0e3;
   --t-mes-etiqueta: #c2a98c;
+  /* Cromo escuro: sidebar, cabeçalho de tabela, faixa de título. Fica ESCURO
+     nos dois temas — é identidade visual, não superfície de conteúdo. Existe
+     porque #2B2620 era usado no design tanto como cor de texto quanto como
+     fundo escuro; um token só para os dois inverteria um deles no tema escuro. */
+  --t-ink: #2b2620;
   --t-backdrop: rgba(28, 27, 20, 0.5);
   /* Alias histórico: era o vermelho, não a terracota. Mantido para não
      quebrar quem já usa. */
@@ -91,6 +96,7 @@
   --t-danger-bg: #3c271f;
   --t-info-bg: #2d3223;
   --t-mes-etiqueta: #8f805f;
+  --t-ink: #14110c;
   --t-backdrop: rgba(0, 0, 0, 0.62);
   --t-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   --t-shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.45);

@@ -68,7 +68,8 @@ Suba a API (na raiz do repositório):
 docker compose up        # ou, dentro de /backend:  npm install && npm run dev
 ```
 
-A API sobe na porta **3001**. Login padrão: **`admin` / `jw1010`**.
+A API sobe na porta **3001**. O usuário `admin` é criado no primeiro boot com a
+senha definida em `ADMIN_SEED_PASSWORD` (veja `backend/.env.example`).
 
 ### 2. URL da API
 Por padrão o app já aponta para a **API de produção** (Easypanel), configurada
@@ -88,6 +89,14 @@ cp .env.example .env
 
 > Celulares/emuladores **não** enxergam o `localhost` do PC. Para a API local
 > use o IP da sua rede (no Windows: `ipconfig` → campo *IPv4 Address*).
+
+> ⚠️ **Ao trocar a URL da API, mude nos DOIS lugares.** `EXPO_PUBLIC_API_URL`
+> tem prioridade sobre `expo.extra.apiUrl`, e nos builds do EAS ela vem das
+> **variáveis de ambiente do painel do Expo** — que não existem neste
+> repositório. Alterar só o `app.json` não surte efeito no build: o valor do
+> painel vence em silêncio. Confira em
+> <https://expo.dev> → o projeto → *Environment variables*, nos environments
+> `preview` e `production`.
 
 ### 3. Instalar e iniciar
 

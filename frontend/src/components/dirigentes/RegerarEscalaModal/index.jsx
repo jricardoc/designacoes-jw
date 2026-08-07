@@ -64,7 +64,7 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
           marginTop: '2px',
         }}
       >
-        {regras[chave] && <Check size={14} color="white" />}
+        {regras[chave] && <Check size={14} color="var(--t-text-on-primary)" />}
       </div>
       <input
         type="checkbox"
@@ -186,7 +186,7 @@ export default function RegerarEscalaModal({ isOpen, quadroId, onClose, onConclu
               borderRadius: '10px',
               border: 'none',
               background: loading ? 'var(--t-border-strong)' : 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
-              color: 'white',
+              color: loading ? 'var(--t-text)' : 'var(--t-text-on-primary)',
               fontWeight: 600,
               cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',

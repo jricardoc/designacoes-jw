@@ -11,7 +11,7 @@ export default function PageHeader({
     olive: { bg: "var(--t-success-bg)", fg: "var(--t-primary)" },
     green: { bg: "var(--t-success-bg)", fg: "var(--t-green-dark)" },
     purple: { bg: "var(--t-success-bg)", fg: "var(--t-olive)" },
-    orange: { bg: "#F3E2CD", fg: "var(--t-amber)" },
+    orange: { bg: "var(--t-warning-bg)", fg: "var(--t-amber)" },
     sand: { bg: "var(--t-sand)", fg: "var(--t-brown)" },
   };
   const tint = tints[color] || tints.olive;

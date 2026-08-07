@@ -132,6 +132,9 @@
   border: 1px solid var(--t-border);
   border-radius: 8px;
   font-size: 0.95rem;
+  /* Sem fundo declarado o campo caía no branco do user-agent, e com
+     color: var(--t-text) (claro no escuro) o texto digitado sumia. */
+  background: var(--t-surface-muted);
   color: var(--t-text);
   transition: all 0.2s;
   outline: none;

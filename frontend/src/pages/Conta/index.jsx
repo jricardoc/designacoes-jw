@@ -229,7 +229,7 @@ export default function Conta() {
           <div className="t-stack">
             <div className="t-card" style={{ padding: '1.4rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '999px', background: 'var(--t-olive)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 700, color: 'var(--t-surface)', flexShrink: 0 }}>{initials(usuario?.nome)}</div>
+                <div style={{ width: '60px', height: '60px', borderRadius: '999px', background: 'var(--t-olive)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem', fontWeight: 700, color: 'var(--t-text-on-primary)', flexShrink: 0 }}>{initials(usuario?.nome)}</div>
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '1.3rem', fontWeight: 600, color: 'var(--t-text)' }}>{usuario?.nome}</span>

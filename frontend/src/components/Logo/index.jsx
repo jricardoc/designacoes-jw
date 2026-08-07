@@ -23,7 +23,7 @@ export function LogoMark({ size = 40, radius }) {
         fontSize="60"
         fontWeight="800"
         letterSpacing="-2.4"
-        fill="var(--t-surface)"
+        fill="var(--t-text-on-primary)"
         textAnchor="middle"
       >
         S
@@ -34,7 +34,7 @@ export function LogoMark({ size = 40, radius }) {
         fontFamily={FONT}
         fontSize="28"
         fontWeight="800"
-        fill="var(--t-surface)"
+        fill="var(--t-text-on-primary)"
         textAnchor="middle"
       >
         +

@@ -245,7 +245,7 @@ export default function DiagnosticoEscala({ diagnostico, onClose, titulo = 'Resu
               borderRadius: '10px',
               border: 'none',
               background: 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
-              color: 'white',
+              color: 'var(--t-text-on-primary)',
               fontWeight: 600,
               cursor: 'pointer',
             }}

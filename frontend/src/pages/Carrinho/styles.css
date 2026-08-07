@@ -83,7 +83,7 @@
   justify-content: space-between;
   gap: 1rem;
   padding: 0.7rem 1rem;
-  color: var(--t-surface);
+  color: var(--t-text-on-primary);
 }
 .crr-ponto-nome {
   display: flex;
@@ -114,7 +114,7 @@
   gap: 5px;
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  color: var(--t-surface);
+  color: var(--t-text-on-primary);
   border-radius: 8px;
   padding: 5px 10px;
   font-size: 0.82rem;
@@ -261,7 +261,9 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.crr-btn-primario { background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%); color: var(--t-surface); }
+/* O preenchimento usa --t-primary, não --t-primary-dark: os tokens "-dark" são
+   TEXTO forte e CLAREIAM no tema escuro, o que apagava o rótulo do botão. */
+.crr-btn-primario { background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%); color: var(--t-text-on-primary); }
 .crr-btn-primario:hover { filter: brightness(1.07); }
 .crr-btn-primario:disabled { background: var(--t-border-strong); cursor: not-allowed; filter: none; }
 .crr-btn-neutro { background: var(--t-surface-muted); color: var(--t-text); border: 1px solid var(--t-border-strong); }
@@ -359,7 +361,7 @@
   transition: all 0.15s;
 }
 .crr-chip:hover { border-color: var(--t-text-2); }
-.crr-chip.ativo { color: var(--t-surface); }
+.crr-chip.ativo { color: var(--t-text-on-primary); }
 
 .crr-turnos-escolha { display: flex; flex-direction: column; gap: 0.9rem; }
 .crr-turnos-ponto-nome {

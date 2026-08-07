@@ -5,7 +5,7 @@ import PageHeader from '../../components/PageHeader';
 import PrivilegioBadge from '../../components/PrivilegioBadge';
 
 const TIPOS = {
-  designacao: { label: 'Quadro de designações', icon: FileText, cor: 'var(--t-olive)', fundo: 'var(--t-success-bg)' },
+  designacao: { label: 'Quadro de designações', icon: FileText, cor: 'var(--t-green-dark)', fundo: 'var(--t-success-bg)' },
   dirigente: { label: 'Saída de campo', icon: Compass, cor: 'var(--t-amber)', fundo: 'var(--t-warning-bg)' },
   reuniao: { label: 'Reunião', icon: Users, cor: 'var(--t-teal)', fundo: 'var(--t-teal-bg)' },
 };

@@ -175,7 +175,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: var(--t-text);
+  background: var(--t-ink);
   color: white;
   padding: 20px 30px;
   border-radius: 12px;

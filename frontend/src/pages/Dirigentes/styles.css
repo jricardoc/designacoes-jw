@@ -5,7 +5,7 @@
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%);
-  color: white;
+  color: var(--t-text-on-primary);
   border: none;
   border-radius: 12px;
   font-weight: 600;
@@ -52,7 +52,7 @@
 .btn-primary {
   padding: 0.75rem 1.5rem;
   background: var(--t-olive);
-  color: white;
+  color: var(--t-text-on-primary);
   border: none;
   border-radius: 10px;
   font-weight: 600;

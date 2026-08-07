@@ -56,7 +56,7 @@
 .tabela-pagina-thead {
   display: grid;
   grid-template-columns: 80px 100px 1fr 1fr 1fr;
-  background: var(--t-text);
+  background: var(--t-ink);
   color: white;
   font-weight: 600;
   font-size: 0.85rem;
