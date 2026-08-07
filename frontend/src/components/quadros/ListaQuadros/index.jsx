@@ -81,7 +81,7 @@ export default function ListaQuadros() {
             alignItems: 'center',
             gap: '0.5rem',
             padding: '0.75rem 1.5rem',
-            background: 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
+            background: 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%)',
             color: 'white',
             border: 'none',
             borderRadius: '12px',
@@ -122,7 +122,7 @@ export default function ListaQuadros() {
             onClick={() => setModalAberto(true)}
             style={{
               padding: '0.75rem 1.5rem',
-              background: 'var(--t-olive)',
+              background: 'var(--t-primary)',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
@@ -185,7 +185,7 @@ export default function ListaQuadros() {
                     width: '48px',
                     height: '48px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
+                    background: 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary) 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
