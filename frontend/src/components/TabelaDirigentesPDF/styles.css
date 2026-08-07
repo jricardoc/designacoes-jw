@@ -1,101 +1,117 @@
+/* Folha de EXPORTAÇÃO da escala de dirigentes.
+   ------------------------------------------------------------------
+   Duas regras valem para o arquivo inteiro:
+
+   1. PALETA EM HEX LITERAL. É este bloco que o html2canvas fotografa
+      (DirigentesQuadroView) para virar o PDF. O papel sai claro sempre,
+      independente do tema da tela — com var(--t-*) a escala impressa
+      invertia junto com o tema escuro e saía ilegível. Os valores abaixo
+      são exatamente os do tema claro.
+
+   2. TUDO ESCOPADO EM .pdf-container. As classes de célula
+      (.cell-data, .cell-dia, .cell-local, .cell-horario,
+      .semana-title-row, .border-bottom-*) são as MESMAS da tabela de
+      tela (components/TabelaDirigentes/styles.css). Sem o escopo, o CSS
+      global fazia estes hexes claros vazarem para a tabela na tela.
+   ------------------------------------------------------------------ */
 .pdf-container {
   width: 210mm; /* A4 width */
   min-height: 297mm; /* A4 height */
   padding: 15mm;
-  background-color: var(--t-surface);
+  background-color: #fbf7ef;
   box-sizing: border-box;
   font-family: Arial, Helvetica, sans-serif;
   color: black;
 }
 
-.pdf-header {
+.pdf-container .pdf-header {
   text-align: center;
   margin-bottom: 20px;
-  border-bottom: 2px solid var(--t-text);
+  border-bottom: 2px solid #2b2620;
   padding-bottom: 12px;
 }
 
-.pdf-title {
+.pdf-container .pdf-title {
   font-size: 24px;
   font-weight: bold;
   margin: 0;
   text-transform: uppercase;
-  color: var(--t-text);
+  color: #2b2620;
 }
 
-.pdf-subtitle {
+.pdf-container .pdf-subtitle {
   font-size: 18px;
   margin: 8px 0 0 0;
-  color: var(--t-primary);
+  color: #5e6b48;
 }
 
-.tabela-pdf {
+.pdf-container .tabela-pdf {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
 }
 
-.tabela-pdf th,
-.tabela-pdf td {
+.pdf-container .tabela-pdf th,
+.pdf-container .tabela-pdf td {
   border: 1px solid #bfdbfe;
   padding: 10px 8px;
   text-align: center;
   vertical-align: middle;
 }
 
-.tabela-pdf th {
-  background-color: var(--t-success-bg);
-  color: var(--t-text);
+.pdf-container .tabela-pdf th {
+  background-color: #e2e7d2;
+  color: #2b2620;
   font-weight: bold;
   text-align: center;
   font-size: 13px;
   padding: 12px 8px;
 }
 
-.cell-data {
+.pdf-container .cell-data {
   text-align: center;
   font-weight: bold;
   font-size: 16px;
-  color: var(--t-primary-dark);
+  color: #566239;
 }
 
-.semana-title-row {
-  background-color: var(--t-primary-dark) !important;
+.pdf-container .semana-title-row {
+  background-color: #566239 !important;
   color: white !important;
   font-weight: bold;
   text-align: center !important;
   padding: 10px !important;
   font-size: 14px !important;
   letter-spacing: 2px;
-  border-bottom: 2px solid var(--t-text) !important;
+  border-bottom: 2px solid #2b2620 !important;
 }
 
-.cell-dia {
+.pdf-container .cell-dia {
   font-weight: bold;
   text-align: center;
-  color: var(--t-primary-dark);
+  color: #566239;
   font-size: 14px;
 }
 
-.cell-local {
+.pdf-container .cell-local {
   font-size: 14px;
 }
 
-.cell-horario {
+.pdf-container .cell-horario {
   text-align: center;
   font-weight: bold;
 }
 
-.cell-nome {
+.pdf-container .cell-nome {
   font-size: 14px;
   text-transform: uppercase;
 }
 
-.border-bottom-thick td {
-  border-bottom: 2px solid #8B9A6F;
+.pdf-container .border-bottom-thick td {
+  border-bottom: 2px solid #8b9a6f;
 }
 
 /* Separador visual entre semanas - borda grossa dupla */
-.border-bottom-semana td {
-  border-bottom: 4px double var(--t-primary);
+.pdf-container .border-bottom-semana td {
+  border-bottom: 4px double #5e6b48;
 }

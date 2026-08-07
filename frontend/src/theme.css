@@ -42,6 +42,10 @@
   --t-warning-strong: #b45309;
   --t-teal: #2f6f7e;
   --t-teal-bg: #e4eff2;
+  /* Roxo do chip de ancião (utils/privilegios.js). O par servo ministerial já
+     era token; este tinha ficado em hex fixo e acendia um chip claro no escuro. */
+  --t-purple: #7a5c9e;
+  --t-purple-bg: #efe9f5;
   --t-success-bg: #e2e7d2;
   --t-warning-bg: #f1e1d2;
   --t-danger-bg: #f8ede8;
@@ -91,6 +95,11 @@
   --t-warning-strong: #d9a05b;
   --t-teal: #6fa9b8;
   --t-teal-bg: #1e2e33;
+  /* Roxo de MEIO-TOM de propósito: o chip de ancião usa a mesma cor como texto
+     (sobre --t-purple-bg) e como preenchimento (com --t-text-on-primary por
+     cima). Clarear como os demais tokens do escuro mataria o segundo caso. */
+  --t-purple: #9377bb;
+  --t-purple-bg: #2c2338;
   --t-success-bg: #2a3120;
   --t-warning-bg: #3b2f1e;
   --t-danger-bg: #3c271f;

@@ -245,8 +245,10 @@ export default function TabelaQuadro({
 
     if (mesmoDia) {
       return {
-        color: "#3A382C",
-        background: "#bfdbfe",
+        // Os outros dois avisos desta função já são token; este continuava num
+        // azul claro fixo, que virava uma mancha clara no meio da tabela escura.
+        color: "var(--t-teal)",
+        background: "var(--t-teal-bg)",
         borderRadius: "4px",
         padding: "2px 6px",
       };

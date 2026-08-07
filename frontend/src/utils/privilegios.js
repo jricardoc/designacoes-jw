@@ -13,8 +13,8 @@ export const PRIVILEGIOS = [
     id: 'anciao',
     label: 'Ancião',
     abreviacao: 'Ancião',
-    cor: '#7A5C9E',
-    fundo: '#EFE9F5',
+    cor: 'var(--t-purple)',
+    fundo: 'var(--t-purple-bg)',
   },
   {
     id: 'servoMinisterial',

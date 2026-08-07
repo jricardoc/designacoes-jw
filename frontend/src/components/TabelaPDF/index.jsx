@@ -39,6 +39,12 @@ const MESES_LONGO = [
 ];
 
 // Componente especifico para PDF - Layout PORTRAIT
+//
+// PALETA EM HEX LITERAL, DE PROPOSITO. Este componente e so folha de EXPORTACAO:
+// e fotografado pelo html2canvas (QuadroView) e vira PNG dentro do PDF. O papel
+// sai claro sempre, independente do tema da tela — com var(--t-*) o quadro
+// impresso invertia junto com o tema escuro e saia ilegivel. Os valores abaixo
+// sao exatamente os do tema claro.
 export default function TabelaPDF({ dados, quadro, id }) {
   const mes = MESES_CURTO[quadro?.mes] || "JAN";
   const mesLongo = MESES_LONGO[quadro?.mes] || "JANEIRO";
@@ -59,7 +65,7 @@ export default function TabelaPDF({ dados, quadro, id }) {
     <div
       id={id}
       style={{
-        background: "var(--t-surface)",
+        background: "#FBF7EF",
         width: "210mm",
         height: "297mm",
         padding: "4mm",
@@ -75,7 +81,7 @@ export default function TabelaPDF({ dados, quadro, id }) {
       {/* Header - Compactado para caber 5 dias */}
       <div
         style={{
-          background: "linear-gradient(135deg, var(--t-primary) 0%, var(--t-primary-dark) 100%)",
+          background: "linear-gradient(135deg, #5E6B48 0%, #566239 100%)",
           padding: "4mm 10mm",
           borderRadius: "3mm",
           textAlign: "center",
@@ -125,22 +131,22 @@ export default function TabelaPDF({ dados, quadro, id }) {
               style={{
                 display: "grid",
                 gridTemplateColumns: "25mm 25mm 1fr",
-                background: diaIndex % 2 === 0 ? "var(--t-surface-muted)" : 'var(--t-surface)',
-                borderBottom: "0.5mm solid var(--t-border-strong)",
+                background: diaIndex % 2 === 0 ? "#F6F0E4" : "#FBF7EF",
+                borderBottom: "0.5mm solid #E6DCC9",
                 flex: 1,
               }}
             >
               {/* Coluna Data */}
               <div
                 style={{
-                  background: "var(--t-primary)",
+                  background: "#5E6B48",
                   color: "white",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "center",
                   alignItems: "center",
                   padding: "1mm",
-                  borderRight: "1mm solid var(--t-primary-dark)",
+                  borderRight: "1mm solid #566239",
                 }}
               >
                 <span
@@ -173,8 +179,8 @@ export default function TabelaPDF({ dados, quadro, id }) {
                     fontWeight: 700,
                     textTransform: "uppercase",
                     background:
-                      diaData.dia === "Domingo" ? "var(--t-terracotta)" : "var(--t-primary)",
-                    color: diaData.dia === "Domingo" ? "var(--t-warning-strong)" : "#064e3b",
+                      diaData.dia === "Domingo" ? "#B06A43" : "#5E6B48",
+                    color: diaData.dia === "Domingo" ? "#b45309" : "#064e3b",
                   }}
                 >
                   {diaData.dia}
@@ -194,7 +200,7 @@ export default function TabelaPDF({ dados, quadro, id }) {
                       padding: "0.5mm 2mm",
                       borderBottom:
                         idx < funcoesOrdenadas.length - 1
-                          ? "0.3mm solid var(--t-border-strong)"
+                          ? "0.3mm solid #E6DCC9"
                           : "none",
                       alignItems: "center",
                       flex: 1,
@@ -218,7 +224,7 @@ export default function TabelaPDF({ dados, quadro, id }) {
                       style={{
                         textAlign: "center",
                         fontWeight: 600,
-                        color: "var(--t-text)",
+                        color: "#2B2620",
                         fontSize: "4mm",
                       }}
                     >
@@ -228,7 +234,7 @@ export default function TabelaPDF({ dados, quadro, id }) {
                       style={{
                         textAlign: "center",
                         fontWeight: 600,
-                        color: "var(--t-text)",
+                        color: "#2B2620",
                         fontSize: "4mm",
                       }}
                     >

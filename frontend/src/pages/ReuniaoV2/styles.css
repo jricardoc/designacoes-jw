@@ -490,7 +490,11 @@
    COLUNA FIM DE SEMANA (DIREITA)
    ==================================== */
 .v2-col-fim {
-  background: linear-gradient(180deg, var(--t-surface) 0%, #fefefe 100%);
+  /* Coluna do pôster, que é claro nos dois temas (ver posterA4.css). O posterA4
+     não redeclara este fundo, então o degradê daqui é o que vale: com
+     var(--t-surface) o topo da coluna ficava escuro no tema escuro, dentro de
+     uma folha creme. Claro fixo, como o resto do pôster. */
+  background: linear-gradient(180deg, #fbf7ef 0%, #fefefe 100%);
   display: flex;
   flex-direction: column;
 }
