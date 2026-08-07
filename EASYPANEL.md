@@ -18,7 +18,7 @@ Crie um serviço PostgreSQL no EasyPanel e anote a connection string. Ela será 
   |----------|-------------|-----------|
   | `DATABASE_URL` | sim | Connection string do Postgres do passo 1 |
   | `JWT_SECRET` | **sim** | Segredo forte e aleatório. Sem ele o servidor **não inicia**. Gere com `openssl rand -hex 32` |
-  | `FRONTEND_URL` | sim | URL pública do frontend (liberada no CORS) |
+  | `FRONTEND_URL` | sim | URL(s) pública(s) do frontend, liberada(s) no CORS. Aceita várias separadas por vírgula — use durante uma troca de domínio: `https://servirmais.site,https://antigo.com.br` |
   | `PORT` | não | Padrão `3001` |
   | `JWT_EXPIRES_IN` | não | Padrão `7d` |
   | `ADMIN_SEED_PASSWORD` | não | Senha inicial do usuário `admin` criado no primeiro boot. **Troque no primeiro acesso.** |
@@ -49,4 +49,4 @@ Crie um serviço PostgreSQL no EasyPanel e anote a connection string. Ela será 
 - [ ] Login com `admin` funciona e a senha foi trocada.
 - [ ] `GET /health` do backend responde `{ "status": "ok" }`.
 - [ ] O frontend chama a API correta (confira `VITE_API_URL` no build).
-- [ ] `FRONTEND_URL` no backend bate com o domínio real (CORS).
+- [ ] `FRONTEND_URL` no backend bate com o domínio real (CORS). Numa troca de domínio, liste os DOIS enquanto o antigo estiver no ar.

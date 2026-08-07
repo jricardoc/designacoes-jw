@@ -909,7 +909,7 @@ export default function EditarIrmaoModal({ irmao, onClose }) {
                   cursor: "pointer",
                   transition: "background 0.2s",
                 }}
-                onMouseEnter={(e) => (e.target.style.background = "#F0DED3")}
+                onMouseEnter={(e) => (e.target.style.background = "var(--t-danger-bg)")}
                 onMouseLeave={(e) => (e.target.style.background = "var(--t-danger-bg)")}
               >
                 <Trash2 size={18} />

@@ -357,7 +357,7 @@ export default function GerenciarIrmaos() {
                         padding: '0.3rem 0.65rem',
                         borderRadius: '20px',
                         border: `1px solid ${marcado ? opcao.cor : 'var(--t-border-strong)'}`,
-                        background: marcado ? opcao.cor : '#FFFFFF',
+                        background: marcado ? opcao.cor : 'var(--t-surface)',
                         color: marcado ? '#FFFFFF' : 'var(--t-text)',
                         fontSize: '0.78rem',
                         fontWeight: marcado ? '600' : '500',

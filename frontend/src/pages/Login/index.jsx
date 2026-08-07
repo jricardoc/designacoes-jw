@@ -39,13 +39,17 @@ export default function Login() {
       padding: '1rem'
     }}>
       <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
+        // Segue o tema, como no app. Era 'rgba(255,255,255,.95)' fixo: no tema
+        // escuro o título (var(--t-text)) clareava e ficava 1.23:1 sobre o
+        // branco — sumia. A borda existe porque no escuro o cartão e o gradiente
+        // do fundo ficam quase da mesma cor, e ela é o que delimita a folha.
+        background: 'var(--t-surface)',
+        border: '1px solid var(--t-border-strong)',
         borderRadius: '24px',
         padding: '3rem',
         width: '100%',
         maxWidth: '420px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(10px)'
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
       }}>
         {/* Logo/Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -180,7 +184,7 @@ export default function Login() {
               background: 'var(--t-danger-bg)',
               borderRadius: '10px',
               marginBottom: '1.25rem',
-              border: '1px solid #F0DED3'
+              border: '1px solid var(--t-danger-bg)'
             }}>
               <AlertCircle size={20} color="var(--t-red)" />
               <span style={{ color: 'var(--t-red-dark)', fontSize: '0.9rem' }}>{erro}</span>
@@ -197,7 +201,7 @@ export default function Login() {
               background: carregando 
                 ? 'var(--t-muted)' 
                 : 'linear-gradient(135deg, var(--t-olive) 0%, var(--t-primary-dark) 100%)',
-              color: 'white',
+              color: 'var(--t-text-on-primary)',
               border: 'none',
               borderRadius: '12px',
               fontSize: '1rem',

@@ -15,8 +15,17 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 
 // CORS configurado - DEVE vir ANTES do helmet para permitir preflight
+//
+// FRONTEND_URL aceita VARIAS origens separadas por virgula. E o que permite
+// servir o site em dois dominios ao mesmo tempo durante uma troca — o antigo
+// continua funcionando enquanto o novo propaga o DNS e os aparelhos migram:
+//   FRONTEND_URL=https://servirmais.site,https://designacoes.jricardodev.com.br
+// A barra final e removida porque o header Origin nunca a envia; com ela, a
+// comparacao falharia em silencio e o site quebraria so em producao.
 const allowedOrigins = [
-    process.env.FRONTEND_URL,
+    ...String(process.env.FRONTEND_URL || '')
+        .split(',')
+        .map(o => o.trim().replace(/\/+$/, '')),
     'http://localhost:3000',
     'http://localhost:5173'
 ].filter(Boolean);

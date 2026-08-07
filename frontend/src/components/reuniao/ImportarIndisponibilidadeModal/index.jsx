@@ -348,7 +348,7 @@ export default function ImportarIndisponibilidadeModal({
                             alignItems: "center",
                             gap: "0.6rem",
                             flexWrap: "wrap",
-                            background: "#FBF4E6",
+                            background: "var(--t-warning-bg)",
                             border: "1px solid #E7CDA8",
                             borderRadius: "10px",
                             padding: "0.6rem 0.75rem",
