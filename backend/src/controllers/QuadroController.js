@@ -269,9 +269,17 @@ class QuadroController {
 
             const valorAntigo = designacao[campo];
 
+            // Trocar o irmao da celula zera a avaliacao de cumprimento (V/X):
+            // ela e da escalacao anterior — mante-la marcaria o irmao novo com
+            // o resultado de outra pessoa.
+            const updateData = { [campo]: valor };
+            if (valor !== valorAntigo) {
+                updateData[campo === 'irmao1' ? 'cumpriu1' : 'cumpriu2'] = null;
+            }
+
             const atualizada = await prisma.designacao.update({
                 where: { id: designacao.id },
-                data: { [campo]: valor }
+                data: updateData
             });
 
             // Registrar no historico

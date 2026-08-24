@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
@@ -67,6 +68,21 @@ app.use(express.json());
 
 // Middleware de autenticacao
 app.use(authMiddleware);
+
+// Imagens dos cartoes de territorio (geradas por territorio/extrair.py).
+// Montado DEPOIS do authMiddleware de proposito: os cartoes ficam atras do
+// login como todo o resto — o app manda o Authorization tambem no <Image>.
+//
+// Cache-Control PRIVATE, nao o "public" padrao do serve-static: a resposta so
+// existe porque a requisicao levou Authorization, e "public" autorizaria um
+// CDN/proxy futuro a semear cache compartilhado e servir o cartao sem login.
+app.use('/territorios/arquivos', express.static(
+    path.join(__dirname, '..', 'public', 'territorios'),
+    {
+        cacheControl: false,
+        setHeaders: (res) => res.setHeader('Cache-Control', 'private, max-age=86400'),
+    }
+));
 
 // Rotas da API
 app.use('/', routes);

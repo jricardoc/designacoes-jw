@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useDirigentesQuadros } from "@/api/hooks/useDirigentes";
 import { Button, EmptyState, GradientHeader, Loading } from "@/components/ui";
+import { AtalhoCumprimento } from "@/components/cumprimento/AtalhoCumprimento";
 import { MonthCard } from "@/components/quadros/MonthCard";
 import { NovaEscalaModal } from "@/components/dirigentes/NovaEscalaModal";
 import { useAuth } from "@/context/AuthContext";
@@ -85,6 +86,10 @@ export default function DirigentesScreen() {
               ) : null}
             </EmptyState>
           )}
+
+          <View style={styles.atalho}>
+            <AtalhoCumprimento />
+          </View>
         </ScrollView>
       )}
 
@@ -113,4 +118,5 @@ const criarEstilos = (colors: Cores) =>
     sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
     sectionSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
     list: { gap: 12 },
+    atalho: { marginTop: 16 },
   });

@@ -268,9 +268,21 @@ class DirigentesController {
                 return res.status(400).json({ error: 'Campo inválido' });
             }
 
+            const escala = await prisma.escalaDirigente.findUnique({
+                where: { id: parseInt(escalaId) }
+            });
+            if (!escala) {
+                return res.status(404).json({ error: 'Saída não encontrada' });
+            }
+
+            // Trocar o dirigente zera a avaliacao de cumprimento (V/X): ela e
+            // da escalacao anterior, nao do nome que entra agora.
             const atualizada = await prisma.escalaDirigente.update({
-                where: { id: parseInt(escalaId) },
-                data: { principal: valor }
+                where: { id: escala.id },
+                data:
+                    valor === escala.principal
+                        ? { principal: valor }
+                        : { principal: valor, cumpriu: null }
             });
 
             return res.json(atualizada);

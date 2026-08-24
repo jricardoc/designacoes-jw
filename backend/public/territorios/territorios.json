@@ -1,0 +1,247 @@
+{
+  "territorios": [
+    {
+      "numero": 1,
+      "localidade": "Rua Vila Romana",
+      "arquivos": {
+        "mapa": "01-mapa.jpg",
+        "satelite": "01-satelite.jpg",
+        "thumb": "01-thumb.jpg"
+      }
+    },
+    {
+      "numero": 2,
+      "localidade": "R. das Pedrinhas",
+      "arquivos": {
+        "mapa": "02-mapa.jpg",
+        "satelite": "02-satelite.jpg",
+        "thumb": "02-thumb.jpg"
+      }
+    },
+    {
+      "numero": 3,
+      "localidade": "R. Vila Romana",
+      "arquivos": {
+        "mapa": "03-mapa.jpg",
+        "satelite": "03-satelite.jpg",
+        "thumb": "03-thumb.jpg"
+      }
+    },
+    {
+      "numero": 4,
+      "localidade": "R. do Monte",
+      "arquivos": {
+        "mapa": "04-mapa.jpg",
+        "satelite": "04-satelite.jpg",
+        "thumb": "04-thumb.jpg"
+      }
+    },
+    {
+      "numero": 5,
+      "localidade": "Casinhas",
+      "arquivos": {
+        "mapa": "05-mapa.jpg",
+        "satelite": "05-satelite.jpg",
+        "thumb": "05-thumb.jpg"
+      }
+    },
+    {
+      "numero": 6,
+      "localidade": "Cond. Recanto de Itapuã",
+      "arquivos": {
+        "mapa": "06-mapa.jpg",
+        "satelite": "06-satelite.jpg",
+        "thumb": "06-thumb.jpg"
+      }
+    },
+    {
+      "numero": 7,
+      "localidade": "Cond. Recanto de Itapuã",
+      "arquivos": {
+        "mapa": "07-mapa.jpg",
+        "satelite": "07-satelite.jpg",
+        "thumb": "07-thumb.jpg"
+      }
+    },
+    {
+      "numero": 8,
+      "localidade": "Cond. Recanto de Itapuã",
+      "arquivos": {
+        "mapa": "08-mapa.jpg",
+        "satelite": "08-satelite.jpg",
+        "thumb": "08-thumb.jpg"
+      }
+    },
+    {
+      "numero": 9,
+      "localidade": "2A Travessa Vila Romana",
+      "arquivos": {
+        "mapa": "09-mapa.jpg",
+        "satelite": null,
+        "thumb": "09-thumb.jpg"
+      }
+    },
+    {
+      "numero": 10,
+      "localidade": "VASP - Atrás do Posto",
+      "arquivos": {
+        "mapa": "10-mapa.jpg",
+        "satelite": null,
+        "thumb": "10-thumb.jpg"
+      }
+    },
+    {
+      "numero": 11,
+      "localidade": "VASP - Jardim Itapuã",
+      "arquivos": {
+        "mapa": "11-mapa.jpg",
+        "satelite": null,
+        "thumb": "11-thumb.jpg"
+      }
+    },
+    {
+      "numero": 12,
+      "localidade": "VASP - Ponto de Ônibus",
+      "arquivos": {
+        "mapa": "12-mapa.jpg",
+        "satelite": null,
+        "thumb": "12-thumb.jpg"
+      }
+    },
+    {
+      "numero": 13,
+      "localidade": "VASP - Itagimirim",
+      "arquivos": {
+        "mapa": "13-mapa.jpg",
+        "satelite": null,
+        "thumb": "13-thumb.jpg"
+      }
+    },
+    {
+      "numero": 14,
+      "localidade": "Ex Combatentes - L",
+      "arquivos": {
+        "mapa": "14-mapa.jpg",
+        "satelite": null,
+        "thumb": "14-thumb.jpg"
+      }
+    },
+    {
+      "numero": 15,
+      "localidade": "Casinhas 1",
+      "arquivos": {
+        "mapa": "15-mapa.jpg",
+        "satelite": null,
+        "thumb": "15-thumb.jpg"
+      }
+    },
+    {
+      "numero": 16,
+      "localidade": "Casinhas 2",
+      "arquivos": {
+        "mapa": "16-mapa.jpg",
+        "satelite": null,
+        "thumb": "16-thumb.jpg"
+      }
+    },
+    {
+      "numero": 17,
+      "localidade": "Casinhas 3",
+      "arquivos": {
+        "mapa": "17-mapa.jpg",
+        "satelite": null,
+        "thumb": "17-thumb.jpg"
+      }
+    },
+    {
+      "numero": 18,
+      "localidade": "Início KM 17",
+      "arquivos": {
+        "mapa": "18-mapa.jpg",
+        "satelite": null,
+        "thumb": "18-thumb.jpg"
+      }
+    },
+    {
+      "numero": 19,
+      "localidade": "Bispo & Xangô",
+      "arquivos": {
+        "mapa": "19-mapa.jpg",
+        "satelite": null,
+        "thumb": "19-thumb.jpg"
+      }
+    },
+    {
+      "numero": 20,
+      "localidade": "R. Rio da Ilha",
+      "arquivos": {
+        "mapa": "20-mapa.jpg",
+        "satelite": null,
+        "thumb": "20-thumb.jpg"
+      }
+    },
+    {
+      "numero": 21,
+      "localidade": "KM 17 Jucélia",
+      "arquivos": {
+        "mapa": "21-mapa.jpg",
+        "satelite": null,
+        "thumb": "21-thumb.jpg"
+      }
+    },
+    {
+      "numero": 22,
+      "localidade": "R. Manoel Esteves",
+      "arquivos": {
+        "mapa": "22-mapa.jpg",
+        "satelite": null,
+        "thumb": "22-thumb.jpg"
+      }
+    },
+    {
+      "numero": 23,
+      "localidade": "R. José Araujo",
+      "arquivos": {
+        "mapa": "23-mapa.jpg",
+        "satelite": null,
+        "thumb": "23-thumb.jpg"
+      }
+    },
+    {
+      "numero": 24,
+      "localidade": "R. Edmundo Spinola + Cond",
+      "arquivos": {
+        "mapa": "24-mapa.jpg",
+        "satelite": null,
+        "thumb": "24-thumb.jpg"
+      }
+    },
+    {
+      "numero": 25,
+      "localidade": "R. KM 17 + Luis Eduardo M.",
+      "arquivos": {
+        "mapa": "25-mapa.jpg",
+        "satelite": null,
+        "thumb": "25-thumb.jpg"
+      }
+    },
+    {
+      "numero": 26,
+      "localidade": "Residencial Parque Itapuã",
+      "arquivos": {
+        "mapa": "26-mapa.jpg",
+        "satelite": null,
+        "thumb": "26-thumb.jpg"
+      }
+    },
+    {
+      "numero": 27,
+      "localidade": "Luis Eduardo Magalhães",
+      "arquivos": {
+        "mapa": "27-mapa.jpg",
+        "satelite": null,
+        "thumb": "27-thumb.jpg"
+      }
+    }
+  ]
+}

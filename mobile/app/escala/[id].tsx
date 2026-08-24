@@ -20,6 +20,7 @@ import {
   useExcluirSemanaEscala,
 } from "@/api/hooks/useDirigentes";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
+import { useMarcarCumprimentoEscala } from "@/api/hooks/useCumprimento";
 import type { EscalaDirigente, QuadroDirigente } from "@/api/types";
 import {
   Badge,
@@ -30,6 +31,7 @@ import {
   useConfirm,
   useToast,
 } from "@/components/ui";
+import { MarcadorCumprimento } from "@/components/cumprimento/MarcadorCumprimento";
 import {
   DirigentePickerSheet,
   type PickerPerson,
@@ -66,6 +68,7 @@ export default function EscalaScreen() {
   const excluir = useExcluirDirigenteQuadro();
   const excluirDia = useExcluirDiaEscala(id);
   const excluirSemana = useExcluirSemanaEscala(id);
+  const marcarCumprimento = useMarcarCumprimentoEscala();
 
   const [editing, setEditing] = useState<{
     escalaId: number;
@@ -139,7 +142,14 @@ export default function EscalaScreen() {
         ? {
             ...old,
             escalas: old.escalas.map((e) =>
-              e.id === escalaId ? { ...e, principal: valor } : e,
+              e.id === escalaId
+                ? {
+                    ...e,
+                    principal: valor,
+                    // Espelha o backend: trocar o dirigente zera a avaliação.
+                    cumpriu: valor === e.principal ? e.cumpriu : null,
+                  }
+                : e,
             ),
           }
         : old,
@@ -149,6 +159,48 @@ export default function EscalaScreen() {
       toast.show("Escala atualizada!");
     } catch {
       toast.show("Erro ao salvar", "error");
+      refetch();
+    }
+  };
+
+  /** O toque no V/X do dirigente — otimista como a troca de nome, pelo mesmo motivo. */
+  const avaliar = async (escala: EscalaDirigente, cumpriu: boolean | null) => {
+    // A troca de nome invalida o quadro no sucesso, então é comum haver um GET
+    // em voo exatamente quando o V/X é tocado — sem cancelar, ele resolveria
+    // com o banco antigo e apagaria o toque da tela.
+    await qc.cancelQueries({ queryKey: qk.dirigentesQuadro(id) });
+    qc.setQueryData<QuadroDirigente>(qk.dirigentesQuadro(id), (old) =>
+      old
+        ? {
+            ...old,
+            escalas: old.escalas.map((x) =>
+              x.id === escala.id ? { ...x, cumpriu } : x,
+            ),
+          }
+        : old,
+    );
+    try {
+      const salva = await marcarCumprimento.mutateAsync({
+        escalaId: escala.id,
+        cumpriu,
+      });
+      // Regrava o que o servidor confirmou, caso algum refetch tenha passado
+      // por cima do otimista no meio do caminho.
+      qc.setQueryData<QuadroDirigente>(qk.dirigentesQuadro(id), (old) =>
+        old
+          ? {
+              ...old,
+              escalas: old.escalas.map((x) =>
+                x.id === salva.id ? { ...x, ...salva } : x,
+              ),
+            }
+          : old,
+      );
+    } catch (err) {
+      toast.show(
+        err instanceof Error ? err.message : "Erro ao salvar avaliação",
+        "error",
+      );
       refetch();
     }
   };
@@ -351,12 +403,22 @@ export default function EscalaScreen() {
                     }
                   >
                     <Text style={styles.cellTag}>Dirigente</Text>
-                    <Text
-                      style={[styles.cellText, !e.principal && styles.cellEmpty]}
-                      numberOfLines={1}
-                    >
-                      {e.principal || "—"}
-                    </Text>
+                    <View style={styles.cellInner}>
+                      <Text
+                        style={[styles.cellText, !e.principal && styles.cellEmpty]}
+                        numberOfLines={1}
+                      >
+                        {e.principal || "—"}
+                      </Text>
+                      {e.principal ? (
+                        <MarcadorCumprimento
+                          valor={e.cumpriu ?? null}
+                          onChange={
+                            podeEditar ? (v) => avaliar(e, v) : undefined
+                          }
+                        />
+                      ) : null}
+                    </View>
                   </Pressable>
                 </View>
               </View>
@@ -462,7 +524,13 @@ const criarEstilos = (colors: Cores) =>
       color: colors.textMuted,
       textTransform: "uppercase",
     },
-    cellText: { fontSize: 14, fontWeight: "600", color: colors.text, marginTop: 2 },
+    cellInner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      marginTop: 2,
+    },
+    cellText: { flex: 1, fontSize: 14, fontWeight: "600", color: colors.text },
     cellEmpty: { color: colors.textMuted, fontWeight: "400" },
     panel: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 16 },
     panelTitle: { fontSize: 15, fontWeight: "700", color: colors.text },

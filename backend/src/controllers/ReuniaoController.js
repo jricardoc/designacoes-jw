@@ -2,7 +2,7 @@ const prisma = require('../prisma');
 const { parseExcel } = require('../services/ExcelReuniaoParser');
 const { parsePdf } = require('../services/PdfReuniaoParser');
 const { buildIndisponibilidadePreview } = require('../services/MatchIrmaosService');
-const { reconciliarSemanas } = require('../utils/semanaReuniao');
+const { reconciliarSemanas, domingoDaSemana } = require('../utils/semanaReuniao');
 const ConviteReuniaoService = require('../services/ConviteReuniaoService');
 
 // Campos editaveis de SemanaReuniao (whitelist para o updateSemana).
@@ -169,9 +169,39 @@ class ReuniaoController {
     async delete(req, res) {
         try {
             const { id } = req.params;
-            await prisma.reuniao.delete({ where: { id: parseInt(id) } });
+            const reuniaoId = parseInt(id);
+
+            // A assistencia nao tem FK para a semana (sobrevive de proposito a
+            // REIMPORTACAO, que recria as semanas). Mas excluir o mes e outra
+            // historia: sem isto os registros ficariam orfaos, poluindo a media
+            // da tela de Reuniao sem nenhum caminho de UI para remove-los (a
+            // folha de assistencia so abre pelo cartao da semana, que morreu).
+            // Apaga pelas datas derivadas das semanas do mes — nao por "mes da
+            // data", porque o domingo da ultima semana pode cair no mes seguinte.
+            const reuniao = await prisma.reuniao.findUnique({
+                where: { id: reuniaoId },
+                include: { semanas: { select: { dataReuniao: true } } },
+            });
+            if (reuniao) {
+                const ddMMyyyy = (d) =>
+                    `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                const datas = [];
+                for (const s of reuniao.semanas) {
+                    const m = String(s.dataReuniao || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                    if (!m) continue;
+                    datas.push(`${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[3]}`);
+                    const fds = domingoDaSemana(s.dataReuniao);
+                    if (fds) datas.push(ddMMyyyy(fds));
+                }
+                if (datas.length > 0) {
+                    await prisma.assistenciaReuniao.deleteMany({ where: { data: { in: datas } } });
+                }
+            }
+
+            await prisma.reuniao.delete({ where: { id: reuniaoId } });
             return res.json({ success: true });
         } catch (error) {
+            console.error('Erro ao excluir reunião:', error);
             return res.status(500).json({ error: 'Erro ao excluir reunião' });
         }
     }
@@ -228,6 +258,104 @@ class ReuniaoController {
         } catch (error) {
             console.error('Erro ao montar textos de compartilhamento:', error);
             return res.status(500).json({ error: 'Erro ao montar os textos' });
+        }
+    }
+
+    /**
+     * GET /reunioes/assistencias
+     *
+     * Todos os registros de assistencia, do mais recente para o mais antigo. O
+     * app calcula as estatisticas em cima desta lista — sao poucas linhas (duas
+     * por semana), nao vale um endpoint de agregacao.
+     *
+     * Leitura: qualquer irmao logado ve as estatisticas.
+     */
+    async listarAssistencias(req, res) {
+        try {
+            const registros = await prisma.assistenciaReuniao.findMany();
+            // "dd/MM/yyyy" nao ordena como texto; compara pela chave invertida.
+            const chave = (r) => {
+                const m = String(r.data).match(/(\d{2})\/(\d{2})\/(\d{4})/);
+                return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+            };
+            registros.sort((a, b) => chave(b).localeCompare(chave(a)));
+            return res.json(registros);
+        } catch (error) {
+            console.error('Erro ao buscar assistências:', error);
+            return res.status(500).json({ error: 'Erro ao buscar assistências' });
+        }
+    }
+
+    /**
+     * PUT /reunioes/assistencias
+     *
+     * Grava (ou regrava) a assistencia de uma reuniao.
+     * Body: { data: "dd/MM/yyyy", tipo: "meio"|"fds", presencial, zoom }
+     *
+     * Upsert por (data, tipo) de proposito: contar de novo e corrigir o numero
+     * e o fluxo normal, nao um conflito.
+     */
+    async salvarAssistencia(req, res) {
+        try {
+            const { data, tipo, presencial, zoom } = req.body || {};
+
+            const m = String(data || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!m) {
+                return res.status(400).json({ error: 'Data inválida. Use o formato dd/MM/yyyy.' });
+            }
+            const dia = Number(m[1]);
+            const mes = Number(m[2]);
+            const valida = new Date(Number(m[3]), mes - 1, dia);
+            if (valida.getDate() !== dia || valida.getMonth() !== mes - 1) {
+                return res.status(400).json({ error: 'Data inexistente no calendário.' });
+            }
+
+            if (tipo !== 'meio' && tipo !== 'fds') {
+                return res.status(400).json({ error: 'Tipo inválido. Use "meio" ou "fds".' });
+            }
+
+            const contagens = {};
+            for (const [campo, valor] of [['presencial', presencial], ['zoom', zoom]]) {
+                const n = Number(valor);
+                if (!Number.isInteger(n) || n < 0 || n > 5000) {
+                    return res.status(400).json({ error: `Valor de "${campo}" inválido: informe um número inteiro entre 0 e 5000.` });
+                }
+                contagens[campo] = n;
+            }
+
+            const assistencia = await prisma.assistenciaReuniao.upsert({
+                where: { data_tipo: { data, tipo } },
+                update: contagens,
+                create: { data, tipo, ...contagens },
+            });
+
+            return res.json({ success: true, assistencia });
+        } catch (error) {
+            console.error('Erro ao salvar assistência:', error);
+            return res.status(500).json({ error: 'Erro ao salvar assistência' });
+        }
+    }
+
+    /**
+     * DELETE /reunioes/assistencias/:id
+     *
+     * Remove um registro (contagem lançada na semana errada, por exemplo).
+     */
+    async excluirAssistencia(req, res) {
+        try {
+            const id = parseInt(req.params.id, 10);
+            if (!Number.isInteger(id)) {
+                return res.status(400).json({ error: 'Registro inválido' });
+            }
+            await prisma.assistenciaReuniao.delete({ where: { id } });
+            return res.json({ success: true });
+        } catch (error) {
+            // P2025 = registro ja nao existe; para quem apagou, deu no mesmo.
+            if (error && error.code === 'P2025') {
+                return res.status(404).json({ error: 'Registro não encontrado' });
+            }
+            console.error('Erro ao excluir assistência:', error);
+            return res.status(500).json({ error: 'Erro ao excluir assistência' });
         }
     }
 }

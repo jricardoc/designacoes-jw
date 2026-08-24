@@ -14,6 +14,9 @@ export const qk = {
   dirigentesQuadro: (id: number | string) =>
     ["dirigentes-quadros", String(id)] as const,
   reunioes: ["reunioes"] as const,
+  assistencias: ["assistencias"] as const,
+  cumprimento: ["cumprimento"] as const,
+  territorios: ["territorios"] as const,
   compartilhamentosSemana: (semanaId: number | string) =>
     ["compartilhamentos-semana", String(semanaId)] as const,
   usuarios: ["usuarios"] as const,

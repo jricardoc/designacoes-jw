@@ -41,6 +41,9 @@ function AuthGate() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="quadro/[id]" />
       <Stack.Screen name="escala/[id]" />
+      <Stack.Screen name="reuniao/meses" />
+      <Stack.Screen name="cumprimento" />
+      <Stack.Screen name="territorio/[numero]" />
       <Stack.Screen name="irmao" />
       <Stack.Screen name="notificacoes" />
     </Stack>

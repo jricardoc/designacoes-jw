@@ -133,6 +133,14 @@ class IrmaoController {
                     prisma.designacao.updateMany({
                         where: { irmao2: nomeAntigo },
                         data: { irmao2: updateData.nome }
+                    }),
+                    // EscalaDirigente.principal e o mesmo caso: nome como texto.
+                    // Sem propagar, o irmao some de MinhasDesignacoes e a analise
+                    // de cumprimento o divide em duas pessoas (nome antigo nas
+                    // escalas, novo nas designacoes).
+                    prisma.escalaDirigente.updateMany({
+                        where: { principal: nomeAntigo },
+                        data: { principal: updateData.nome }
                     })
                 ] : [])
             ]);

@@ -13,6 +13,8 @@ const SaidaCampoController = require('./controllers/SaidaCampoController');
 const DirigentesController = require('./controllers/DirigentesController');
 const MinhasDesignacoesController = require('./controllers/MinhasDesignacoesController');
 const CarrinhoController = require('./controllers/CarrinhoController');
+const CumprimentoController = require('./controllers/CumprimentoController');
+const TerritorioController = require('./controllers/TerritorioController');
 const PushTokenController = require('./controllers/PushTokenController');
 const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
 const requireAdmin = require('./middleware/requireAdmin');
@@ -131,6 +133,15 @@ routes.get('/historico/estatisticas/:quadroId?', HistoricoController.estatistica
 // ==================== ESTATISTICAS GLOBAIS (DASHBOARD) ====================
 routes.get('/estatisticas', EstatisticasController.getEstatisticasGlobais);
 
+// ==================== CUMPRIMENTO DE PARTICIPACOES ====================
+// Marcar (o V/X ao lado do nome) segue o escopo da area da tela. O gate do GET
+// reserva a TELA de analise a quem gerencia designacoes ou dirigentes — nao e
+// confidencialidade: os campos cumpriu* viajam nas leituras livres dos quadros
+// (como os proprios nomes), e o V/X aparece por celula para qualquer irmao.
+routes.get('/cumprimento', requireEscopo(ESCOPOS.DESIGNACOES, ESCOPOS.DIRIGENTES), CumprimentoController.index);
+routes.put('/quadros/designacao/cumprimento', podeDesignacoes, CumprimentoController.marcarDesignacao);
+routes.put('/dirigentes/escala/cumprimento', podeDirigentes, CumprimentoController.marcarEscala);
+
 // ==================== IRMAOS ====================
 // Leitura livre (o seletor de designacao precisa da lista); cadastro e admin.
 routes.get('/irmaos', IrmaoController.index);
@@ -160,12 +171,23 @@ routes.delete('/indisponibilidades/irmao/:irmaoId/clear', requireAdmin, Indispon
 routes.get('/reunioes', ReuniaoController.index);
 routes.post('/reunioes/import', podeReunioes, upload.single('file'), ReuniaoController.import);
 routes.post('/reunioes/indisponibilidades', podeReunioes, ReuniaoController.aplicarIndisponibilidades);
+// Assistencia das reunioes: leitura livre (as estatisticas aparecem para todo
+// irmao logado); escrita e exclusao exigem o escopo de reunioes. Registradas
+// ANTES de DELETE /reunioes/:id para "assistencias" nunca ser lida como :id.
+routes.get('/reunioes/assistencias', ReuniaoController.listarAssistencias);
+routes.put('/reunioes/assistencias', podeReunioes, ReuniaoController.salvarAssistencia);
+routes.delete('/reunioes/assistencias/:id', podeReunioes, ReuniaoController.excluirAssistencia);
 routes.delete('/reunioes/:id', podeReunioes, ReuniaoController.delete);
 routes.put('/reunioes/semanas/:id', podeReunioes, ReuniaoController.updateSemana);
 // Os textos de compartilhamento sao montados no servidor (ver ConviteReuniaoService):
 // assim mudar o texto ou o negrito nao exige build novo do app. Leitura, nao admin —
 // compartilhar o convite e coisa de qualquer irmao.
 routes.get('/reunioes/semanas/:id/compartilhamentos', ReuniaoController.compartilhamentos);
+
+// ==================== TERRITORIOS ====================
+// Leitura livre para logado; as imagens em /territorios/arquivos tambem exigem
+// login (express.static montado depois do authMiddleware em index.js).
+routes.get('/territorios', TerritorioController.index);
 
 // ==================== SAÍDAS DE CAMPO ====================
 routes.get('/saidas-campo', SaidaCampoController.index);

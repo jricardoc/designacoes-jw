@@ -41,6 +41,7 @@ const ITENS: ItemMenu[] = [
   { chave: "minhas", rotulo: "Início", icone: "home-outline", href: "/(tabs)/minhas" },
   { chave: "index", rotulo: "Designações", icone: "document-text-outline", href: "/(tabs)" },
   { chave: "dirigentes", rotulo: "Dirigentes", icone: "compass-outline", href: "/(tabs)/dirigentes" },
+  { chave: "territorio", rotulo: "Território", icone: "map-outline", href: "/(tabs)/territorio" },
   { chave: "reuniao", rotulo: "Reunião", icone: "people-outline", href: "/(tabs)/reuniao" },
   { chave: "carrinho", rotulo: "Carrinho", icone: "book-outline", href: "/(tabs)/carrinho" },
   { chave: "conta", rotulo: "Conta", icone: "person-outline", href: "/(tabs)/conta" },

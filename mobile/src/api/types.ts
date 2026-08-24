@@ -124,6 +124,9 @@ export interface Designacao {
   funcao: string; // "Microfone Volante" | "Indicador" | "Audio e Video" | "Estacionamento"
   irmao1: string;
   irmao2: string;
+  /** Cumprimento por irmão da linha: null/ausente = não avaliado. */
+  cumpriu1?: boolean | null;
+  cumpriu2?: boolean | null;
 }
 
 export interface QuadroResumo {
@@ -199,7 +202,27 @@ export interface EscalaDirigente {
   dia: string;
   principal: string;
   removido: boolean;
+  /** null/ausente = não avaliado, true = dirigiu, false = faltou. */
+  cumpriu?: boolean | null;
   saidaCampo?: SaidaCampo;
+}
+
+// ===== Cumprimento de participações =====
+
+export type OrigemCumprimento = "designacoes" | "dirigentes";
+
+/**
+ * Uma avaliação achatada, como GET /cumprimento devolve. A tela de análise
+ * agrega e filtra em cima desta lista — o backend não pré-agrega por corte.
+ */
+export interface RegistroCumprimento {
+  nome: string;
+  origem: OrigemCumprimento;
+  cumpriu: boolean;
+  /** "dd/MM/yyyy" — ano já resolvido pelo backend (quadro pode ter dias do ano anterior). */
+  data: string;
+  /** A função (designações) ou "horário · local" (dirigentes). */
+  rotulo: string;
 }
 
 export interface QuadroDirigenteResumo {
@@ -215,6 +238,24 @@ export interface QuadroDirigenteResumo {
 
 export interface QuadroDirigente extends QuadroDirigenteResumo {
   escalas: EscalaDirigente[];
+}
+
+// ===== Territórios =====
+
+/**
+ * Um cartão de mapa de território (S-12-T). As imagens são caminhos RELATIVOS
+ * da API (ex.: "/territorios/arquivos/01-mapa.jpg") e exigem o header de
+ * autenticação — prefixar com API_URL e mandar o Bearer no <Image>.
+ */
+export interface Territorio {
+  numero: number;
+  localidade: string;
+  imagens: {
+    mapa: string;
+    /** Só os territórios 01-08 têm a versão de satélite. */
+    satelite: string | null;
+    thumb: string;
+  };
 }
 
 // ===== Reuniões =====
@@ -290,6 +331,26 @@ export interface Reuniao {
   mes: number;
   ano: number;
   semanas: SemanaReuniao[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ===== Assistência das reuniões =====
+
+export type TipoAssistencia = "meio" | "fds";
+
+/**
+ * Espelha `model AssistenciaReuniao` do Prisma. Chaveada pela DATA da reunião,
+ * não pela semana: reimportar o mês recria as semanas com ids novos, e o
+ * histórico de assistência sobrevive porque não aponta para elas.
+ */
+export interface AssistenciaReuniao {
+  id: number;
+  /** "dd/MM/yyyy" — o dia da reunião contada (meio: a própria; fds: o domingo). */
+  data: string;
+  tipo: TipoAssistencia;
+  presencial: number;
+  zoom: number;
   createdAt: string;
   updatedAt: string;
 }

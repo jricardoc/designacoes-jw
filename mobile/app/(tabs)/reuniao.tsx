@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { useMemo, useRef, useState } from "react";
+import { router } from "expo-router";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -10,28 +11,18 @@ import {
   Text,
   View,
 } from "react-native";
-import { useImportarReuniao } from "@/api/hooks/useReunioes";
+import { useAssistencias, useImportarReuniao } from "@/api/hooks/useReunioes";
 import { useReunioes } from "@/api/hooks/useMisc";
-import type { IndisponibilidadePreview, Reuniao, SemanaReuniao } from "@/api/types";
+import type { IndisponibilidadePreview, Reuniao } from "@/api/types";
 import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
-import { CompartilharReuniaoSheet } from "@/components/reuniao/CompartilharReuniaoSheet";
+import { AssistenciaStats } from "@/components/reuniao/AssistenciaStats";
 import { ImportIndisponibilidadeSheet } from "@/components/reuniao/ImportIndisponibilidadeSheet";
+import { useSemanaAcoes, type Alvo } from "@/components/reuniao/useSemanaAcoes";
 import { useAuth } from "@/context/AuthContext";
 import { podeGerenciar } from "@/utils/permissoes";
-import { SemanaCard } from "@/components/reuniao/SemanaCard";
-import { SemanaShareCard } from "@/components/reuniao/SemanaShareCard";
 import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { exportarImagem } from "@/utils/exportImagem";
-import { exportarPdf } from "@/utils/exportPdf";
-import { gerarHtmlSemana } from "@/utils/pdfHtml";
 import { datasDaSemana } from "@/utils/semanaReuniao";
-
-/** A semana escolhida junto do mês/ano dela — o PDF precisa dos dois para o cabeçalho. */
-interface Alvo {
-  reuniao: Reuniao;
-  semana: SemanaReuniao;
-}
 
 /**
  * A semana da programação que contém o dia de hoje (segunda a domingo,
@@ -52,6 +43,28 @@ function encontrarSemanaAtual(reunioes: Reuniao[] | undefined): Alvo | null {
   return null;
 }
 
+/**
+ * Os meses que ficam NA tela: o atual e os futuros, do mais próximo para o mais
+ * distante. Os anteriores moram atrás do botão "Todos os meses" — era a lista
+ * deles, crescendo a cada importação, que fazia a tela ficar quilométrica. Se
+ * só há passado importado, fica o mês mais recente para a tela não sair vazia.
+ */
+function separarMeses(reunioes: Reuniao[] | undefined): {
+  emTela: Reuniao[];
+  ocultos: number;
+} {
+  if (!reunioes || reunioes.length === 0) return { emTela: [], ocultos: 0 };
+  const hoje = new Date();
+  const chave = (ano: number, mes: number) => ano * 100 + mes;
+  const chaveHoje = chave(hoje.getFullYear(), hoje.getMonth() + 1);
+  const atuais = reunioes.filter((r) => chave(r.ano, r.mes) >= chaveHoje);
+  // A API manda do mais novo para o mais velho (reunioes[0] é o mais recente).
+  const emTela = (atuais.length > 0 ? atuais : [reunioes[0]])
+    .slice()
+    .sort((a, b) => chave(a.ano, a.mes) - chave(b.ano, b.mes));
+  return { emTela, ocultos: reunioes.length - emTela.length };
+}
+
 export default function ReuniaoScreen() {
   const { colors, styles } = useTema(criarEstilos);
   // Importar programação muda dados da congregação inteira: só admin. PDF e
@@ -59,60 +72,18 @@ export default function ReuniaoScreen() {
   const { usuario } = useAuth();
   const podeEditar = podeGerenciar(usuario, "reunioes");
   const { data: reunioes, isLoading, refetch, isRefetching } = useReunioes();
+  // A mesma query que o AssistenciaStats lê — aqui só para o puxar-para-
+  // atualizar renovar as estatísticas junto com a programação.
+  const assistencias = useAssistencias();
   const importar = useImportarReuniao();
   const toast = useToast();
+  const { renderSemana, overlays } = useSemanaAcoes();
 
   const [preview, setPreview] = useState<IndisponibilidadePreview | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
-  // Mesma mecânica do quadro: montar o cartão fora da tela é o que dispara a captura.
-  const [alvoImagem, setAlvoImagem] = useState<Alvo | null>(null);
-  // A semana cujo leque de opções de compartilhamento está aberto.
-  const [alvoShare, setAlvoShare] = useState<Alvo | null>(null);
-  const [pdfDe, setPdfDe] = useState<number | null>(null);
-  const shotRef = useRef<View>(null);
-  const capturando = useRef(false);
 
   const semanaAtual = useMemo(() => encontrarSemanaAtual(reunioes), [reunioes]);
-
-  const nomeArquivo = (alvo: Alvo, ext: string) => {
-    const { meio } = datasDaSemana(alvo.semana);
-    const marca = meio ? meio.diaMes.replace("/", "-") : String(alvo.semana.id);
-    const mes = (MESES[alvo.reuniao.mes] ?? "mes").toLowerCase();
-    return `reuniao-${marca}-${mes}-${alvo.reuniao.ano}.${ext}`;
-  };
-
-  const gerarPdf = async (alvo: Alvo) => {
-    setPdfDe(alvo.semana.id);
-    try {
-      const html = gerarHtmlSemana(
-        alvo.reuniao,
-        alvo.semana,
-        datasDaSemana(alvo.semana),
-      );
-      await exportarPdf(html, nomeArquivo(alvo, "pdf"));
-    } catch (err) {
-      toast.show(err instanceof Error ? err.message : "Erro ao gerar PDF", "error");
-    } finally {
-      setPdfDe(null);
-    }
-  };
-
-  /** Chamado pelo onLayout do cartão escondido — antes disso a imagem sai em branco. */
-  const capturarSemana = async () => {
-    if (!alvoImagem || capturando.current) return;
-    capturando.current = true;
-    try {
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-      );
-      await exportarImagem(shotRef, nomeArquivo(alvoImagem, "png"));
-    } catch (err) {
-      toast.show(err instanceof Error ? err.message : "Erro ao gerar imagem", "error");
-    } finally {
-      setAlvoImagem(null);
-      capturando.current = false;
-    }
-  };
+  const { emTela, ocultos } = useMemo(() => separarMeses(reunioes), [reunioes]);
 
   const handleImport = async () => {
     try {
@@ -148,19 +119,6 @@ export default function ReuniaoScreen() {
     }
   };
 
-  const renderSemana = (reuniao: Reuniao, semana: SemanaReuniao, index: number, destaque = false) => (
-    <SemanaCard
-      key={semana.id}
-      semana={semana}
-      index={index}
-      destaque={destaque}
-      onPdf={() => gerarPdf({ reuniao, semana })}
-      onCompartilhar={() => setAlvoShare({ reuniao, semana })}
-      gerandoPdf={pdfDe === semana.id}
-      compartilhando={alvoImagem?.semana.id === semana.id}
-    />
-  );
-
   return (
     <View style={styles.flex}>
       <GradientHeader
@@ -195,7 +153,13 @@ export default function ReuniaoScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+            <RefreshControl
+              refreshing={isRefetching || assistencias.isRefetching}
+              onRefresh={() => {
+                refetch();
+                assistencias.refetch();
+              }}
+            />
           }
         >
           {/* A semana em que estamos vem hasteada no topo, fora do mês dela:
@@ -211,23 +175,51 @@ export default function ReuniaoScreen() {
           ) : null}
 
           {reunioes && reunioes.length > 0 ? (
-            reunioes.map((r) => {
-              // A semana destacada não repete na lista do mês.
-              const semanas = r.semanas.filter(
-                (s) => s.id !== semanaAtual?.semana.id,
-              );
-              if (semanas.length === 0) return null;
-              return (
-                <View key={r.id} style={styles.mesGroup}>
-                  <Text style={styles.mesTitulo}>
-                    {MESES[r.mes]} {r.ano}
-                  </Text>
-                  <View style={styles.semanas}>
-                    {semanas.map((s, i) => renderSemana(r, s, i))}
+            <>
+              {emTela.map((r) => {
+                // A semana destacada não repete na lista do mês.
+                const semanas = r.semanas.filter(
+                  (s) => s.id !== semanaAtual?.semana.id,
+                );
+                if (semanas.length === 0) return null;
+                return (
+                  <View key={r.id} style={styles.mesGroup}>
+                    <Text style={styles.mesTitulo}>
+                      {MESES[r.mes]} {r.ano}
+                    </Text>
+                    <View style={styles.semanas}>
+                      {semanas.map((s, i) => renderSemana(r, s, i))}
+                    </View>
                   </View>
-                </View>
-              );
-            })
+                );
+              })}
+
+              {ocultos > 0 ? (
+                <Pressable
+                  style={styles.todosBtn}
+                  onPress={() => router.push("/reuniao/meses")}
+                >
+                  <View style={styles.todosIcone}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={20}
+                      color={colors.primaryDark}
+                    />
+                  </View>
+                  <View style={styles.todosTextos}>
+                    <Text style={styles.todosTitulo}>Todos os meses</Text>
+                    <Text style={styles.todosDescricao}>
+                      {ocultos === 1
+                        ? "Ver mais 1 mês anterior"
+                        : `Ver mais ${ocultos} meses anteriores`}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </Pressable>
+              ) : null}
+
+              <AssistenciaStats podeRegistrar={podeEditar} />
+            </>
           ) : (
             <EmptyState
               icon="calendar-outline"
@@ -242,25 +234,7 @@ export default function ReuniaoScreen() {
         </ScrollView>
       )}
 
-      {/* Fora da tela de propósito: precisa estar montado e com layout para o view-shot
-          capturar, mas não pode aparecer para o usuário. */}
-      {alvoImagem ? (
-        <View style={styles.shotHost} pointerEvents="none" onLayout={capturarSemana}>
-          <SemanaShareCard
-            ref={shotRef}
-            reuniao={alvoImagem.reuniao}
-            semana={alvoImagem.semana}
-          />
-        </View>
-      ) : null}
-
-      <CompartilharReuniaoSheet
-        semana={alvoShare?.semana ?? null}
-        onClose={() => setAlvoShare(null)}
-        onImagem={() => {
-          if (alvoShare) setAlvoImagem(alvoShare);
-        }}
-      />
+      {overlays}
 
       <ImportIndisponibilidadeSheet
         visible={sheetVisible}
@@ -315,7 +289,23 @@ const criarEstilos = (colors: Cores) =>
       fontWeight: "700",
       fontSize: 13,
     },
-    // Longe da área visível, sem opacity 0: view invisível por opacidade sai em branco no
-    // print de alguns Android.
-    shotHost: { position: "absolute", left: -10000, top: 0 },
+    todosBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: 14,
+    },
+    todosIcone: {
+      width: 40,
+      height: 40,
+      borderRadius: radius.md,
+      backgroundColor: colors.infoBg,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    todosTextos: { flex: 1, gap: 2 },
+    todosTitulo: { fontSize: 15.5, fontWeight: "700", color: colors.text },
+    todosDescricao: { fontSize: 13, color: colors.textSecondary },
   });

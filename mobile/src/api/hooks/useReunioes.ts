@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
-import type { ImportarReuniaoResponse, OpcaoCompartilhamento } from "@/api/types";
+import type {
+  AssistenciaReuniao,
+  ImportarReuniaoResponse,
+  OpcaoCompartilhamento,
+  TipoAssistencia,
+} from "@/api/types";
 
 /** Arquivo escolhido pelo DocumentPicker. */
 export interface ArquivoSelecionado {
@@ -59,6 +64,51 @@ export function useCompartilhamentosSemana(semanaId: number | null) {
     // O texto muda quando a programação é reimportada ou editada; enquanto a
     // folha está aberta não precisa reconsultar.
     staleTime: 5 * 60_000,
+  });
+}
+
+/**
+ * Todos os registros de assistência, do mais recente para o mais antigo. É a
+ * fonte tanto do pré-preenchimento da folha de registro quanto das
+ * estatísticas da tela de Reunião — o cálculo é do app (são poucas linhas).
+ */
+export function useAssistencias() {
+  return useQuery({
+    queryKey: qk.assistencias,
+    queryFn: () => apiRequest<AssistenciaReuniao[]>("/reunioes/assistencias"),
+  });
+}
+
+/** Grava (ou corrige) a assistência de uma reunião — upsert por (data, tipo). */
+export function useSalvarAssistencia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: {
+      data: string;
+      tipo: TipoAssistencia;
+      presencial: number;
+      zoom: number;
+    }) =>
+      apiRequest<{ success: boolean; assistencia: AssistenciaReuniao }>(
+        "/reunioes/assistencias",
+        { method: "PUT", body: payload },
+      ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.assistencias }),
+  });
+}
+
+/** Remove um registro de assistência (lançado na reunião errada, por exemplo). */
+export function useExcluirAssistencia() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      apiRequest<{ success: boolean }>(`/reunioes/assistencias/${id}`, {
+        method: "DELETE",
+      }),
+    // onSettled, não onSuccess: um 404 significa que OUTRO aparelho já removeu
+    // o registro — o cache local é que está atrasado, e sem a invalidação a
+    // folha continuaria pré-preenchida com um registro fantasma.
+    onSettled: () => qc.invalidateQueries({ queryKey: qk.assistencias }),
   });
 }
 

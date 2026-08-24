@@ -301,11 +301,17 @@ class AutoDirigenteService {
             regras: { ...REGRAS_PADRAO, ...(regras || {}) }
         });
 
+        // Mesma regra do updateEscala manual: trocar o dirigente zera a
+        // avaliacao de cumprimento (V/X) — ela era da escalacao anterior, e
+        // mante-la marcaria o dirigente novo com o resultado de outra pessoa.
+        const principalAtual = new Map(escalas.map(e => [e.id, e.principal]));
         await prisma.$transaction(
             saida.atribuicoes.map(a =>
                 prisma.escalaDirigente.update({
                     where: { id: a.id },
-                    data: { principal: a.principal }
+                    data: a.principal === principalAtual.get(a.id)
+                        ? { principal: a.principal }
+                        : { principal: a.principal, cumpriu: null }
                 })
             )
         );

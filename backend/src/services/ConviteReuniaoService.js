@@ -35,6 +35,10 @@ const ZOOM_FIM_DE_SEMANA = {
     salaAberta: '08:30',
 };
 
+// Uma constante so, usada nos dois convites: o aviso tem que ser identico —
+// e ja saiu diferente uma vez (faltava no meio de semana e estava sem negrito).
+const AVISO_REDES_SOCIAIS = 'Essas informações, não devem ser compartilhadas nas redes sociais.';
+
 const MESES = [
     '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
@@ -137,6 +141,7 @@ function conviteMeioSemana(semana) {
         ZOOM_MEIO_SEMANA.link,
         `ID da reunião: ${ZOOM_MEIO_SEMANA.id}`,
         `Senha de acesso: ${ZOOM_MEIO_SEMANA.senha}`,
+        negrito(AVISO_REDES_SOCIAIS),
         '"Uma boa Reunião a todos"',
     ].join('\n\n');
 }
@@ -167,7 +172,7 @@ function conviteFimDeSemana(semana) {
         `Abertura da sala: ${ZOOM_FIM_DE_SEMANA.salaAberta}`,
         `Entrar na reunião Zoom\n${ZOOM_FIM_DE_SEMANA.link}`,
         `ID da reunião: ${ZOOM_FIM_DE_SEMANA.id}\nSenha de acesso: ${ZOOM_FIM_DE_SEMANA.senha}`,
-        'Essas informações, não devem ser compartilhadas nas redes sociais.',
+        negrito(AVISO_REDES_SOCIAIS),
         'Uma boa reunião a todos.'
     );
 

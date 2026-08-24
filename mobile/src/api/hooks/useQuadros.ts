@@ -77,6 +77,9 @@ export function useAtualizarDesignacao(quadroId: string | number) {
       }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: qk.historico(quadroId) });
+      // Trocar o irmão de uma célula avaliada descarta a avaliação no backend —
+      // a análise de cumprimento precisa reler.
+      qc.invalidateQueries({ queryKey: qk.cumprimento });
     },
   });
 }

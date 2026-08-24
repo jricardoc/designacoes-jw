@@ -20,7 +20,8 @@ import {
   useQuadro,
 } from "@/api/hooks/useQuadros";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
-import type { Quadro } from "@/api/types";
+import { useMarcarCumprimentoDesignacao } from "@/api/hooks/useCumprimento";
+import type { Designacao, Quadro } from "@/api/types";
 import {
   Badge,
   Button,
@@ -32,6 +33,7 @@ import {
   useToast,
   type SelectOption,
 } from "@/components/ui";
+import { MarcadorCumprimento } from "@/components/cumprimento/MarcadorCumprimento";
 import { DiaShareCard } from "@/components/quadros/DiaShareCard";
 import { HistoricoList } from "@/components/quadros/HistoricoList";
 import { useAuth } from "@/context/AuthContext";
@@ -76,6 +78,7 @@ export default function QuadroScreen() {
   const status = useAtualizarStatusQuadro(id);
   const excluir = useExcluirQuadro();
   const excluirDia = useExcluirDia(id);
+  const marcarCumprimento = useMarcarCumprimentoDesignacao();
 
   const [editing, setEditing] = useState<EditingCell | null>(null);
   const [pendingSeguida, setPendingSeguida] = useState<
@@ -119,7 +122,15 @@ export default function QuadroScreen() {
             ...old,
             designacoes: old.designacoes.map((d) =>
               d.data === cell.data && d.funcao === cell.funcao
-                ? { ...d, [cell.campo]: valor }
+                ? {
+                    ...d,
+                    [cell.campo]: valor,
+                    // Espelha o backend: trocar o irmão zera a avaliação (V/X)
+                    // da célula — ela era da escalação anterior.
+                    ...(valor !== d[cell.campo]
+                      ? { [cell.campo === "irmao1" ? "cumpriu1" : "cumpriu2"]: null }
+                      : null),
+                  }
                 : d,
             ),
           }
@@ -147,6 +158,55 @@ export default function QuadroScreen() {
       return;
     }
     applyChange(cell, valor);
+  };
+
+  /** O toque no V/X — otimista como a edição de célula, pelo mesmo motivo. */
+  const avaliar = async (
+    designacao: Designacao,
+    campo: "irmao1" | "irmao2",
+    cumpriu: boolean | null,
+  ) => {
+    const coluna = campo === "irmao1" ? "cumpriu1" : "cumpriu2";
+    // Um refetch em voo (revalidação por staleTime, pull-to-refresh) leria o
+    // banco de antes do toque e sobrescreveria o otimista — cancela primeiro.
+    await qc.cancelQueries({ queryKey: qk.quadro(id) });
+    qc.setQueryData<Quadro>(qk.quadro(id), (old) =>
+      old
+        ? {
+            ...old,
+            designacoes: old.designacoes.map((d) =>
+              d.id === designacao.id ? { ...d, [coluna]: cumpriu } : d,
+            ),
+          }
+        : old,
+    );
+    try {
+      const salva = await marcarCumprimento.mutateAsync({
+        designacaoId: designacao.id,
+        campo,
+        cumpriu,
+      });
+      // Regrava o que o servidor confirmou: se algum refetch passou no meio do
+      // caminho, é isto que devolve a célula ao estado verdadeiro.
+      qc.setQueryData<Quadro>(qk.quadro(id), (old) =>
+        old
+          ? {
+              ...old,
+              designacoes: old.designacoes.map((d) =>
+                d.id === salva.id ? { ...d, ...salva } : d,
+              ),
+            }
+          : old,
+      );
+      // A avaliação entra no histórico do quadro.
+      qc.invalidateQueries({ queryKey: qk.historico(id) });
+    } catch (err) {
+      toast.show(
+        err instanceof Error ? err.message : "Erro ao salvar avaliação",
+        "error",
+      );
+      refetch();
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -384,6 +444,8 @@ export default function QuadroScreen() {
                   {(["irmao1", "irmao2"] as const).map((campo) => {
                     const nome = f[campo];
                     const st = cellState(nome, grupo.data, f.funcao, campo);
+                    const cumpriu =
+                      (campo === "irmao1" ? f.cumpriu1 : f.cumpriu2) ?? null;
                     return (
                       <Pressable
                         key={campo}
@@ -396,17 +458,29 @@ export default function QuadroScreen() {
                           setEditing({ data: grupo.data, funcao: f.funcao, campo })
                         }
                       >
-                        <Text
-                          style={[
-                            styles.cellText,
-                            st?.color ? { color: st.color } : null,
-                            st?.strike ? styles.strike : null,
-                            !nome && styles.cellEmpty,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {nome || "—"}
-                        </Text>
+                        <View style={styles.cellInner}>
+                          <Text
+                            style={[
+                              styles.cellText,
+                              st?.color ? { color: st.color } : null,
+                              st?.strike ? styles.strike : null,
+                              !nome && styles.cellEmpty,
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {nome || "—"}
+                          </Text>
+                          {nome ? (
+                            <MarcadorCumprimento
+                              valor={cumpriu}
+                              onChange={
+                                podeEditar
+                                  ? (v) => avaliar(f, campo, v)
+                                  : undefined
+                              }
+                            />
+                          ) : null}
+                        </View>
                       </Pressable>
                     );
                   })}
@@ -598,7 +672,8 @@ const criarEstilos = (colors: Cores) => StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.slotBorder,
   },
-  cellText: { fontSize: 14, fontWeight: "600", color: colors.text },
+  cellInner: { flexDirection: "row", alignItems: "center", gap: 6 },
+  cellText: { flex: 1, fontSize: 14, fontWeight: "600", color: colors.text },
   cellEmpty: { color: colors.textMuted, fontWeight: "400" },
   strike: { textDecorationLine: "line-through" },
   panel: {

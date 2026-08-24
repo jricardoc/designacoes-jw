@@ -127,6 +127,7 @@ export function SemanaCard({
   destaque = false,
   onCompartilhar,
   onPdf,
+  onAssistencia,
   compartilhando = false,
   gerandoPdf = false,
 }: {
@@ -136,6 +137,12 @@ export function SemanaCard({
   destaque?: boolean;
   onCompartilhar?: () => void;
   onPdf?: () => void;
+  /**
+   * Abre o registro de assistência. Só chega para quem gerencia reuniões e
+   * quando a semana tem data importada — sem os dois, o botão nem aparece
+   * (diferente de PDF/Compartilhar, que são de leitura e ficam para todos).
+   */
+  onAssistencia?: () => void;
   compartilhando?: boolean;
   gerandoPdf?: boolean;
 }) {
@@ -216,6 +223,12 @@ export function SemanaCard({
           )}
           <Text style={styles.acaoTexto}>PDF</Text>
         </Pressable>
+        {onAssistencia ? (
+          <Pressable style={styles.acao} onPress={onAssistencia}>
+            <Ionicons name="people-outline" size={15} color={colors.primaryDark} />
+            <Text style={styles.acaoTexto}>Assistência</Text>
+          </Pressable>
+        ) : null}
         <Pressable
           style={styles.acao}
           onPress={onCompartilhar}
@@ -399,6 +412,9 @@ const criarEstilos = (colors: Cores) =>
     },
     acoes: {
       flexDirection: "row",
+      // Com o botão de Assistência são três ações: em telas estreitas a linha
+      // quebra em vez de empurrar o último botão para fora do cartão.
+      flexWrap: "wrap",
       gap: 8,
       paddingHorizontal: 14,
       paddingVertical: 8,

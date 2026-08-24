@@ -93,8 +93,12 @@ export function useAtualizarEscala(quadroId: string | number) {
     // Só existe o dirigente do turno: o substituto foi extinto, então não há mais `campo`.
     mutationFn: (payload: { escalaId: number; valor: string }) =>
       apiRequest("/dirigentes/escala", { method: "PUT", body: payload }),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: qk.dirigentesQuadro(quadroId) }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.dirigentesQuadro(quadroId) });
+      // Trocar o dirigente de uma saída avaliada descarta a avaliação no
+      // backend — a análise de cumprimento precisa reler.
+      qc.invalidateQueries({ queryKey: qk.cumprimento });
+    },
   });
 }
 

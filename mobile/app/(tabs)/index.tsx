@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useQuadros } from "@/api/hooks/useQuadros";
 import { Button, EmptyState, GradientHeader, Loading } from "@/components/ui";
+import { AtalhoCumprimento } from "@/components/cumprimento/AtalhoCumprimento";
 import { DashboardGlobal } from "@/components/quadros/DashboardGlobal";
 import { MonthCard } from "@/components/quadros/MonthCard";
 import { NovoQuadroModal } from "@/components/quadros/NovoQuadroModal";
@@ -92,6 +93,10 @@ export default function DesignacoesScreen() {
             </EmptyState>
           )}
 
+          <View style={styles.atalho}>
+            <AtalhoCumprimento />
+          </View>
+
           <DashboardGlobal />
         </ScrollView>
       )}
@@ -121,4 +126,5 @@ const criarEstilos = (colors: Cores) =>
     sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.text },
     sectionSub: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
     list: { gap: 12 },
+    atalho: { marginTop: 16 },
   });

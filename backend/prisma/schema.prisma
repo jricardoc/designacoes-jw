@@ -32,6 +32,11 @@ model Designacao {
   funcao    String
   irmao1    String
   irmao2    String
+  // Cumprimento da participacao (um por irmao da linha): null = ainda nao
+  // avaliado, true = cumpriu, false = faltou. Vive NA designacao de proposito —
+  // trocar o irmao da celula ou excluir o quadro descarta a avaliacao junto.
+  cumpriu1  Boolean?
+  cumpriu2  Boolean?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -210,8 +215,24 @@ model SemanaReuniao {
   
   // Limpeza
   limpeza                 String?
-  
+
   createdAt      DateTime @default(now())
+}
+
+// Assistencia (contagem de presentes) de cada reuniao, separada em presencial e
+// Zoom. Chaveada pela DATA da reuniao, NAO por SemanaReuniao: reimportar o mes
+// apaga e recria as semanas (deleteMany + createMany em ReuniaoController.import,
+// ids novos), e o historico de assistencia precisa sobreviver a isso.
+model AssistenciaReuniao {
+  id         Int      @id @default(autoincrement())
+  data       String   // "dd/MM/yyyy" — o dia da reuniao contada (meio: a propria; fds: o domingo)
+  tipo       String   // "meio" | "fds"
+  presencial Int      @default(0)
+  zoom       Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([data, tipo])
 }
 
 // ==========================================================================
@@ -328,6 +349,10 @@ model EscalaDirigente {
   dia             String          // "Segunda", "Terça", etc.
   principal       String          @default("") // Nome do dirigente
   removido        Boolean         @default(false) // Para remover dias/semanas
+  // null = nao avaliado, true = dirigiu a saida, false = faltou. Trocar o
+  // dirigente (edicao manual ou regerar) zera a avaliacao — ela e da
+  // escalacao anterior, nao do nome que entra.
+  cumpriu         Boolean?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 }
