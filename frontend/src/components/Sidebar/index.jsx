@@ -104,7 +104,6 @@ export default function Sidebar() {
           <span className="footer-text">
             <Heart size={12} style={{ color: "var(--t-red)" }} /> Feito com amor
           </span>
-          <span className="footer-version">v1.4.0</span>
         </div>
       </div>
 

@@ -19,6 +19,24 @@ function chaveDataBR(data: string, mesQuadro?: number): number {
   return mesRelativo * 100 + dia;
 }
 
+/**
+ * Data completa de um dia "dd/MM" de um quadro mensal. Mês maior que o do
+ * quadro é do ano ANTERIOR — a mesma regra de chaveDataBR acima: um quadro
+ * pode abrir com dias do mês anterior (a semana que contém o dia 1), nunca
+ * com dias do mês seguinte.
+ */
+export function dataDoQuadro(
+  data: string,
+  mesQuadro: number,
+  anoQuadro: number,
+): Date | null {
+  const [dia, mes] = data.split("/").map(Number);
+  if (!dia || !mes) return null;
+  const ano = mes > mesQuadro ? anoQuadro - 1 : anoQuadro;
+  const d = new Date(ano, mes - 1, dia);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 /** Format an ISO timestamp as dd/MM/yyyy. */
 export function formatDateBR(iso: string): string {
   const d = new Date(iso);

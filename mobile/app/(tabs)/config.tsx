@@ -30,8 +30,6 @@ import { FUNCOES, funcaoColor, funcaoLabel } from "@/utils/funcoes";
 
 type Secao = "irmaos" | "sistema";
 
-const APP_VERSION = "2.4.0";
-
 const DIA_ABBR: Record<string, string> = {
   segunda: "SEG",
   terca: "TER",
@@ -331,10 +329,6 @@ export default function ConfigScreen() {
               </Text>
             </View>
           </View>
-
-          <Text style={styles.version}>
-            Quadro de Designações · Versão {APP_VERSION}
-          </Text>
         </ScrollView>
       )}
 
@@ -509,6 +503,5 @@ const criarEstilos = (colors: Cores) =>
   prefDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
   prefLabel: { fontSize: 15, fontWeight: "500", color: colors.text },
   prefValue: { fontSize: 13, color: colors.textMuted },
-  version: { textAlign: "center", fontSize: 12, color: "#B7AC97", marginTop: 6 },
   flex: { flex: 1 },
   });

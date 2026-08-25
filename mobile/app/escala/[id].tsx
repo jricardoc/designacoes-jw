@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import {
   Pressable,
   RefreshControl,
@@ -40,7 +40,8 @@ import { useAuth } from "@/context/AuthContext";
 import { podeGerenciar } from "@/utils/permissoes";
 import { MESES, MESES_CURTO, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { compareDataBR } from "@/utils/date";
+import { compareDataBR, dataDoQuadro } from "@/utils/date";
+import { useHoje } from "@/utils/useHoje";
 import { exportarPdf } from "@/utils/exportPdf";
 import { gerarHtmlDirigentes, type GrupoEscalaPdf } from "@/utils/pdfHtml";
 
@@ -119,6 +120,23 @@ export default function EscalaScreen() {
     });
     return Object.entries(c).sort((a, b) => b[1] - a[1]);
   }, [quadro]);
+
+  // Os dias que ainda vêm abrem a lista (o próximo primeiro); os que já
+  // passaram descem para a seção "Dias anteriores" no fim. Só a ORDEM de
+  // exibição muda: `grupos` continua cronológico para o PDF e o agrupamento
+  // de semanas (datasDaSemana).
+  const hoje = useHoje();
+  const { proximos, anteriores } = useMemo(() => {
+    const proximos: GrupoEscala[] = [];
+    const anteriores: GrupoEscala[] = [];
+    for (const g of grupos) {
+      const d = quadro ? dataDoQuadro(g.data, quadro.mes, quadro.ano) : null;
+      // Data ilegível não classifica: fica visível no topo, com os próximos.
+      if (d && d.getTime() < hoje) anteriores.push(g);
+      else proximos.push(g);
+    }
+    return { proximos, anteriores };
+  }, [grupos, quadro, hoje]);
 
   if (isLoading || !quadro) {
     return <Loading label="Carregando escala..." />;
@@ -322,8 +340,20 @@ export default function EscalaScreen() {
           </View>
         </View>
 
-        {grupos.map((grupo) => (
-          <View key={grupo.data} style={styles.diaCard}>
+        {/* Dias: os próximos primeiro (o próximo abre a lista); os que já
+            passaram descem para a seção "Dias anteriores" no fim. */}
+        {proximos.length > 0 ? (
+          <View style={styles.proximoBadge}>
+            <Ionicons name="star" size={12} color={colors.textOnPrimary} />
+            <Text style={styles.proximoBadgeTexto}>Próximo dia</Text>
+          </View>
+        ) : null}
+        {[...proximos, ...anteriores].map((grupo, idx) => (
+          <Fragment key={grupo.data}>
+            {idx === proximos.length && anteriores.length > 0 ? (
+              <Text style={styles.anterioresTitulo}>Dias anteriores</Text>
+            ) : null}
+          <View style={styles.diaCard}>
             <View style={styles.diaHeader}>
               <View style={styles.diaDate}>
                 <Text style={styles.diaNumero}>{grupo.data}</Text>
@@ -424,6 +454,7 @@ export default function EscalaScreen() {
               </View>
             ))}
           </View>
+          </Fragment>
         ))}
 
         <View style={styles.panel}>
@@ -476,6 +507,32 @@ const criarEstilos = (colors: Cores) =>
     },
     actionsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
     diaCard: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: 14 },
+    proximoBadge: {
+      alignSelf: "flex-start",
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.primary,
+      borderRadius: radius.pill,
+      paddingVertical: 5,
+      paddingHorizontal: 11,
+      marginBottom: -4,
+    },
+    proximoBadgeTexto: {
+      color: colors.textOnPrimary,
+      fontSize: 11.5,
+      fontWeight: "800",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    anterioresTitulo: {
+      fontSize: 13,
+      fontWeight: "800",
+      color: colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.6,
+      marginTop: 10,
+    },
     diaHeader: {
       flexDirection: "row",
       alignItems: "center",

@@ -302,9 +302,6 @@ export default function SistemaPanel() {
         </div>
       </div>
 
-      <div style={{ textAlign: "center", fontSize: "12px", color: "var(--t-muted)", marginTop: "20px" }}>
-        Quadro de Designações · Versão 2.4.0
-      </div>
       </div>
     </div>
 

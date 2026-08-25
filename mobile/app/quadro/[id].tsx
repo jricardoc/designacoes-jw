@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -48,6 +48,8 @@ import {
   isIndisponivel,
   type GrupoDia,
 } from "@/utils/designacaoRules";
+import { dataDoQuadro } from "@/utils/date";
+import { useHoje } from "@/utils/useHoje";
 import { ordenarFuncoes } from "@/utils/funcoes";
 import { exportarImagem } from "@/utils/exportImagem";
 import { exportarPdf } from "@/utils/exportPdf";
@@ -94,7 +96,7 @@ export default function QuadroScreen() {
   const capturando = useRef(false);
 
   const grupos = useMemo<GrupoDia[]>(
-    () => (quadro ? agruparPorData(quadro.designacoes) : []),
+    () => (quadro ? agruparPorData(quadro.designacoes, quadro.mes) : []),
     [quadro],
   );
 
@@ -106,6 +108,23 @@ export default function QuadroScreen() {
     });
     return Object.entries(c).sort((a, b) => b[1] - a[1]);
   }, [quadro]);
+
+  // Os dias que ainda vêm abrem a lista (o próximo primeiro); os que já
+  // passaram descem para uma seção própria no fim — consultar o que vem é o
+  // caso comum de abrir o quadro. Só a ORDEM de exibição muda: `grupos`
+  // continua cronológico para o PDF e as regras de designação.
+  const hoje = useHoje();
+  const { proximos, anteriores } = useMemo(() => {
+    const proximos: GrupoDia[] = [];
+    const anteriores: GrupoDia[] = [];
+    for (const g of grupos) {
+      const d = quadro ? dataDoQuadro(g.data, quadro.mes, quadro.ano) : null;
+      // Data ilegível não classifica: fica visível no topo, com os próximos.
+      if (d && d.getTime() < hoje) anteriores.push(g);
+      else proximos.push(g);
+    }
+    return { proximos, anteriores };
+  }, [grupos, quadro, hoje]);
 
   if (isLoading || !quadro) {
     return <Loading label="Carregando quadro..." />;
@@ -381,9 +400,20 @@ export default function QuadroScreen() {
           </View>
         </View>
 
-        {/* Dias */}
-        {grupos.map((grupo) => (
-          <View key={grupo.data} style={styles.diaCard}>
+        {/* Dias: os próximos primeiro (o próximo abre a lista); os que já
+            passaram descem para a seção "Reuniões anteriores" no fim. */}
+        {proximos.length > 0 ? (
+          <View style={styles.proximoBadge}>
+            <Ionicons name="star" size={12} color={colors.textOnPrimary} />
+            <Text style={styles.proximoBadgeTexto}>Próxima reunião</Text>
+          </View>
+        ) : null}
+        {[...proximos, ...anteriores].map((grupo, idx) => (
+          <Fragment key={grupo.data}>
+            {idx === proximos.length && anteriores.length > 0 ? (
+              <Text style={styles.anterioresTitulo}>Reuniões anteriores</Text>
+            ) : null}
+          <View style={styles.diaCard}>
             <View style={styles.diaHeader}>
               <View style={styles.diaDate}>
                 <Text style={styles.diaNumero}>{grupo.data.split("/")[0]}</Text>
@@ -488,6 +518,7 @@ export default function QuadroScreen() {
               </View>
             ))}
           </View>
+          </Fragment>
         ))}
 
         {/* Estatísticas */}
@@ -610,6 +641,32 @@ const criarEstilos = (colors: Cores) => StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     padding: 14,
+  },
+  proximoBadge: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+    marginBottom: -4,
+  },
+  proximoBadgeTexto: {
+    color: colors.textOnPrimary,
+    fontSize: 11.5,
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  anterioresTitulo: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginTop: 10,
   },
   diaHeader: {
     flexDirection: "row",

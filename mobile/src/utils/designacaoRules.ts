@@ -1,4 +1,5 @@
 import type { Designacao, Irmao } from "@/api/types";
+import { compareDataBR } from "@/utils/date";
 import { FUNCAO_LABEL_TO_ID } from "@/utils/funcoes";
 
 export interface GrupoDia {
@@ -57,16 +58,23 @@ export function isDesignadoNoMesmoDia(
   });
 }
 
-/** Group designações by date, sorted chronologically by dd/MM. */
-export function agruparPorData(designacoes: Designacao[]): GrupoDia[] {
+/**
+ * Group designações by date, sorted chronologically by dd/MM.
+ *
+ * `mesQuadro` corrige a virada de ano: num quadro de janeiro, "29/12" é do ano
+ * ANTERIOR e deve vir antes de "01/01" — sem o parâmetro, dezembro ordenaria
+ * para o fim (mesma regra de compareDataBR, que a tela da escala já usa).
+ */
+export function agruparPorData(
+  designacoes: Designacao[],
+  mesQuadro?: number,
+): GrupoDia[] {
   const map: Record<string, GrupoDia> = {};
   for (const d of designacoes) {
     if (!map[d.data]) map[d.data] = { data: d.data, dia: d.dia, funcoes: [] };
     map[d.data].funcoes.push(d);
   }
-  return Object.values(map).sort((a, b) => {
-    const [da, ma] = a.data.split("/").map(Number);
-    const [db, mb] = b.data.split("/").map(Number);
-    return ma * 100 + da - (mb * 100 + db);
-  });
+  return Object.values(map).sort((a, b) =>
+    compareDataBR(a.data, b.data, mesQuadro),
+  );
 }
