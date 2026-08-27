@@ -6,31 +6,41 @@
 // agora agrupando por irmão e separando matches confiáveis (1 candidato) dos
 // ambíguos (vários candidatos), em vez de aplicar direto no banco.
 
+const { domingoDaSemana } = require('../utils/semanaReuniao');
+
 // Campos das semanas que carregam nomes de pessoas, com um rótulo legível da parte.
+//
+// `momento` diz em QUE DIA daquela semana a parte acontece: 'meio' na reunião de meio de
+// semana (a única data que o arquivo importado traz) e 'fds' no domingo que fecha a mesma
+// semana. Sem essa distinção, quem serve no fim de semana era marcado como ocupado na
+// quinta — e o domingo, o dia em que ele realmente serve, continuava livre no quadro.
+//
+// Espelha o `momento` de CAMPOS_REUNIAO (MinhasDesignacoesService): as duas listas precisam
+// concordar sobre o dia de cada parte, e verificar:indisponibilidade-import confere isso.
 const CAMPOS = [
-    ['presidente', 'Presidente'],
-    ['conselheiroB', 'Conselheiro Sala B'],
-    ['oracaoInicial', 'Oração Inicial'],
-    ['oracaoFinal', 'Oração Final'],
-    ['tesouro1_irmao', 'Tesouros 1'],
-    ['tesouro2_irmao', 'Tesouros 2'],
-    ['tesouro3_principal', 'Leitura da Bíblia'],
-    ['tesouro3_salaB', 'Leitura da Bíblia (Sala B)'],
-    ['ministerio1_principal', 'Ministério 1'],
-    ['ministerio1_salaB', 'Ministério 1 (Sala B)'],
-    ['ministerio2_principal', 'Ministério 2'],
-    ['ministerio2_salaB', 'Ministério 2 (Sala B)'],
-    ['ministerio3_principal', 'Ministério 3'],
-    ['ministerio3_salaB', 'Ministério 3 (Sala B)'],
-    ['ministerio4_principal', 'Ministério 4'],
-    ['ministerio4_salaB', 'Ministério 4 (Sala B)'],
-    ['vidaCrista1_irmao', 'Vida Cristã 1'],
-    ['vidaCrista2_irmao', 'Vida Cristã 2'],
-    ['estudoBiblico_dirigente', 'Estudo (Dirigente)'],
-    ['estudoBiblico_leitor', 'Estudo (Leitor)'],
-    ['fds_presidente', 'Fim de Semana (Presidente)'],
-    ['fds_orador', 'Fim de Semana (Orador)'],
-    ['fds_leitor', 'Leitor da Sentinela'],
+    { campo: 'presidente', label: 'Presidente', momento: 'meio' },
+    { campo: 'conselheiroB', label: 'Conselheiro Sala B', momento: 'meio' },
+    { campo: 'oracaoInicial', label: 'Oração Inicial', momento: 'meio' },
+    { campo: 'oracaoFinal', label: 'Oração Final', momento: 'meio' },
+    { campo: 'tesouro1_irmao', label: 'Tesouros 1', momento: 'meio' },
+    { campo: 'tesouro2_irmao', label: 'Tesouros 2', momento: 'meio' },
+    { campo: 'tesouro3_principal', label: 'Leitura da Bíblia', momento: 'meio' },
+    { campo: 'tesouro3_salaB', label: 'Leitura da Bíblia (Sala B)', momento: 'meio' },
+    { campo: 'ministerio1_principal', label: 'Ministério 1', momento: 'meio' },
+    { campo: 'ministerio1_salaB', label: 'Ministério 1 (Sala B)', momento: 'meio' },
+    { campo: 'ministerio2_principal', label: 'Ministério 2', momento: 'meio' },
+    { campo: 'ministerio2_salaB', label: 'Ministério 2 (Sala B)', momento: 'meio' },
+    { campo: 'ministerio3_principal', label: 'Ministério 3', momento: 'meio' },
+    { campo: 'ministerio3_salaB', label: 'Ministério 3 (Sala B)', momento: 'meio' },
+    { campo: 'ministerio4_principal', label: 'Ministério 4', momento: 'meio' },
+    { campo: 'ministerio4_salaB', label: 'Ministério 4 (Sala B)', momento: 'meio' },
+    { campo: 'vidaCrista1_irmao', label: 'Vida Cristã 1', momento: 'meio' },
+    { campo: 'vidaCrista2_irmao', label: 'Vida Cristã 2', momento: 'meio' },
+    { campo: 'estudoBiblico_dirigente', label: 'Estudo (Dirigente)', momento: 'meio' },
+    { campo: 'estudoBiblico_leitor', label: 'Estudo (Leitor)', momento: 'meio' },
+    { campo: 'fds_presidente', label: 'Fim de Semana (Presidente)', momento: 'fds' },
+    { campo: 'fds_orador', label: 'Fim de Semana (Orador)', momento: 'fds' },
+    { campo: 'fds_leitor', label: 'Leitor da Sentinela', momento: 'fds' },
 ];
 
 const normalizeString = (str) =>
@@ -82,6 +92,19 @@ const compareData = (a, b) => {
 };
 
 /**
+ * "dd/MM" — o formato de data do quadro e da tabela Indisponibilidade (sem ano).
+ * Aceita a string "dd/MM/yyyy" da programação ou um Date já calculado.
+ */
+function formatarDiaMes(valor) {
+    if (valor instanceof Date) {
+        if (Number.isNaN(valor.getTime())) return null;
+        return `${String(valor.getDate()).padStart(2, '0')}/${String(valor.getMonth() + 1).padStart(2, '0')}`;
+    }
+    const m = String(valor || '').match(/(\d{1,2})\/(\d{1,2})/);
+    return m ? `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}` : null;
+}
+
+/**
  * @param {Array} semanas  Semanas parseadas (formato SemanaReuniao)
  * @param {Array} irmaosDB Irmãos cadastrados ([{ id, nome }])
  * @returns {{ confirmados: Array, ambiguos: Array }}
@@ -92,19 +115,25 @@ function buildIndisponibilidadePreview(semanas, irmaosDB) {
     // 1) Coleta ocorrências { nomeOriginal, data "dd/MM", parte }
     const ocorrencias = [];
     for (const sem of semanas) {
-        let dataFmt = null;
-        if (sem.dataReuniao) {
-            const [dd, mm] = sem.dataReuniao.split('/');
-            if (dd && mm) dataFmt = `${dd.padStart(2, '0')}/${mm.padStart(2, '0')}`;
-        }
-        if (!dataFmt) continue;
+        // Duas datas por semana: a reunião de meio de semana (a única que o arquivo traz) e o
+        // domingo que a fecha, por aritmética de data. O domingo pode cair no mês seguinte
+        // (30/09 fecha em 04/10), então não dá para tirá-lo do mês da Reuniao. As semanas
+        // chegam aqui já reconciliadas por reconciliarSemanas.
+        const datas = {
+            meio: formatarDiaMes(sem.dataReuniao),
+            fds: formatarDiaMes(domingoDaSemana(sem.dataReuniao)),
+        };
+        if (!datas.meio && !datas.fds) continue;
 
-        for (const [campo, label] of CAMPOS) {
+        for (const { campo, label, momento } of CAMPOS) {
+            const data = datas[momento];
+            if (!data) continue;
+
             const val = sem[campo];
             if (!val || typeof val !== 'string') continue;
             const fragmentos = val.split('/').map((n) => n.trim()).filter((n) => n && n !== '-');
             for (const nome of fragmentos) {
-                ocorrencias.push({ nomeOriginal: nome, data: dataFmt, parte: label });
+                ocorrencias.push({ nomeOriginal: nome, data, parte: label });
             }
         }
     }
@@ -210,4 +239,4 @@ function buildIndisponibilidadePreview(semanas, irmaosDB) {
 // tokenize/matchStrength saem tambem soltos: o script de normalizacao de nomes das
 // designacoes precisa do mesmo criterio de semelhanca, e reimplementa-lo la deixaria duas
 // regras de match divergindo com o tempo.
-module.exports = { buildIndisponibilidadePreview, CAMPOS, tokenize, matchStrength };
+module.exports = { buildIndisponibilidadePreview, CAMPOS, tokenize, matchStrength, formatarDiaMes };
