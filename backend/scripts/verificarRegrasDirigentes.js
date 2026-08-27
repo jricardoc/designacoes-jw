@@ -283,6 +283,68 @@ chk(AutoDesignacao.puxarDaFila(filaHist, i => i.funcoes.includes('indicador')).n
 chk(filaHist.map(i => i.nome).join() === 'Bruno,Ana,Carlos,Zeca',
   'os designados vao para o fim da fila unica, na ordem em que serviram');
 
+sec('dirigentes: a saida com menos candidatos escolhe primeiro no dia');
+// Sabado, dois turnos as 08:45 em casas diferentes: ninguem pode estar nos dois. Se a Casa A
+// (tres candidatos) escolher antes da Casa B (so a Ana), ela leva a Ana e a Casa B fica VAZIA
+// com Bruno e Caio sobrando. A fila e unica, entao a ordem dentro do dia decide isso.
+const turnoSab = (id, saidaCampoId, turno, local) => ({
+  id, data: '10/01', dataObj: new Date(2026, 0, 10), saidaCampoId, turno, local, horario: '08:45',
+});
+const doisTurnos = [turnoSab(1, 1, 1, 'Casa A'), turnoSab(2, 3, 3, 'Casa B')];
+const trioSabado = [
+  { nome: 'Ana', saidaCampoIds: [1, 3], indisponiveis: [] },
+  { nome: 'Bruno', saidaCampoIds: [1], indisponiveis: [] },
+  { nome: 'Caio', saidaCampoIds: [1], indisponiveis: [] },
+];
+const rSabado = gerarEscala({ vagasBase: doisTurnos, dirigentes: trioSabado, historico: {}, regras: {} });
+const quemPegou = (id) => rSabado.atribuicoes.find(a => a.id === id)?.principal;
+chk(rSabado.diagnostico.vagasVazias === 0,
+  `nenhum turno fica vazio (Casa A: ${quemPegou(1) || 'VAZIO'}, Casa B: ${quemPegou(2) || 'VAZIO'})`);
+chk(quemPegou(2) === 'Ana', 'a unica habilitada na Casa B pega a Casa B, nao a Casa A');
+chk(['Bruno', 'Caio'].includes(quemPegou(1)), 'a Casa A fica com quem so dirige nela');
+
+// A escassez so desempata DENTRO da data: entre datas a ordem continua cronologica, senao o
+// rodizio deixaria de ser rodizio.
+const doisDias = [
+  { id: 1, data: '12/01', dataObj: new Date(2026, 0, 12), saidaCampoId: 1, turno: 1, local: 'Casa A' },
+  { id: 2, data: '10/01', dataObj: new Date(2026, 0, 10), saidaCampoId: 3, turno: 3, local: 'Casa B' },
+];
+const rDias = gerarEscala({
+  vagasBase: doisDias,
+  dirigentes: [
+    { nome: 'Ana', saidaCampoIds: [1, 3], indisponiveis: [] },
+    { nome: 'Bruno', saidaCampoIds: [1, 3], indisponiveis: [] },
+  ],
+  historico: {},
+  regras: {},
+});
+chk(rDias.atribuicoes.find(a => a.id === 2)?.principal === 'Ana',
+  'o dia 10 e resolvido antes do dia 12, mesmo tendo os mesmos candidatos');
+
+sec('dirigentes: uma fila so, para todas as saidas');
+// O bug que o quadro mecanico tinha: uma fila por funcao fazia quem acumulava funcoes servir
+// mais. Aqui a fila e unica desde sempre — servir numa saida adia a vez do irmao em TODAS.
+const duasSaidas = [
+  { id: 1, data: '05/01', dataObj: new Date(2026, 0, 5), saidaCampoId: 1, turno: 1, local: 'Casa A' },
+  { id: 2, data: '06/01', dataObj: new Date(2026, 0, 6), saidaCampoId: 2, turno: 1, local: 'Casa B' },
+  { id: 3, data: '07/01', dataObj: new Date(2026, 0, 7), saidaCampoId: 1, turno: 1, local: 'Casa A' },
+  { id: 4, data: '08/01', dataObj: new Date(2026, 0, 8), saidaCampoId: 2, turno: 1, local: 'Casa B' },
+];
+const rFila = gerarEscala({
+  vagasBase: duasSaidas,
+  dirigentes: [
+    { nome: 'Poli', saidaCampoIds: [1, 2], indisponiveis: [] }, // dirige nas duas
+    { nome: 'SoA', saidaCampoIds: [1], indisponiveis: [] },
+    { nome: 'SoB', saidaCampoIds: [2], indisponiveis: [] },
+  ],
+  historico: {},
+  regras: {},
+});
+const cargaDirigente = (nome) => rFila.atribuicoes.filter(a => a.principal === nome).length;
+chk(cargaDirigente('Poli') <= cargaDirigente('SoA') + 1 && cargaDirigente('Poli') <= cargaDirigente('SoB') + 1,
+  `quem dirige nas duas saidas nao serve mais que quem dirige numa (Poli:${cargaDirigente('Poli')} SoA:${cargaDirigente('SoA')} SoB:${cargaDirigente('SoB')})`);
+chk(rFila.diagnostico.vagasVazias === 0, 'as quatro vagas foram preenchidas');
+
 sec('designacoes mecanicas: ordem em que as funcoes de um dia escolhem');
 const ordemFuncoes = AutoDesignacao.ordenarFuncoes([
   { nome: 'a', funcoes: ['microfone', 'indicador'] },

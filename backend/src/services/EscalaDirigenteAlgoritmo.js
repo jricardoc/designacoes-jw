@@ -15,8 +15,9 @@
  *
  *   1. Existe uma FILA unica de dirigentes. A ordem inicial vem do historico: quem serviu ha
  *      mais tempo fica na frente, quem nunca serviu fica na frente de todos.
- *   2. Os turnos sao percorridos em ordem cronologica. Para cada turno andamos na fila do
- *      inicio para o fim e pegamos o PRIMEIRO irmao que possa servir naquele turno.
+ *   2. Os turnos sao percorridos em ordem cronologica - e, dentro de uma mesma data, do que
+ *      tem MENOS candidatos para o que tem mais (ver ordenarTurnos). Para cada turno andamos
+ *      na fila do inicio para o fim e pegamos o PRIMEIRO irmao que possa servir nele.
  *   3. PULA E MANTEM A VEZ: quem nao pode servir naquele dia NAO perde a vez - continua na
  *      frente e pega o proximo turno compativel. E isso que faz o irmao que so dirige as
  *      segundas reaparecer duas semanas depois, numa segunda, sem ter servido no meio.
@@ -59,13 +60,33 @@ function chaveHorario(base) {
  * Ordem cronologica de verdade dos turnos.
  *
  * `data` e so "DD/MM", entao ordenar por string colocaria "02/09" antes de "28/08". Quem
- * resolve o mes/ano e o chamador, que entrega `dataObj`; aqui so desempatamos pelo turno
- * (varias saidas na mesma data) e pela saida, para a geracao ser reproduzivel.
+ * resolve o mes/ano e o chamador, que entrega `dataObj`.
+ *
+ * DENTRO da mesma data, quem tem MENOS candidatos escolhe primeiro. A fila e unica: o
+ * primeiro turno do dia escolhe entre todos os habilitados e os seguintes escolhem no que
+ * sobrou, porque ninguem serve duas vezes no mesmo dia nem em dois lugares no mesmo horario.
+ * Resolvendo o turno farto antes do escasso, o turno escasso fica VAZIO:
+ *
+ *   sabado 08:45, Casa A (Ana, Bruno, Caio) e Casa B (so a Ana)
+ *   por turno:     Casa A leva a Ana  ->  Casa B fica sem ninguem
+ *   por escassez:  Casa B leva a Ana  ->  Casa A leva o Bruno, as duas preenchidas
+ *
+ * Isso nao mexe em quantas vezes cada um serve — so em QUAL saida cada um pega no dia.
+ * `candidatosPorTurno` e opcional: sem ele a ordem e a antiga (data, turno, saida).
+ *
+ * @param {Array} bases
+ * @param {Map<any, number>} [candidatosPorTurno] base.id -> quantos irmaos poderiam assumir
  */
-function ordenarTurnos(bases) {
+function ordenarTurnos(bases, candidatosPorTurno) {
+    const candidatos = (base) => candidatosPorTurno?.get(base.id) ?? 0;
+
     return [...bases].sort((a, b) => {
         const dif = a.dataObj.getTime() - b.dataObj.getTime();
         if (dif !== 0) return dif;
+        if (candidatosPorTurno) {
+            const escassez = candidatos(a) - candidatos(b);
+            if (escassez !== 0) return escassez;
+        }
         const turnoA = a.turno || 0;
         const turnoB = b.turno || 0;
         if (turnoA !== turnoB) return turnoA - turnoB;
@@ -162,7 +183,18 @@ function gerarEscala(entrada) {
     }));
 
     // ---- 2. Universo de turnos --------------------------------------------
-    const turnos = ordenarTurnos(entrada.vagasBase || []);
+    // Quantos irmaos poderiam assumir cada turno, antes de qualquer escolha. E a mesma
+    // conta do `habilitado` de detectarGargalos: vinculo com a saida e livre naquela data.
+    const habilitadoPara = (d, base) =>
+        d.saidas.has(base.saidaCampoId)
+        && !(regras.respeitarIndisponibilidades && d.indisponiveis.has(base.data));
+
+    const candidatosPorTurno = new Map(
+        (entrada.vagasBase || []).map(base =>
+            [base.id, dirigentes.filter(d => habilitadoPara(d, base)).length])
+    );
+
+    const turnos = ordenarTurnos(entrada.vagasBase || [], candidatosPorTurno);
     const totalVagas = turnos.length;
 
     const turnosPorData = new Map();
