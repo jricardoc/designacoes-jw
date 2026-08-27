@@ -12,6 +12,7 @@
     "verificar:regras-lembrete": "node scripts/verificarRegrasLembrete.js",
     "verificar:semana-reuniao": "node scripts/verificarSemanaReuniao.js",
     "verificar:indisponibilidade-import": "node scripts/verificarIndisponibilidadeImport.js",
+    "verificar:rodizio-quadro": "node scripts/verificarRodizioQuadro.js",
     "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js"
   },
   "dependencies": {

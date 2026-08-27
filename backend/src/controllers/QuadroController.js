@@ -418,3 +418,6 @@ class QuadroController {
 }
 
 module.exports = new QuadroController();
+// gerarTemplate sai junto para a verificacao do rodizio (verificar:rodizio-quadro) simular o
+// mes real em vez de reimplementar as datas e funcoes do quadro e sair divergindo daqui.
+module.exports.gerarTemplate = gerarTemplate;

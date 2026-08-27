@@ -266,8 +266,11 @@ const irmaosMec = [
   { nome: 'Ana', funcoes: ['indicador', 'microfone'] }, // serviu por ultimo
   { nome: 'Carlos', funcoes: ['microfone'] },
 ];
+// O historico guarda a POSICAO da ultima vaga que o irmao ocupou (um contador que anda de
+// vaga em vaga nos quadros anteriores), nao a data — e o que faz a fila de um mes comecar
+// exatamente onde a do mes anterior parou. Ver carregarHistorico.
 const filasMec = AutoDesignacao.montarFilas(irmaosMec, {
-  indicador: { Bruno: new Date(2026, 0, 5).getTime(), Ana: new Date(2026, 0, 20).getTime() },
+  indicador: { Bruno: 4, Ana: 17 },
   microfone: {},
 });
 chk(filasMec.indicador.map(i => i.nome).join() === 'Zeca,Bruno,Ana',

@@ -31,10 +31,10 @@ const FUNCAO_MAP = {
 
 const FUNCOES = ['microfone', 'indicador', 'audioVideo', 'estacionamento'];
 
-// "31/01" + 2026 -> Date(2026, 0, 31). Mes no Javascript e index 0.
-const parseDataParaDate = (dataString, anoRelativo) => {
+// "31/01" -> 131. So para ordenar as datas de UM quadro, que e sempre de um unico mes.
+const diaMesEmNumero = (dataString) => {
     const [dia, mes] = String(dataString).split('/').map(Number);
-    return new Date(anoRelativo, mes - 1, dia);
+    return (mes || 0) * 100 + (dia || 0);
 };
 
 class AutoDesignacaoService {
@@ -157,9 +157,22 @@ class AutoDesignacaoService {
     }
 
     /**
-     * Ultima vez que cada irmao serviu em cada funcao, olhando TODOS os quadros anteriores.
-     * Gerar um mes novo nao recomeca do zero: a fila do mes N sai de como terminou o mes N-1.
-     * @returns {Object} { microfone: { nome: timestamp }, indicador: {...}, ... }
+     * Posicao da ULTIMA vez que cada irmao serviu em cada funcao, olhando TODOS os quadros
+     * anteriores. Gerar um mes novo nao recomeca do zero: a fila do mes N sai de como terminou
+     * o mes N-1.
+     *
+     * A posicao e um contador que anda de vaga em vaga, na ordem em que as vagas foram
+     * preenchidas (quadro por quadro, data por data, irmao1 antes de irmao2) — nao a DATA em
+     * que o irmao serviu.
+     *
+     * A diferenca importa no ultimo dia de cada mes. Toda vaga escala dois irmaos no mesmo
+     * dia, entao, por data, os dois empatam; o desempate era alfabetico e trocava a ordem
+     * real da fila. Quem serviu por ultimo voltava na frente de quem tinha servido antes,
+     * so por causa do nome: o descanso encurtava na virada do mes e os primeiros do alfabeto
+     * acumulavam uma designacao a mais a cada mes. Contando a POSICAO, a fila de janeiro
+     * comeca exatamente onde a de dezembro parou.
+     *
+     * @returns {Object} { microfone: { nome: posicao }, indicador: {...}, ... }
      */
     async carregarHistorico(mes, ano) {
         const ultimoServico = {};
@@ -172,33 +185,36 @@ class AutoDesignacaoService {
                     { ano: ano, mes: { lt: mes } }
                 ]
             },
-            include: { designacoes: true }
+            include: { designacoes: true },
+            // A ordem dos quadros deixou de ser indiferente: o contador depende dela.
+            orderBy: [{ ano: 'asc' }, { mes: 'asc' }]
         });
 
-        quadrosAnteriores.forEach(quadro => {
-            quadro.designacoes.forEach(d => {
+        let posicao = 0;
+        for (const quadro of quadrosAnteriores) {
+            const linhas = quadro.designacoes
+                .filter(d => FUNCAO_MAP[d.funcao])
+                .sort((a, b) => diaMesEmNumero(a.data) - diaMesEmNumero(b.data));
+
+            for (const d of linhas) {
                 const funcaoId = FUNCAO_MAP[d.funcao];
-                if (!funcaoId) return;
-
-                const quando = parseDataParaDate(d.data, quadro.ano).getTime();
-                if (Number.isNaN(quando)) return;
-
-                [d.irmao1, d.irmao2].forEach(nome => {
-                    if (!nome) return;
-                    const atual = ultimoServico[funcaoId][nome];
-                    if (atual === undefined || atual < quando) {
-                        ultimoServico[funcaoId][nome] = quando;
-                    }
-                });
-            });
-        });
+                for (const nome of [d.irmao1, d.irmao2]) {
+                    posicao += 1;
+                    if (nome) ultimoServico[funcaoId][nome] = posicao;
+                }
+            }
+        }
 
         return ultimoServico;
     }
 
     /**
      * Fila inicial de cada funcao: quem nunca serviu na frente de todos, depois quem serviu ha
-     * mais tempo. Empate desempatado por nome para a geracao ser reproduzivel.
+     * mais tempo (menor posicao no historico).
+     *
+     * O empate por nome so decide entre irmaos que NUNCA serviram naquela funcao — duas
+     * posicoes iguais nao existem, porque o contador anda a cada vaga. Serve para a geracao
+     * ser reproduzivel.
      */
     montarFilas(irmaos, ultimoServico) {
         const filas = {};
