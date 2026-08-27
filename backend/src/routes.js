@@ -134,10 +134,11 @@ routes.get('/historico/estatisticas/:quadroId?', HistoricoController.estatistica
 routes.get('/estatisticas', EstatisticasController.getEstatisticasGlobais);
 
 // ==================== CUMPRIMENTO DE PARTICIPACOES ====================
-// Marcar (o V/X ao lado do nome) segue o escopo da area da tela. O gate do GET
-// reserva a TELA de analise a quem gerencia designacoes ou dirigentes — nao e
-// confidencialidade: os campos cumpriu* viajam nas leituras livres dos quadros
-// (como os proprios nomes), e o V/X aparece por celula para qualquer irmao.
+// Marcar (o V/X ao lado do nome) segue o escopo da area da tela, e VER tambem:
+// a avaliacao e restrita a quem cuida daquela area. Alem do gate do GET abaixo,
+// as leituras do quadro (QuadroController.show e DirigentesController.showQuadro)
+// podam os campos cumpriu* de quem nao tem o escopo — esconder so na tela deixaria
+// o dado a um F12 de distancia.
 routes.get('/cumprimento', requireEscopo(ESCOPOS.DESIGNACOES, ESCOPOS.DIRIGENTES), CumprimentoController.index);
 routes.put('/quadros/designacao/cumprimento', podeDesignacoes, CumprimentoController.marcarDesignacao);
 routes.put('/dirigentes/escala/cumprimento', podeDirigentes, CumprimentoController.marcarEscala);

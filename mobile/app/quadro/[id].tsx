@@ -500,14 +500,12 @@ export default function QuadroScreen() {
                           >
                             {nome || "—"}
                           </Text>
-                          {nome ? (
+                          {/* Só quem cuida de designações vê o cumprimento — para os
+                              demais o backend nem manda o campo. */}
+                          {nome && podeEditar ? (
                             <MarcadorCumprimento
                               valor={cumpriu}
-                              onChange={
-                                podeEditar
-                                  ? (v) => avaliar(f, campo, v)
-                                  : undefined
-                              }
+                              onChange={(v) => avaliar(f, campo, v)}
                             />
                           ) : null}
                         </View>

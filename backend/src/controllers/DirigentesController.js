@@ -1,5 +1,6 @@
 const prisma = require('../prisma');
 const { REGRAS_PADRAO } = require('../services/EscalaDirigenteAlgoritmo');
+const { ESCOPOS, temEscopo } = require('../middleware/escopos');
 
 const MESES = ['', 'JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO',
     'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
@@ -115,6 +116,15 @@ class DirigentesController {
 
             if (!quadro) {
                 return res.status(404).json({ error: 'Quadro não encontrado' });
+            }
+
+            // Mesma regra do quadro de designacoes: quem nao cuida da escala ve os turnos e
+            // os nomes, mas nao a avaliacao de cumprimento.
+            if (!temEscopo(req.user, ESCOPOS.DIRIGENTES)) {
+                return res.json({
+                    ...quadro,
+                    escalas: quadro.escalas.map(({ cumpriu, ...resto }) => resto),
+                });
             }
 
             return res.json(quadro);

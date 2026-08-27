@@ -440,12 +440,12 @@ export default function EscalaScreen() {
                       >
                         {e.principal || "—"}
                       </Text>
-                      {e.principal ? (
+                      {/* Só quem cuida de dirigentes vê o cumprimento — para os
+                          demais o backend nem manda o campo. */}
+                      {e.principal && podeEditar ? (
                         <MarcadorCumprimento
                           valor={e.cumpriu ?? null}
-                          onChange={
-                            podeEditar ? (v) => avaliar(e, v) : undefined
-                          }
+                          onChange={(v) => avaliar(e, v)}
                         />
                       ) : null}
                     </View>

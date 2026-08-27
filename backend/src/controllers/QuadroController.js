@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const { ESCOPOS, temEscopo } = require('../middleware/escopos');
 
 const MESES = ['', 'JANEIRO', 'FEVEREIRO', 'MARCO', 'ABRIL', 'MAIO', 'JUNHO',
     'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
@@ -89,6 +90,18 @@ class QuadroController {
 
             if (!quadro) {
                 return res.status(404).json({ error: 'Quadro nao encontrado' });
+            }
+
+            // A avaliacao de cumprimento (o V/X ao lado do nome) e informacao restrita a quem
+            // cuida das designacoes. Quem nao cuida ve o quadro inteiro — e o quadro e publico
+            // por natureza — mas nao ve quem faltou. Sem esta poda os campos viajavam para
+            // todo irmao logado, e esconder so na tela deixaria o dado a um F12 de distancia.
+            if (!temEscopo(req.user, ESCOPOS.DESIGNACOES)) {
+                return res.json({
+                    ...quadro,
+                    designacoes: quadro.designacoes.map(
+                        ({ cumpriu1, cumpriu2, ...resto }) => resto),
+                });
             }
 
             return res.json(quadro);
