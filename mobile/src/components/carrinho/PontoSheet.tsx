@@ -100,7 +100,7 @@ export function PontoSheet({ visible, ponto, onClose }: Props) {
   const podeExcluir = editando && podeEditar;
 
   return (
-    <Sheet visible={visible} onClose={onClose}>
+    <Sheet visible={visible} onClose={onClose} scroll>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{editando ? "Editar ponto" : "Novo ponto"}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>

@@ -189,7 +189,7 @@ export default function ContaScreen() {
     <View style={styles.screen}>
       <GradientHeader title="Conta" description="Perfil e usuários" />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
         {/* Perfil */}
         <View style={styles.card}>
           <View style={styles.profileTop}>

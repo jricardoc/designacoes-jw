@@ -171,7 +171,7 @@ export default function IrmaoScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
         <Animated.View entering={FadeInDown.duration(280)} style={styles.card}>
           <Text style={styles.label}>Nome</Text>
           <TextInput

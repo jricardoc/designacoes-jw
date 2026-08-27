@@ -26,7 +26,7 @@ interface Props {
 export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onResetSenha, onExcluir, onVincular }: Props) {
   const { colors, styles } = useTema(criarEstilos);
   return (
-    <Sheet visible={!!user} onClose={onClose}>
+    <Sheet visible={!!user} onClose={onClose} scroll>
       {user ? (
         <>
           <View style={styles.header}>

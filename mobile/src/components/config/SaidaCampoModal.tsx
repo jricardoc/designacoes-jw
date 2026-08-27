@@ -99,7 +99,7 @@ export function SaidaCampoModal({ visible, saida, onClose }: Props) {
   };
 
   return (
-    <Sheet visible={visible} onClose={onClose}>
+    <Sheet visible={visible} onClose={onClose} scroll>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{editando ? "Editar Saída" : "Nova Saída de Campo"}</Text>
         <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>

@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Modal, Pressable, StyleSheet, View } from "react-native";
+import { type ReactNode } from "react";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
   FadeIn,
@@ -9,6 +9,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { useAlturaTeclado } from "./useAlturaTeclado";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -22,15 +23,33 @@ interface SheetProps {
   maxHeightPct?: number;
   /** Remove o padding horizontal interno (para folhas com lista que rola até a borda). */
   flush?: boolean;
+  /**
+   * Envolve o conteúdo num ScrollView. Ligue quando a folha puder ficar mais alta que a
+   * tela — lista de tamanho variável, formulário com vários campos, ou qualquer coisa que
+   * o teclado empurre para cima. Sem isso o excedente é CORTADO, sem barra de rolagem e sem
+   * jeito de chegar no botão de salvar.
+   *
+   * Deixe desligado nas folhas que já trazem o próprio ScrollView ou FlatList: dois
+   * roláveis aninhados brigam pelo gesto.
+   */
+  scroll?: boolean;
 }
 
 /**
  * Bottom sheet do design "terroso": backdrop com fade, folha deslizando de baixo,
  * cantos arredondados no topo e a alça (handle). Reaproveitada por todos os modais.
  */
-export function Sheet({ visible, onClose, children, maxHeightPct = 0.9, flush }: SheetProps) {
+export function Sheet({
+  visible,
+  onClose,
+  children,
+  maxHeightPct = 0.9,
+  flush,
+  scroll,
+}: SheetProps) {
   const { styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
+  const alturaTeclado = useAlturaTeclado();
 
   return (
     <Modal
@@ -40,7 +59,11 @@ export function Sheet({ visible, onClose, children, maxHeightPct = 0.9, flush }:
       statusBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={styles.root}>
+      {/* O recuo do teclado vai na RAIZ: ela ocupa a tela toda e alinha a folha embaixo,
+          então empurrá-la para cima levanta a folha inteira. Como a altura máxima da folha é
+          uma porcentagem da caixa de conteúdo da raiz, ela encolhe junto — o que sobra da
+          tela com o teclado aberto continua sendo respeitado. */}
+      <View style={[styles.root, { paddingBottom: alturaTeclado }]}>
         <AnimatedPressable
           entering={FadeIn.duration(motion.fundo)}
           exiting={FadeOut.duration(motion.saida)}
@@ -52,7 +75,9 @@ export function Sheet({ visible, onClose, children, maxHeightPct = 0.9, flush }:
           style={[
             styles.sheet,
             {
-              paddingBottom: insets.bottom + 18,
+              // Com o teclado aberto, a área segura de baixo fica ESCONDIDA atrás dele:
+              // somá-la ali abriria um vão morto entre a folha e o teclado.
+              paddingBottom: (alturaTeclado > 0 ? 0 : insets.bottom) + 18,
               maxHeight: `${Math.round(maxHeightPct * 100)}%`,
               paddingHorizontal: flush ? 0 : 22,
             },
@@ -61,7 +86,22 @@ export function Sheet({ visible, onClose, children, maxHeightPct = 0.9, flush }:
           <View style={styles.handleWrap}>
             <View style={styles.handle} />
           </View>
-          {children}
+          {scroll ? (
+            // `flexShrink: 1` é o que faz a rolagem existir: o padrão do Yoga é 0, e sem ele
+            // o ScrollView insiste na altura do conteúdo e estoura o teto da folha em vez de
+            // rolar. `keyboardShouldPersistTaps` evita que o primeiro toque no botão de
+            // salvar seja gasto só fechando o teclado.
+            <ScrollView
+              style={styles.rolagem}
+              contentContainerStyle={styles.rolagemConteudo}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {children}
+            </ScrollView>
+          ) : (
+            children
+          )}
         </Animated.View>
       </View>
     </Modal>
@@ -76,6 +116,9 @@ const criarEstilos = (colors: Cores) =>
       backgroundColor: colors.backdrop,
     },
     sheet: {
+      // Rede de seguranca do recuo do teclado: se o teto de altura ainda nao couber no que
+      // sobrou da tela, a folha encolhe em vez de subir para fora dela por cima.
+      flexShrink: 1,
       backgroundColor: colors.surface,
       borderTopLeftRadius: 28,
       borderTopRightRadius: 28,
@@ -86,6 +129,8 @@ const criarEstilos = (colors: Cores) =>
       shadowRadius: 44,
       elevation: 24,
     },
+    rolagem: { flexShrink: 1 },
+    rolagemConteudo: { paddingBottom: 4 },
     handleWrap: { alignItems: "center", paddingVertical: 4, paddingBottom: 12 },
     handle: { width: 42, height: 5, borderRadius: 999, backgroundColor: colors.handle },
   });

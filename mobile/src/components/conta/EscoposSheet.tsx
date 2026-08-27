@@ -40,7 +40,7 @@ export function EscoposSheet({ user, salvando, onClose, onSalvar }: Props) {
   const opcoes = data?.escopos ?? [];
 
   return (
-    <Sheet visible={!!user} onClose={onClose}>
+    <Sheet visible={!!user} onClose={onClose} scroll>
       {user ? (
         <View>
           <Text style={styles.titulo}>Áreas de acesso</Text>

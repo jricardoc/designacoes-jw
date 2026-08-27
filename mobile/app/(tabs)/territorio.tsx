@@ -130,6 +130,7 @@ export default function TerritorioScreen() {
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
           }
           keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
           ListHeaderComponent={
             <View style={styles.topo}>
               <TextField

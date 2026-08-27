@@ -155,7 +155,7 @@ export default function ConfigScreen() {
         isLoading ? (
           <Loading />
         ) : (
-          <ScrollView contentContainerStyle={styles.scroll}>
+          <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
             <View style={styles.searchWrap}>
               <Ionicons name="search" size={17} color={colors.textMuted} style={styles.searchIcon} />
               <TextInput
@@ -241,7 +241,7 @@ export default function ConfigScreen() {
           </ScrollView>
         )
       ) : (
-        <ScrollView contentContainerStyle={styles.scroll}>
+        <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
           {/* Congregação */}
           <View style={styles.card}>
             <View style={styles.cardHead}>

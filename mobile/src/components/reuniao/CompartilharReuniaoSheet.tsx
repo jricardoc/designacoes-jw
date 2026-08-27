@@ -45,7 +45,7 @@ export function CompartilharReuniaoSheet({
   };
 
   return (
-    <Sheet visible={!!semana} onClose={onClose}>
+    <Sheet visible={!!semana} onClose={onClose} scroll>
       {semana ? (
         <View style={styles.corpo}>
           <Text style={styles.titulo}>Compartilhar</Text>

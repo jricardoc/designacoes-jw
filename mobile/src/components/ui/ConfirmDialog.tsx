@@ -10,6 +10,7 @@ import {
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { Button } from "./Button";
+import { useAlturaTeclado } from "./useAlturaTeclado";
 
 export interface ConfirmConfig {
   title: string;
@@ -43,6 +44,7 @@ export function ConfirmDialog({ config, onClose }: ConfirmDialogProps) {
   const { colors, styles } = useTema(criarEstilos);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const alturaTeclado = useAlturaTeclado();
 
   useEffect(() => {
     if (config) {
@@ -66,7 +68,10 @@ export function ConfirmDialog({ config, onClose }: ConfirmDialogProps) {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      {/* O cartão é centralizado na tela inteira; com o teclado aberto ele continuava no
+          meio, e o campo de texto (e os botões abaixo dele) ficavam embaixo do teclado.
+          Recuando o fundo, ele recentraliza no espaço que sobrou. */}
+      <View style={[styles.backdrop, { paddingBottom: 24 + alturaTeclado }]}>
         <View style={styles.card}>
           <View style={[styles.iconCircle, { backgroundColor: accent + "22" }]}>
             <Ionicons name={TYPE_ICON[type]} size={28} color={accent} />

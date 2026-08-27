@@ -145,7 +145,7 @@ export default function NotificacoesConfigScreen() {
         showBack
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
         {/* Chave geral — é o registro do aparelho, e sem ele nada mais aqui importa. */}
         <View style={styles.card}>
           <View style={styles.linhaSwitch}>
