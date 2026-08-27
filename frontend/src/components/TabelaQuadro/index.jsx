@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Trash2 } from "lucide-react";
 import { useAuth } from '../../context/AuthContext';
 import ConfirmModal from '../ConfirmModal';
@@ -61,6 +61,9 @@ export default function TabelaQuadro({
 }) {
   const { authFetch } = useAuth();
   const [editingCell, setEditingCell] = useState(null);
+  // So um select fica aberto por vez (editingCell casa com uma unica celula), entao um ref
+  // basta para saber se o clique caiu dentro dele.
+  const selectAbertoRef = useRef(null);
   const [irmaos, setIrmaos] = useState([]);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -230,6 +233,39 @@ export default function TabelaQuadro({
     setConfirmModal({ isOpen: false, irmaoNome: "", pendingChange: null });
   };
 
+  // Fechar a edicao sem escolher ninguem: clique fora ou Esc.
+  //
+  // O select nao tem onBlur de proposito (ver handleSelectChange): com onBlur, abrir o modal
+  // de "designacao seguida" tirava o foco do select e fechava a celula no meio da confirmacao.
+  // Sem ele, porem, a unica saida da edicao era escolher uma opcao — clicar fora ou apertar Esc
+  // deixava a celula presa em modo de edicao. Os dois listeners abaixo dao essa saida sem
+  // reintroduzir o conflito, porque nao dependem do foco.
+  //
+  // Nao valem enquanto o modal de confirmacao esta aberto: clicar nele fecharia a celula.
+  useEffect(() => {
+    if (!editingCell || confirmModal.isOpen) return undefined;
+
+    const fecharEdicao = () => setEditingCell(null);
+
+    const aoClicarFora = (e) => {
+      // As opcoes do select nativo abrem numa janela do sistema e nao geram mousedown na
+      // pagina, entao escolher um irmao no dropdown nao cai aqui — quem fecha nesse caso e o
+      // onChange.
+      if (!selectAbertoRef.current?.contains(e.target)) fecharEdicao();
+    };
+
+    const aoTeclar = (e) => {
+      if (e.key === "Escape") fecharEdicao();
+    };
+
+    document.addEventListener("mousedown", aoClicarFora);
+    document.addEventListener("keydown", aoTeclar);
+    return () => {
+      document.removeEventListener("mousedown", aoClicarFora);
+      document.removeEventListener("keydown", aoTeclar);
+    };
+  }, [editingCell, confirmModal.isOpen]);
+
   // Estilo do nome exibido
   const getNomeStyle = (nomeIrmao, data, funcaoAtual, campoAtual) => {
     if (!nomeIrmao || nomeIrmao === "-") return {};
@@ -358,6 +394,7 @@ export default function TabelaQuadro({
                         editingCell?.funcao === funcao.funcao &&
                         editingCell?.campo === "irmao1" ? (
                           <select
+                            ref={selectAbertoRef}
                             autoFocus
                             defaultValue={funcao.irmao1}
                             onChange={(e) =>
@@ -452,6 +489,7 @@ export default function TabelaQuadro({
                         editingCell?.funcao === funcao.funcao &&
                         editingCell?.campo === "irmao2" ? (
                           <select
+                            ref={selectAbertoRef}
                             autoFocus
                             defaultValue={funcao.irmao2}
                             onChange={(e) =>
