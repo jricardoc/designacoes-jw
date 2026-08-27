@@ -6,6 +6,7 @@ import { useConfig } from "@/api/hooks/useMisc";
 import { useMinhasDesignacoes } from "@/api/hooks/useMinhasDesignacoes";
 import type { Compromisso, Config, TipoCompromisso } from "@/api/types";
 import { GradientHeader, Loading } from "@/components/ui";
+import { CompromissoSheet } from "@/components/minhas/CompromissoSheet";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
 import { MESES, radius, shadow, type Cores } from "@/theme";
@@ -239,6 +240,10 @@ export default function InicioScreen() {
   };
   const { usuario } = useAuth();
   const [filtro, setFiltro] = useState<"proximas" | "todas">("proximas");
+  // O compromisso aberto na folha de detalhes. Guarda o objeto, não o id: a lista se
+  // reordena a cada tique do relógio e um compromisso que "passa" sai dela — por id, a
+  // folha fecharia sozinha no meio da leitura.
+  const [detalhe, setDetalhe] = useState<Compromisso | null>(null);
   // Uma chamada só: "todas" traz o histórico inteiro e as próximas saem daqui por
   // filtro, então alternar a lista não custa outra ida à rede.
   const { data, isLoading, refetch, isRefetching } = useMinhasDesignacoes("todas");
@@ -356,7 +361,16 @@ export default function InicioScreen() {
                     const tipo = TIPOS[c.tipo] ?? TIPOS.designacao;
                     const rascunho = c.origem?.status === "rascunho";
                     return (
-                      <View style={[styles.proximo, { borderLeftColor: tipo.color }]}>
+                      <Pressable
+                        onPress={() => setDetalhe(c)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Ver detalhes de ${c.titulo}`}
+                        style={({ pressed }) => [
+                          styles.proximo,
+                          { borderLeftColor: tipo.color },
+                          pressed && styles.pressionado,
+                        ]}
+                      >
                         <View style={styles.proximoTopo}>
                           <View style={[styles.iconeBox, { backgroundColor: tipo.bg }]}>
                             <Ionicons name={tipo.icon} size={15} color={tipo.color} />
@@ -392,7 +406,7 @@ export default function InicioScreen() {
                             Data aproximada — confira na programação
                           </Text>
                         ) : null}
-                      </View>
+                      </Pressable>
                     );
                   })()}
                 </Animated.View>
@@ -516,40 +530,50 @@ export default function InicioScreen() {
                         <Animated.View
                           key={c.id}
                           entering={FadeInDown.delay(Math.min((gi * 4 + i) * 25, 300)).duration(240)}
-                          style={[styles.card, { borderLeftColor: tipo.color }]}
                         >
-                          <View style={styles.dataBox}>
-                            <Text style={styles.dataDia}>{c.data ? c.data.split("/")[0] : "—"}</Text>
-                            <Text style={styles.dataSemana}>{(c.diaSemana || "").slice(0, 3)}</Text>
-                          </View>
+                          <Pressable
+                            onPress={() => setDetalhe(c)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Ver detalhes de ${c.titulo}`}
+                            style={({ pressed }) => [
+                              styles.card,
+                              { borderLeftColor: tipo.color },
+                              pressed && styles.pressionado,
+                            ]}
+                          >
+                            <View style={styles.dataBox}>
+                              <Text style={styles.dataDia}>{c.data ? c.data.split("/")[0] : "—"}</Text>
+                              <Text style={styles.dataSemana}>{(c.diaSemana || "").slice(0, 3)}</Text>
+                            </View>
 
-                          <View style={[styles.iconeBox, { backgroundColor: tipo.bg }]}>
-                            <Ionicons name={tipo.icon} size={15} color={tipo.color} />
-                          </View>
+                            <View style={[styles.iconeBox, { backgroundColor: tipo.bg }]}>
+                              <Ionicons name={tipo.icon} size={15} color={tipo.color} />
+                            </View>
 
-                          <View style={styles.flex}>
-                            <View style={styles.tituloLinha}>
-                              <Text style={styles.titulo} numberOfLines={2}>{c.titulo}</Text>
-                              {c.papel ? (
-                                <View style={[styles.tag, { backgroundColor: tipo.bg }]}>
-                                  <Text style={[styles.tagTexto, { color: tipo.color }]}>{c.papel}</Text>
-                                </View>
-                              ) : null}
-                              {rascunho ? (
-                                <View style={[styles.tag, { backgroundColor: statusConfig.rascunho.bg }]}>
-                                  <Text style={[styles.tagTexto, { color: statusConfig.rascunho.color }]}>Rascunho</Text>
-                                </View>
+                            <View style={styles.flex}>
+                              <View style={styles.tituloLinha}>
+                                <Text style={styles.titulo} numberOfLines={2}>{c.titulo}</Text>
+                                {c.papel ? (
+                                  <View style={[styles.tag, { backgroundColor: tipo.bg }]}>
+                                    <Text style={[styles.tagTexto, { color: tipo.color }]}>{c.papel}</Text>
+                                  </View>
+                                ) : null}
+                                {rascunho ? (
+                                  <View style={[styles.tag, { backgroundColor: statusConfig.rascunho.bg }]}>
+                                    <Text style={[styles.tagTexto, { color: statusConfig.rascunho.color }]}>Rascunho</Text>
+                                  </View>
+                                ) : null}
+                              </View>
+                              <Text style={styles.detalhe} numberOfLines={2}>
+                                {[tipo.label, c.detalhe, c.local, c.horario].filter(Boolean).join(" · ")}
+                              </Text>
+                              {c.dataAproximada ? (
+                                <Text style={styles.aproximada}>
+                                  Data aproximada — confira na programação
+                                </Text>
                               ) : null}
                             </View>
-                            <Text style={styles.detalhe} numberOfLines={2}>
-                              {[tipo.label, c.detalhe, c.local, c.horario].filter(Boolean).join(" · ")}
-                            </Text>
-                            {c.dataAproximada ? (
-                              <Text style={styles.aproximada}>
-                                Data aproximada — confira na programação
-                              </Text>
-                            ) : null}
-                          </View>
+                          </Pressable>
                         </Animated.View>
                       );
                     })}
@@ -560,6 +584,14 @@ export default function InicioScreen() {
           )}
         </ScrollView>
       )}
+
+      <CompromissoSheet
+        compromisso={detalhe}
+        onClose={() => setDetalhe(null)}
+        visual={TIPOS[detalhe?.tipo ?? "designacao"] ?? TIPOS.designacao}
+        quando={detalhe ? rotuloQuando(detalhe, agora, config) : ""}
+        rascunho={detalhe?.origem?.status === "rascunho"}
+      />
     </View>
   );
 }
@@ -684,6 +716,9 @@ const criarEstilos = (colors: Cores) =>
       color: colors.textMuted,
       marginBottom: 8,
     },
+
+    /** Retorno do toque, igual nos dois cartões que abrem os detalhes. */
+    pressionado: { opacity: 0.62 },
 
     /**
      * Sem contorno em volta: um traço claro fechando cada item virava uma grade
