@@ -6,53 +6,53 @@
  * Nao precisa de banco: o Prisma e trocado por um duble em memoria, e o mes e montado pelo
  * MESMO gerarTemplate do QuadroController, entao o que roda aqui e o algoritmo de producao.
  *
- * Por que isto existe: as tres promessas do gerador ("leva em conta os meses anteriores",
- * "minimo de repeticoes", "tempo de descanso igual") nao geram erro nenhum quando quebram.
- * O quadro sai preenchido, bonito, e so quem conhece a congregacao percebe que um irmao
- * serviu tres vezes e outro nenhuma. Aqui elas viram numero: tres meses seguidos sao gerados
- * em sequencia, como na vida real, e as contagens tem que fechar.
+ * Por que isto existe: as promessas do gerador ("ninguem fica de fora", "descanso igual",
+ * "leva em conta os meses anteriores") nao geram erro nenhum quando quebram. O quadro sai
+ * preenchido, bonito, e so quem conhece a congregacao percebe que um irmao serviu cinco
+ * vezes e sete nao serviram nenhuma — que foi exatamente o que aconteceu na geracao real
+ * que originou este arquivo. Aqui as promessas viram numero.
+ *
+ * O cadastro de teste imita a forma do cadastro real: um punhado de irmaos acumulando duas
+ * ou tres funcoes, a maioria com uma so, e um grupo pequeno habilitado em Audio e Video.
  */
 
 // --- duble do Prisma (precisa existir ANTES de carregar o servico) ---------
-const path = require('path');
 const caminhoPrisma = require.resolve('../src/prisma');
 
-const banco = {
-    irmaos: [],
-    quadros: [], // { id, mes, ano, designacoes: [...] }
-};
-
-const bancoDeTeste = {
-    irmao: {
-        findMany: async () => banco.irmaos.filter((i) => i.ativo),
-    },
-    designacao: {
-        findMany: async ({ where }) =>
-            banco.quadros
-                .find((q) => q.id === where.quadroId)
-                .designacoes.slice()
-                // espelha orderBy: [{ data: 'asc' }, { funcao: 'asc' }]
-                .sort((a, b) => a.data.localeCompare(b.data) || a.funcao.localeCompare(b.funcao)),
-        update: async ({ where, data }) => {
-            for (const q of banco.quadros) {
-                const d = q.designacoes.find((x) => x.id === where.id);
-                if (d) Object.assign(d, data);
-            }
-        },
-    },
-    quadro: {
-        findMany: async ({ where }) =>
-            banco.quadros.filter((q) => q.ano < where.OR[1].ano || (q.ano === where.OR[1].ano && q.mes < where.OR[1].mes.lt)),
-    },
-};
+const banco = { irmaos: [], quadros: [] };
 
 require.cache[caminhoPrisma] = {
     id: caminhoPrisma,
     filename: caminhoPrisma,
     loaded: true,
-    exports: bancoDeTeste,
     paths: [],
     children: [],
+    exports: {
+        irmao: {
+            findMany: async () => banco.irmaos.filter((i) => i.ativo),
+        },
+        designacao: {
+            findMany: async ({ where }) =>
+                banco.quadros
+                    .find((q) => q.id === where.quadroId)
+                    .designacoes.slice()
+                    // espelha orderBy: [{ data: 'asc' }, { funcao: 'asc' }]
+                    .sort((a, b) => a.data.localeCompare(b.data) || a.funcao.localeCompare(b.funcao)),
+            update: async ({ where, data }) => {
+                for (const q of banco.quadros) {
+                    const d = q.designacoes.find((x) => x.id === where.id);
+                    if (d) Object.assign(d, data);
+                }
+            },
+        },
+        quadro: {
+            findMany: async ({ where }) =>
+                banco.quadros
+                    .filter((q) => q.ano < where.OR[1].ano
+                        || (q.ano === where.OR[1].ano && q.mes < where.OR[1].mes.lt))
+                    .sort((a, b) => a.ano - b.ano || a.mes - b.mes),
+        },
+    },
 };
 
 const AutoDesignacaoService = require('../src/services/AutoDesignacaoService');
@@ -60,29 +60,60 @@ const { gerarTemplate } = require('../src/controllers/QuadroController');
 
 let falhas = 0;
 const chk = (ok, m) => { console.log(`${ok ? '  OK  ' : ' FALHA'} ${m}`); if (!ok) falhas++; };
+const info = (m) => console.log(`  ..    ${m}`);
 const sec = (t) => console.log(`\n=== ${t} ===`);
-
-// --- congregacao de teste --------------------------------------------------
-// Nomes curtos de proposito: o que interessa aqui e a CONTAGEM, e nome curto deixa a saida
-// legivel quando uma verificacao falha.
-const irmao = (nome, funcoes, nivelAudioVideo = 'experiente', indisponibilidades = []) =>
-    ({ id: nome, nome, funcoes, nivelAudioVideo, ativo: true, indisponibilidades });
 
 const MIC = 'microfone';
 const IND = 'indicador';
 const AV = 'audioVideo';
 const EST = 'estacionamento';
 
+// Cadastro com a forma do real: 5 irmaos de A e V, 10 acumulando funcoes, 17 com uma so.
+const CADASTRO = [
+    ['AV-Mat', [AV, MIC, IND], 'experiente'],
+    ['AV-Eve', [AV, MIC, IND], 'experiente'],
+    ['AV-Cri', [AV, MIC], 'treinando'],
+    ['AV-Eri', [AV, MIC], 'treinando'],
+    ['AV-Joa', [AV, IND], 'treinando'],
+
+    ['Tri-Hen', [MIC, IND, EST], 'experiente'],
+    ['Tri-Man', [MIC, IND, EST], 'experiente'],
+    ['Duo-Ric', [MIC, IND], 'experiente'],
+    ['Duo-Kai', [MIC, IND], 'experiente'],
+    ['Duo-Cla', [IND, EST], 'experiente'],
+    ['Duo-Jes', [IND, EST], 'experiente'],
+    ['Duo-Cos', [MIC, EST], 'experiente'],
+    ['Duo-Cas', [MIC, IND], 'experiente'],
+    ['Duo-Rai', [IND, EST], 'experiente'],
+    ['Duo-Mig', [MIC, IND], 'experiente'],
+
+    ['Uni-Dom', [MIC], 'experiente'],
+    ['Uni-Fra', [MIC], 'experiente'],
+    ['Uni-And', [MIC], 'experiente'],
+    ['Uni-Ivo', [MIC], 'experiente'],
+    ['Uni-Alo', [MIC], 'experiente'],
+    ['Uni-Ben', [MIC], 'experiente'],
+    ['Uni-Kau', [MIC], 'experiente'],
+    ['Uni-Leo', [MIC], 'experiente'],
+    ['Uni-Giv', [IND], 'experiente'],
+    ['Uni-Har', [IND], 'experiente'],
+    ['Uni-Jos', [IND], 'experiente'],
+    ['Uni-Edg', [IND], 'experiente'],
+    ['Uni-Laz', [IND], 'experiente'],
+    ['Uni-Nic', [IND], 'experiente'],
+    ['Uni-Car', [EST], 'experiente'],
+    ['Uni-Juc', [EST], 'experiente'],
+    ['Uni-Ped', [EST], 'experiente'],
+];
+
+const ehAV = (nome) => nome.startsWith('AV-');
+const funcoesDe = (nome) => banco.irmaos.find((i) => i.nome === nome).funcoes;
+
 function prepararIrmaos() {
-    banco.irmaos = [
-        irmao('Mic-A', [MIC]), irmao('Mic-B', [MIC]), irmao('Mic-C', [MIC]),
-        irmao('Mic-D', [MIC]), irmao('Mic-E', [MIC]), irmao('Mic-F', [MIC]),
-        irmao('Ind-A', [IND]), irmao('Ind-B', [IND]), irmao('Ind-C', [IND]),
-        irmao('Ind-D', [IND]), irmao('Ind-E', [IND]),
-        irmao('AV-A', [AV]), irmao('AV-B', [AV]),
-        irmao('AV-C', [AV], 'treinando'), irmao('AV-D', [AV], 'treinando'),
-        irmao('Est-A', [EST]), irmao('Est-B', [EST]), irmao('Est-C', [EST]),
-    ];
+    banco.irmaos = CADASTRO.map(([nome, funcoes, nivelAudioVideo]) => ({
+        id: nome, nome, funcoes, nivelAudioVideo, ativo: true, indisponibilidades: [],
+    }));
+    banco.quadros = [];
 }
 
 let proximoId = 1;
@@ -98,13 +129,8 @@ async function gerarMes(mes, ano) {
     return quadro;
 }
 
-/** Todas as escalacoes de uma funcao, em ordem cronologica, achatadas em uma lista de nomes. */
-const sequencia = (quadros, funcaoLabel) =>
-    quadros
-        .flatMap((q) => q.designacoes.filter((d) => d.funcao === funcaoLabel)
-            .sort((a, b) => a.data.localeCompare(b.data)))
-        .flatMap((d) => [d.irmao1, d.irmao2])
-        .filter(Boolean);
+const escalados = (quadros) =>
+    quadros.flatMap((q) => q.designacoes).flatMap((d) => [d.irmao1, d.irmao2]).filter(Boolean);
 
 const contar = (nomes) => {
     const c = new Map();
@@ -112,110 +138,110 @@ const contar = (nomes) => {
     return c;
 };
 
-const resumo = (quadros, funcaoLabel, elegiveis) => {
-    const c = contar(sequencia(quadros, funcaoLabel));
-    const contagens = elegiveis.map((n) => c.get(n) || 0);
-    return {
-        contagens,
-        min: Math.min(...contagens),
-        max: Math.max(...contagens),
-        detalhe: elegiveis.map((n, i) => `${n}:${contagens[i]}`).join(' '),
-    };
-};
-
-/**
- * Maior "corrida" em que alguem repete antes de a fila inteira passar.
- * Numa fila de tamanho N, o rodizio puro so pode repetir um nome depois de N escalacoes.
- * Devolve o menor intervalo observado entre duas escalacoes do mesmo irmao.
- */
-function menorIntervaloDeRepeticao(nomes) {
-    const ultimaPos = new Map();
-    let menor = Infinity;
-    nomes.forEach((n, i) => {
-        if (ultimaPos.has(n)) menor = Math.min(menor, i - ultimaPos.get(n));
-        ultimaPos.set(n, i);
-    });
-    return menor;
-}
+/** Escalacoes de cada irmao, em ordem cronologica, achatadas numa lista de nomes. */
+const sequencia = (quadros, filtroFuncao = () => true) =>
+    quadros.flatMap((q) => q.designacoes
+        .filter((d) => filtroFuncao(d.funcao))
+        .sort((a, b) => a.data.localeCompare(b.data)))
+        .flatMap((d) => [d.irmao1, d.irmao2])
+        .filter(Boolean);
 
 (async () => {
-    sec('tres meses gerados em sequencia (set, out e nov de 2026)');
+    sec('tres meses gerados em sequencia (out, nov e dez de 2026)');
     prepararIrmaos();
-    const set = await gerarMes(9, 2026);
-    const out = await gerarMes(10, 2026);
-    const nov = await gerarMes(11, 2026);
-    const meses = [set, out, nov];
-    const preenchidas = meses.flatMap((q) => q.designacoes).filter((d) => d.irmao1 || d.irmao2);
-    chk(preenchidas.length === meses.flatMap((q) => q.designacoes).length,
-        `todas as ${preenchidas.length} vagas dos tres meses foram preenchidas`);
+    const meses = [await gerarMes(10, 2026), await gerarMes(11, 2026), await gerarMes(12, 2026)];
+    const vagas = meses.flatMap((q) => q.designacoes);
+    const preenchidas = vagas.filter((d) => d.irmao1 && d.irmao2);
+    chk(preenchidas.length === vagas.length,
+        `as ${vagas.length} vagas dos tres meses foram preenchidas, sem celula vazia`);
 
-    sec('o mes novo continua a fila do mes anterior (nao recomeca do zero)');
-    // A prova: quem FECHA a fila de setembro nao pode abrir outubro. Se o gerador ignorasse o
-    // historico, a fila de outubro voltaria a ordem alfabetica e "Mic-A" abriria todo mes.
-    const micSet = sequencia([set], 'Microfone Volante');
-    const micOut = sequencia([out], 'Microfone Volante');
-    chk(micOut[0] !== micSet[0], `outubro nao reabre com quem abriu setembro (set: ${micSet[0]}, out: ${micOut[0]})`);
-    chk(micOut[0] === micSet[micSet.length - 6] || !micSet.includes(micOut[0]) || true,
-        `outubro abre com ${micOut[0]}, o proximo da fila deixada por setembro`);
-    const intervaloNaVirada = micSet.slice(-5).includes(micOut[0]);
-    chk(!intervaloNaVirada,
-        'quem serviu nas ultimas escalacoes de setembro nao abre outubro (o descanso atravessa o mes)');
+    const cargas = contar(escalados(meses));
+    const carga = (n) => cargas.get(n) || 0;
 
-    // Prova pelo avesso: gerar o MESMO outubro sem historico nenhum da outro resultado.
-    const quadrosReais = banco.quadros;
-    banco.quadros = [];
+    sec('ninguem fica de fora');
+    const semNenhuma = banco.irmaos.filter((i) => carga(i.nome) === 0);
+    chk(semNenhuma.length === 0,
+        `todo irmao habilitado foi designado ao menos uma vez${semNenhuma.length ? ': faltaram ' + semNenhuma.map((i) => i.nome).join(', ') : ''}`);
+
+    sec('descanso igual: acumular funcoes NAO faz o irmao servir mais');
+    // Era o bug relatado: com uma fila por funcao, quem tinha tres funcoes entrava em tres
+    // rodizios. Numa geracao real deu 5x para quem acumulava e 0x para sete irmaos de uma
+    // funcao so. Audio e Video fica de fora da conta — la a repeticao e combinada.
+    const semAV = banco.irmaos.filter((i) => !ehAV(i.nome));
+    const porQtdFuncoes = (n) => semAV.filter((i) => i.funcoes.length === n).map((i) => carga(i.nome));
+    const media = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+    const uma = porQtdFuncoes(1);
+    const duas = porQtdFuncoes(2);
+    const tres = porQtdFuncoes(3);
+    info(`media em 3 meses — 1 funcao: ${media(uma).toFixed(1)}x | 2 funcoes: ${media(duas).toFixed(1)}x | 3 funcoes: ${media(tres).toFixed(1)}x`);
+    chk(Math.abs(media(tres) - media(uma)) <= 1,
+        'quem tem 3 funcoes serve praticamente o mesmo que quem tem 1');
+    chk(Math.abs(media(duas) - media(uma)) <= 1,
+        'quem tem 2 funcoes serve praticamente o mesmo que quem tem 1');
+
+    const cargasSemAV = semAV.map((i) => carga(i.nome));
+    const spread = Math.max(...cargasSemAV) - Math.min(...cargasSemAV);
+    info(`carga fora do A e V: de ${Math.min(...cargasSemAV)}x a ${Math.max(...cargasSemAV)}x`);
+    chk(spread <= 2,
+        `a diferenca entre o mais e o menos usado (fora do A e V) e de ${spread} designacoes em 3 meses`);
+
+    sec('Audio e Video: a excecao combinada');
+    const avSlots = sequencia(meses, (f) => f === 'Audio e Video');
+    chk(avSlots.every((n) => funcoesDe(n).includes(AV)),
+        'toda vaga de A e V foi preenchida por irmao habilitado em A e V');
+    const cargaAV = banco.irmaos.filter((i) => ehAV(i.nome)).map((i) => carga(i.nome));
+    info(`os 5 irmaos de A e V serviram ${cargaAV.join('x, ')}x no total (${avSlots.length} vagas de A e V em 3 meses)`);
+    chk(Math.min(...cargaAV) > Math.max(...cargasSemAV) - 2,
+        'quem e de A e V serve mais que a media — a repeticao ali e esperada, nao um desvio');
+
+    // Prioridade: o irmao de A e V nao pode ser consumido por outra funcao no MESMO dia em
+    // que uma vaga de A e V ficaria sem ele. Como A e V e resolvida primeiro, isso nao ocorre.
+    let roubados = 0;
+    for (const quadro of meses) {
+        const porData = new Map();
+        quadro.designacoes.forEach((d) => {
+            if (!porData.has(d.data)) porData.set(d.data, []);
+            porData.get(d.data).push(d);
+        });
+        for (const [, linhas] of porData) {
+            const naAV = new Set(linhas.filter((d) => d.funcao === 'Audio e Video')
+                .flatMap((d) => [d.irmao1, d.irmao2]).filter(Boolean));
+            const emOutras = linhas.filter((d) => d.funcao !== 'Audio e Video')
+                .flatMap((d) => [d.irmao1, d.irmao2]).filter(Boolean);
+            if (linhas.some((d) => d.funcao === 'Audio e Video' && (!d.irmao1 || !d.irmao2))
+                && emOutras.some((n) => ehAV(n) && !naAV.has(n))) roubados += 1;
+        }
+    }
+    chk(roubados === 0, 'nenhum dia teve vaga de A e V vazia com irmao de A e V servindo em outra funcao');
+
+    sec('o mes novo continua a fila do mes anterior');
+    const seqOut = sequencia([meses[0]]);
+    const seqNov = sequencia([meses[1]]);
+    chk(!seqOut.slice(-6).includes(seqNov[0]),
+        `quem serviu nas ultimas vagas de outubro nao abre novembro (fecha com ${seqOut[seqOut.length - 1]}, abre com ${seqNov[0]})`);
+
+    // Prova pelo avesso: o MESMO novembro, gerado sem historico, sai diferente.
+    const guardados = banco.quadros;
     prepararIrmaos();
-    const outSozinho = await gerarMes(10, 2026);
-    const micOutSozinho = sequencia([outSozinho], 'Microfone Volante');
-    banco.quadros = quadrosReais;
-    chk(micOutSozinho.join() !== micOut.join(),
-        'o mesmo outubro sai diferente quando nao ha meses anteriores — o historico muda o resultado');
-    chk(micOutSozinho[0] === 'Mic-A',
-        'sem historico a fila comeca em ordem alfabetica (e o unico caso em que isso acontece)');
-
-    sec('minimo de repeticoes: carga igual dentro de cada funcao (3 meses)');
-    const nomesDe = (f) => banco.irmaos.filter((i) => i.funcoes.includes(f)).map((i) => i.nome);
-    const alvos = [
-        ['Microfone Volante', MIC],
-        ['Indicador', IND],
-        ['Estacionamento', EST],
-    ];
-    for (const [label, funcaoId] of alvos) {
-        const r = resumo(meses, label, nomesDe(funcaoId));
-        chk(r.max - r.min <= 1, `${label}: diferenca maxima de ${r.max - r.min} escalacao entre o mais e o menos usado  [${r.detalhe}]`);
-    }
-    // Audio e Video fica de fora da exigencia de carga igual de proposito: sao poucos irmaos e
-    // a regra experiente/treinando prende cada vaga a um nivel.
-    const rAV = resumo(meses, 'Audio e Video', nomesDe(AV));
-    console.log(`  ..    Audio e Video (sem exigencia de carga igual): [${rAV.detalhe}]`);
-
-    sec('tempo de descanso: ninguem repete antes de a fila inteira passar');
-    for (const [label, funcaoId] of alvos) {
-        const fila = nomesDe(funcaoId).length;
-        const intervalo = menorIntervaloDeRepeticao(sequencia(meses, label));
-        chk(intervalo >= fila,
-            `${label}: menor intervalo entre duas escalacoes do mesmo irmao = ${intervalo} (fila tem ${fila})`);
-    }
+    const novSozinho = await gerarMes(11, 2026);
+    banco.quadros = guardados;
+    chk(sequencia([novSozinho]).join() !== seqNov.join(),
+        'o mesmo novembro sai diferente sem meses anteriores — o historico muda o resultado');
 
     sec('quem esta indisponivel nao perde a vez');
-    banco.quadros = [];
     prepararIrmaos();
-    // Est-A ocupado no primeiro domingo de setembro (06/09).
-    banco.irmaos.find((i) => i.nome === 'Est-A').indisponibilidades = [{ data: '06/09' }];
-    const setComFalta = await gerarMes(9, 2026);
-    const est = sequencia([setComFalta], 'Estacionamento');
-    chk(est[0] !== 'Est-A' && est[1] !== 'Est-A', 'Est-A nao e escalado no dia em que esta ocupado');
-    chk(est[2] === 'Est-A' || est[3] === 'Est-A',
-        `Est-A pega o turno seguinte em vez de ir para o fim da fila (sequencia: ${est.slice(0, 4).join(' ')})`);
+    // 'Uni-Car' so faz estacionamento; ocupado no primeiro domingo de novembro (01/11).
+    banco.irmaos.find((i) => i.nome === 'Uni-Car').indisponibilidades = [{ data: '01/11' }];
+    const novComFalta = await gerarMes(11, 2026);
+    const est = sequencia([novComFalta], (f) => f === 'Estacionamento');
+    chk(!est.slice(0, 2).includes('Uni-Car'), 'nao e escalado no dia em que esta ocupado');
+    chk(est.slice(2).includes('Uni-Car'), `pega um turno seguinte em vez de sumir do mes (${est.slice(0, 6).join(' ')})`);
 
     sec('ninguem ocupa duas vagas no mesmo dia');
-    banco.quadros = [];
     prepararIrmaos();
-    // Um irmao acumulando funcoes e o caso em que isso pode acontecer.
-    banco.irmaos.push(irmao('Poli', [MIC, IND, EST]));
-    const setPoli = await gerarMes(9, 2026);
+    const mesUnico = await gerarMes(11, 2026);
     const porDia = new Map();
-    setPoli.designacoes.forEach((d) => {
+    mesUnico.designacoes.forEach((d) => {
         [d.irmao1, d.irmao2].filter(Boolean).forEach((n) => {
             const chave = `${d.data}__${n}`;
             porDia.set(chave, (porDia.get(chave) || 0) + 1);
@@ -224,17 +250,13 @@ function menorIntervaloDeRepeticao(nomes) {
     chk([...porDia.values()].every((v) => v === 1),
         'nenhum irmao aparece duas vezes no mesmo dia, mesmo acumulando funcoes');
 
-    sec('AVISO: a carga igual vale DENTRO de cada funcao, nao entre funcoes');
-    // Cada funcao tem a propria fila. Quem esta cadastrado em tres funcoes entra em tres
-    // rodizios e serve mais vezes no total que quem esta em uma so — sem ser um erro do
-    // rodizio: dentro de cada funcao ele espera a vez como todo mundo.
-    const totalPoli = setPoli.designacoes
-        .flatMap((d) => [d.irmao1, d.irmao2]).filter((n) => n === 'Poli').length;
-    const totalMicA = setPoli.designacoes
-        .flatMap((d) => [d.irmao1, d.irmao2]).filter((n) => n === 'Mic-A').length;
-    console.log(`  ..    num mes: 'Poli' (3 funcoes) serviu ${totalPoli}x, 'Mic-A' (1 funcao) serviu ${totalMicA}x`);
-    chk(totalPoli >= totalMicA,
-        'comportamento atual documentado: acumular funcoes aumenta o total de designacoes do irmao');
+    sec('a funcao com menos habilitados escolhe primeiro');
+    // Estacionamento so existe no domingo e tem poucos habilitados. Se microfone escolhesse
+    // antes, consumiria os irmaos que tambem fazem estacionamento e a vaga ficaria vazia.
+    const ordem = AutoDesignacaoService.ordenarFuncoes(banco.irmaos);
+    chk(ordem[0] === 'Audio e Video', `A e V e sempre a primeira: ${ordem.join(' -> ')}`);
+    chk(ordem.indexOf('Estacionamento') < ordem.indexOf('Microfone Volante'),
+        'estacionamento (poucos habilitados) escolhe antes de microfone (muitos)');
 
     console.log(`\n${falhas === 0 ? '*** TODAS AS VERIFICACOES PASSARAM ***' : `*** ${falhas} FALHA(S) ***`}`);
     process.exit(falhas === 0 ? 0 : 1);

@@ -4,32 +4,40 @@ const prisma = require('../prisma');
  * Servico de preenchimento automatico do quadro de designacoes mecanicas.
  *
  * REGRA DE OURO (rodizio puro, sem pontuacao):
- * 1. Existe uma FILA de irmaos elegiveis. A ordem inicial vem do historico: quem serviu ha
- *    mais tempo fica na frente, quem nunca serviu fica na frente de todos.
+ * 1. Existe UMA fila com todos os irmaos ativos. A ordem inicial vem do historico: quem
+ *    serviu ha mais tempo fica na frente, quem nunca serviu fica na frente de todos.
  * 2. Os turnos sao percorridos em ordem CRONOLOGICA. Para cada vaga, anda-se na fila do
  *    inicio para o fim e pega-se o PRIMEIRO irmao que possa servir naquele turno.
- * 3. Quem nao pode servir naquele dia NAO perde a vez: continua na mesma posicao e pega o
- *    proximo turno compativel.
+ * 3. Quem nao pode servir naquele turno (nao tem a funcao, esta ocupado, ja serviu no dia)
+ *    NAO perde a vez: continua na mesma posicao e pega o proximo turno compativel.
  * 4. Quem e designado vai para o FIM da fila. Quando todos ja serviram uma vez, a fila esta
  *    exatamente na ordem em que serviram, e o ciclo reinicia sozinho.
  *
- * O rodizio substitui a antiga politica de escolha por pesos (contador de designacoes,
- * "evitar repeticoes" por proximidade de datas, "designar todos"). As RESTRICOES continuam:
- * irmao inativo, funcao do irmao, indisponibilidade na data, nivel de Audio e Video e o fato
- * de ninguem poder ocupar duas vagas no mesmo dia.
+ * A FILA E UNICA, NAO UMA POR FUNCAO. Com uma fila por funcao, quem acumulava tres funcoes
+ * entrava em tres rodizios e servia tres vezes mais que quem tinha uma so: numa geracao real
+ * de 56 vagas, os irmaos de tres funcoes sairam com 5 designacoes e sete irmaos de uma funcao
+ * so ficaram sem nenhuma. Cada um esperava a vez direitinho DENTRO da sua fila, e mesmo assim
+ * o quadro saia injusto. Com fila unica, ser designado em QUALQUER funcao manda o irmao para
+ * o fim da fila inteira — o descanso passa a ser igual para todos, independente de quantas
+ * funcoes o irmao faz.
+ *
+ * Audio e Video e a excecao combinada: sao poucos habilitados para 16 vagas por mes, entao
+ * ali a repeticao e inevitavel. Duas coisas garantem que ela nao contamine o resto: A e V e
+ * a PRIMEIRA funcao resolvida em cada dia (ver ordenarFuncoes), entao quem e de A e V e pego
+ * para A e V antes que outra funcao o consuma; e, como cada designacao de A e V manda o irmao
+ * para o fim da fila unica, ele raramente volta a frente a tempo de tomar uma vaga de quem so
+ * faz microfone, indicador ou estacionamento.
+ *
+ * As RESTRICOES continuam: irmao inativo, funcao do irmao, indisponibilidade na data, nivel
+ * de Audio e Video e o fato de ninguem poder ocupar duas vagas no mesmo dia.
  */
 
-// Uma fila POR FUNCAO, nao uma fila unica. Um irmao pode acumular funcoes; com fila unica ele
-// seria sempre pego primeiro e as funcoes com poucos habilitados nunca fechariam o ciclo.
-// "Todos serem distribuidos antes de repetir" so tem sentido dentro do grupo que faz aquela funcao.
 const FUNCAO_MAP = {
     'Microfone Volante': 'microfone',
     'Indicador': 'indicador',
     'Audio e Video': 'audioVideo',
     'Estacionamento': 'estacionamento'
 };
-
-const FUNCOES = ['microfone', 'indicador', 'audioVideo', 'estacionamento'];
 
 // "31/01" -> 131. So para ordenar as datas de UM quadro, que e sempre de um unico mes.
 const diaMesEmNumero = (dataString) => {
@@ -76,29 +84,33 @@ class AutoDesignacaoService {
             designacoesPorData[d.data].push(d);
         });
 
-        // 3. Historico dos meses anteriores: define a ordem inicial de cada fila
-        const ultimoServico = await this.carregarHistorico(mes, ano);
-        const filas = this.montarFilas(irmaos, ultimoServico);
+        // 3. Historico dos meses anteriores: define a ordem inicial da fila
+        const ultimaPosicao = await this.carregarHistorico(mes, ano);
+        const fila = this.montarFila(irmaos, ultimaPosicao);
+
+        // Dentro de um mesmo dia, as funcoes com menos habilitados escolhem primeiro (A e V
+        // sempre na frente). Resolver microfone antes de estacionamento pode consumir o unico
+        // irmao que faz estacionamento e deixar a vaga vazia — o contrario nunca acontece.
+        const ordemDasFuncoes = this.ordenarFuncoes(irmaos);
 
         // 4. Turnos em ordem cronologica
-        const datas = Object.keys(designacoesPorData).sort((a, b) => {
-            const [diaA, mesA] = a.split('/').map(Number);
-            const [diaB, mesB] = b.split('/').map(Number);
-            return (mesA * 100 + diaA) - (mesB * 100 + diaB);
-        });
+        const datas = Object.keys(designacoesPorData).sort((a, b) =>
+            diaMesEmNumero(a) - diaMesEmNumero(b));
 
         for (const data of datas) {
             // Ninguem ocupa duas vagas no mesmo dia, mesmo que acumule funcoes.
             const jaDesignadosNoDia = new Set();
 
-            for (const designacao of designacoesPorData[data]) {
-                const funcaoId = FUNCAO_MAP[designacao.funcao];
-                const fila = filas[funcaoId];
+            const vagasDoDia = designacoesPorData[data].slice().sort((a, b) =>
+                ordemDasFuncoes.indexOf(a.funcao) - ordemDasFuncoes.indexOf(b.funcao));
 
-                if (!fila || fila.length === 0) continue;
+            for (const designacao of vagasDoDia) {
+                const funcaoId = FUNCAO_MAP[designacao.funcao];
+                if (!funcaoId) continue;
 
                 // Restricao comum a todas as vagas daquele turno
                 const podeServir = (irmao) => {
+                    if (!irmao.funcoes.includes(funcaoId)) return false;
                     if (jaDesignadosNoDia.has(irmao.nome)) return false;
                     if (respeitarIndisponibilidades) {
                         if (irmao.indisponibilidades?.some(ind => ind.data === data)) return false;
@@ -143,6 +155,29 @@ class AutoDesignacaoService {
     }
 
     /**
+     * Ordem em que as funcoes de um mesmo dia sao resolvidas: Audio e Video sempre primeiro
+     * (combinado: quem e de A e V serve em A e V, mesmo tendo outras funcoes), depois as
+     * demais da que tem MENOS irmaos habilitados para a que tem mais.
+     *
+     * A fila e unica, entao a primeira funcao resolvida escolhe entre todos os elegiveis e as
+     * seguintes escolhem entre o que sobrou naquele dia. Quem tem poucos candidatos precisa
+     * escolher antes, ou a vaga fica vazia.
+     *
+     * @returns {string[]} rotulos de funcao ('Audio e Video', ...) na ordem de resolucao
+     */
+    ordenarFuncoes(irmaos) {
+        const habilitados = (funcaoId) => irmaos.filter(i => i.funcoes.includes(funcaoId)).length;
+
+        return Object.keys(FUNCAO_MAP).sort((a, b) => {
+            const idA = FUNCAO_MAP[a];
+            const idB = FUNCAO_MAP[b];
+            const avA = idA === 'audioVideo' ? 0 : 1;
+            const avB = idB === 'audioVideo' ? 0 : 1;
+            return avA - avB || habilitados(idA) - habilitados(idB) || a.localeCompare(b);
+        });
+    }
+
+    /**
      * Anda na fila do inicio para o fim e devolve o primeiro irmao que atende ao filtro.
      * Quem nao serve naquele turno NAO perde a vez: continua onde estava.
      * Quem e escolhido vai para o fim da fila.
@@ -157,9 +192,9 @@ class AutoDesignacaoService {
     }
 
     /**
-     * Posicao da ULTIMA vez que cada irmao serviu em cada funcao, olhando TODOS os quadros
-     * anteriores. Gerar um mes novo nao recomeca do zero: a fila do mes N sai de como terminou
-     * o mes N-1.
+     * Posicao da ULTIMA vaga que cada irmao ocupou, olhando TODOS os quadros anteriores —
+     * somando as quatro funcoes, porque a fila e uma so. Gerar um mes novo nao recomeca do
+     * zero: a fila do mes N sai de como terminou o mes N-1.
      *
      * A posicao e um contador que anda de vaga em vaga, na ordem em que as vagas foram
      * preenchidas (quadro por quadro, data por data, irmao1 antes de irmao2) — nao a DATA em
@@ -172,11 +207,15 @@ class AutoDesignacaoService {
      * acumulavam uma designacao a mais a cada mes. Contando a POSICAO, a fila de janeiro
      * comeca exatamente onde a de dezembro parou.
      *
-     * @returns {Object} { microfone: { nome: posicao }, indicador: {...}, ... }
+     * As vagas de um mesmo dia sao contadas em ordem alfabetica de funcao, e nao na ordem em
+     * que foram geradas: o quadro pode ter sido editado a mao depois, entao a ordem real de
+     * geracao nao sobrevive no banco. So afeta a ordem relativa de quem serviu no ultimo dia
+     * do mes, em funcoes diferentes.
+     *
+     * @returns {Object} { nome: posicao }
      */
     async carregarHistorico(mes, ano) {
-        const ultimoServico = {};
-        FUNCOES.forEach(f => { ultimoServico[f] = {}; });
+        const ultimaPosicao = {};
 
         const quadrosAnteriores = await prisma.quadro.findMany({
             where: {
@@ -194,50 +233,42 @@ class AutoDesignacaoService {
         for (const quadro of quadrosAnteriores) {
             const linhas = quadro.designacoes
                 .filter(d => FUNCAO_MAP[d.funcao])
-                .sort((a, b) => diaMesEmNumero(a.data) - diaMesEmNumero(b.data));
+                .sort((a, b) => diaMesEmNumero(a.data) - diaMesEmNumero(b.data)
+                    || String(a.funcao).localeCompare(String(b.funcao)));
 
             for (const d of linhas) {
-                const funcaoId = FUNCAO_MAP[d.funcao];
                 for (const nome of [d.irmao1, d.irmao2]) {
                     posicao += 1;
-                    if (nome) ultimoServico[funcaoId][nome] = posicao;
+                    if (nome) ultimaPosicao[nome] = posicao;
                 }
             }
         }
 
-        return ultimoServico;
+        return ultimaPosicao;
     }
 
     /**
-     * Fila inicial de cada funcao: quem nunca serviu na frente de todos, depois quem serviu ha
-     * mais tempo (menor posicao no historico).
+     * Fila inicial: quem nunca serviu na frente de todos, depois quem serviu ha mais tempo
+     * (menor posicao no historico).
      *
-     * O empate por nome so decide entre irmaos que NUNCA serviram naquela funcao — duas
-     * posicoes iguais nao existem, porque o contador anda a cada vaga. Serve para a geracao
-     * ser reproduzivel.
+     * Entram TODOS os irmaos ativos, inclusive quem nao faz nenhuma das quatro funcoes — ele
+     * simplesmente nunca passa no filtro de nenhuma vaga e fica parado na fila, sem atrapalhar.
+     *
+     * O empate por nome so decide entre irmaos que NUNCA serviram — duas posicoes iguais nao
+     * existem, porque o contador anda a cada vaga. Serve para a geracao ser reproduzivel.
      */
-    montarFilas(irmaos, ultimoServico) {
-        const filas = {};
+    montarFila(irmaos, ultimaPosicao) {
+        return irmaos.slice().sort((a, b) => {
+            const ultimaA = ultimaPosicao[a.nome];
+            const ultimaB = ultimaPosicao[b.nome];
 
-        FUNCOES.forEach(funcaoId => {
-            const historico = ultimoServico[funcaoId] || {};
-
-            filas[funcaoId] = irmaos
-                .filter(i => i.funcoes.includes(funcaoId))
-                .sort((a, b) => {
-                    const ultimaA = historico[a.nome];
-                    const ultimaB = historico[b.nome];
-
-                    if (ultimaA === undefined && ultimaB !== undefined) return -1;
-                    if (ultimaA !== undefined && ultimaB === undefined) return 1;
-                    if (ultimaA !== undefined && ultimaB !== undefined && ultimaA !== ultimaB) {
-                        return ultimaA - ultimaB;
-                    }
-                    return a.nome.localeCompare(b.nome);
-                });
+            if (ultimaA === undefined && ultimaB !== undefined) return -1;
+            if (ultimaA !== undefined && ultimaB === undefined) return 1;
+            if (ultimaA !== undefined && ultimaB !== undefined && ultimaA !== ultimaB) {
+                return ultimaA - ultimaB;
+            }
+            return a.nome.localeCompare(b.nome);
         });
-
-        return filas;
     }
 }
 

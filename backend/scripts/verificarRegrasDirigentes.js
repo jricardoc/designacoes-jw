@@ -261,23 +261,40 @@ chk(AutoDesignacao.puxarDaFila([], () => true) === null, 'fila vazia devolve nul
 
 sec('designacoes mecanicas: a fila inicial sai do historico');
 const irmaosMec = [
-  { nome: 'Zeca', funcoes: ['indicador'] },          // nunca serviu
-  { nome: 'Bruno', funcoes: ['indicador'] },         // serviu ha mais tempo
+  { nome: 'Zeca', funcoes: ['indicador'] },             // nunca serviu
+  { nome: 'Bruno', funcoes: ['indicador'] },            // serviu ha mais tempo
   { nome: 'Ana', funcoes: ['indicador', 'microfone'] }, // serviu por ultimo
-  { nome: 'Carlos', funcoes: ['microfone'] },
+  { nome: 'Carlos', funcoes: ['microfone'] },           // nunca serviu
 ];
 // O historico guarda a POSICAO da ultima vaga que o irmao ocupou (um contador que anda de
 // vaga em vaga nos quadros anteriores), nao a data — e o que faz a fila de um mes comecar
 // exatamente onde a do mes anterior parou. Ver carregarHistorico.
-const filasMec = AutoDesignacao.montarFilas(irmaosMec, {
-  indicador: { Bruno: 4, Ana: 17 },
-  microfone: {},
-});
-chk(filasMec.indicador.map(i => i.nome).join() === 'Zeca,Bruno,Ana',
-  `quem nunca serviu na frente, depois quem serviu ha mais tempo: ${filasMec.indicador.map(i => i.nome).join(' -> ')}`);
-chk(filasMec.microfone.map(i => i.nome).join() === 'Ana,Carlos',
-  `a fila e POR FUNCAO: em microfone Ana volta para a frente (${filasMec.microfone.map(i => i.nome).join(' -> ')})`);
-chk(!filasMec.indicador.some(i => i.nome === 'Carlos'), 'quem nao tem a funcao nao entra na fila dela');
+const filaHist = AutoDesignacao.montarFila(irmaosMec, { Bruno: 4, Ana: 17 });
+chk(filaHist.map(i => i.nome).join() === 'Carlos,Zeca,Bruno,Ana',
+  `quem nunca serviu na frente (empate por nome), depois quem serviu ha mais tempo: ${filaHist.map(i => i.nome).join(' -> ')}`);
+
+// A fila e UMA SO, para todas as funcoes. Ana serviu por ultimo, entao fica atras tambem em
+// microfone — servir numa funcao adia a vez do irmao em TODAS. Com uma fila por funcao, ela
+// voltava para a frente em microfone e acabava servindo o dobro de quem tem uma funcao so.
+chk(AutoDesignacao.puxarDaFila(filaHist, i => i.funcoes.includes('microfone')).nome === 'Carlos',
+  'em microfone sai Carlos, nao Ana: o descanso de Ana conta o que ela fez em indicador');
+chk(AutoDesignacao.puxarDaFila(filaHist, i => i.funcoes.includes('indicador')).nome === 'Zeca',
+  'em indicador sai Zeca, o proximo da mesma fila');
+chk(filaHist.map(i => i.nome).join() === 'Bruno,Ana,Carlos,Zeca',
+  'os designados vao para o fim da fila unica, na ordem em que serviram');
+
+sec('designacoes mecanicas: ordem em que as funcoes de um dia escolhem');
+const ordemFuncoes = AutoDesignacao.ordenarFuncoes([
+  { nome: 'a', funcoes: ['microfone', 'indicador'] },
+  { nome: 'b', funcoes: ['microfone', 'indicador'] },
+  { nome: 'c', funcoes: ['microfone', 'estacionamento'] },
+  { nome: 'd', funcoes: ['microfone', 'audioVideo'] },
+]);
+chk(ordemFuncoes[0] === 'Audio e Video',
+  `A e V escolhe primeiro, mesmo nao sendo a funcao com menos habilitados: ${ordemFuncoes.join(' -> ')}`);
+chk(ordemFuncoes.indexOf('Estacionamento') < ordemFuncoes.indexOf('Indicador')
+  && ordemFuncoes.indexOf('Indicador') < ordemFuncoes.indexOf('Microfone Volante'),
+  'depois, da funcao com menos habilitados para a com mais (senao a vaga escassa fica vazia)');
 
 console.log(`\n${falhas === 0 ? '*** TODOS OS CASOS DA REGRA DE OURO PASSARAM ***' : `*** ${falhas} FALHA(S) ***`}`);
 process.exit(falhas === 0 ? 0 : 1);
