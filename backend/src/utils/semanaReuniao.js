@@ -17,6 +17,10 @@ const MESES_PT = {
     julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12
 };
 
+// Ultimo recurso quando nem o rotulo nem a data da reuniao vieram legiveis. `faixaData` e
+// NOT NULL no banco: gravar algo visivel e melhor que derrubar a importacao inteira.
+const SEM_ROTULO = 'Semana sem rótulo';
+
 function normalizar(texto) {
     return String(texto || '')
         .toLowerCase()
@@ -96,7 +100,20 @@ function reconciliarSemanas(semanas) {
     const corrigidas = (semanas || []).map(s => {
         const r = reconciliarDataReuniao(s.faixaData, s.dataReuniao);
         if (r.aviso) avisos.push(r.aviso);
-        return r.corrigida ? { ...s, dataReuniao: r.dataReuniao } : s;
+        const semana = r.corrigida ? { ...s, dataReuniao: r.dataReuniao } : s;
+
+        // Semana sem rotulo: acontece quando o PDF nao traz a faixa de datas ao lado do
+        // cabecalho da semana. Como `faixaData` e NOT NULL, isso derrubava a importacao
+        // INTEIRA com "Argument `faixaData` is missing" - um mes de programacao perdido por
+        // causa de um titulo. O rotulo e reconstruido a partir da data da reuniao, que e a
+        // informacao que de fato importa, e quem importou fica sabendo pelo aviso.
+        if (String(semana.faixaData || '').trim()) return semana;
+
+        const derivado = rotuloDaSemana(semana.dataReuniao);
+        avisos.push(derivado
+            ? `A semana de ${semana.dataReuniao} veio sem o título da faixa de datas no arquivo. Foi usado "${derivado}".`
+            : 'Uma semana veio sem título e sem data legível no arquivo. Confira a programação importada.');
+        return { ...semana, faixaData: derivado || SEM_ROTULO };
     });
     return { semanas: corrigidas, avisos };
 }
@@ -112,4 +129,49 @@ function domingoDaSemana(dataReuniao) {
     return fds;
 }
 
-module.exports = { reconciliarDataReuniao, reconciliarSemanas, faixaInequivoca, domingoDaSemana, MESES_PT };
+/** Segunda-feira que abre a semana da `dataReuniao`. */
+function segundaDaSemana(dataReuniao) {
+    const fds = domingoDaSemana(dataReuniao);
+    if (!fds) return null;
+    const inicio = new Date(fds);
+    inicio.setDate(inicio.getDate() - 6);
+    return inicio;
+}
+
+const NOMES_MESES = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+
+/**
+ * Reconstroi o rotulo da semana ("07 - 13 de Setembro") a partir da data da reuniao.
+ *
+ * Usa a mesma semana do resto do app (segunda a domingo, via `domingoDaSemana`) e imita o
+ * formato que o proprio arquivo de origem usa, inclusive quando a semana atravessa o mes
+ * ("31 de Agosto - 06 de Setembro").
+ *
+ * @returns {string|null} null quando a data nao da para ler.
+ */
+function rotuloDaSemana(dataReuniao) {
+    const inicio = segundaDaSemana(dataReuniao);
+    const fim = domingoDaSemana(dataReuniao);
+    if (!inicio || !fim) return null;
+
+    const dia = (d) => String(d.getDate()).padStart(2, '0');
+    const mes = (d) => NOMES_MESES[d.getMonth()];
+
+    return inicio.getMonth() === fim.getMonth()
+        ? `${dia(inicio)} - ${dia(fim)} de ${mes(fim)}`
+        : `${dia(inicio)} de ${mes(inicio)} - ${dia(fim)} de ${mes(fim)}`;
+}
+
+module.exports = {
+    reconciliarDataReuniao,
+    reconciliarSemanas,
+    faixaInequivoca,
+    domingoDaSemana,
+    segundaDaSemana,
+    rotuloDaSemana,
+    SEM_ROTULO,
+    MESES_PT
+};

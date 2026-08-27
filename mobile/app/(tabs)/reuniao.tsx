@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -105,10 +106,18 @@ export default function ReuniaoScreen() {
         indisp &&
         (indisp.confirmados?.length || 0) + (indisp.ambiguos?.length || 0) > 0;
 
+      // O backend corrige o que dá para corrigir sozinho no arquivo (data que contradiz o
+      // rótulo da semana, semana que veio sem título) e devolve o que mexeu. Vai em Alert,
+      // não em toast: isso pede conferência, e o toast some sozinho em 3 segundos.
+      const avisos = resposta.avisos ?? [];
+      if (avisos.length > 0) {
+        Alert.alert("Importado com avisos", avisos.join("\n\n"));
+      }
+
       if (temMatches) {
         setPreview(indisp);
         setSheetVisible(true);
-      } else {
+      } else if (avisos.length === 0) {
         toast.show(resposta.message || "Programação importada!");
       }
     } catch (err) {

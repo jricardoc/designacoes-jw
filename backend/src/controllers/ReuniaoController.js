@@ -219,10 +219,17 @@ class ReuniaoController {
                 return res.status(400).json({ error: 'Campo inválido' });
             }
 
+            // `faixaData` e a unica coluna NOT NULL editavel: limpar o titulo na tela
+            // mandaria null e o Prisma derrubaria a edicao inteira. Vazio e um titulo
+            // valido; null nao e.
+            const valorFinal = campo === 'faixaData' && (valor === null || valor === undefined)
+                ? ''
+                : valor;
+
             const semanaAtualizada = await prisma.semanaReuniao.update({
                 where: { id: parseInt(id) },
                 data: {
-                    [campo]: valor
+                    [campo]: valorFinal
                 }
             });
 

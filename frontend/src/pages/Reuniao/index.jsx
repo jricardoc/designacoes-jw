@@ -22,6 +22,21 @@ import Swal from "sweetalert2";
 import EditableField from "../../components/EditableField";
 import ImportarIndisponibilidadeModal from "../../components/reuniao/ImportarIndisponibilidadeModal";
 
+// Os avisos da importação carregam texto do arquivo de origem (o rótulo da semana). Como o
+// SweetAlert recebe HTML, o texto passa por aqui antes de entrar na lista.
+const escaparHtml = (texto) =>
+  String(texto ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[c],
+  );
+
 export default function Reuniao() {
   const { authFetch } = useAuth();
   const [reunioes, setReunioes] = useState([]);
@@ -85,10 +100,26 @@ export default function Reuniao() {
           indisp &&
           (indisp.confirmados?.length || 0) + (indisp.ambiguos?.length || 0) > 0;
 
+        // O backend corrige o que dá para corrigir sozinho (data que contradiz o rótulo da
+        // semana, semana que veio sem título) e devolve o que foi mexido. Isso precisa
+        // aparecer: correção silenciosa em programação é como erro que ninguém vê.
+        const avisos = Array.isArray(data.avisos) ? data.avisos : [];
+        if (avisos.length > 0) {
+          await Swal.fire({
+            title: "Importado com avisos",
+            html: `<p>${escaparHtml(data.message || "Programação importada.")}</p>
+                   <ul style="text-align:left;margin:0;padding-left:1.2em">
+                     ${avisos.map((a) => `<li>${escaparHtml(a)}</li>`).join("")}
+                   </ul>`,
+            icon: "warning",
+            confirmButtonColor: "#538d35",
+          });
+        }
+
         if (temMatches) {
           // Abre a revisão de indisponibilidades (substitui a marcação silenciosa).
           setPreviewIndisp(indisp);
-        } else {
+        } else if (avisos.length === 0) {
           Swal.fire({
             title: "Importado com Sucesso!",
             text: data.message || "Os dados da reunião foram salvos.",

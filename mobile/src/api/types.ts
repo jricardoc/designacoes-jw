@@ -407,6 +407,13 @@ export interface ImportarReuniaoResponse {
   ano: number;
   message: string;
   indisponibilidades: IndisponibilidadePreview;
+  /**
+   * O que o backend consertou sozinho no arquivo importado: data que contradizia o
+   * rótulo da semana, semana que veio sem título. Vem de `reconciliarSemanas`
+   * (backend/src/utils/semanaReuniao.js) e precisa aparecer na tela — programação
+   * corrigida em silêncio é erro que ninguém confere.
+   */
+  avisos?: string[];
 }
 
 // ===== Escala de Dirigentes: regras e diagnóstico da geração automática =====
