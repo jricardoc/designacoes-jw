@@ -10,8 +10,8 @@ import {
 import Animated, {
   Easing,
   FadeIn,
+  FadeInDown,
   FadeOut,
-  SlideInDown,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { motion, type Cores } from "@/theme";
@@ -25,6 +25,33 @@ const CURVA = Easing.bezier(...motion.curvaSuave);
 // Altura fixa do cabeçalho da folha, descontada do teto da rolagem: o `paddingTop` da folha
 // (10) mais a alça (4 de folga em cima + 5 dela + 12 embaixo).
 const ALTURA_DO_CABECALHO = 10 + 21;
+
+/**
+ * A entrada da folha: sobe de baixo da tela até o lugar dela.
+ *
+ * É `FadeInDown` com o ponto de partida trocado, e NÃO `SlideInDown`, apesar de o nome do
+ * segundo descrever melhor o que se vê. O motivo é onde cada um mexe:
+ *
+ *   SlideInDown anima o `originY` ABSOLUTO da folha até o `targetOriginY` medido no instante
+ *   em que a animação começa. Numa folha que carrega o conteúdo depois de abrir — as áreas de
+ *   acesso, a lista de irmãos para vincular, os convites de compartilhamento — a folha nasce
+ *   baixinha (só o spinner), a animação trava naquele Y, e quando o conteúdo chega ela cresce
+ *   para cima a partir de um Y que já não vale mais: fica alta e ancorada lá embaixo, com o
+ *   fim dela para fora da tela. Era o bug das "áreas de acesso", que abria mostrando só o
+ *   cabeçalho e a primeira opção.
+ *
+ *   FadeInDown anima um `transform: translateY`, que não disputa com o layout. O layout
+ *   posiciona a folha embaixo, seja qual for a altura dela, e o transform só a desloca durante
+ *   a animação, terminando em 0. Se a altura mudar no meio do caminho, o layout se acerta
+ *   sozinho.
+ *
+ * A opacidade inicial vai em 1 de propósito: sem isso a folha piscaria junto com a subida, o
+ * que o SlideInDown não fazia.
+ */
+const entradaDaFolha = (deslocamento: number) =>
+  FadeInDown.duration(motion.entrada)
+    .easing(CURVA)
+    .withInitialValues({ opacity: 1, transform: [{ translateY: deslocamento }] });
 
 interface SheetProps {
   visible: boolean;
@@ -94,7 +121,7 @@ export function Sheet({
           onPress={onClose}
         />
         <Animated.View
-          entering={SlideInDown.duration(motion.entrada).easing(CURVA)}
+          entering={entradaDaFolha(alturaDaJanela)}
           style={[
             styles.sheet,
             {
