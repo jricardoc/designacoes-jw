@@ -12,7 +12,7 @@
  * G. d. Silva") e o cadastro esta incompleto ("Marisol", "Olga").
  */
 const { GRUPOS, APELIDOS, _internos } = require('./importarGrupos');
-const { chaveNome, pedacos, acharPessoa } = _internos;
+const { chaveNome, pedacos, acharPessoa, podeSerAbreviacao } = _internos;
 
 let falhas = 0;
 const chk = (ok, m) => { console.log(`${ok ? '  OK  ' : ' FALHA'} ${m}`); if (!ok) falhas++; };
@@ -79,6 +79,30 @@ Object.entries(APELIDOS).forEach(([doDocumento, doCadastro]) => {
     chk(r?.pessoa.nome === doCadastro && r.criterio === 'par confirmado a mao',
         `"${doDocumento}" = "${doCadastro}"`);
 });
+
+sec('a inicial do documento levanta suspeita, mas nunca casa sozinha');
+// So AVISA. As duplicatas que escapam sao as do tipo "Edgar B. d. Santos" x "Edgar Bispo":
+// o sobrenome do cadastro esta no documento, abreviado. Nenhum criterio de casamento pega
+// isso, e nem deve — 'A.' serve para Alvim, Assad, Andrade e Araujo.
+[
+    ['Edgar B. d. Santos', 'Edgar Bispo', true],
+    ['Ana Lúcia P. S. Rodrigues', 'Ana Portela', true],
+    // Aqui a inicial nao cai em cima de nada: sao pessoas diferentes mesmo.
+    ['Laura Bispo D. Santos', 'Laura Leonídia', false],
+    ['Maria Cristiane S. de Souza', 'Maria José', false],
+    ['Marcia Vieira Santos', 'Márcia Nunes', false],
+    ['Ana Lúcia P. S. Rodrigues', 'Ana Cristina', false],
+    // Nome inteiro contido no outro nao e caso de inicial — o casamento normal ja pega.
+    ['Lourrany Alves dos Santos', 'Lourrany Alves', false],
+    // Registro de um nome so tem tratamento proprio em acharPessoa; aqui nao entra.
+    ['Tânia Maria A. de Mello', 'Tânia', false],
+].forEach(([doDocumento, doCadastro, esperado]) => {
+    chk(podeSerAbreviacao(doDocumento, doCadastro) === esperado,
+        `"${doDocumento}" x "${doCadastro}" ${esperado ? 'levanta suspeita' : 'nao levanta'}`);
+});
+// A suspeita nao pode virar casamento: o Edgar continua sendo criado, e nao fundido.
+chk(acharPessoa('Edgar B. d. Santos', cadastroDe(['Edgar Bispo'])) === null,
+    'suspeitar nao e casar: "Edgar B. d. Santos" segue como pessoa nova');
 
 sec('o que NAO pode casar');
 // Sobrenome em comum nao e a mesma pessoa.

@@ -316,6 +316,51 @@ function acharPessoa(nome, cadastro) {
 }
 
 /**
+ * Os nomes com as INICIAIS preservadas: "Edgar B. d. Santos" -> [edgar, b, d, santos].
+ *
+ * `pedacos` joga as iniciais fora de proposito — sozinhas elas nao identificam ninguem e so
+ * atrapalhariam o casamento. Aqui elas fazem falta: e olhando para elas que da para
+ * desconfiar que o "B." de "Edgar B. d. Santos" e o "Bispo" de "Edgar Bispo".
+ */
+function pedacosComIniciais(nome) {
+    return chaveNome(nome)
+        .split(/\s+/)
+        .map((t) => t.replace(/\.$/, ''))
+        .filter((t) => t.length > 0 && !CONECTIVOS.has(t));
+}
+
+/**
+ * O nome do cadastro cabe no do documento se cada pedaco dele aparecer, NA ORDEM, por
+ * extenso ou abreviado na inicial?
+ *
+ * ISTO NAO CASA NINGUEM — so avisa. Uma inicial e uma letra: "A." serve para Alvim, Assad,
+ * Andrade e Araujo, e promover isso a criterio de casamento fundiria duas irmas diferentes.
+ * Mas como pista para olho humano e exatamente o que falta: das dezenas de linhas do
+ * CONFERIR, so umas poucas tem uma inicial caindo em cima de um sobrenome — sao essas que
+ * valem a leitura.
+ *
+ * Exige pelo menos UMA inicial no caminho: se todos os pedacos batem por extenso, o
+ * casamento normal ja teria achado a pessoa e este aviso nem existiria.
+ */
+function podeSerAbreviacao(doDocumento, doCadastro) {
+    const documento = pedacosComIniciais(doDocumento);
+    const cadastro = pedacos(doCadastro);
+    // Registro de um nome so ("Tânia") ja tem tratamento proprio dentro de `acharPessoa`.
+    if (cadastro.length < 2) return false;
+
+    let i = 0;
+    let porInicial = 0;
+    for (const parte of cadastro) {
+        while (i < documento.length && documento[i] !== parte && documento[i] !== parte[0]) {
+            i += 1;
+        }
+        if (i >= documento.length) return false;
+        if (documento[i] !== parte) porInicial += 1;
+        i += 1;
+    }
+    return porInicial > 0;
+}
+/**
  * Renomeia a pessoa E as referencias por TEXTO a ela.
  *
  * `Designacao.irmao1/irmao2` e `EscalaDirigente.principal` guardam o NOME, nao a chave — sao
@@ -359,6 +404,7 @@ async function main() {
     const avisos = [];
     const completados = [];
     const podemCompletar = [];
+    const provaveis = [];
     let casados = 0;
     let criados = 0;
     let jaNoGrupo = 0;
@@ -422,9 +468,15 @@ async function main() {
                     (c) => c.pedacos[0] && c.pedacos[0] === pedacos(item.nome)[0],
                 );
                 if (mesmoPrimeiro.length > 0) {
+                    const parecidos = mesmoPrimeiro.filter((c) => podeSerAbreviacao(item.nome, c.nome));
                     avisos.push(
-                        `"${item.nome}" sera criado, mas ja existe: ${mesmoPrimeiro.map((c) => `"${c.nome}"`).join(', ')}`,
+                        `"${item.nome}" sera criado, mas ja existe: ${mesmoPrimeiro
+                            .map((c) => `"${c.nome}"${parecidos.includes(c) ? ' <-- PROVAVEL' : ''}`)
+                            .join(', ')}`,
                     );
+                    parecidos.forEach((c) => {
+                        provaveis.push(`"${item.nome}" (documento)  =?  "${c.nome}" (cadastro)`);
+                    });
                 }
 
                 criados += 1;
@@ -502,6 +554,16 @@ async function main() {
         podemCompletar.forEach((c) => console.log(`   ${c}`));
     }
 
+    if (provaveis.length > 0) {
+        console.log(`\n=== PROVAVEL MESMA PESSOA (${provaveis.length}) ===`);
+        console.log('Aqui uma inicial do documento cai bem em cima do sobrenome do cadastro');
+        console.log('("Edgar B. d. Santos" x "Edgar Bispo"). Se for a mesma pessoa, o par TEM DE');
+        console.log('entrar na tabela APELIDOS do script ANTES de rodar de verdade: depois de');
+        console.log('criada, a duplicata so sai a mao — pessoas:duplicados so olha quem veio do');
+        console.log('carrinho e nao pega estes.');
+        provaveis.forEach((c) => console.log(`   ? ${c}`));
+    }
+
     if (avisos.length > 0) {
         console.log(`\n=== CONFERIR (${avisos.length}) ===`);
         console.log('Nomes que serao criados tendo alguem parecido no cadastro. Se for a mesma');
@@ -533,4 +595,4 @@ if (require.main === module) {
         .finally(() => prisma.$disconnect());
 }
 
-module.exports = { GRUPOS, APELIDOS, _internos: { chaveNome, pedacos, acharPessoa } };
+module.exports = { GRUPOS, APELIDOS, _internos: { chaveNome, pedacos, acharPessoa, podeSerAbreviacao } };
