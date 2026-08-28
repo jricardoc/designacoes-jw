@@ -1,22 +1,29 @@
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   View,
 } from "react-native";
-import { GradientHeader } from "@/components/ui";
+import { GradientHeader, useToast } from "@/components/ui";
+import { useAtualizarConfig, useConfig } from "@/api/hooks/useMisc";
+import { useAuth } from "@/context/AuthContext";
+import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema, type TemaPreferido } from "@/theme/TemaContext";
 
 /**
- * Ajustes do APP — aparência e atalhos. Não confundir com "Configurações", que
- * é da congregação (saídas de campo, indisponibilidade): aqui é o que só muda
- * neste aparelho.
+ * Ajustes do APP — aparência, atalhos e o nome da congregação.
+ *
+ * Quase tudo aqui só muda NESTE aparelho. A exceção é a Congregação, que vale para todos e
+ * por isso só aparece para o admin geral: ela veio da aba "Sistema" da tela de cadastro,
+ * que deixou de existir — aquela tela virou "Publicadores" e é só de pessoas.
  */
 
 const OPCOES_TEMA: {
@@ -46,6 +53,30 @@ const OPCOES_TEMA: {
 ];
 
 export default function AjustesScreen() {
+  const { usuario } = useAuth();
+  const { data: config } = useConfig();
+  const atualizarConfig = useAtualizarConfig();
+  const toast = useToast();
+  const [congName, setCongName] = useState("");
+
+  useEffect(() => {
+    if (config) setCongName(config.subtitulo ?? "");
+  }, [config]);
+
+  const salvarCongregacao = () => {
+    const valor = congName.trim();
+    // Nada a fazer se está vazio ou igual ao que já está gravado — o onBlur dispara a cada
+    // saída do campo, inclusive quando ninguém digitou nada.
+    if (!valor || valor === config?.subtitulo) return;
+    atualizarConfig.mutate(
+      { subtitulo: valor },
+      {
+        onSuccess: () => toast.show("Congregação atualizada!"),
+        onError: () => toast.show("Erro ao salvar", "error"),
+      },
+    );
+  };
+
   const { colors, styles, tema, daltonico, setTema, setDaltonico } =
     useTema(criarEstilos);
   const versao = Constants.expoConfig?.version ?? "—";
@@ -58,7 +89,27 @@ export default function AjustesScreen() {
         icon="settings"
       />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
+        {/* Congregação — do admin geral, não do aparelho. */}
+        {ehAdminGeral(usuario) ? (
+          <>
+            <Text style={styles.secao}>Congregação</Text>
+            <View style={[styles.card, styles.cardCampo]}>
+              <Text style={styles.campoRotulo}>Nome</Text>
+              <TextInput
+                value={congName}
+                onChangeText={setCongName}
+                // Salva ao sair do campo, como era na tela antiga: sem botão para esquecer
+                // de apertar, e sem gravar a cada letra digitada.
+                onBlur={salvarCongregacao}
+                placeholder="Congregação..."
+                placeholderTextColor={colors.textMuted}
+                style={styles.campo}
+              />
+            </View>
+          </>
+        ) : null}
+
         {/* Tema */}
         <Text style={styles.secao}>Aparência</Text>
         <View style={styles.card}>
@@ -203,6 +254,22 @@ const criarEstilos = (colors: Cores) =>
       textTransform: "uppercase",
       letterSpacing: 0.5,
       marginTop: spacing.sm,
+    },
+    cardCampo: { padding: 14, gap: 6 },
+    campoRotulo: {
+      fontSize: 11,
+      fontWeight: "700",
+      letterSpacing: 0.4,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+    },
+    campo: {
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.sm,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 15,
+      color: colors.text,
     },
     card: {
       backgroundColor: colors.surface,

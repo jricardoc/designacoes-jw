@@ -56,8 +56,9 @@ const ITENS: ItemMenu[] = [
     escopo: "confirmacoes",
   },
   { chave: "conta", rotulo: "Conta", icone: "person-outline", href: "/(tabs)/conta" },
-  // Cadastro da congregação (irmãos, saídas de campo): só administradores.
-  { chave: "config", rotulo: "Configurações", icone: "options-outline", href: "/(tabs)/config", somenteAdmin: true },
+  // Cadastro das pessoas da congregação: só o admin geral. As saídas de campo, que também
+  // moravam aqui, foram para o Território.
+  { chave: "config", rotulo: "Publicadores", icone: "people-circle-outline", href: "/(tabs)/config", somenteAdmin: true },
   { chave: "ajustes", rotulo: "Ajustes", icone: "settings-outline", href: "/(tabs)/ajustes" },
 ];
 
@@ -155,10 +156,9 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
             {ITENS.filter((item) => {
               // `podeGerenciar` já contempla o admin geral em qualquer escopo.
               if (item.escopo) return podeGerenciar(usuario, item.escopo);
-              if (!item.somenteAdmin) return true;
-              // As saídas de campo vivem em Configurações e são da área de
-              // dirigentes — quem tem esse escopo precisa alcançar a tela.
-              return ehAdminGeral(usuario) || podeGerenciar(usuario, "dirigentes");
+              // Publicadores é só do admin geral. As saídas de campo, que davam acesso a
+              // quem cuida de dirigentes, saíram de lá para o Território.
+              return ehAdminGeral(usuario);
             }).map((item) => {
               const ativo = item.chave === atual;
               return (

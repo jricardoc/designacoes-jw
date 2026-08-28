@@ -13,6 +13,7 @@ import {
 import { useImagemTerritorio, useTerritorios } from "@/api/hooks/useTerritorios";
 import type { Territorio } from "@/api/types";
 import { Button, EmptyState, GradientHeader, Loading, TextField } from "@/components/ui";
+import { SaidasDeCampo } from "@/components/config/SaidasDeCampo";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
@@ -133,6 +134,9 @@ export default function TerritorioScreen() {
           automaticallyAdjustKeyboardInsets
           ListHeaderComponent={
             <View style={styles.topo}>
+              {/* Saída de campo é lugar, não território — mas é o lugar de onde se SAI para
+                  o território, e era o que sobrava da tela de cadastro. */}
+              <SaidasDeCampo />
               <TextField
                 icon="search"
                 placeholder="Buscar por número ou localidade..."

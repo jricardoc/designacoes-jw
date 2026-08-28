@@ -28,7 +28,7 @@ import { ConfirmDialog, EmptyState, GradientHeader, useConfirm, useToast } from 
 import { CalendarioIndisponibilidade } from "@/components/config/CalendarioIndisponibilidade";
 import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral } from "@/utils/permissoes";
-import { type Cores } from "@/theme";
+import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import {
   FUNCOES_POR_GENERO,
@@ -196,6 +196,58 @@ export default function IrmaoScreen() {
     }
   };
 
+  // No cadastro NOVO o tratamento vem antes de tudo: e ele que decide quais funcoes a tela
+  // oferece e se o mapa de indisponibilidade existe. Perguntar depois faria a tela mudar de
+  // forma no meio do preenchimento. Na edicao nao aparece — o registro ja tem tratamento, e
+  // trocar e um toque no chip la embaixo.
+  if (!irmaoId && !genero) {
+    return (
+      <View style={styles.screen}>
+        <View style={[styles.headerWrap, { paddingTop: insets.top + 12 }]}>
+          <Pressable onPress={() => router.back()} style={styles.back} hitSlop={8}>
+            <Ionicons name="chevron-back" size={18} color="#7A7060" />
+            <Text style={styles.backText}>Voltar</Text>
+          </Pressable>
+          <Text style={styles.h1}>Novo publicador</Text>
+          <Text style={styles.summary}>Como se fala com essa pessoa?</Text>
+        </View>
+
+        <View style={styles.escolha}>
+          {([
+            {
+              id: "irmao" as const,
+              rotulo: "Irmão",
+              descricao: "Pode receber designações mecânicas, dirigir saída de campo e carrinho",
+              icone: "man-outline" as const,
+            },
+            {
+              id: "irma" as const,
+              rotulo: "Irmã",
+              descricao: "Carrinho de publicações",
+              icone: "woman-outline" as const,
+            },
+          ]).map((op) => (
+            <Pressable
+              key={op.id}
+              onPress={() => setGenero(op.id)}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.escolhaCard, pressed && styles.escolhaPressionada]}
+            >
+              <View style={styles.escolhaIcone}>
+                <Ionicons name={op.icone} size={26} color={colors.primaryDark} />
+              </View>
+              <View style={styles.flex}>
+                <Text style={styles.escolhaRotulo}>{op.rotulo}</Text>
+                <Text style={styles.escolhaDescricao}>{op.descricao}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.screen}>
       <View style={[styles.headerWrap, { paddingTop: insets.top + 12 }]}>
@@ -208,7 +260,15 @@ export default function IrmaoScreen() {
             <Text style={styles.headerAvatarText}>{initials(nome) || "+"}</Text>
           </View>
           <View style={styles.flex}>
-            <Text style={styles.h1}>{irmaoId ? "Editar Irmão" : "Novo Irmão"}</Text>
+            <Text style={styles.h1}>
+              {irmaoId
+                ? genero === "irma"
+                  ? "Editar Irmã"
+                  : "Editar Irmão"
+                : genero === "irma"
+                  ? "Nova Irmã"
+                  : "Novo Irmão"}
+            </Text>
             <Text style={styles.summary}>{summary}</Text>
           </View>
         </View>
@@ -444,6 +504,27 @@ export default function IrmaoScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  escolha: { padding: 16, gap: 12 },
+  escolhaCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: 16,
+    ...shadow.card,
+  },
+  escolhaPressionada: { opacity: 0.6 },
+  escolhaIcone: {
+    width: 48,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.infoBg,
+  },
+  escolhaRotulo: { fontSize: 17, fontWeight: "700", color: colors.text },
+  escolhaDescricao: { fontSize: 12.5, color: colors.textSecondary, marginTop: 3, lineHeight: 17 },
   headerWrap: { paddingHorizontal: 20, paddingBottom: 12 },
   back: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 4 },
   backText: { color: "#7A7060", fontSize: 15, fontWeight: "500" },

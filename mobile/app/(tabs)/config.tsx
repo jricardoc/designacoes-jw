@@ -1,81 +1,37 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import {
-  useAtualizarConfig,
-  useConfig,
-} from "@/api/hooks/useMisc";
-import { useSaidasCampo } from "@/api/hooks/useDirigentes";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
-import type { FuncaoId, SaidaCampo, GeneroPessoa} from "@/api/types";
-import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
-import { SaidaCampoModal } from "@/components/config/SaidaCampoModal";
+import type { FuncaoId, GeneroPessoa } from "@/api/types";
+import { EmptyState, GradientHeader, Loading } from "@/components/ui";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
-import { ehAdminGeral, podeGerenciar } from "@/utils/permissoes";
-import { useNotifPref } from "@/notifications/notifPref";
+import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { FUNCOES, funcaoColor, funcaoLabel } from "@/utils/funcoes";
 
-type Secao = "irmaos" | "sistema";
-
-const DIA_ABBR: Record<string, string> = {
-  segunda: "SEG",
-  terca: "TER",
-  quarta: "QUA",
-  quinta: "QUI",
-  sexta: "SEX",
-  sabado: "SÁB",
-  domingo: "DOM",
-};
-
-function splitLocal(local: string, turno: number) {
-  const parts = (local || "").split(" - ");
-  const group = parts[0] || `Turno ${turno}`;
-  const host = parts.slice(1).join(" - ");
-  return { group, host };
-}
-
 export default function ConfigScreen() {
-  const { colors, styles, esquema, daltonico } = useTema(criarEstilos);
+  const { colors, styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
   const { data: irmaos, isLoading } = useIrmaos();
-  const { data: config } = useConfig();
-  const atualizarConfig = useAtualizarConfig();
-  const { data: saidas } = useSaidasCampo();
-  const notif = useNotifPref();
-  const toast = useToast();
 
   // Quem entrou só pelo escopo de dirigentes não tem a aba "Irmãos": abrir nela
   // deixaria a tela vazia.
-  const [secao, setSecao] = useState<Secao>(
-    ehAdminGeral(usuario) ? "irmaos" : "sistema",
-  );
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FuncaoId | "todos">("todos");
   // Filtro à parte do de função: com irmãs no cadastro (elas não têm função mecânica), o
   // filtro por função não alcança metade das pessoas.
   const [genero, setGenero] = useState<GeneroPessoa | "todos">("todos");
-  const [congName, setCongName] = useState("");
-  const [saidaModal, setSaidaModal] = useState<{ open: boolean; saida: SaidaCampo | null }>({
-    open: false,
-    saida: null,
-  });
-
-  useEffect(() => {
-    if (config) setCongName(config.subtitulo ?? "");
-  }, [config]);
 
   const filtrados = useMemo(
     () =>
@@ -88,20 +44,19 @@ export default function ConfigScreen() {
     [irmaos, busca, filtro, genero],
   );
 
-  // Cadastro de irmãos é do admin geral; as saídas de campo são da área de
-  // dirigentes (o backend concorda: /saidas-campo exige o escopo `dirigentes`).
-  // Quem tem só o escopo entra e vê apenas a aba Sistema.
+  // Cadastro de publicadores e do admin geral. As saidas de campo, que dividiam esta tela
+  // com ele, foram para o Territorio — sao lugar, nao pessoa.
   const geral = ehAdminGeral(usuario);
-  const podeSaidas = podeGerenciar(usuario, "dirigentes");
 
   // O menu já esconde a entrada, mas a rota continua alcançável (deep link,
   // rebaixamento com o app aberto). O backend também barra as escritas.
-  if (!geral && !podeSaidas) {
+  if (!geral) {
     return (
       <View style={styles.screen}>
         <GradientHeader
-          title="Configurações"
-          description="Irmãos, funções e sistema"
+          title="Publicadores"
+          description="Acesso restrito"
+          icon="lock-closed"
         />
         <EmptyState
           icon="lock-closed-outline"
@@ -112,51 +67,15 @@ export default function ConfigScreen() {
     );
   }
 
-  const salvarCong = () => {
-    const v = congName.trim();
-    if (!v || v === config?.subtitulo) return;
-    atualizarConfig.mutate(
-      { subtitulo: v },
-      {
-        onSuccess: () => toast.show("Congregação atualizada!"),
-        onError: () => toast.show("Erro ao salvar", "error"),
-      },
-    );
-  };
-
   return (
     <View style={styles.screen}>
       <GradientHeader
-        title="Configurações"
-        description="Irmãos, funções e sistema"
+        title="Publicadores"
+        description="Irmãos e irmãs da congregação"
+        icon="people"
       />
 
-      <View style={styles.segmented}>
-        {(["irmaos", "sistema"] as const)
-          .filter((s) => (s === "irmaos" ? geral : podeSaidas))
-          .map((s) => {
-          const active = secao === s;
-          return (
-            <Pressable
-              key={s}
-              style={[styles.segment, active && styles.segmentActive]}
-              onPress={() => setSecao(s)}
-            >
-              <Ionicons
-                name={s === "irmaos" ? "people-outline" : "construct-outline"}
-                size={16}
-                color={active ? colors.primaryDark : colors.textSecondary}
-              />
-              <Text style={[styles.segmentText, active && styles.segmentTextActive]}>
-                {s === "irmaos" ? "Irmãos" : "Sistema"}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {secao === "irmaos" && geral ? (
-        isLoading ? (
+      {isLoading ? (
           <Loading />
         ) : (
           <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
@@ -265,105 +184,8 @@ export default function ConfigScreen() {
                 <Text style={styles.empty}>Nenhum irmão encontrado.</Text>
               ) : null}
             </View>
-          </ScrollView>
-        )
-      ) : (
-        <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
-          {/* Congregação */}
-          <View style={styles.card}>
-            <View style={styles.cardHead}>
-              <Ionicons name="business-outline" size={18} color={colors.oliveSoft} />
-              <Text style={styles.cardTitle}>Congregação</Text>
-            </View>
-            <Text style={styles.fieldLabel}>Nome</Text>
-            <TextInput
-              value={congName}
-              onChangeText={setCongName}
-              onBlur={salvarCong}
-              placeholder="Congregação..."
-              placeholderTextColor={colors.textMuted}
-              style={styles.input}
-            />
-          </View>
-
-          {/* Saídas de Campo */}
-          <View style={[styles.card, { paddingBottom: 8 }]}>
-            <View style={styles.cardHeadRow}>
-              <View style={styles.cardHead}>
-                <Ionicons name="send-outline" size={17} color={colors.oliveSoft} />
-                <Text style={styles.cardTitle}>Saídas de Campo</Text>
-              </View>
-              <Pressable
-                style={styles.smallBtn}
-                onPress={() => setSaidaModal({ open: true, saida: null })}
-              >
-                <Ionicons name="add" size={14} color={colors.textOnPrimary} />
-                <Text style={styles.smallBtnText}>Nova</Text>
-              </Pressable>
-            </View>
-            <Text style={styles.cardSub}>{saidas?.length ?? 0} saída(s) cadastrada(s)</Text>
-
-            <View style={{ marginTop: 4 }}>
-              {(saidas ?? []).map((o) => {
-                const { group, host } = splitLocal(o.local, o.turno);
-                return (
-                  <Pressable
-                    key={o.id}
-                    style={styles.outingRow}
-                    onPress={() => setSaidaModal({ open: true, saida: o })}
-                  >
-                    <View style={styles.outingWhen}>
-                      <Text style={styles.outingWd}>{DIA_ABBR[o.diaSemana] ?? o.diaSemana}</Text>
-                      <Text style={styles.outingTime}>{o.horario}</Text>
-                    </View>
-                    <View style={styles.flex}>
-                      <Text style={styles.outingGroup} numberOfLines={1}>
-                        {group}
-                      </Text>
-                      {host ? (
-                        <Text style={styles.outingHost} numberOfLines={1}>
-                          {host}
-                        </Text>
-                      ) : null}
-                    </View>
-                    <Ionicons name="create-outline" size={17} color="#C2B79D" />
-                  </Pressable>
-                );
-              })}
-              {(saidas?.length ?? 0) === 0 ? (
-                <Text style={[styles.empty, { paddingVertical: 16 }]}>
-                  Nenhuma saída cadastrada.
-                </Text>
-              ) : null}
-            </View>
-          </View>
-
-          {/* Preferências */}
-          <View style={[styles.card, { padding: 0, overflow: "hidden" }]}>
-            <View style={[styles.prefRow, styles.prefDivider]}>
-              <Text style={styles.prefLabel}>Notificações</Text>
-              <Switch
-                value={notif.enabled}
-                onValueChange={notif.toggle}
-                trackColor={{ true: colors.primary, false: colors.borderStrong }}
-                thumbColor="#fff"
-              />
-            </View>
-            <View style={styles.prefRow}>
-              <Text style={styles.prefLabel}>Tema</Text>
-              <Text style={styles.prefValue}>
-                {`Terroso ${esquema}${daltonico ? " · daltônico" : ""}`}
-              </Text>
-            </View>
-          </View>
         </ScrollView>
       )}
-
-      <SaidaCampoModal
-        visible={saidaModal.open}
-        saida={saidaModal.saida}
-        onClose={() => setSaidaModal({ open: false, saida: null })}
-      />
     </View>
   );
 }

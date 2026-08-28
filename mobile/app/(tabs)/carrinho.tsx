@@ -11,11 +11,9 @@ import {
 import { useCarrinho } from "@/api/hooks/useCarrinho";
 import type {
   CarrinhoPonto,
-  CarrinhoPublicador,
   CarrinhoTurno,
 } from "@/api/types";
 import { PontoSheet } from "@/components/carrinho/PontoSheet";
-import { PublicadorSheet } from "@/components/carrinho/PublicadorSheet";
 import { TurnoSheet } from "@/components/carrinho/TurnoSheet";
 import { useAuth } from "@/context/AuthContext";
 import { podeGerenciar } from "@/utils/permissoes";
@@ -49,10 +47,6 @@ export default function CarrinhoScreen() {
     turno: CarrinhoTurno | null;
     ponto: CarrinhoPonto | null;
   }>({ open: false, turno: null, ponto: null });
-  const [pessoaSheet, setPessoaSheet] = useState<{
-    open: boolean;
-    publicador: CarrinhoPublicador | null;
-  }>({ open: false, publicador: null });
 
   const pontos = useMemo(() => data?.pontos ?? [], [data]);
   const publicadores = useMemo(() => data?.publicadores ?? [], [data]);
@@ -381,14 +375,9 @@ export default function CarrinhoScreen() {
                   {publicadores.length} cadastrada(s)
                 </Text>
               </View>
-              {podeEditar ? (
-                <Button
-                  label="Pessoa"
-                  icon="add"
-                  variant="secondary"
-                  onPress={() => setPessoaSheet({ open: true, publicador: null })}
-                />
-              ) : null}
+              {/* Sem botão de cadastrar: publicador se cadastra num lugar só, na tela de
+                  Publicadores. Aqui se monta a escala com quem já existe — o vínculo com os
+                  turnos é feito pelo turno, não pela pessoa. */}
             </View>
 
             {publicadores.length > 0 ? (
@@ -396,11 +385,8 @@ export default function CarrinhoScreen() {
                 {publicadores.map((p, i) => (
                   <Pressable
                     key={p.id}
-                    onPress={
-                      podeEditar
-                        ? () => setPessoaSheet({ open: true, publicador: p })
-                        : undefined
-                    }
+                    // Só leitura: editar nome e telefone é na tela de Publicadores.
+                    disabled
                     style={[
                       styles.linha,
                       i > 0 && styles.linhaDivisor,
@@ -439,18 +425,13 @@ export default function CarrinhoScreen() {
             ) : (
               <EmptyState
                 icon="people-outline"
-                title="Nenhuma pessoa cadastrada"
-                message="Cadastre quem serve no carrinho para montar os turnos."
-              >
-                {podeEditar ? (
-                  <Button
-                    label="Cadastrar Pessoa"
-                    onPress={() =>
-                      setPessoaSheet({ open: true, publicador: null })
-                    }
-                  />
-                ) : null}
-              </EmptyState>
+                title="Ninguém no carrinho ainda"
+                message={
+                  podeEditar
+                    ? 'Marque a função "Carrinho" em Publicadores para as irmãs e irmãos que servem aqui.'
+                    : "Quando alguém for marcado para o carrinho, aparece aqui."
+                }
+              />
             )}
           </View>
         </ScrollView>
@@ -469,12 +450,6 @@ export default function CarrinhoScreen() {
         publicadores={publicadores}
         diaInicial={dia}
         onClose={() => setTurnoSheet({ open: false, turno: null, ponto: null })}
-      />
-      <PublicadorSheet
-        visible={pessoaSheet.open}
-        publicador={pessoaSheet.publicador}
-        pontos={pontos}
-        onClose={() => setPessoaSheet({ open: false, publicador: null })}
       />
     </View>
   );
