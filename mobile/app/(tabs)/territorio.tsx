@@ -6,6 +6,7 @@ import {
   Image,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -14,7 +15,9 @@ import { useImagemTerritorio, useTerritorios } from "@/api/hooks/useTerritorios"
 import type { Territorio } from "@/api/types";
 import { Button, EmptyState, GradientHeader, Loading, TextField } from "@/components/ui";
 import { SaidasDeCampo } from "@/components/config/SaidasDeCampo";
-import { radius, type Cores } from "@/theme";
+import { useAuth } from "@/context/AuthContext";
+import { podeGerenciar } from "@/utils/permissoes";
+import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
 /** Acentos fora da busca: "itapua" tem que achar "Itapuã". */
@@ -55,6 +58,12 @@ function Thumb({
 }
 
 export default function TerritorioScreen() {
+  const { usuario } = useAuth();
+  // Saída de campo é da área de dirigentes — é o escopo que o backend exige em
+  // /saidas-campo. Sem ele a aba nem aparece.
+  const podeSaidas = podeGerenciar(usuario, "dirigentes");
+  const [aba, setAba] = useState<"mapas" | "saidas">("mapas");
+
   const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading, isError, refetch, isRefetching } = useTerritorios();
   const imagem = useImagemTerritorio();
@@ -111,7 +120,40 @@ export default function TerritorioScreen() {
         icon="map"
       />
 
-      {isLoading ? (
+      {/* Mesmo seletor que a tela de cadastro tinha: são dois assuntos que dividem a tela,
+          e a aba deixa claro que um não é continuação do outro. Some para quem não cuida de
+          dirigentes — sem a segunda aba, não há o que escolher. */}
+      {podeSaidas ? (
+        <View style={styles.segmented}>
+          {(["mapas", "saidas"] as const).map((s) => {
+            const ativa = aba === s;
+            return (
+              <Pressable
+                key={s}
+                style={[styles.segment, ativa && styles.segmentActive]}
+                onPress={() => setAba(s)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: ativa }}
+              >
+                <Ionicons
+                  name={s === "mapas" ? "map-outline" : "send-outline"}
+                  size={16}
+                  color={ativa ? colors.primaryDark : colors.textSecondary}
+                />
+                <Text style={[styles.segmentText, ativa && styles.segmentTextActive]}>
+                  {s === "mapas" ? "Mapas" : "Saídas de campo"}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+
+      {aba === "saidas" && podeSaidas ? (
+        <ScrollView contentContainerStyle={styles.scrollSaidas}>
+          <SaidasDeCampo />
+        </ScrollView>
+      ) : isLoading ? (
         <Loading label="Carregando territórios..." />
       ) : isError ? (
         <EmptyState
@@ -134,9 +176,6 @@ export default function TerritorioScreen() {
           automaticallyAdjustKeyboardInsets
           ListHeaderComponent={
             <View style={styles.topo}>
-              {/* Saída de campo é lugar, não território — mas é o lugar de onde se SAI para
-                  o território, e era o que sobrava da tela de cadastro. */}
-              <SaidasDeCampo />
               <TextField
                 icon="search"
                 placeholder="Buscar por número ou localidade..."
@@ -167,6 +206,28 @@ export default function TerritorioScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.background },
+    segmented: {
+      flexDirection: "row",
+      marginHorizontal: 16,
+      marginTop: 12,
+      backgroundColor: colors.sand,
+      borderRadius: radius.md,
+      padding: 5,
+      gap: 5,
+    },
+    segment: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingVertical: 9,
+      borderRadius: radius.sm,
+    },
+    segmentActive: { backgroundColor: colors.surface, ...shadow.card },
+    segmentText: { fontWeight: "700", color: colors.textSecondary, fontSize: 13.5 },
+    segmentTextActive: { color: colors.primaryDark },
+    scrollSaidas: { padding: 16 },
     lista: { padding: 16, paddingBottom: 40, gap: 10 },
     topo: { gap: 6, marginBottom: 6 },
     contagem: { fontSize: 12.5, color: colors.textSecondary },
