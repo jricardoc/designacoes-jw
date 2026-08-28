@@ -25,7 +25,7 @@ export default function ConfigScreen() {
   const { usuario } = useAuth();
   const { data: irmaos, isLoading } = useIrmaos();
 
-  // Quem entrou só pelo escopo de dirigentes não tem a aba "Irmãos": abrir nela
+  // Quem não é admin geral não tem esta tela: abrir nela
   // deixaria a tela vazia.
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FuncaoId | "todos">("todos");
@@ -84,7 +84,7 @@ export default function ConfigScreen() {
               <TextInput
                 value={busca}
                 onChangeText={setBusca}
-                placeholder="Buscar irmão..."
+                placeholder="Buscar publicador..."
                 placeholderTextColor={colors.textMuted}
                 style={styles.searchInput}
               />
@@ -137,7 +137,7 @@ export default function ConfigScreen() {
 
             <Pressable style={styles.primaryBtn} onPress={() => router.push("/irmao")}>
               <Ionicons name="add" size={18} color={colors.textOnPrimary} />
-              <Text style={styles.primaryBtnText}>Novo Irmão</Text>
+              <Text style={styles.primaryBtnText}>Novo Publicador</Text>
             </Pressable>
 
             <Text style={styles.counter}>{filtrados.length} pessoa(s)</Text>
@@ -181,7 +181,7 @@ export default function ConfigScreen() {
                 </Animated.View>
               ))}
               {filtrados.length === 0 ? (
-                <Text style={styles.empty}>Nenhum irmão encontrado.</Text>
+                <Text style={styles.empty}>Nenhum publicador encontrado.</Text>
               ) : null}
             </View>
         </ScrollView>
