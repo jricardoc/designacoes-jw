@@ -17,7 +17,7 @@ import {
 } from "@/api/hooks/useMisc";
 import { useSaidasCampo } from "@/api/hooks/useDirigentes";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
-import type { FuncaoId, SaidaCampo } from "@/api/types";
+import type { FuncaoId, SaidaCampo, GeneroPessoa} from "@/api/types";
 import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { SaidaCampoModal } from "@/components/config/SaidaCampoModal";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
@@ -64,6 +64,9 @@ export default function ConfigScreen() {
   );
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FuncaoId | "todos">("todos");
+  // Filtro à parte do de função: com irmãs no cadastro (elas não têm função mecânica), o
+  // filtro por função não alcança metade das pessoas.
+  const [genero, setGenero] = useState<GeneroPessoa | "todos">("todos");
   const [congName, setCongName] = useState("");
   const [saidaModal, setSaidaModal] = useState<{ open: boolean; saida: SaidaCampo | null }>({
     open: false,
@@ -79,9 +82,10 @@ export default function ConfigScreen() {
       (irmaos ?? []).filter((i) => {
         const okBusca = i.nome.toLowerCase().includes(busca.toLowerCase());
         const okFiltro = filtro === "todos" || i.funcoes.includes(filtro);
-        return okBusca && okFiltro;
+        const okGenero = genero === "todos" || i.genero === genero;
+        return okBusca && okFiltro && okGenero;
       }),
-    [irmaos, busca, filtro],
+    [irmaos, busca, filtro, genero],
   );
 
   // Cadastro de irmãos é do admin geral; as saídas de campo são da área de
@@ -172,6 +176,29 @@ export default function ConfigScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.filtersRow}
             >
+              {(["todos", "irmao", "irma"] as const).map((g) => {
+                const active = genero === g;
+                const label =
+                  g === "todos" ? "Todos" : g === "irmao" ? "Irmãos" : "Irmãs";
+                return (
+                  <Pressable
+                    key={g}
+                    onPress={() => setGenero(g)}
+                    style={[styles.filterChip, active && styles.filterChipActive]}
+                  >
+                    <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filtersRow}
+            >
               {(["todos", ...FUNCOES.map((f) => f.id)] as (FuncaoId | "todos")[]).map((f) => {
                 const active = filtro === f;
                 const label = f === "todos" ? "Todos" : funcaoLabel(f);
@@ -194,7 +221,7 @@ export default function ConfigScreen() {
               <Text style={styles.primaryBtnText}>Novo Irmão</Text>
             </Pressable>
 
-            <Text style={styles.counter}>{filtrados.length} irmão(s)</Text>
+            <Text style={styles.counter}>{filtrados.length} pessoa(s)</Text>
 
             <View style={styles.list}>
               {filtrados.map((irmao, i) => (

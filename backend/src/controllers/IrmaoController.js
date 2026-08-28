@@ -14,6 +14,23 @@ function normalizarPrivilegio(valor) {
     return PRIVILEGIOS.includes(valor) ? valor : null;
 }
 
+/** Como se fala com a pessoa. Nao e sexo biologico — por isso os valores tem esse nome. */
+const GENEROS = new Set(['irmao', 'irma']);
+
+/**
+ * Aceita so 'irmao'/'irma'. Vazio limpa; `undefined` (chave ausente no PUT) mantem o que
+ * estava. Valor fora da lista tambem vira `undefined`, para um cliente desatualizado nao
+ * apagar o genero de ninguem mandando lixo.
+ *
+ * @returns {string|null|undefined}
+ */
+function normalizarGenero(valor) {
+    if (valor === undefined) return undefined;
+    if (valor === null || valor === '') return null;
+    const limpo = String(valor).trim().toLowerCase();
+    return GENEROS.has(limpo) ? limpo : undefined;
+}
+
 /**
  * Guarda o telefone so com digitos: quem cadastra digita "(71) 99999-8888" e o link do
  * WhatsApp precisa de "71999998888". Vazio limpa o campo; `undefined` (chave ausente no PUT)
@@ -73,7 +90,7 @@ class IrmaoController {
     // Criar novo irmao
     async create(req, res) {
         try {
-            const { nome, funcoes, nivelAudioVideo, privilegio, telefone } = req.body;
+            const { nome, funcoes, nivelAudioVideo, privilegio, telefone, genero } = req.body;
 
             if (!nome) {
                 return res.status(400).json({ error: 'Nome e obrigatorio' });
@@ -85,7 +102,8 @@ class IrmaoController {
                     funcoes: funcoes || [],
                     nivelAudioVideo: nivelAudioVideo || 'experiente',
                     privilegio: normalizarPrivilegio(privilegio) ?? null,
-                    telefone: normalizarTelefone(telefone) ?? null
+                    telefone: normalizarTelefone(telefone) ?? null,
+                    genero: normalizarGenero(genero) ?? null
                 }
             });
 
@@ -103,7 +121,7 @@ class IrmaoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone } = req.body;
+            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone, genero } = req.body;
 
             const updateData = {};
             if (nome !== undefined) updateData.nome = String(nome).trim();
@@ -133,6 +151,9 @@ class IrmaoController {
 
             const telefoneNormalizado = normalizarTelefone(telefone);
             if (telefoneNormalizado !== undefined) updateData.telefone = telefoneNormalizado;
+
+            const generoNormalizado = normalizarGenero(genero);
+            if (generoNormalizado !== undefined) updateData.genero = generoNormalizado;
 
             // Uma transacao: ou o irmao e as designacoes dele andam juntos, ou nada muda.
             const [irmao] = await prisma.$transaction([

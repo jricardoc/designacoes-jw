@@ -108,6 +108,9 @@ export interface DirigenteSaida {
   saidaCampo?: SaidaCampo;
 }
 
+/** Como se fala com a pessoa. Não é sexo biológico — daí o nome dos valores. */
+export type GeneroPessoa = "irmao" | "irma";
+
 export interface Irmao {
   id: number;
   nome: string;
@@ -116,6 +119,7 @@ export interface Irmao {
   privilegio?: PrivilegioId | null;
   /** Só dígitos, com DDD ("71999998888"). Abre o WhatsApp já com o texto na tela de Confirmações. */
   telefone?: string | null;
+  genero?: GeneroPessoa | null;
   ativo: boolean;
   indisponibilidades?: Indisponibilidade[];
   dirigenteSaidas?: DirigenteSaida[];

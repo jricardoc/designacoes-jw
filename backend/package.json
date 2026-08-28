@@ -14,7 +14,8 @@
     "verificar:indisponibilidade-import": "node scripts/verificarIndisponibilidadeImport.js",
     "verificar:rodizio-quadro": "node scripts/verificarRodizioQuadro.js",
     "verificar:confirmacoes": "node scripts/verificarConfirmacoes.js",
-    "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js"
+    "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js",
+    "unificar:pessoas": "node scripts/unificarPessoas.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

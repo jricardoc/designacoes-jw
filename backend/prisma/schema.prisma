@@ -109,6 +109,10 @@ model Irmao {
   // texto da confirmacao. Opcional: quem nao tem numero cadastrado ainda cai no
   // compartilhamento comum, que deixa o irmao escolher o app e o contato.
   telefone           String?
+  // "irmao" | "irma". Como se fala com a pessoa, nao sexo biologico — e por isso que os
+  // valores tem o nome que tem. Opcional so por causa da transicao: o script de migracao
+  // preenche todo mundo, e quem entrar depois preenche na tela de Pessoas.
+  genero             String?
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio         String?
@@ -116,6 +120,7 @@ model Irmao {
   usuario            Usuario?
   indisponibilidades Indisponibilidade[]
   dirigenteSaidas    DirigenteSaidaCampo[]
+  carrinhoEscalas    CarrinhoEscala[]
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
 }
@@ -312,15 +317,27 @@ model CarrinhoTurno {
   @@unique([pontoId, diaSemana, horaInicio])
 }
 
+// EM TRANSICAO: `irmaoId` e o destino, `publicadorId` e a origem.
+//
+// As pessoas viviam em duas tabelas — Irmao (quem tem funcao mecanica, so homens) e
+// CarrinhoPublicador (quem faz carrinho, homens e mulheres) — e quem estava nas duas existia
+// duas vezes, com telefone podendo divergir. A unificacao move todo mundo para Irmao.
+//
+// Os dois campos convivem de proposito: acrescentar coluna e seguro no `db push` do
+// EasyPanel, remover trava o deploy. Depois que a migracao for conferida em producao,
+// `publicadorId` e a tabela CarrinhoPublicador saem num passo separado.
 model CarrinhoEscala {
-  id           Int                @id @default(autoincrement())
+  id           Int                 @id @default(autoincrement())
   turnoId      Int
-  turno        CarrinhoTurno      @relation(fields: [turnoId], references: [id], onDelete: Cascade)
-  publicadorId Int
-  publicador   CarrinhoPublicador @relation(fields: [publicadorId], references: [id], onDelete: Cascade)
-  createdAt    DateTime           @default(now())
+  turno        CarrinhoTurno       @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  publicadorId Int?
+  publicador   CarrinhoPublicador? @relation(fields: [publicadorId], references: [id], onDelete: Cascade)
+  irmaoId      Int?
+  irmao        Irmao?              @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  createdAt    DateTime            @default(now())
 
   @@unique([turnoId, publicadorId])
+  @@unique([turnoId, irmaoId])
 }
 
 // Configuração das Saídas de Campo (locais/horários por dia da semana)

@@ -23,7 +23,7 @@ import {
   useExcluirIrmao,
   useIrmaos,
 } from "@/api/hooks/useIrmaos";
-import type { FuncaoId, NivelAudioVideo, PrivilegioId } from "@/api/types";
+import type { FuncaoId, NivelAudioVideo, PrivilegioId, GeneroPessoa} from "@/api/types";
 import { ConfirmDialog, EmptyState, GradientHeader, useConfirm, useToast } from "@/components/ui";
 import { CalendarioIndisponibilidade } from "@/components/config/CalendarioIndisponibilidade";
 import { useAuth } from "@/context/AuthContext";
@@ -70,6 +70,8 @@ export default function IrmaoScreen() {
   const [funcoes, setFuncoes] = useState<FuncaoId[]>([]);
   const [nivel, setNivel] = useState<NivelAudioVideo>("experiente");
   const [privilegio, setPrivilegio] = useState<PrivilegioId | null>(null);
+  const [genero, setGenero] = useState<GeneroPessoa | null>(null);
+  const [telefone, setTelefone] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [saidas, setSaidas] = useState<number[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -80,6 +82,8 @@ export default function IrmaoScreen() {
       setFuncoes(existente.funcoes);
       setNivel(existente.nivelAudioVideo);
       setPrivilegio(existente.privilegio ?? null);
+      setGenero(existente.genero ?? null);
+      setTelefone(existente.telefone ?? "");
       setAtivo(existente.ativo);
       setHydrated(true);
     }
@@ -138,9 +142,25 @@ export default function IrmaoScreen() {
     try {
       let savedId = irmaoId;
       if (irmaoId) {
-        await atualizar.mutateAsync({ id: irmaoId, nome: nome.trim(), funcoes, nivelAudioVideo: nivel, privilegio, ativo });
+        await atualizar.mutateAsync({
+          id: irmaoId,
+          nome: nome.trim(),
+          funcoes,
+          nivelAudioVideo: nivel,
+          privilegio,
+          genero,
+          telefone,
+          ativo,
+        });
       } else {
-        const novo = await criar.mutateAsync({ nome: nome.trim(), funcoes, nivelAudioVideo: nivel, privilegio });
+        const novo = await criar.mutateAsync({
+          nome: nome.trim(),
+          funcoes,
+          nivelAudioVideo: nivel,
+          privilegio,
+          genero,
+          telefone,
+        });
         savedId = novo.id;
       }
       if (isDirigente && savedId) {
@@ -205,6 +225,53 @@ export default function IrmaoScreen() {
               );
             })}
           </View>
+
+          <Text style={[styles.label, { marginTop: 18 }]}>Tratamento</Text>
+          <Text style={styles.hint}>
+            Como se fala com a pessoa nas mensagens de confirmação.
+          </Text>
+          <View style={styles.chips}>
+            {([
+              { id: "irmao" as const, label: "Irmão" },
+              { id: "irma" as const, label: "Irmã" },
+            ]).map((g) => {
+              const active = genero === g.id;
+              return (
+                <Pressable
+                  key={g.id}
+                  // Tocar de novo remove: errar o toque não pode obrigar a recarregar a tela.
+                  onPress={() => setGenero((prev) => (prev === g.id ? null : g.id))}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  style={[
+                    styles.chip,
+                    active
+                      ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                      : { backgroundColor: colors.surface, borderColor: colors.borderStrong },
+                  ]}
+                >
+                  {active ? <Ionicons name="checkmark" size={14} color="#FBF7EF" /> : null}
+                  <Text style={[styles.chipText, { color: active ? "#FBF7EF" : "#7A7060" }]}>
+                    {g.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Text style={[styles.label, { marginTop: 18 }]}>WhatsApp</Text>
+          <Text style={styles.hint}>
+            Com DDD. É o que abre a conversa já com a mensagem escrita, na tela de
+            Confirmações.
+          </Text>
+          <TextInput
+            value={telefone}
+            onChangeText={setTelefone}
+            placeholder="(71) 99999-8888"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="phone-pad"
+            style={styles.input}
+          />
 
           <Text style={[styles.label, { marginTop: 18 }]}>Privilégio</Text>
           <Text style={styles.hint}>Opcional. Toque de novo para remover.</Text>
