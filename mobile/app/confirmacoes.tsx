@@ -97,7 +97,12 @@ export default function ConfirmacoesScreen() {
   if (!podeVer) {
     return (
       <View style={styles.tela}>
-        <GradientHeader title="Confirmações" description="Acesso restrito" icon="lock-closed" />
+        <GradientHeader
+          title="Confirmações"
+          description="Acesso restrito"
+          icon="lock-closed"
+          showBack
+        />
         <EmptyState
           icon="lock-closed-outline"
           title="Área restrita"
@@ -125,6 +130,7 @@ export default function ConfirmacoesScreen() {
               : `${pendentes} ${pendentes === 1 ? "parte esperando resposta" : "partes esperando resposta"}`
         }
         icon="checkmark-done"
+        showBack
       />
 
       {isLoading ? (
