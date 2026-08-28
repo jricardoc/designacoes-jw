@@ -9,6 +9,7 @@ export type FuncaoId =
   | "indicador"
   | "audioVideo"
   | "estacionamento"
+  | "carrinho"
   | "dirigente";
 
 export type NivelAudioVideo = "experiente" | "treinando";

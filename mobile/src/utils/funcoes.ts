@@ -38,7 +38,26 @@ export const FUNCOES: { id: FuncaoId; label: string; color: string }[] = [
   { id: "audioVideo", label: "Áudio e Vídeo", color: "#8b5cf6" },
   { id: "estacionamento", label: "Estacionamento", color: "#f59e0b" },
   { id: "dirigente", label: "Dirigente", color: "#ef4444" },
+  { id: "carrinho", label: "Carrinho", color: "#0ea5a4" },
 ];
+
+/**
+ * As funções que cada tratamento pode receber.
+ *
+ * As designações mecânicas e a escala de dirigentes são de irmãos — o quadro e a escala são
+ * montados só com eles. O carrinho é de todos. Separar aqui evita oferecer na tela uma função
+ * que nunca vai ser usada, e evita o engano de marcar uma irmã como indicadora.
+ */
+export const FUNCOES_POR_GENERO: Record<"irmao" | "irma", FuncaoId[]> = {
+  irmao: FUNCOES.map((f) => f.id),
+  irma: ["carrinho"],
+};
+
+/** As funções oferecidas para quem ainda não tem tratamento definido: todas. */
+export function funcoesDisponiveis(genero: "irmao" | "irma" | null | undefined) {
+  const permitidas = genero ? FUNCOES_POR_GENERO[genero] : FUNCOES.map((f) => f.id);
+  return FUNCOES.filter((f) => permitidas.includes(f.id));
+}
 
 /** Maps the designação `funcao` label (as stored on a Designacao) to a FuncaoId. */
 export const FUNCAO_LABEL_TO_ID: Record<string, FuncaoId> = {

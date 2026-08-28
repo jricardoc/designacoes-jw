@@ -30,7 +30,12 @@ import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral } from "@/utils/permissoes";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { FUNCOES, PRIVILEGIOS, privilegioLabel } from "@/utils/funcoes";
+import {
+  FUNCOES_POR_GENERO,
+  PRIVILEGIOS,
+  funcoesDisponiveis,
+  privilegioLabel,
+} from "@/utils/funcoes";
 
 const WD_LABEL: Record<string, string> = {
   domingo: "Domingo",
@@ -93,6 +98,17 @@ export default function IrmaoScreen() {
     if (dispDirigente) setSaidas(dispDirigente.map((d) => d.saidaCampoId));
   }, [dispDirigente]);
 
+  // Marcar "Irmã" depois de ter marcado funções de irmão deixaria o cadastro dizendo que ela
+  // é indicadora. As que não valem mais caem sozinhas.
+  useEffect(() => {
+    if (!genero) return;
+    setFuncoes((antes) => {
+      const validas = FUNCOES_POR_GENERO[genero];
+      const filtradas = antes.filter((f) => validas.includes(f));
+      return filtradas.length === antes.length ? antes : filtradas;
+    });
+  }, [genero]);
+
   const toggleFuncao = (f: FuncaoId) =>
     setFuncoes((prev) => (prev.includes(f) ? prev.filter((x) => x !== f) : [...prev, f]));
   // Exclusivo e desmarcável: tocar no que já está ativo limpa o privilégio.
@@ -107,6 +123,13 @@ export default function IrmaoScreen() {
 
   const isDirigente = funcoes.includes("dirigente");
   const isAV = funcoes.includes("audioVideo");
+
+  // Designação mecânica e escala de dirigentes são de irmãos; o carrinho é de todos. Enquanto
+  // o tratamento não está escolhido, todas aparecem — a tela não adivinha.
+  const funcoesOferecidas = funcoesDisponiveis(genero);
+  // Irmã não entra no quadro nem na escala, então não há dia para bloquear: o mapa de
+  // indisponibilidade só serve a quem é escalado por data.
+  const temIndisponibilidade = genero !== "irma";
   const saving = criar.isPending || atualizar.isPending;
 
   const summary = [
@@ -204,7 +227,7 @@ export default function IrmaoScreen() {
 
           <Text style={[styles.label, { marginTop: 18 }]}>Funções</Text>
           <View style={styles.chips}>
-            {FUNCOES.map((f) => {
+            {funcoesOferecidas.map((f) => {
               const active = funcoes.includes(f.id);
               return (
                 <Pressable
@@ -376,7 +399,9 @@ export default function IrmaoScreen() {
           </View>
         ) : null}
 
-        {irmaoId ? <CalendarioIndisponibilidade irmaoId={irmaoId} /> : null}
+        {irmaoId && temIndisponibilidade ? (
+          <CalendarioIndisponibilidade irmaoId={irmaoId} />
+        ) : null}
 
         <Pressable style={styles.saveBtn} onPress={handleSave} disabled={saving}>
           <Ionicons name="checkmark" size={17} color="#FBF7EF" />

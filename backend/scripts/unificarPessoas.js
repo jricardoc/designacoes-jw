@@ -32,6 +32,8 @@
  *     um numero ja cadastrado a mao vale mais que o importado.
  *  3. Liga cada `CarrinhoEscala` ao `Irmao` correspondente (`irmaoId`), sem apagar o
  *     `publicadorId` — a coluna antiga so sai depois que isto for conferido em producao.
+ *  4. Da a funcao 'carrinho' a quem ficou ligado a alguma escala. O carrinho deixou de ter
+ *     cadastro proprio: quem aparece la e um `Irmao` com essa funcao, igual as mecanicas.
  *
  * O QUE ELE NAO FAZ
  * -----------------
@@ -171,6 +173,27 @@ async function main() {
         }
     }
     log(`   religadas: ${religadas}${semDestino ? ` | sem destino: ${semDestino}` : ''}`);
+
+    // ---- 4. quem faz carrinho ganha a funcao 'carrinho' --------------------
+    // O carrinho deixou de ter cadastro proprio: quem aparece la e um `Irmao` com essa
+    // funcao, igual as mecanicas. Sem este passo, quem foi migrado some da tela do carrinho.
+    const idsNoCarrinho = new Set([...mapaPublicadorParaIrmao.values()]);
+    const jaComFuncao = await prisma.irmao.findMany({
+        where: { id: { in: [...idsNoCarrinho] } },
+        select: { id: true, nome: true, funcoes: true },
+    });
+    const faltando = jaComFuncao.filter((i) => !i.funcoes.includes('carrinho'));
+
+    log(`
+4) funcao 'carrinho' a dar: ${faltando.length}`);
+    if (!simular) {
+        for (const i of faltando) {
+            await prisma.irmao.update({
+                where: { id: i.id },
+                data: { funcoes: [...i.funcoes, 'carrinho'] },
+            });
+        }
+    }
 
     // ---- conferencia -------------------------------------------------------
     log('\n=== CONFERENCIA ===');

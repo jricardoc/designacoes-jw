@@ -1,5 +1,8 @@
 const prisma = require('../prisma');
 
+/** A funcao que poe a pessoa na tela do carrinho — igual as mecanicas. */
+const FUNCAO_CARRINHO = 'carrinho';
+
 /**
  * Carrinho de publicações.
  *
@@ -42,7 +45,7 @@ class CarrinhoController {
                             include: {
                                 escalas: {
                                     include: {
-                                        publicador: { select: { id: true, nome: true, telefone: true, ativo: true } },
+                                        irmao: { select: { id: true, nome: true, telefone: true, ativo: true } },
                                     },
                                 },
                             },
@@ -50,7 +53,14 @@ class CarrinhoController {
                     },
                     orderBy: [{ ordem: 'asc' }, { nome: 'asc' }],
                 }),
-                prisma.carrinhoPublicador.findMany({ orderBy: { nome: 'asc' } }),
+                // Quem faz carrinho e um `Irmao` com a funcao 'carrinho', como qualquer outra
+                // funcao. A tabela CarrinhoPublicador virou historia: as pessoas moram num
+                // lugar so, e o telefone e o genero delas valem para o app inteiro.
+                prisma.irmao.findMany({
+                    where: { funcoes: { has: FUNCAO_CARRINHO } },
+                    select: { id: true, nome: true, telefone: true, ativo: true },
+                    orderBy: { nome: 'asc' },
+                }),
             ]);
 
             const resposta = pontos.map(p => ({
@@ -68,8 +78,12 @@ class CarrinhoController {
                         diaSemanaNome: DIAS[t.diaSemana],
                         horaInicio: t.horaInicio,
                         horaFim: t.horaFim,
+                        // O nome do campo continua `publicadores` de proposito: as telas ja
+                        // desenham por ele, e o formato ({id, nome, telefone, ativo}) e o
+                        // mesmo — so a origem mudou.
                         publicadores: t.escalas
-                            .map(e => e.publicador)
+                            .map(e => e.irmao)
+                            .filter(Boolean)
                             .sort((a, b) => a.nome.localeCompare(b.nome)),
                     })),
             }));
@@ -111,7 +125,7 @@ class CarrinhoController {
                 include: {
                     ponto: { select: { id: true, nome: true, cor: true } },
                     escalas: {
-                        include: { publicador: { select: { id: true, nome: true, telefone: true, ativo: true } } },
+                        include: { irmao: { select: { id: true, nome: true, telefone: true, ativo: true } } },
                     },
                 },
             });
@@ -129,8 +143,8 @@ class CarrinhoController {
                     // Só quem está ativo entra: uma pessoa desativada não deve
                     // receber lembrete, mas continua no histórico do turno.
                     publicadores: t.escalas
-                        .map(e => e.publicador)
-                        .filter(p => p.ativo)
+                        .map(e => e.irmao)
+                        .filter(p => p && p.ativo)
                         .map(p => ({ id: p.id, nome: p.nome, telefone: p.telefone || null }))
                         .sort((a, b) => a.nome.localeCompare(b.nome)),
                 }));
@@ -228,10 +242,13 @@ class CarrinhoController {
                     horaInicio,
                     horaFim,
                     escalas: {
-                        create: [...new Set(publicadorIds || [])].map(id => ({ publicadorId: Number(id) })),
+                        // `publicadorIds` continua sendo o nome do campo na requisicao — as
+                        // telas nao mudaram — mas os ids agora sao de Irmao, porque e de la
+                        // que a lista de quem faz carrinho passou a sair.
+                        create: [...new Set(publicadorIds || [])].map(id => ({ irmaoId: Number(id) })),
                     },
                 },
-                include: { escalas: { include: { publicador: true } } },
+                include: { escalas: { include: { irmao: true } } },
             });
             return res.status(201).json(turno);
         } catch (error) {
@@ -267,7 +284,7 @@ class CarrinhoController {
                     const ids = [...new Set(publicadorIds)].map(Number).filter(Number.isInteger);
                     if (ids.length > 0) {
                         await tx.carrinhoEscala.createMany({
-                            data: ids.map(publicadorId => ({ turnoId: id, publicadorId })),
+                            data: ids.map(irmaoId => ({ turnoId: id, irmaoId })),
                             skipDuplicates: true,
                         });
                     }
@@ -275,7 +292,7 @@ class CarrinhoController {
                 return tx.carrinhoTurno.update({
                     where: { id },
                     data: novo,
-                    include: { escalas: { include: { publicador: true } } },
+                    include: { escalas: { include: { irmao: true } } },
                 });
             });
 
@@ -304,6 +321,14 @@ class CarrinhoController {
 
     // ==================== PUBLICADORES ====================
 
+    /**
+     * Poe alguem no carrinho.
+     *
+     * Nao cria "um publicador": cria (ou reaproveita) uma PESSOA e da a ela a funcao
+     * 'carrinho'. Se o nome ja existe no cadastro — um irmao que tambem faz carrinho, por
+     * exemplo — a funcao e acrescentada ao registro dele em vez de nascer um segundo. Foi
+     * exatamente a duplicata que a unificacao teve de desfazer.
+     */
     async criarPublicador(req, res) {
         try {
             const { nome, telefone, turnoIds } = req.body;
@@ -311,21 +336,47 @@ class CarrinhoController {
                 return res.status(400).json({ error: 'Nome é obrigatório' });
             }
 
-            const publicador = await prisma.carrinhoPublicador.create({
-                data: {
-                    nome: String(nome).trim(),
-                    telefone: telefone ? String(telefone).trim() : null,
-                    escalas: {
-                        create: [...new Set(turnoIds || [])].map(id => ({ turnoId: Number(id) })),
-                    },
-                },
-                include: { escalas: true },
+            const nomeLimpo = String(nome).trim();
+            const telefoneLimpo = telefone ? String(telefone).replace(/\D/g, '') || null : null;
+            const turnos = [...new Set(turnoIds || [])].map(Number).filter(Number.isInteger);
+
+            const pessoa = await prisma.$transaction(async (tx) => {
+                const existente = await tx.irmao.findUnique({ where: { nome: nomeLimpo } });
+
+                const alvo = existente
+                    ? await tx.irmao.update({
+                        where: { id: existente.id },
+                        data: {
+                            funcoes: existente.funcoes.includes(FUNCAO_CARRINHO)
+                                ? existente.funcoes
+                                : [...existente.funcoes, FUNCAO_CARRINHO],
+                            // Nao sobrescreve o que ja esta la: o cadastro completo vale mais
+                            // que o que foi digitado na tela do carrinho.
+                            ...(existente.telefone || !telefoneLimpo ? {} : { telefone: telefoneLimpo }),
+                        },
+                    })
+                    : await tx.irmao.create({
+                        data: {
+                            nome: nomeLimpo,
+                            funcoes: [FUNCAO_CARRINHO],
+                            // Quem entra por esta tela e irma na esmagadora maioria; o cadastro
+                            // corrige em dois toques quando nao for.
+                            genero: 'irma',
+                            telefone: telefoneLimpo,
+                        },
+                    });
+
+                if (turnos.length > 0) {
+                    await tx.carrinhoEscala.createMany({
+                        data: turnos.map(turnoId => ({ turnoId, irmaoId: alvo.id })),
+                        skipDuplicates: true,
+                    });
+                }
+                return alvo;
             });
-            return res.status(201).json(publicador);
+
+            return res.status(201).json(pessoa);
         } catch (error) {
-            if (error.code === 'P2002') {
-                return res.status(400).json({ error: 'Já existe alguém com esse nome no carrinho' });
-            }
             console.error('Erro ao criar publicador:', error);
             return res.status(500).json({ error: 'Erro interno' });
         }
@@ -338,22 +389,25 @@ class CarrinhoController {
 
             const data = {};
             if (nome !== undefined) data.nome = String(nome).trim();
-            // String vazia limpa o telefone; campo ausente mantém o que está lá.
-            if (telefone !== undefined) data.telefone = telefone ? String(telefone).trim() : null;
+            // String vazia limpa o telefone; campo ausente mantém o que está lá. Guardado só
+            // com dígitos, como no cadastro — é o que o link do WhatsApp precisa.
+            if (telefone !== undefined) {
+                data.telefone = telefone ? String(telefone).replace(/\D/g, '') || null : null;
+            }
             if (ativo !== undefined) data.ativo = Boolean(ativo);
 
             const publicador = await prisma.$transaction(async (tx) => {
                 if (turnoIds !== undefined) {
-                    await tx.carrinhoEscala.deleteMany({ where: { publicadorId: id } });
+                    await tx.carrinhoEscala.deleteMany({ where: { irmaoId: id } });
                     const ids = [...new Set(turnoIds)].map(Number).filter(Number.isInteger);
                     if (ids.length > 0) {
                         await tx.carrinhoEscala.createMany({
-                            data: ids.map(turnoId => ({ turnoId, publicadorId: id })),
+                            data: ids.map(turnoId => ({ turnoId, irmaoId: id })),
                             skipDuplicates: true,
                         });
                     }
                 }
-                return tx.carrinhoPublicador.update({ where: { id }, data });
+                return tx.irmao.update({ where: { id }, data });
             });
 
             return res.json(publicador);
@@ -369,14 +423,31 @@ class CarrinhoController {
         }
     }
 
+    /**
+     * Tira alguem do carrinho.
+     *
+     * NAO apaga a pessoa: remove a funcao 'carrinho' e as escalas dela. Apagar seria
+     * catastrofico agora que a tabela e a mesma do cadastro — tirar uma irma do carrinho
+     * levaria junto o telefone, e tirar um irmao levaria as funcoes mecanicas dele.
+     */
     async excluirPublicador(req, res) {
         try {
-            await prisma.carrinhoPublicador.delete({ where: { id: parseInt(req.params.id) } });
-            return res.status(204).send();
-        } catch (error) {
-            if (error.code === 'P2025') {
+            const id = parseInt(req.params.id);
+            const pessoa = await prisma.irmao.findUnique({ where: { id } });
+            if (!pessoa) {
                 return res.status(404).json({ error: 'Pessoa não encontrada' });
             }
+
+            await prisma.$transaction([
+                prisma.carrinhoEscala.deleteMany({ where: { irmaoId: id } }),
+                prisma.irmao.update({
+                    where: { id },
+                    data: { funcoes: pessoa.funcoes.filter(f => f !== FUNCAO_CARRINHO) },
+                }),
+            ]);
+
+            return res.status(204).send();
+        } catch (error) {
             console.error('Erro ao excluir publicador:', error);
             return res.status(500).json({ error: 'Erro interno' });
         }
