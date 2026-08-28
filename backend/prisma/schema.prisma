@@ -119,7 +119,11 @@ model Irmao {
   // boot em producao (o `db push` recusa DROP COLUMN) — sai com um ALTER a mao, quando der.
   grupo              String?
   grupoId            Int?
-  grupoCampo         GrupoCampo?           @relation(fields: [grupoId], references: [id], onDelete: SetNull)
+  grupoCampo         GrupoCampo?           @relation("GrupoPublicadores", fields: [grupoId], references: [id], onDelete: SetNull)
+  // Os grupos que esta pessoa dirige ou ajuda. Lista, e nao campo unico, porque e o Prisma
+  // que exige o lado inverso — na pratica e no maximo um de cada.
+  gruposQueDirige    GrupoCampo[]          @relation("GrupoDirigente")
+  gruposQueAjuda     GrupoCampo[]          @relation("GrupoAjudante")
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio         String?
@@ -142,14 +146,25 @@ model Irmao {
 // E o que liga a pessoa a limpeza do salao: o campo `limpeza` da programacao importada vem
 // escrito por grupo ("Grupos 1 Fulano & Grupo 2 Sicrano").
 model GrupoCampo {
-  id           Int      @id @default(autoincrement())
-  nome         String   @unique
+  id           Int     @id @default(autoincrement())
+  nome         String  @unique
   // Ordem de exibicao; empate cai no nome. Serve para a lista nao dancar a cada renomeacao.
-  ordem        Int      @default(0)
-  ativo        Boolean  @default(true)
-  publicadores Irmao[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  ordem        Int     @default(0)
+  ativo        Boolean @default(true)
+  publicadores Irmao[] @relation("GrupoPublicadores")
+
+  // Dirigente e ajudante moram NO GRUPO, e nao como campo do publicador: o papel e do grupo,
+  // e a mesma pessoa pode dirigir um e nao ser nada em outro. Como campo da pessoa, trocar o
+  // dirigente exigiria mexer em dois cadastros e nada garantiria que so um e o dirigente.
+  //
+  // `onDelete: SetNull`: apagar a pessoa nao pode apagar o grupo inteiro junto.
+  dirigenteId Int?
+  dirigente   Irmao? @relation("GrupoDirigente", fields: [dirigenteId], references: [id], onDelete: SetNull)
+  ajudanteId  Int?
+  ajudante    Irmao? @relation("GrupoAjudante", fields: [ajudanteId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Datas em que o irmao nao esta disponivel
