@@ -40,7 +40,15 @@ export function GradientHeader({
         <Pressable
           style={styles.back}
           hitSlop={10}
-          onPress={() => (onBack ? onBack() : router.back())}
+          onPress={() => {
+            if (onBack) return onBack();
+            // O menu lateral navega com `router.replace` — de propósito, senão cada ida ao
+            // menu empilharia uma tela. Só que quem chega por ele não tem histórico, e o
+            // `back()` estoura em "GO_BACK was not handled by any navigator", deixando o
+            // botão morto. Sem para onde voltar, o Início é o destino óbvio.
+            if (router.canGoBack()) return router.back();
+            router.replace("/(tabs)/minhas");
+          }}
         >
           <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
           <Text style={styles.backText}>Voltar</Text>
