@@ -11,6 +11,7 @@ import { gerarHtmlSemana } from "@/utils/pdfHtml";
 import { datasDaSemana } from "@/utils/semanaReuniao";
 import { AssistenciaSheet } from "./AssistenciaSheet";
 import { CompartilharReuniaoSheet } from "./CompartilharReuniaoSheet";
+import { router } from "expo-router";
 import { SemanaCard } from "./SemanaCard";
 import { SemanaShareCard } from "./SemanaShareCard";
 
@@ -101,6 +102,12 @@ export function useSemanaAcoes() {
         semana={semana}
         index={index}
         destaque={destaque}
+        onAbrir={() =>
+          router.push({
+            pathname: "/reuniao/semana/[id]",
+            params: { id: semana.id },
+          })
+        }
         onPdf={() => gerarPdf({ reuniao, semana })}
         onCompartilhar={() => setAlvoShare({ reuniao, semana })}
         onAssistencia={

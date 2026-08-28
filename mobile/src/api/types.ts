@@ -20,7 +20,12 @@ export type PrivilegioId = "servoMinisterial" | "anciao";
  * Área que um usuário pode administrar sem ser admin geral. Espelha
  * backend/src/middleware/escopos.js.
  */
-export type EscopoAdmin = "designacoes" | "dirigentes" | "reunioes" | "carrinho";
+export type EscopoAdmin =
+  | "designacoes"
+  | "dirigentes"
+  | "reunioes"
+  | "carrinho"
+  | "confirmacoes";
 
 /** Uma área do catálogo de permissões, como o backend a descreve. */
 export interface OpcaoEscopo {
@@ -109,6 +114,8 @@ export interface Irmao {
   funcoes: FuncaoId[];
   nivelAudioVideo: NivelAudioVideo;
   privilegio?: PrivilegioId | null;
+  /** Só dígitos, com DDD ("71999998888"). Abre o WhatsApp já com o texto na tela de Confirmações. */
+  telefone?: string | null;
   ativo: boolean;
   indisponibilidades?: Indisponibilidade[];
   dirigenteSaidas?: DirigenteSaida[];
@@ -547,4 +554,45 @@ export interface CarrinhoResposta {
   pontos: CarrinhoPonto[];
   publicadores: CarrinhoPublicador[];
   dias: string[];
+}
+
+// ===== Confirmação das partes de estudante =====
+
+/** Em qual sala a parte acontece. */
+export type SalaDaParte = "principal" | "salaB";
+
+/**
+ * Uma pessoa com parte de estudante numa semana, e o estado da confirmação dela.
+ *
+ * `data`, `campo` e `nome` juntos são a identidade da linha — é o que volta no PUT.
+ */
+export interface ParteParaConfirmar {
+  data: string;
+  campo: string;
+  nome: string;
+  /** "Leitura da Bíblia", "Ministério — parte 1"... */
+  parte: string;
+  sala: SalaDaParte;
+  /** O título da parte na programação, sem a hora ("Iniciando conversas (3 min)"). */
+  titulo: string | null;
+  /** null = ainda sem resposta, true = vai cumprir, false = não vai. */
+  confirmou: boolean | null;
+  /** A mensagem pronta, montada pelo backend com a saudação da hora. */
+  texto: string;
+  /** Link do WhatsApp já com o texto. null quando não há telefone cadastrado. */
+  whatsapp: string | null;
+}
+
+export interface ReuniaoParaConfirmar {
+  data: string;
+  faixaData: string;
+  leituraSemanal: string | null;
+  partes: ParteParaConfirmar[];
+  total: number;
+  confirmadas: number;
+  recusadas: number;
+}
+
+export interface ConfirmacoesResposta {
+  reunioes: ReuniaoParaConfirmar[];
 }

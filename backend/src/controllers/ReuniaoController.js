@@ -269,6 +269,37 @@ class ReuniaoController {
     }
 
     /**
+     * GET /reunioes/confirmacao?nome=Fulano de Tal
+     *
+     * A mensagem pronta para perguntar a quem tem parte na semana se esta tudo certo com a
+     * designacao. Vem montada daqui pelo mesmo motivo dos convites de Zoom: o app nao tem EAS
+     * Update, entao texto que ele monta sozinho so muda com um build nativo novo.
+     *
+     * Pedida no momento do toque, e nao junto com a semana, porque a saudacao depende da HORA:
+     * carregar a tela de manha e compartilhar depois do almoco mandaria "Bom dia" as 13h.
+     *
+     * Leitura: qualquer irmao logado — quem ve a programacao pode confirmar a parte.
+     */
+    async textoConfirmacao(req, res) {
+        try {
+            const nome = String(req.query.nome || '').trim();
+            if (!nome) {
+                return res.status(400).json({ error: 'Nome não informado' });
+            }
+
+            const texto = ConviteReuniaoService.textoConfirmacaoDesignacao(nome);
+            if (!texto) {
+                return res.status(400).json({ error: 'Nome inválido' });
+            }
+
+            return res.json({ texto });
+        } catch (error) {
+            console.error('Erro ao montar o texto de confirmação:', error);
+            return res.status(500).json({ error: 'Erro ao montar o texto' });
+        }
+    }
+
+    /**
      * GET /reunioes/assistencias
      *
      * Todos os registros de assistencia, do mais recente para o mais antigo. O

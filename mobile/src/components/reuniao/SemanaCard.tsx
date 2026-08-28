@@ -1,96 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import type { SemanaReuniao } from "@/api/types";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { canticoLegivel, datasDaSemana, parteTitulo } from "@/utils/semanaReuniao";
-
-// Sentinela gravada pela web para marcar uma linha como excluida.
-const SENTINELA_DELETADO = "__DELETADO__";
-
-export function limpar(value?: string | null): string | null {
-  if (!value || value === SENTINELA_DELETADO) return null;
-  const t = String(value).trim();
-  return t && t !== "-" ? t : null;
-}
-
-/** Uma parte com título e quem faz — e, quando existe, o irmão da Sala B. */
-function Parte({
-  titulo,
-  principal,
-  salaB,
-  rotulo,
-}: {
-  titulo?: string | null;
-  principal?: string | null;
-  salaB?: string | null;
-  rotulo?: string;
-}) {
-  const { styles } = useTema(criarEstilos);
-  // O título vem com a hora colada ("19:36 1. Joias espirituais"); separada, ela vira a
-  // marcação de horário e o texto fica legível.
-  const t = parteTitulo(titulo);
-  const p = limpar(principal);
-  const b = limpar(salaB);
-  if (!t && !p && !b) return null;
-
-  return (
-    <View style={styles.parte}>
-      <Text style={styles.parteTitulo}>
-        {t?.hora ? <Text style={styles.parteHora}>{t.hora} </Text> : null}
-        {t?.texto || rotulo || "—"}
-      </Text>
-      <View style={styles.parteQuem}>
-        {p ? (
-          <View style={styles.chip}>
-            <Text style={styles.chipTexto}>{p}</Text>
-          </View>
-        ) : null}
-        {b ? (
-          <View style={[styles.chip, styles.chipSalaB]}>
-            <Text style={[styles.chipTexto, styles.chipTextoSalaB]}>Sala B: {b}</Text>
-          </View>
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-/** Linha simples "rótulo: valor". */
-function Linha({ label, value }: { label: string; value?: string | null }) {
-  const { styles } = useTema(criarEstilos);
-  const conteudo = limpar(value);
-  if (!conteudo) return null;
-  return (
-    <View style={styles.linha}>
-      <Text style={styles.linhaLabel}>{label}</Text>
-      <Text style={styles.linhaValue}>{conteudo}</Text>
-    </View>
-  );
-}
-
-function Secao({
-  titulo,
-  cor,
-  children,
-}: {
-  titulo: string;
-  cor: string;
-  children: React.ReactNode;
-}) {
-  const { styles } = useTema(criarEstilos);
-  return (
-    <View style={styles.secao}>
-      <View style={[styles.secaoBar, { backgroundColor: cor }]} />
-      <View style={styles.secaoBody}>
-        <Text style={[styles.secaoTitulo, { color: cor }]}>{titulo}</Text>
-        {children}
-      </View>
-    </View>
-  );
-}
+import { datasDaSemana, limpar } from "@/utils/semanaReuniao";
 
 /** O bloco de data: número grande, mês e o dia da semana — como no quadro de designações. */
 function BlocoData({
@@ -125,6 +39,7 @@ export function SemanaCard({
   semana,
   index = 0,
   destaque = false,
+  onAbrir,
   onCompartilhar,
   onPdf,
   onAssistencia,
@@ -135,6 +50,8 @@ export function SemanaCard({
   index?: number;
   /** Semana atual hasteada no topo da tela: ganha borda viva na cor da marca. */
   destaque?: boolean;
+  /** Abre a programação da semana numa tela própria. */
+  onAbrir?: () => void;
   onCompartilhar?: () => void;
   onPdf?: () => void;
   /**
@@ -147,33 +64,20 @@ export function SemanaCard({
   gerandoPdf?: boolean;
 }) {
   const { colors, styles } = useTema(criarEstilos);
-  const [open, setOpen] = useState(false);
   const { meio, fds } = datasDaSemana(semana);
-
-  const temMinisterio =
-    limpar(semana.ministerio1_titulo) ||
-    limpar(semana.ministerio2_titulo) ||
-    limpar(semana.ministerio3_titulo) ||
-    limpar(semana.ministerio4_titulo);
-
-  const temFds =
-    limpar(semana.fds_tema) ||
-    limpar(semana.fds_orador) ||
-    limpar(semana.fds_presidente) ||
-    limpar(semana.fds_leitor);
-
-  const temMecanicaFds =
-    limpar(semana.fds_mecanica_audioVideo) ||
-    limpar(semana.fds_mecanica_indicadores) ||
-    limpar(semana.fds_mecanica_microfone) ||
-    limpar(semana.fds_mecanica_portao);
 
   return (
     <Animated.View
       entering={FadeInDown.delay(index * 55).duration(300)}
       style={[styles.card, destaque && styles.cardDestaque]}
     >
-      <Pressable style={styles.header} onPress={() => setOpen((o) => !o)}>
+      <Pressable
+        style={({ pressed }) => [styles.header, pressed && styles.pressionado]}
+        onPress={onAbrir}
+        disabled={!onAbrir}
+        accessibilityRole="button"
+        accessibilityLabel="Abrir a programação desta semana"
+      >
         {/* As datas vêm primeiro: é o que o irmão procura ao abrir a tela. O rótulo textual
             do PDF ("Agosto 03 - 09") só aparece quando a importação não trouxe a data. */}
         {meio || fds ? (
@@ -199,11 +103,7 @@ export function SemanaCard({
           <Text style={styles.faixa}>{semana.faixaData}</Text>
         )}
 
-        <Ionicons
-          name={open ? "chevron-up" : "chevron-down"}
-          size={20}
-          color={colors.textSecondary}
-        />
+        <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
       </Pressable>
 
       {limpar(semana.leituraSemanal) ? (
@@ -243,123 +143,6 @@ export function SemanaCard({
         </Pressable>
       </View>
 
-      {open ? (
-        <View style={styles.body}>
-          <Secao titulo="Presidência" cor={colors.primary}>
-            <Linha label="Presidente" value={semana.presidente} />
-            <Linha label="Conselheiro B" value={semana.conselheiroB} />
-            <Linha label="Oração Inicial" value={semana.oracaoInicial} />
-            <Linha label="Cântico Inicial" value={canticoLegivel(semana.canticoInicial)} />
-          </Secao>
-
-          {limpar(semana.tesouro1_titulo) ||
-          limpar(semana.tesouro2_titulo) ||
-          limpar(semana.tesouro3_titulo) ? (
-            <Secao titulo="💎 Tesouros da Palavra de Deus" cor="#5E7A8A">
-              <Parte
-                titulo={semana.tesouro1_titulo}
-                principal={semana.tesouro1_irmao}
-                rotulo="Discurso"
-              />
-              <Parte
-                titulo={semana.tesouro2_titulo}
-                principal={semana.tesouro2_irmao}
-                rotulo="Joias espirituais"
-              />
-              <Parte
-                titulo={semana.tesouro3_titulo}
-                principal={semana.tesouro3_principal}
-                salaB={semana.tesouro3_salaB}
-                rotulo="Leitura da Bíblia"
-              />
-            </Secao>
-          ) : null}
-
-          {/* Faltava por inteiro na tela antiga, mesmo sendo o maior bloco da reunião. */}
-          {temMinisterio ? (
-            <Secao titulo="🌾 Faça Seu Melhor no Ministério" cor={colors.orangeDark}>
-              <Parte
-                titulo={semana.ministerio1_titulo}
-                principal={semana.ministerio1_principal}
-                salaB={semana.ministerio1_salaB}
-              />
-              <Parte
-                titulo={semana.ministerio2_titulo}
-                principal={semana.ministerio2_principal}
-                salaB={semana.ministerio2_salaB}
-              />
-              <Parte
-                titulo={semana.ministerio3_titulo}
-                principal={semana.ministerio3_principal}
-                salaB={semana.ministerio3_salaB}
-              />
-              <Parte
-                titulo={semana.ministerio4_titulo}
-                principal={semana.ministerio4_principal}
-                salaB={semana.ministerio4_salaB}
-              />
-            </Secao>
-          ) : null}
-
-          {limpar(semana.vidaCrista1_titulo) || limpar(semana.vidaCrista2_titulo) ? (
-            <Secao titulo="🐑 Nossa Vida Cristã" cor={colors.redDark}>
-              <Linha label="Cântico" value={canticoLegivel(semana.canticoMeio)} />
-              <Parte
-                titulo={semana.vidaCrista1_titulo}
-                principal={semana.vidaCrista1_irmao}
-              />
-              <Parte
-                titulo={semana.vidaCrista2_titulo}
-                principal={semana.vidaCrista2_irmao}
-              />
-            </Secao>
-          ) : null}
-
-          {limpar(semana.estudoBiblico_dirigente) || limpar(semana.estudoBiblico_leitor) ? (
-            <Secao titulo="📕 Estudo Bíblico de Congregação" cor={colors.redDark}>
-              <Linha label="Dirigente" value={semana.estudoBiblico_dirigente} />
-              <Linha label="Leitor" value={semana.estudoBiblico_leitor} />
-              <Linha label="Cântico Final" value={canticoLegivel(semana.canticoFinal)} />
-              <Linha label="Oração Final" value={semana.oracaoFinal} />
-            </Secao>
-          ) : null}
-
-          {limpar(semana.mecanica_audioVideo) ||
-          limpar(semana.mecanica_indicadores) ||
-          limpar(semana.mecanica_microfone) ? (
-            <Secao titulo="🔧 Mecânicas — meio de semana" cor={colors.purple}>
-              <Linha label="Áudio e Vídeo" value={semana.mecanica_audioVideo} />
-              <Linha label="Indicadores" value={semana.mecanica_indicadores} />
-              <Linha label="Microfones" value={semana.mecanica_microfone} />
-            </Secao>
-          ) : null}
-
-          {temFds ? (
-            <Secao titulo="📅 Fim de Semana" cor={colors.amber}>
-              <Linha label="Presidente" value={semana.fds_presidente} />
-              <Linha label="Tema" value={semana.fds_tema} />
-              <Linha label="Orador" value={semana.fds_orador} />
-              <Linha label="Congregação" value={semana.fds_congregacao} />
-              <Linha label="Leitor" value={semana.fds_leitor} />
-            </Secao>
-          ) : null}
-
-          {temMecanicaFds ? (
-            <Secao titulo="🔧 Mecânicas — fim de semana" cor={colors.purple}>
-              <Linha label="Áudio e Vídeo" value={semana.fds_mecanica_audioVideo} />
-              <Linha label="Indicadores" value={semana.fds_mecanica_indicadores} />
-              <Linha label="Microfones" value={semana.fds_mecanica_microfone} />
-              <Linha label="Portão" value={semana.fds_mecanica_portao} />
-            </Secao>
-          ) : null}
-
-          {limpar(semana.limpeza) ? (
-            <Secao titulo="🧹 Limpeza" cor={colors.green}>
-              <Linha label="Responsável" value={semana.limpeza} />
-            </Secao>
-          ) : null}
-        </View>
-      ) : null}
     </Animated.View>
   );
 }
@@ -376,6 +159,7 @@ const criarEstilos = (colors: Cores) =>
       borderWidth: 2,
       borderColor: colors.primary,
     },
+    pressionado: { opacity: 0.6 },
     header: {
       flexDirection: "row",
       alignItems: "center",

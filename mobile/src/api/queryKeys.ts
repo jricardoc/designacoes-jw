@@ -14,6 +14,9 @@ export const qk = {
   dirigentesQuadro: (id: number | string) =>
     ["dirigentes-quadros", String(id)] as const,
   reunioes: ["reunioes"] as const,
+  // Com o recorte no nome: a lista "so as proximas" e a "com as passadas" sao consultas
+  // diferentes, e uma nao pode servir cache para a outra.
+  confirmacoes: (passadas: boolean) => ["confirmacoes", passadas] as const,
   assistencias: ["assistencias"] as const,
   cumprimento: ["cumprimento"] as const,
   territorios: ["territorios"] as const,

@@ -204,9 +204,77 @@ function montarOpcoes(semana) {
     ];
 }
 
+// ---------------------------------------------------------------------------
+// Confirmacao de designacao: a mensagem curta que se manda para o irmao que tem
+// parte na semana, para saber se esta tudo certo.
+// ---------------------------------------------------------------------------
+
+/** Como a mensagem comeca. Mudar o texto aqui e um deploy, nao um build do app. */
+const TEXTO_CONFIRMACAO = (saudacao, nome) =>
+    `${saudacao} ${nome}! Tudo certinho com a sua designação?`;
+
+const FUSO_CONGREGACAO = 'America/Bahia';
+
+// A hora do servidor e UTC; quem manda e o relogio da congregacao. Mesmo criterio de
+// LembreteDesignacoesService, que ja formata datas nesse fuso pelo mesmo motivo.
+const FORMATADOR_HORA = new Intl.DateTimeFormat('en-GB', {
+    timeZone: FUSO_CONGREGACAO,
+    hour: '2-digit',
+    hour12: false,
+});
+
+/** "Bom dia" ate 11:59, "Boa tarde" ate 17:59, "Boa noite" dai em diante. */
+function saudacaoDaHora(agora = new Date()) {
+    const hora = Number(FORMATADOR_HORA.format(agora));
+    if (!Number.isFinite(hora)) return 'Olá';
+    if (hora < 12) return 'Bom dia';
+    if (hora < 18) return 'Boa tarde';
+    return 'Boa noite';
+}
+
+// Primeiros nomes que quase nunca vem sozinhos: cumprimentar so "Maria" numa congregacao
+// com varias Marias nao identifica ninguem. Com dois nomes, "Maria Eduarda" resolve.
+const NOMES_COMPOSTOS = new Set([
+    'maria', 'ana', 'jose', 'joao', 'luiz', 'luis', 'antonio', 'carlos', 'pedro', 'paulo',
+]);
+
+const semAcento = (texto) =>
+    String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+/**
+ * O nome como se fala com a pessoa: o primeiro nome, e o segundo junto quando o primeiro e
+ * daqueles que pedem companhia. O arquivo importado traz o nome inteiro ("Maria Eduarda dos
+ * S. Gomes de Araujo"), que numa mensagem direta soa como formulario.
+ */
+function nomeDeTratamento(nomeCompleto) {
+    const partes = String(nomeCompleto || '').trim().split(/\s+/).filter(Boolean);
+    if (partes.length === 0) return '';
+    if (partes.length === 1) return partes[0];
+    return NOMES_COMPOSTOS.has(semAcento(partes[0]))
+        ? `${partes[0]} ${partes[1]}`
+        : partes[0];
+}
+
+/**
+ * A mensagem pronta para um irmao/irma com parte na semana.
+ *
+ * @param {string} nomeCompleto  nome como esta na programacao importada
+ * @param {Date} [agora]         injetavel para o teste fixar o relogio
+ * @returns {string|null} null quando nao ha nome
+ */
+function textoConfirmacaoDesignacao(nomeCompleto, agora = new Date()) {
+    const nome = nomeDeTratamento(nomeCompleto);
+    if (!nome) return null;
+    return TEXTO_CONFIRMACAO(saudacaoDaHora(agora), nome);
+}
+
 module.exports = {
     montarOpcoes,
     conviteMeioSemana,
     conviteFimDeSemana,
-    _internos: { negrito, faixaPorExtenso, datasDaSemana, temaEntreAspas, limpo },
+    textoConfirmacaoDesignacao,
+    _internos: {
+        negrito, faixaPorExtenso, datasDaSemana, temaEntreAspas, limpo,
+        saudacaoDaHora, nomeDeTratamento,
+    },
 };

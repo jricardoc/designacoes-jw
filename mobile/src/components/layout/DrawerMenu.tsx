@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { EscopoAdmin } from "@/api/types";
 import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral, podeGerenciar } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
@@ -35,6 +36,8 @@ interface ItemMenu {
   href: Href;
   /** Some do menu para quem não pode entrar na tela. */
   somenteAdmin?: boolean;
+  /** Some para quem não tem este escopo (o admin geral passa em todos). */
+  escopo?: EscopoAdmin;
 }
 
 const ITENS: ItemMenu[] = [
@@ -44,6 +47,14 @@ const ITENS: ItemMenu[] = [
   { chave: "territorio", rotulo: "Território", icone: "map-outline", href: "/(tabs)/territorio" },
   { chave: "reuniao", rotulo: "Reunião", icone: "people-outline", href: "/(tabs)/reuniao" },
   { chave: "carrinho", rotulo: "Carrinho", icone: "book-outline", href: "/(tabs)/carrinho" },
+  // Falar com quem tem parte de estudante e anotar quem confirmou: área própria.
+  {
+    chave: "confirmacoes",
+    rotulo: "Confirmações",
+    icone: "checkmark-done-outline",
+    href: "/confirmacoes",
+    escopo: "confirmacoes",
+  },
   { chave: "conta", rotulo: "Conta", icone: "person-outline", href: "/(tabs)/conta" },
   // Cadastro da congregação (irmãos, saídas de campo): só administradores.
   { chave: "config", rotulo: "Configurações", icone: "options-outline", href: "/(tabs)/config", somenteAdmin: true },
@@ -141,14 +152,14 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           </View>
 
           <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
-            {ITENS.filter(
-              (item) =>
-                !item.somenteAdmin ||
-                ehAdminGeral(usuario) ||
-                // As saídas de campo vivem em Configurações e são da área de
-                // dirigentes — quem tem esse escopo precisa alcançar a tela.
-                podeGerenciar(usuario, "dirigentes"),
-            ).map((item) => {
+            {ITENS.filter((item) => {
+              // `podeGerenciar` já contempla o admin geral em qualquer escopo.
+              if (item.escopo) return podeGerenciar(usuario, item.escopo);
+              if (!item.somenteAdmin) return true;
+              // As saídas de campo vivem em Configurações e são da área de
+              // dirigentes — quem tem esse escopo precisa alcançar a tela.
+              return ehAdminGeral(usuario) || podeGerenciar(usuario, "dirigentes");
+            }).map((item) => {
               const ativo = item.chave === atual;
               return (
                 <Pressable

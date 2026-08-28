@@ -46,6 +46,21 @@ export function useImportarReuniao() {
 }
 
 /**
+ * A mensagem pronta para confirmar a designação com quem tem parte na semana.
+ *
+ * Função solta, e não hook: é pedida no TOQUE do botão, não na abertura da tela. A saudação
+ * depende da hora, então buscar antes mandaria "Bom dia" numa mensagem enviada às 15h.
+ *
+ * O texto vem montado do backend pelo mesmo motivo dos convites de Zoom — ver
+ * ConviteReuniaoService.
+ */
+export function buscarTextoConfirmacao(nome: string) {
+  return apiRequest<{ texto: string }>(
+    `/reunioes/confirmacao?nome=${encodeURIComponent(nome)}`,
+  );
+}
+
+/**
  * Os textos prontos de compartilhamento da semana (os convites de Zoom).
  *
  * O app NÃO monta esses textos: eles vêm montados de

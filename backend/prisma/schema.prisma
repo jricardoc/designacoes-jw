@@ -9,16 +9,16 @@ datasource db {
 
 // Quadro de Designacoes Mensal (um por mes/ano)
 model Quadro {
-  id           Int           @id @default(autoincrement())
-  mes          Int           // 1-12
-  ano          Int           // 2026
-  titulo       String        // "Quadro de Designacoes JANEIRO 2026"
-  status       String        @default("rascunho") // rascunho, publicado, arquivado
-  designacoes  Designacao[]
-  historicos   Historico[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  
+  id          Int          @id @default(autoincrement())
+  mes         Int // 1-12
+  ano         Int // 2026
+  titulo      String // "Quadro de Designacoes JANEIRO 2026"
+  status      String       @default("rascunho") // rascunho, publicado, arquivado
+  designacoes Designacao[]
+  historicos  Historico[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
   @@unique([mes, ano])
 }
 
@@ -43,77 +43,81 @@ model Designacao {
 
 // Historico de todas as modificacoes
 model Historico {
-  id          Int      @id @default(autoincrement())
-  quadroId    Int
-  quadro      Quadro   @relation(fields: [quadroId], references: [id], onDelete: Cascade)
-  usuarioId   Int?
-  usuario     Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
-  acao        String   // "criou", "editou", "excluiu", "publicou", "arquivou"
-  descricao   String   // Descricao legivel
-  campo       String?  // Campo modificado (irmao1, irmao2, data, dia)
-  valorAntigo String?  // Valor anterior
-  valorNovo   String?  // Novo valor
+  id             Int      @id @default(autoincrement())
+  quadroId       Int
+  quadro         Quadro   @relation(fields: [quadroId], references: [id], onDelete: Cascade)
+  usuarioId      Int?
+  usuario        Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  acao           String // "criou", "editou", "excluiu", "publicou", "arquivou"
+  descricao      String // Descricao legivel
+  campo          String? // Campo modificado (irmao1, irmao2, data, dia)
+  valorAntigo    String? // Valor anterior
+  valorNovo      String? // Novo valor
   designacaoInfo String? // Info da designacao (data + funcao)
-  createdAt   DateTime @default(now())
+  createdAt      DateTime @default(now())
 }
 
 // Configuracoes gerais do sistema
 model Config {
-  id        Int      @id @default(autoincrement())
-  titulo    String
-  subtitulo String
-  mes       String
+  id              Int      @id @default(autoincrement())
+  titulo          String
+  subtitulo       String
+  mes             String
   // Horario em que a reuniao comeca, "HH:MM" no fuso da congregacao. E o que torna possivel
   // um lembrete "3 horas antes": a designacao guarda so a data, entao sem isto nao existe
   // instante nenhum de onde subtrair as horas.
-  horaMeioSemana  String @default("19:30")
-  horaFimDeSemana String @default("09:00")
-  updatedAt DateTime @updatedAt
+  horaMeioSemana  String   @default("19:30")
+  horaFimDeSemana String   @default("09:00")
+  updatedAt       DateTime @updatedAt
 }
 
 // Usuario para autenticacao (login por nickname)
 model Usuario {
-  id         Int         @id @default(autoincrement())
-  nickname   String      @unique
-  senha      String
-  nome       String
+  id                   Int                     @id @default(autoincrement())
+  nickname             String                  @unique
+  senha                String
+  nome                 String
   // Admin GERAL: contempla tudo. Continua sendo o campo historico — nao foi
   // convertido em escopo para nao precisar migrar dado de usuario ja existente
   // num banco em producao (o EasyPanel roda `db push`, que nao move dado).
-  isAdmin    Boolean     @default(false)
+  isAdmin              Boolean                 @default(false)
   // Escopos de admin por area, para quem NAO e admin geral. Um usuario pode ter
   // varios. Valores validos em src/middleware/escopos.js.
   // Aditivo com default: seguro para o `db push` do deploy.
-  escopos    String[]    @default([])
+  escopos              String[]                @default([])
   // Vinculo com o cadastro da congregacao. E o que permite ao irmao ver as proprias
   // designacoes: sem ele so restaria casar por nome, que falha em silencio quando o nome do
   // login difere do cadastro ("Henzel D. Almeida" vs "Henzel Almeida").
   // @unique: uma conta por irmao. SetNull para que excluir um irmao nao apague a conta.
-  irmaoId    Int?        @unique
-  irmao      Irmao?      @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
-  historicos Historico[]
-  pushTokens PushToken[]
-  prefNotificacao PreferenciaNotificacao?
+  irmaoId              Int?                    @unique
+  irmao                Irmao?                  @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
+  historicos           Historico[]
+  pushTokens           PushToken[]
+  prefNotificacao      PreferenciaNotificacao?
   notificacoesEnviadas NotificacaoEnviada[]
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
 }
 
 // Cadastro de irmaos com suas funcoes
 model Irmao {
-  id                 Int                @id @default(autoincrement())
-  nome               String             @unique
+  id                 Int                   @id @default(autoincrement())
+  nome               String                @unique
   funcoes            String[]
-  nivelAudioVideo    String             @default("experiente") // "experiente" ou "treinando"
+  nivelAudioVideo    String                @default("experiente") // "experiente" ou "treinando"
+  // So digitos, com DDD ("71999998888"). Usado para abrir a conversa no WhatsApp ja com o
+  // texto da confirmacao. Opcional: quem nao tem numero cadastrado ainda cai no
+  // compartilhamento comum, que deixa o irmao escolher o app e o contato.
+  telefone           String?
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio         String?
-  ativo              Boolean            @default(true)
+  ativo              Boolean               @default(true)
   usuario            Usuario?
   indisponibilidades Indisponibilidade[]
   dirigenteSaidas    DirigenteSaidaCampo[]
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
 }
 
 // Datas em que o irmao nao esta disponivel
@@ -124,65 +128,65 @@ model Indisponibilidade {
   data      String
   motivo    String?
   createdAt DateTime @default(now())
-  
+
   @@unique([irmaoId, data])
 }
 
 // NOVO: Modelos para Reuniões Importadas via Excel
 model Reuniao {
-  id        Int      @id @default(autoincrement())
-  mes       Int      // 1-12
-  ano       Int      // 2026
+  id        Int             @id @default(autoincrement())
+  mes       Int // 1-12
+  ano       Int // 2026
   semanas   SemanaReuniao[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@unique([mes, ano])
 }
 
 model SemanaReuniao {
-  id             Int      @id @default(autoincrement())
-  reuniaoId      Int
-  reuniao        Reuniao  @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
-  
+  id        Int     @id @default(autoincrement())
+  reuniaoId Int
+  reuniao   Reuniao @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+
   // Dados Gerais da Semana
-  faixaData      String   // Ex: "Março 02 - 08"
-  dataReuniao    String?  // Ex: "05/03/2026"
-  leituraSemanal String?  // Ex: "Ísaias 41 - 42"
-  
+  faixaData      String // Ex: "Março 02 - 08"
+  dataReuniao    String? // Ex: "05/03/2026"
+  leituraSemanal String? // Ex: "Ísaias 41 - 42"
+
   // Cabeçalho / Presidente
-  presidente     String?
-  conselheiroB   String?
-  oracaoInicial  String?
-  oracaoFinal    String?
-  
+  presidente    String?
+  conselheiroB  String?
+  oracaoInicial String?
+  oracaoFinal   String?
+
   // Canticos e Tempos
   canticoInicial String?
   canticoMeio    String?
   canticoFinal   String?
-  
+
   // Partes da Reunião (JSON ou campos específicos - usaremos campos para facilitar)
   // Tesouros
-  tesouro1_titulo   String?
-  tesouro1_irmao    String?
-  tesouro2_titulo   String?
-  tesouro2_irmao    String?
-  tesouro3_titulo   String?
-  tesouro3_salaB    String?
+  tesouro1_titulo    String?
+  tesouro1_irmao     String?
+  tesouro2_titulo    String?
+  tesouro2_irmao     String?
+  tesouro3_titulo    String?
+  tesouro3_salaB     String?
   tesouro3_principal String?
-  
+
   // Ministério
-  ministerio1_titulo String?
-  ministerio1_salaB  String?
+  ministerio1_titulo    String?
+  ministerio1_salaB     String?
   ministerio1_principal String?
-  ministerio2_titulo String?
-  ministerio2_salaB  String?
+  ministerio2_titulo    String?
+  ministerio2_salaB     String?
   ministerio2_principal String?
-  ministerio3_titulo String?
-  ministerio3_salaB  String?
+  ministerio3_titulo    String?
+  ministerio3_salaB     String?
   ministerio3_principal String?
-  ministerio4_titulo String?
-  ministerio4_salaB  String?
+  ministerio4_titulo    String?
+  ministerio4_salaB     String?
   ministerio4_principal String?
 
   // Vida Cristã
@@ -190,33 +194,33 @@ model SemanaReuniao {
   vidaCrista1_irmao  String?
   vidaCrista2_titulo String?
   vidaCrista2_irmao  String?
-  
+
   // Estudo Bíblico
   estudoBiblico_dirigente String?
   estudoBiblico_leitor    String?
-  
-  // Final de Semana
-  fds_presidente String?
-  fds_tema       String?
-  fds_orador     String?
-  fds_congregacao String?
-  fds_leitor     String?
-  
-  // Designações Mecânicas (Meio de Semana)
-  mecanica_audioVideo String?
-  mecanica_indicadores String?
-  mecanica_microfone  String?
-  
-  // Designações Mecânicas (Final de Semana)
-  fds_mecanica_audioVideo String?
-  fds_mecanica_indicadores String?
-  fds_mecanica_microfone  String?
-  fds_mecanica_portao     String?
-  
-  // Limpeza
-  limpeza                 String?
 
-  createdAt      DateTime @default(now())
+  // Final de Semana
+  fds_presidente  String?
+  fds_tema        String?
+  fds_orador      String?
+  fds_congregacao String?
+  fds_leitor      String?
+
+  // Designações Mecânicas (Meio de Semana)
+  mecanica_audioVideo  String?
+  mecanica_indicadores String?
+  mecanica_microfone   String?
+
+  // Designações Mecânicas (Final de Semana)
+  fds_mecanica_audioVideo  String?
+  fds_mecanica_indicadores String?
+  fds_mecanica_microfone   String?
+  fds_mecanica_portao      String?
+
+  // Limpeza
+  limpeza String?
+
+  createdAt DateTime @default(now())
 }
 
 // Assistencia (contagem de presentes) de cada reuniao, separada em presencial e
@@ -225,14 +229,36 @@ model SemanaReuniao {
 // ids novos), e o historico de assistencia precisa sobreviver a isso.
 model AssistenciaReuniao {
   id         Int      @id @default(autoincrement())
-  data       String   // "dd/MM/yyyy" — o dia da reuniao contada (meio: a propria; fds: o domingo)
-  tipo       String   // "meio" | "fds"
+  data       String // "dd/MM/yyyy" — o dia da reuniao contada (meio: a propria; fds: o domingo)
+  tipo       String // "meio" | "fds"
   presencial Int      @default(0)
   zoom       Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@unique([data, tipo])
+}
+
+// Confirmacao das partes de estudante: o irmao/irma com parte disse se vai cumprir.
+//
+// Chaveada pela DATA + campo + nome, e NAO por SemanaReuniao — mesmo motivo da
+// AssistenciaReuniao acima: reimportar o mes apaga e recria as semanas com ids novos, e uma
+// confirmacao ja obtida nao pode se perder porque alguem reimportou o PDF.
+//
+// `nome` e o texto como esta na programacao, nao uma chave estrangeira para Irmao: boa parte
+// das irmas das partes do ministerio nao esta no cadastro, que gira em torno das funcoes
+// mecanicas. Casar com o cadastro (para pegar o telefone) e feito por semelhanca de nome, na
+// leitura, e nao aqui.
+model ConfirmacaoDesignacao {
+  id        Int      @id @default(autoincrement())
+  data      String // "dd/MM/yyyy" — o dia da reuniao de meio de semana
+  campo     String // "tesouro3_principal", "ministerio1_salaB", ...
+  nome      String // nome como esta na programacao importada
+  confirmou Boolean? // null = ainda sem resposta, true = vai cumprir, false = nao vai
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([data, campo, nome])
 }
 
 // ==========================================================================
@@ -287,74 +313,74 @@ model CarrinhoTurno {
 }
 
 model CarrinhoEscala {
-  id            Int                @id @default(autoincrement())
-  turnoId       Int
-  turno         CarrinhoTurno      @relation(fields: [turnoId], references: [id], onDelete: Cascade)
-  publicadorId  Int
-  publicador    CarrinhoPublicador @relation(fields: [publicadorId], references: [id], onDelete: Cascade)
-  createdAt     DateTime           @default(now())
+  id           Int                @id @default(autoincrement())
+  turnoId      Int
+  turno        CarrinhoTurno      @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  publicadorId Int
+  publicador   CarrinhoPublicador @relation(fields: [publicadorId], references: [id], onDelete: Cascade)
+  createdAt    DateTime           @default(now())
 
   @@unique([turnoId, publicadorId])
 }
 
 // Configuração das Saídas de Campo (locais/horários por dia da semana)
 model SaidaCampo {
-  id        Int      @id @default(autoincrement())
-  diaSemana String   // "segunda", "terca", "quarta", "quinta", "sexta", "sabado"
-  turno     Int      @default(1) // 1 para dias normais, 1-4 para sábado
-  local     String   // "Ex-Combatentes - Casa dos irmãos Walney e Olga"
-  horario   String   // "08:45"
-  ativo     Boolean  @default(true)
+  id                    Int                   @id @default(autoincrement())
+  diaSemana             String // "segunda", "terca", "quarta", "quinta", "sexta", "sabado"
+  turno                 Int                   @default(1) // 1 para dias normais, 1-4 para sábado
+  local                 String // "Ex-Combatentes - Casa dos irmãos Walney e Olga"
+  horario               String // "08:45"
+  ativo                 Boolean               @default(true)
   dirigentesDisponiveis DirigenteSaidaCampo[]
-  escalas   EscalaDirigente[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  escalas               EscalaDirigente[]
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 }
 
 // Relação N:N - Quais irmãos podem dirigir em cada saída de campo
 model DirigenteSaidaCampo {
-  id          Int       @id @default(autoincrement())
-  irmaoId     Int
-  irmao       Irmao     @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  id           Int        @id @default(autoincrement())
+  irmaoId      Int
+  irmao        Irmao      @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
   saidaCampoId Int
-  saidaCampo  SaidaCampo @relation(fields: [saidaCampoId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  
+  saidaCampo   SaidaCampo @relation(fields: [saidaCampoId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
   @@unique([irmaoId, saidaCampoId])
 }
 
 // Quadro mensal da Escala de Dirigentes
 model QuadroDirigente {
-  id        Int                @id @default(autoincrement())
-  mes       Int                // 1-12
-  ano       Int                // 2026
+  id        Int               @id @default(autoincrement())
+  mes       Int // 1-12
+  ano       Int // 2026
   titulo    String
-  status    String             @default("rascunho")
+  status    String            @default("rascunho")
   escalas   EscalaDirigente[]
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
-  
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
   @@unique([mes, ano])
 }
 
 // Escala: cada dia/saída tem um unico dirigente. O papel de substituto foi
 // extinto, entao nao ha mais um segundo nome por turno.
 model EscalaDirigente {
-  id              Int             @id @default(autoincrement())
-  quadroId        Int
-  quadro          QuadroDirigente @relation(fields: [quadroId], references: [id], onDelete: Cascade)
-  saidaCampoId    Int
-  saidaCampo      SaidaCampo      @relation(fields: [saidaCampoId], references: [id], onDelete: Cascade)
-  data            String          // "02/06" (dia/mês)
-  dia             String          // "Segunda", "Terça", etc.
-  principal       String          @default("") // Nome do dirigente
-  removido        Boolean         @default(false) // Para remover dias/semanas
+  id           Int             @id @default(autoincrement())
+  quadroId     Int
+  quadro       QuadroDirigente @relation(fields: [quadroId], references: [id], onDelete: Cascade)
+  saidaCampoId Int
+  saidaCampo   SaidaCampo      @relation(fields: [saidaCampoId], references: [id], onDelete: Cascade)
+  data         String // "02/06" (dia/mês)
+  dia          String // "Segunda", "Terça", etc.
+  principal    String          @default("") // Nome do dirigente
+  removido     Boolean         @default(false) // Para remover dias/semanas
   // null = nao avaliado, true = dirigiu a saida, false = faltou. Trocar o
   // dirigente (edicao manual ou regerar) zera a avaliacao — ela e da
   // escalacao anterior, nao do nome que entra.
-  cumpriu         Boolean?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  cumpriu      Boolean?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 }
 
 // ==========================================================================

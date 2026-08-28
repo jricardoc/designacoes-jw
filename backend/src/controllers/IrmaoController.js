@@ -14,6 +14,20 @@ function normalizarPrivilegio(valor) {
     return PRIVILEGIOS.includes(valor) ? valor : null;
 }
 
+/**
+ * Guarda o telefone so com digitos: quem cadastra digita "(71) 99999-8888" e o link do
+ * WhatsApp precisa de "71999998888". Vazio limpa o campo; `undefined` (chave ausente no PUT)
+ * mantem o que estava, para um PUT parcial de outra tela nao apagar o numero sem querer.
+ *
+ * @returns {string|null|undefined}
+ */
+function normalizarTelefone(valor) {
+    if (valor === undefined) return undefined;
+    if (valor === null) return null;
+    const digitos = String(valor).replace(/\D/g, '');
+    return digitos ? digitos : null;
+}
+
 class IrmaoController {
     // Listar todos os irmaos
     async index(req, res) {
@@ -59,7 +73,7 @@ class IrmaoController {
     // Criar novo irmao
     async create(req, res) {
         try {
-            const { nome, funcoes, nivelAudioVideo, privilegio } = req.body;
+            const { nome, funcoes, nivelAudioVideo, privilegio, telefone } = req.body;
 
             if (!nome) {
                 return res.status(400).json({ error: 'Nome e obrigatorio' });
@@ -70,7 +84,8 @@ class IrmaoController {
                     nome: String(nome).trim(),
                     funcoes: funcoes || [],
                     nivelAudioVideo: nivelAudioVideo || 'experiente',
-                    privilegio: normalizarPrivilegio(privilegio) ?? null
+                    privilegio: normalizarPrivilegio(privilegio) ?? null,
+                    telefone: normalizarTelefone(telefone) ?? null
                 }
             });
 
@@ -88,7 +103,7 @@ class IrmaoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { nome, funcoes, ativo, nivelAudioVideo, privilegio } = req.body;
+            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone } = req.body;
 
             const updateData = {};
             if (nome !== undefined) updateData.nome = String(nome).trim();
@@ -115,6 +130,9 @@ class IrmaoController {
             // outra tela nao apaga o privilegio sem querer.
             const privilegioNormalizado = normalizarPrivilegio(privilegio);
             if (privilegioNormalizado !== undefined) updateData.privilegio = privilegioNormalizado;
+
+            const telefoneNormalizado = normalizarTelefone(telefone);
+            if (telefoneNormalizado !== undefined) updateData.telefone = telefoneNormalizado;
 
             // Uma transacao: ou o irmao e as designacoes dele andam juntos, ou nada muda.
             const [irmao] = await prisma.$transaction([

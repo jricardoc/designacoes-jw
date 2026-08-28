@@ -14,6 +14,7 @@ const DirigentesController = require('./controllers/DirigentesController');
 const MinhasDesignacoesController = require('./controllers/MinhasDesignacoesController');
 const CarrinhoController = require('./controllers/CarrinhoController');
 const CumprimentoController = require('./controllers/CumprimentoController');
+const ConfirmacaoController = require('./controllers/ConfirmacaoController');
 const TerritorioController = require('./controllers/TerritorioController');
 const PushTokenController = require('./controllers/PushTokenController');
 const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
@@ -25,6 +26,7 @@ const podeDesignacoes = requireEscopo(ESCOPOS.DESIGNACOES);
 const podeDirigentes = requireEscopo(ESCOPOS.DIRIGENTES);
 const podeReunioes = requireEscopo(ESCOPOS.REUNIOES);
 const podeCarrinho = requireEscopo(ESCOPOS.CARRINHO);
+const podeConfirmacoes = requireEscopo(ESCOPOS.CONFIRMACOES);
 const multer = require('multer');
 
 // Limite de 5MB no upload da programacao para evitar exaustao de memoria (memoryStorage).
@@ -143,6 +145,13 @@ routes.get('/cumprimento', requireEscopo(ESCOPOS.DESIGNACOES, ESCOPOS.DIRIGENTES
 routes.put('/quadros/designacao/cumprimento', podeDesignacoes, CumprimentoController.marcarDesignacao);
 routes.put('/dirigentes/escala/cumprimento', podeDirigentes, CumprimentoController.marcarEscala);
 
+// ==================== CONFIRMACAO DAS PARTES DE ESTUDANTE ====================
+// Area propria: quem fala com os estudantes toda semana nao e necessariamente quem
+// importa a programacao. LEITURA tambem exige o escopo — a lista traz telefone
+// (no link de WhatsApp) e quem confirmou ou recusou, que nao e informacao de todos.
+routes.get('/confirmacoes', podeConfirmacoes, ConfirmacaoController.index);
+routes.put('/confirmacoes', podeConfirmacoes, ConfirmacaoController.registrar);
+
 // ==================== IRMAOS ====================
 // Leitura livre (o seletor de designacao precisa da lista); cadastro e admin.
 routes.get('/irmaos', IrmaoController.index);
@@ -184,6 +193,9 @@ routes.put('/reunioes/semanas/:id', podeReunioes, ReuniaoController.updateSemana
 // assim mudar o texto ou o negrito nao exige build novo do app. Leitura, nao admin —
 // compartilhar o convite e coisa de qualquer irmao.
 routes.get('/reunioes/semanas/:id/compartilhamentos', ReuniaoController.compartilhamentos);
+// Mensagem pronta para confirmar a designacao com quem tem parte na semana. Montada no
+// backend como os convites, e pedida no toque porque a saudacao depende da hora.
+routes.get('/reunioes/confirmacao', ReuniaoController.textoConfirmacao);
 
 // ==================== TERRITORIOS ====================
 // Leitura livre para logado; as imagens em /territorios/arquivos tambem exigem

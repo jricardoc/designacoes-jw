@@ -24,6 +24,7 @@ const ESCOPOS = {
     DIRIGENTES: 'dirigentes',
     REUNIOES: 'reunioes',
     CARRINHO: 'carrinho',
+    CONFIRMACOES: 'confirmacoes',
 };
 
 /** Os valores aceitos ao conceder escopo a um usuario. */
@@ -50,6 +51,11 @@ const CATALOGO_ESCOPOS = [
         id: ESCOPOS.CARRINHO,
         label: 'Carrinho',
         descricao: 'Pontos, turnos e publicadores do carrinho',
+    },
+    {
+        id: ESCOPOS.CONFIRMACOES,
+        label: 'Confirmações',
+        descricao: 'Falar com quem tem parte e anotar quem confirmou',
     },
 ];
 

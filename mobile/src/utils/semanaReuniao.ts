@@ -45,6 +45,19 @@ function descrever(data: Date): DataDaSemana {
   };
 }
 
+// Sentinela gravada pela web para marcar uma linha como excluida.
+const SENTINELA_DELETADO = "__DELETADO__";
+
+/**
+ * O valor de um campo da programação, ou null quando não há nada de útil ali: vazio, "-" ou
+ * a sentinela de exclusão que a web grava.
+ */
+export function limpar(value?: string | null): string | null {
+  if (!value || value === SENTINELA_DELETADO) return null;
+  const t = String(value).trim();
+  return t && t !== "-" ? t : null;
+}
+
 /** Interpreta "dd/MM/yyyy". Devolve null para qualquer outro formato. */
 function parseData(valor?: string | null): Date | null {
   const m = /(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(valor ?? ""));
