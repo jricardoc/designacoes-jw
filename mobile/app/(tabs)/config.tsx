@@ -162,13 +162,13 @@ export default function ConfigScreen() {
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color="#C6BAA0" />
                   </View>
-                  {irmao.grupo || irmao.privilegio || irmao.funcoes.length > 0 ? (
+                  {irmao.grupoCampo || irmao.privilegio || irmao.funcoes.length > 0 ? (
                     <View style={styles.funcoesRow}>
                       {/* O grupo vem primeiro: com 70 publicadores, e por ele que se confere
                           quem ainda falta preencher e quem cuida da limpeza de cada semana. */}
-                      {irmao.grupo ? (
+                      {irmao.grupoCampo ? (
                         <View style={styles.grupoTag}>
-                          <Text style={styles.grupoTagText}>{irmao.grupo}</Text>
+                          <Text style={styles.grupoTagText}>{irmao.grupoCampo.nome}</Text>
                         </View>
                       ) : null}
                       <PrivilegioBadge privilegio={irmao.privilegio} size="sm" abreviado />

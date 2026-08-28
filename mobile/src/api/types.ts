@@ -112,6 +112,15 @@ export interface DirigenteSaida {
 /** Como se fala com a pessoa. Não é sexo biológico — daí o nome dos valores. */
 export type GeneroPessoa = "irmao" | "irma";
 
+/** Grupo de campo da congregação. O nome é o de quem dirige o grupo. */
+export interface GrupoCampo {
+  id: number;
+  nome: string;
+  ordem: number;
+  ativo: boolean;
+  _count?: { publicadores: number };
+}
+
 export interface Irmao {
   id: number;
   nome: string;
@@ -121,8 +130,9 @@ export interface Irmao {
   /** Só dígitos, com DDD ("71999998888"). Abre o WhatsApp já com o texto na tela de Confirmações. */
   telefone?: string | null;
   genero?: GeneroPessoa | null;
-  /** Grupo de campo ("Grupo 1", "Grupo 2"...). Texto livre — é por ele que sai a limpeza. */
-  grupo?: string | null;
+  /** O grupo de campo. É por ele que sai a limpeza do salão. */
+  grupoId?: number | null;
+  grupoCampo?: { id: number; nome: string } | null;
   ativo: boolean;
   indisponibilidades?: Indisponibilidade[];
   dirigenteSaidas?: DirigenteSaida[];

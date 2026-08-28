@@ -15,6 +15,19 @@ function normalizarPrivilegio(valor) {
 }
 
 /**
+ * Id de grupo vindo da rede. Vazio/null desvincula; `undefined` mantem. Valor que nao e
+ * numero vira `undefined` — melhor ignorar do que gravar lixo numa chave estrangeira.
+ *
+ * @returns {number|null|undefined}
+ */
+function normalizarGrupoId(valor) {
+    if (valor === undefined) return undefined;
+    if (valor === null || valor === '') return null;
+    const n = Number(valor);
+    return Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
+/**
  * Texto curto guardado como esta, so aparado. Vazio limpa; `undefined` (chave ausente no PUT)
  * mantem o que estava — mesma regra do privilegio e do telefone, para um PUT parcial de outra
  * tela nao apagar o campo sem querer.
@@ -66,6 +79,7 @@ class IrmaoController {
             const irmaos = await prisma.irmao.findMany({
                 include: {
                     indisponibilidades: true,
+                    grupoCampo: { select: { id: true, nome: true } },
                     dirigenteSaidas: {
                         include: { saidaCampo: true }
                     }
@@ -104,7 +118,7 @@ class IrmaoController {
     // Criar novo irmao
     async create(req, res) {
         try {
-            const { nome, funcoes, nivelAudioVideo, privilegio, telefone, genero, grupo } = req.body;
+            const { nome, funcoes, nivelAudioVideo, privilegio, telefone, genero, grupoId } = req.body;
 
             if (!nome) {
                 return res.status(400).json({ error: 'Nome e obrigatorio' });
@@ -118,7 +132,7 @@ class IrmaoController {
                     privilegio: normalizarPrivilegio(privilegio) ?? null,
                     telefone: normalizarTelefone(telefone) ?? null,
                     genero: normalizarGenero(genero) ?? null,
-                    grupo: normalizarTexto(grupo) ?? null
+                    grupoId: normalizarGrupoId(grupoId) ?? null
                 }
             });
 
@@ -136,7 +150,7 @@ class IrmaoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone, genero, grupo } = req.body;
+            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone, genero, grupoId } = req.body;
 
             const updateData = {};
             if (nome !== undefined) updateData.nome = String(nome).trim();
@@ -170,8 +184,8 @@ class IrmaoController {
             const generoNormalizado = normalizarGenero(genero);
             if (generoNormalizado !== undefined) updateData.genero = generoNormalizado;
 
-            const grupoNormalizado = normalizarTexto(grupo);
-            if (grupoNormalizado !== undefined) updateData.grupo = grupoNormalizado;
+            const grupoNormalizado = normalizarGrupoId(grupoId);
+            if (grupoNormalizado !== undefined) updateData.grupoId = grupoNormalizado;
 
             // Uma transacao: ou o irmao e as designacoes dele andam juntos, ou nada muda.
             const [irmao] = await prisma.$transaction([

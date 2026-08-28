@@ -24,8 +24,8 @@ export interface IrmaoInput {
   genero?: GeneroPessoa | null;
   /** Formato livre: o backend guarda só os dígitos. `null`/"" limpam; omitir mantém. */
   telefone?: string | null;
-  /** Grupo de campo. `null`/"" limpam; omitir mantém. */
-  grupo?: string | null;
+  /** Id do grupo de campo. `null` desvincula; omitir mantém. */
+  grupoId?: number | null;
   ativo?: boolean;
 }
 

@@ -113,10 +113,13 @@ model Irmao {
   // valores tem o nome que tem. Opcional so por causa da transicao: o script de migracao
   // preenche todo mundo, e quem entrar depois preenche na tela de Pessoas.
   genero             String?
-  // Grupo de campo do publicador ("Grupo 1", "Grupo 2"...). Texto livre de proposito: o
-  // rotulo vem da congregacao e muda com ela, e a limpeza do salao e organizada por grupo —
-  // e o que liga esta coluna ao campo `limpeza` da programacao importada. Preenchido a mao.
+  // LEGADO, sem uso. Nasceu como texto livre e durou um commit: renomear um grupo teria de
+  // ser feito publicador por publicador, e um erro de digitacao criaria um grupo fantasma.
+  // A ligacao correta e `grupoId`, abaixo. A coluna continua aqui porque remove-la trava o
+  // boot em producao (o `db push` recusa DROP COLUMN) — sai com um ALTER a mao, quando der.
   grupo              String?
+  grupoId            Int?
+  grupoCampo         GrupoCampo?           @relation(fields: [grupoId], references: [id], onDelete: SetNull)
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio         String?
@@ -127,6 +130,26 @@ model Irmao {
   carrinhoEscalas    CarrinhoEscala[]
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
+}
+
+// Grupos de campo da congregacao.
+//
+// Sao poucos e mudam pouco, mas mudam: grupo e batizado com o nome de quem o dirige, e quando
+// a designacao troca o grupo inteiro e renomeado. Por isso e tabela e nao lista fixa no
+// codigo — renomear aqui acerta todo mundo de uma vez, e o publicador aponta para o grupo,
+// nao para o texto.
+//
+// E o que liga a pessoa a limpeza do salao: o campo `limpeza` da programacao importada vem
+// escrito por grupo ("Grupos 1 Fulano & Grupo 2 Sicrano").
+model GrupoCampo {
+  id           Int      @id @default(autoincrement())
+  nome         String   @unique
+  // Ordem de exibicao; empate cai no nome. Serve para a lista nao dancar a cada renomeacao.
+  ordem        Int      @default(0)
+  ativo        Boolean  @default(true)
+  publicadores Irmao[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // Datas em que o irmao nao esta disponivel

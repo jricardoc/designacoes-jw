@@ -16,7 +16,8 @@
     "verificar:confirmacoes": "node scripts/verificarConfirmacoes.js",
     "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js",
     "unificar:pessoas": "node scripts/unificarPessoas.js",
-    "pessoas:duplicados": "node scripts/duplicadosPessoas.js"
+    "pessoas:duplicados": "node scripts/duplicadosPessoas.js",
+    "seed:grupos": "node scripts/seedGrupos.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

@@ -14,6 +14,7 @@ import {
 import { GradientHeader, useToast } from "@/components/ui";
 import { useAtualizarConfig, useConfig } from "@/api/hooks/useMisc";
 import { useAuth } from "@/context/AuthContext";
+import { GruposDeCampo } from "@/components/config/GruposDeCampo";
 import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema, type TemaPreferido } from "@/theme/TemaContext";
@@ -107,6 +108,14 @@ export default function AjustesScreen() {
                 style={styles.campo}
               />
             </View>
+          </>
+        ) : null}
+
+        {/* Grupos de campo — do admin geral, como a congregação. */}
+        {ehAdminGeral(usuario) ? (
+          <>
+            <Text style={styles.secao}>Grupos de campo</Text>
+            <GruposDeCampo />
           </>
         ) : null}
 

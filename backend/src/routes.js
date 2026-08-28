@@ -15,6 +15,7 @@ const MinhasDesignacoesController = require('./controllers/MinhasDesignacoesCont
 const CarrinhoController = require('./controllers/CarrinhoController');
 const CumprimentoController = require('./controllers/CumprimentoController');
 const ConfirmacaoController = require('./controllers/ConfirmacaoController');
+const GrupoCampoController = require('./controllers/GrupoCampoController');
 const TerritorioController = require('./controllers/TerritorioController');
 const PushTokenController = require('./controllers/PushTokenController');
 const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
@@ -151,6 +152,14 @@ routes.put('/dirigentes/escala/cumprimento', podeDirigentes, CumprimentoControll
 // (no link de WhatsApp) e quem confirmou ou recusou, que nao e informacao de todos.
 routes.get('/confirmacoes', podeConfirmacoes, ConfirmacaoController.index);
 routes.put('/confirmacoes', podeConfirmacoes, ConfirmacaoController.registrar);
+
+// ==================== GRUPOS DE CAMPO ====================
+// Leitura livre: a tela de cadastro precisa da lista para montar o seletor, e nome de grupo
+// nao e informacao reservada. Gestao e do admin geral, junto do resto do cadastro.
+routes.get('/grupos', GrupoCampoController.index);
+routes.post('/grupos', requireAdmin, GrupoCampoController.create);
+routes.put('/grupos/:id', requireAdmin, GrupoCampoController.update);
+routes.delete('/grupos/:id', requireAdmin, GrupoCampoController.delete);
 
 // ==================== IRMAOS ====================
 // Leitura livre (o seletor de designacao precisa da lista); cadastro e admin.

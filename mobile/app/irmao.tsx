@@ -24,8 +24,10 @@ import {
   useIrmaos,
 } from "@/api/hooks/useIrmaos";
 import type { FuncaoId, NivelAudioVideo, PrivilegioId, GeneroPessoa} from "@/api/types";
-import { ConfirmDialog, EmptyState, GradientHeader, useConfirm, useToast } from "@/components/ui";
+import { ConfirmDialog, EmptyState, GradientHeader, SelectSheet, useConfirm, useToast } from "@/components/ui";
 import { CalendarioIndisponibilidade } from "@/components/config/CalendarioIndisponibilidade";
+import { useGrupos } from "@/api/hooks/useGrupos";
+
 import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, type Cores } from "@/theme";
@@ -77,7 +79,8 @@ export default function IrmaoScreen() {
   const [privilegio, setPrivilegio] = useState<PrivilegioId | null>(null);
   const [genero, setGenero] = useState<GeneroPessoa | null>(null);
   const [telefone, setTelefone] = useState("");
-  const [grupo, setGrupo] = useState("");
+  const [grupoId, setGrupoId] = useState<number | null>(null);
+  const [seletorGrupo, setSeletorGrupo] = useState(false);
   const [ativo, setAtivo] = useState(true);
   const [saidas, setSaidas] = useState<number[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -90,7 +93,7 @@ export default function IrmaoScreen() {
       setPrivilegio(existente.privilegio ?? null);
       setGenero(existente.genero ?? null);
       setTelefone(existente.telefone ?? "");
-      setGrupo(existente.grupo ?? "");
+      setGrupoId(existente.grupoId ?? null);
       setAtivo(existente.ativo);
       setHydrated(true);
     }
@@ -124,6 +127,9 @@ export default function IrmaoScreen() {
   const toggleAllSaidas = () =>
     setSaidas(allSaidas ? [] : saidasCampo.map((s) => s.id));
 
+  const { data: grupos } = useGrupos();
+  const grupoAtual = grupos?.find((g) => g.id === grupoId) ?? null;
+
   const isDirigente = funcoes.includes("dirigente");
   const isAV = funcoes.includes("audioVideo");
 
@@ -136,7 +142,7 @@ export default function IrmaoScreen() {
   const saving = criar.isPending || atualizar.isPending;
 
   const summary = [
-    grupo.trim(),
+    grupoAtual?.nome,
     privilegioLabel(privilegio),
     funcoes.length
       ? `${funcoes.length} ${funcoes.length === 1 ? "função" : "funções"}`
@@ -177,7 +183,7 @@ export default function IrmaoScreen() {
           privilegio,
           genero,
           telefone,
-          grupo,
+          grupoId,
           ativo,
         });
       } else {
@@ -188,7 +194,7 @@ export default function IrmaoScreen() {
           privilegio,
           genero,
           telefone,
-          grupo,
+          grupoId,
         });
         savedId = novo.id;
       }
@@ -372,15 +378,22 @@ export default function IrmaoScreen() {
 
           <Text style={[styles.label, { marginTop: 18 }]}>Grupo</Text>
           <Text style={styles.hint}>
-            O grupo de campo do publicador. É por ele que sai a limpeza do salão.
+            O grupo de campo do publicador. É por ele que sai a limpeza do salão. Para criar
+            ou renomear grupos, vá em Ajustes.
           </Text>
-          <TextInput
-            value={grupo}
-            onChangeText={setGrupo}
-            placeholder="Grupo 1"
-            placeholderTextColor={colors.textMuted}
-            style={styles.input}
-          />
+          <Pressable
+            onPress={() => setSeletorGrupo(true)}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.input, styles.seletor, pressed && { opacity: 0.6 }]}
+          >
+            <Text
+              style={[styles.seletorTexto, !grupoAtual && { color: colors.textMuted }]}
+              numberOfLines={1}
+            >
+              {grupoAtual?.nome ?? "Sem grupo"}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+          </Pressable>
 
           {/* Ancião e servo ministerial são privilégios de irmãos. */}
           {genero !== "irma" ? (
@@ -491,6 +504,15 @@ export default function IrmaoScreen() {
           </View>
         ) : null}
 
+        <SelectSheet
+          visible={seletorGrupo}
+          title="Grupo de campo"
+          options={(grupos ?? []).map((g) => ({ value: String(g.id), label: g.nome }))}
+          selected={grupoId ? String(grupoId) : undefined}
+          onSelect={(valor) => setGrupoId(valor ? Number(valor) : null)}
+          onClose={() => setSeletorGrupo(false)}
+        />
+
         {irmaoId && temIndisponibilidade ? (
           <CalendarioIndisponibilidade irmaoId={irmaoId} />
         ) : null}
@@ -536,6 +558,8 @@ export default function IrmaoScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  seletor: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  seletorTexto: { flex: 1, fontSize: 15, color: colors.text },
   escolha: { padding: 16, gap: 12 },
   escolhaCard: {
     flexDirection: "row",
