@@ -1,8 +1,15 @@
 /**
  * Abastece o sistema com a lista "Listas de Grupos - Norte de Itapua".
  *
- *   npm run importar:grupos -- --simular   (nao grava nada; mostra o que faria)
- *   npm run importar:grupos                (grava)
+ *   npm run importar:grupos -- --simular            (nao grava nada; mostra o que faria)
+ *   npm run importar:grupos                         (grava)
+ *   npm run importar:grupos -- --completar-nomes    (grava e completa os nomes curtos)
+ *
+ * `--completar-nomes` troca o nome do cadastro pelo do documento quando o documento e mais
+ * completo ("Marisol" -> "Marisol Santos"). Nao e cosmetico: `mesmaPessoa`, que liga o irmao
+ * a programacao importada, EXIGE IGUALDADE EXATA para nome de uma palavra so — entao quem
+ * esta cadastrado so com o primeiro nome nao ve as proprias designacoes na tela de Inicio.
+ * Combina com `--simular` para ver a lista antes.
  *
  * PRECISA DE BANCO. E idempotente: rodar de novo nao duplica ninguem nem desfaz ajuste feito
  * a mao depois.
@@ -39,6 +46,7 @@
 const prisma = require('../src/prisma');
 
 const simular = process.argv.includes('--simular');
+const completarNomes = process.argv.includes('--completar-nomes');
 
 // --------------------------------------------------------------------------
 // A lista, como esta no documento. `d` = dirigente, `a` = ajudante.
@@ -307,6 +315,27 @@ function acharPessoa(nome, cadastro) {
     return null;
 }
 
+/**
+ * Renomeia a pessoa E as referencias por TEXTO a ela.
+ *
+ * `Designacao.irmao1/irmao2` e `EscalaDirigente.principal` guardam o NOME, nao a chave — sao
+ * as mesmas tabelas que IrmaoController.update atualiza junto ao renomear. Renomear sem isso
+ * faria o irmao sumir do quadro em que esta escalado e das proprias designacoes.
+ *
+ * A programacao da reuniao (SemanaReuniao) NAO entra: ela e o texto importado do PDF, nao uma
+ * referencia ao cadastro, e casa por semelhanca. Completar o nome aqui e justamente o que faz
+ * essa semelhanca passar a funcionar.
+ */
+async function renomear(pessoa, nomeNovo) {
+    const antigo = pessoa.nome;
+    await prisma.$transaction([
+        prisma.irmao.update({ where: { id: pessoa.id }, data: { nome: nomeNovo } }),
+        prisma.designacao.updateMany({ where: { irmao1: antigo }, data: { irmao1: nomeNovo } }),
+        prisma.designacao.updateMany({ where: { irmao2: antigo }, data: { irmao2: nomeNovo } }),
+        prisma.escalaDirigente.updateMany({ where: { principal: antigo }, data: { principal: nomeNovo } }),
+    ]);
+}
+
 // --------------------------------------------------------------------------
 
 async function main() {
@@ -328,6 +357,8 @@ async function main() {
     console.log(`pessoas na lista: ${totalLista}\n`);
 
     const avisos = [];
+    const completados = [];
+    const podemCompletar = [];
     let casados = 0;
     let criados = 0;
     let jaNoGrupo = 0;
@@ -409,6 +440,19 @@ async function main() {
                 }
             }
 
+            // Nome do cadastro mais curto que o do documento: o documento e a lista oficial
+            // da congregacao, e o nome completo e o que faz `mesmaPessoa` casar com a
+            // programacao importada.
+            if (achado && pessoa.id && pedacos(item.nome).length > pedacos(pessoa.nome).length) {
+                if (completarNomes) {
+                    completados.push(`"${pessoa.nome}" -> "${item.nome}"`);
+                    if (!simular) await renomear(pessoa, item.nome);
+                    pessoa.nome = item.nome;
+                } else {
+                    podemCompletar.push(`"${pessoa.nome}" -> "${item.nome}"`);
+                }
+            }
+
             if (item.papel) papeis[item.papel] = pessoa;
 
             // Grupo: so mexe quando muda. Quem ja esta no grupo certo nao e tocado.
@@ -444,6 +488,19 @@ async function main() {
     console.log(`ja cadastrados (reaproveitados): ${casados}`);
     console.log(`criados: ${criados}`);
     console.log(`ja estavam no grupo certo: ${jaNoGrupo} | movidos de grupo: ${movidos}`);
+
+    if (completados.length > 0) {
+        console.log(`\n=== NOMES COMPLETADOS (${completados.length}) ===`);
+        completados.forEach((c) => console.log(`   ${c}`));
+    }
+
+    if (podemCompletar.length > 0) {
+        console.log(`\n=== NOMES QUE PODERIAM SER COMPLETADOS (${podemCompletar.length}) ===`);
+        console.log('Quem esta so com o primeiro nome NAO aparece nas proprias designacoes:');
+        console.log('`mesmaPessoa` exige igualdade exata para nome de uma palavra so.');
+        console.log('Para completar, rode com  -- --completar-nomes');
+        podemCompletar.forEach((c) => console.log(`   ${c}`));
+    }
 
     if (avisos.length > 0) {
         console.log(`\n=== CONFERIR (${avisos.length}) ===`);
