@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const { ESCOPOS, temEscopo } = require('../middleware/escopos');
 
 /**
  * Cumprimento das participacoes: o V/X ao lado do nome nas telas de
@@ -133,26 +134,36 @@ class CumprimentoController {
     /**
      * GET /cumprimento
      *
-     * Todas as avaliacoes ja feitas, achatadas num formato unico:
+     * As avaliacoes DAS AREAS QUE O USUARIO CUIDA, achatadas num formato unico:
      *   { nome, origem: "designacoes"|"dirigentes", cumpriu, data: "dd/MM/yyyy", rotulo }
+     *
+     * Cada area so sai para quem tem o escopo dela. Quem cuida so dos dirigentes ve so os
+     * dirigentes; o admin geral, que passa em todo escopo, ve as duas. O gate da rota exige
+     * UM dos dois escopos e por isso, sozinho, deixava quem tinha um ler os dois.
+     *
+     * A consulta da area negada nem chega a ser feita — filtrar depois de ler seria pagar por
+     * um dado que nao pode ser entregue.
      *
      * A tela de analise agrega e filtra em cima desta lista — sao poucas linhas
      * por mes, nao vale um endpoint de agregacao por corte.
      */
     async index(req, res) {
         try {
+            const veDesignacoes = temEscopo(req.user, ESCOPOS.DESIGNACOES);
+            const veDirigentes = temEscopo(req.user, ESCOPOS.DIRIGENTES);
+
             const [designacoes, escalas] = await Promise.all([
-                prisma.designacao.findMany({
+                veDesignacoes ? prisma.designacao.findMany({
                     where: { OR: [{ cumpriu1: { not: null } }, { cumpriu2: { not: null } }] },
                     include: { quadro: { select: { mes: true, ano: true } } },
-                }),
-                prisma.escalaDirigente.findMany({
+                }) : [],
+                veDirigentes ? prisma.escalaDirigente.findMany({
                     where: { cumpriu: { not: null }, removido: false },
                     include: {
                         quadro: { select: { mes: true, ano: true } },
                         saidaCampo: { select: { local: true, horario: true } },
                     },
-                }),
+                }) : [],
             ]);
 
             const registros = [];

@@ -48,8 +48,12 @@ type FiltroOrigem = "todas" | OrigemCumprimento;
 export default function CumprimentoScreen() {
   const { colors, styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
-  const podeVer =
-    podeGerenciar(usuario, "designacoes") || podeGerenciar(usuario, "dirigentes");
+  const veDesignacoes = podeGerenciar(usuario, "designacoes");
+  const veDirigentes = podeGerenciar(usuario, "dirigentes");
+  const podeVer = veDesignacoes || veDirigentes;
+  // Só quem cuida das DUAS áreas escolhe entre elas — para os demais o backend manda uma só,
+  // e um filtro "Dirigentes" que devolve lista vazia parece dado faltando, não permissão.
+  const escolheOrigem = veDesignacoes && veDirigentes;
   const { data, isLoading, isError, refetch, isRefetching } =
     useCumprimento(podeVer);
 
@@ -148,15 +152,17 @@ export default function CumprimentoScreen() {
               {chip(periodo === "3m", "Últimos 3 meses", () => setPeriodo("3m"))}
               {chip(periodo === "tudo", "Tudo", () => setPeriodo("tudo"))}
             </View>
-            <View style={styles.chipsRow}>
-              {chip(origem === "todas", "Todas", () => setOrigem("todas"))}
-              {chip(origem === "designacoes", "Designações", () =>
-                setOrigem("designacoes"),
-              )}
-              {chip(origem === "dirigentes", "Dirigentes", () =>
-                setOrigem("dirigentes"),
-              )}
-            </View>
+            {escolheOrigem ? (
+              <View style={styles.chipsRow}>
+                {chip(origem === "todas", "Todas", () => setOrigem("todas"))}
+                {chip(origem === "designacoes", "Designações", () =>
+                  setOrigem("designacoes"),
+                )}
+                {chip(origem === "dirigentes", "Dirigentes", () =>
+                  setOrigem("dirigentes"),
+                )}
+              </View>
+            ) : null}
           </View>
 
           {registros.length === 0 ? (
