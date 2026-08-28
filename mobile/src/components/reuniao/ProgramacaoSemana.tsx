@@ -126,7 +126,20 @@ function Secao({
   );
 }
 
-export function ProgramacaoSemana({ semana }: { semana: SemanaReuniao }) {
+/**
+ * As seções de UMA das duas reuniões da semana.
+ *
+ * `momento` diz qual: 'meio' traz da presidência ao estudo bíblico, 'fds' traz o discurso
+ * público e as mecânicas do domingo. A limpeza não entra em nenhuma das duas — ela vale a
+ * semana inteira e fica no cabeçalho da tela, junto das datas.
+ */
+export function ProgramacaoSemana({
+  semana,
+  momento,
+}: {
+  semana: SemanaReuniao;
+  momento: "meio" | "fds";
+}) {
   const { colors, styles } = useTema(criarEstilos);
 
   const temMinisterio =
@@ -146,6 +159,37 @@ export function ProgramacaoSemana({ semana }: { semana: SemanaReuniao }) {
     limpar(semana.fds_mecanica_indicadores) ||
     limpar(semana.fds_mecanica_microfone) ||
     limpar(semana.fds_mecanica_portao);
+
+  if (momento === "fds") {
+    return (
+      <View style={styles.corpo}>
+        {temFds ? (
+          <Secao titulo="📅 Reunião do Fim de Semana" cor={colors.amber}>
+            <Linha label="Presidente" value={semana.fds_presidente} />
+            <Linha label="Tema" value={semana.fds_tema} />
+            <Linha label="Orador" value={semana.fds_orador} />
+            <Linha label="Congregação" value={semana.fds_congregacao} />
+            <Linha label="Leitor" value={semana.fds_leitor} />
+          </Secao>
+        ) : null}
+
+        {temMecanicaFds ? (
+          <Secao titulo="🔧 Mecânicas" cor={colors.purple}>
+            <Linha label="Áudio e Vídeo" value={semana.fds_mecanica_audioVideo} />
+            <Linha label="Indicadores" value={semana.fds_mecanica_indicadores} />
+            <Linha label="Microfones" value={semana.fds_mecanica_microfone} />
+            <Linha label="Portão" value={semana.fds_mecanica_portao} />
+          </Secao>
+        ) : null}
+
+        {!temFds && !temMecanicaFds ? (
+          <Text style={styles.vazio}>
+            A programação importada não trouxe nada do fim de semana desta semana.
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <View style={styles.corpo}>
@@ -224,37 +268,13 @@ export function ProgramacaoSemana({ semana }: { semana: SemanaReuniao }) {
       {limpar(semana.mecanica_audioVideo) ||
       limpar(semana.mecanica_indicadores) ||
       limpar(semana.mecanica_microfone) ? (
-        <Secao titulo="🔧 Mecânicas — meio de semana" cor={colors.purple}>
+        <Secao titulo="🔧 Mecânicas" cor={colors.purple}>
           <Linha label="Áudio e Vídeo" value={semana.mecanica_audioVideo} />
           <Linha label="Indicadores" value={semana.mecanica_indicadores} />
           <Linha label="Microfones" value={semana.mecanica_microfone} />
         </Secao>
       ) : null}
 
-      {temFds ? (
-        <Secao titulo="📅 Fim de Semana" cor={colors.amber}>
-          <Linha label="Presidente" value={semana.fds_presidente} />
-          <Linha label="Tema" value={semana.fds_tema} />
-          <Linha label="Orador" value={semana.fds_orador} />
-          <Linha label="Congregação" value={semana.fds_congregacao} />
-          <Linha label="Leitor" value={semana.fds_leitor} />
-        </Secao>
-      ) : null}
-
-      {temMecanicaFds ? (
-        <Secao titulo="🔧 Mecânicas — fim de semana" cor={colors.purple}>
-          <Linha label="Áudio e Vídeo" value={semana.fds_mecanica_audioVideo} />
-          <Linha label="Indicadores" value={semana.fds_mecanica_indicadores} />
-          <Linha label="Microfones" value={semana.fds_mecanica_microfone} />
-          <Linha label="Portão" value={semana.fds_mecanica_portao} />
-        </Secao>
-      ) : null}
-
-      {limpar(semana.limpeza) ? (
-        <Secao titulo="🧹 Limpeza" cor={colors.green}>
-          <Linha label="Responsável" value={semana.limpeza} />
-        </Secao>
-      ) : null}
     </View>
   );
 }
@@ -262,22 +282,29 @@ export function ProgramacaoSemana({ semana }: { semana: SemanaReuniao }) {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     corpo: { gap: spacing.md },
+    vazio: {
+      fontSize: 15,
+      color: colors.textMuted,
+      textAlign: "center",
+      lineHeight: 21,
+      paddingVertical: spacing.xl,
+    },
 
     secao: { flexDirection: "row", backgroundColor: colors.surface, borderRadius: radius.md, overflow: "hidden" },
     secaoBar: { width: 4 },
     secaoBody: { flex: 1, padding: 14, gap: 10 },
-    secaoTitulo: { fontSize: 13, fontWeight: "800", letterSpacing: 0.2 },
+    secaoTitulo: { fontSize: 15, fontWeight: "800", letterSpacing: 0.2 },
 
     linha: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-    linhaLabel: { fontSize: 12.5, color: colors.textMuted, width: 108, fontWeight: "600" },
-    linhaValue: { flex: 1, fontSize: 14, color: colors.text, lineHeight: 19 },
+    linhaLabel: { fontSize: 14, color: colors.textMuted, width: 116, fontWeight: "600" },
+    linhaValue: { flex: 1, fontSize: 16, color: colors.text, lineHeight: 22 },
 
     parte: { gap: 7 },
-    parteTitulo: { fontSize: 13.5, color: colors.text, fontWeight: "600", lineHeight: 19 },
+    parteTitulo: { fontSize: 15.5, color: colors.text, fontWeight: "600", lineHeight: 21 },
     parteHora: { color: colors.textMuted, fontWeight: "700" },
     grupo: { gap: 4 },
     grupoRotulo: {
-      fontSize: 10.5,
+      fontSize: 11.5,
       fontWeight: "700",
       letterSpacing: 0.5,
       textTransform: "uppercase",
@@ -297,6 +324,6 @@ const criarEstilos = (colors: Cores) =>
       maxWidth: "100%",
     },
     chipSalaB: { backgroundColor: colors.surfaceMuted },
-    chipTexto: { flexShrink: 1, fontSize: 13, fontWeight: "600", color: colors.primaryDark },
+    chipTexto: { flexShrink: 1, fontSize: 15, fontWeight: "600", color: colors.primaryDark },
     chipTextoSalaB: { color: colors.textSecondary },
   });

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useReunioes } from "@/api/hooks/useMisc";
 import type { SemanaReuniao } from "@/api/types";
@@ -15,7 +15,10 @@ import { datasDaSemana, faixaSemana, limpar } from "@/utils/semanaReuniao";
  *
  * Antes isto era um accordion dentro do cartão da lista: para ler a reunião era preciso
  * abrir o cartão e rolar por cima dos outros. Numa tela própria a programação respira — as
- * duas salas ganham rótulo separado e nada fica escondido atrás de um toque.
+ * duas salas ganham rótulo separado e cada reunião tem a sua aba.
+ *
+ * O cabeçalho é da SEMANA: as duas datas, a leitura e a limpeza, que não pertencem a uma
+ * reunião nem à outra. As abas dividem só o que é de cada uma.
  *
  * Os dados NÃO são buscados aqui: saem do cache de `useReunioes`, que a tela de Reunião já
  * carregou. Não existe endpoint de uma semana só, e criar um para isso faria a mesma
@@ -25,6 +28,7 @@ export default function SemanaScreen() {
   const { colors, styles } = useTema(criarEstilos);
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: reunioes, isLoading } = useReunioes();
+  const [aba, setAba] = useState<"meio" | "fds">("meio");
 
   const semanaId = Number(id);
 
@@ -45,6 +49,7 @@ export default function SemanaScreen() {
         title="Programação"
         description={semana ? faixaSemana(semana) : "Semana da reunião"}
         icon="people"
+        showBack
       />
 
       {isLoading ? (
@@ -89,9 +94,39 @@ export default function SemanaScreen() {
             {limpar(semana.leituraSemanal) ? (
               <Text style={styles.leitura}>📖 {semana.leituraSemanal}</Text>
             ) : null}
+
+            {/* A limpeza vale a SEMANA, não uma das reuniões — por isso fica aqui em cima,
+                com as datas, e não dentro de uma das abas. */}
+            {limpar(semana.limpeza) ? (
+              <Text style={styles.limpeza}>🧹 {semana.limpeza}</Text>
+            ) : null}
           </View>
 
-          <ProgramacaoSemana semana={semana} />
+          <View style={styles.segmented}>
+            {(["meio", "fds"] as const).map((m) => {
+              const ativa = aba === m;
+              return (
+                <Pressable
+                  key={m}
+                  style={[styles.segment, ativa && styles.segmentActive]}
+                  onPress={() => setAba(m)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: ativa }}
+                >
+                  <Ionicons
+                    name={m === "meio" ? "book-outline" : "people-outline"}
+                    size={17}
+                    color={ativa ? colors.primaryDark : colors.textSecondary}
+                  />
+                  <Text style={[styles.segmentText, ativa && styles.segmentTextActive]}>
+                    {m === "meio" ? "Meio de semana" : "Fim de semana"}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <ProgramacaoSemana semana={semana} momento={aba} />
         </ScrollView>
       )}
     </View>
@@ -140,20 +175,21 @@ const criarEstilos = (colors: Cores) =>
       ...shadow.card,
     },
     datas: { flexDirection: "row", gap: 22 },
-    faixa: { fontSize: 16, fontWeight: "700", color: colors.text },
-    leitura: { fontSize: 13.5, color: colors.textSecondary },
+    faixa: { fontSize: 18, fontWeight: "700", color: colors.text },
+    leitura: { fontSize: 15.5, color: colors.textSecondary },
+    limpeza: { fontSize: 14.5, color: colors.textSecondary },
 
     blocoData: { gap: 2 },
     blocoRotulo: {
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "700",
       color: colors.textMuted,
       textTransform: "uppercase",
       letterSpacing: 0.4,
     },
     blocoLinha: { flexDirection: "row", alignItems: "center", gap: 6 },
-    blocoDia: { fontSize: 30, fontWeight: "700", color: colors.terracotta, lineHeight: 34 },
-    blocoMes: { fontSize: 10, fontWeight: "700", color: colors.mesEtiqueta, letterSpacing: 1 },
+    blocoDia: { fontSize: 34, fontWeight: "700", color: colors.terracotta, lineHeight: 38 },
+    blocoMes: { fontSize: 11, fontWeight: "700", color: colors.mesEtiqueta, letterSpacing: 1 },
     blocoPill: {
       backgroundColor: colors.infoBg,
       borderRadius: radius.sm,
@@ -161,8 +197,27 @@ const criarEstilos = (colors: Cores) =>
       paddingVertical: 2,
       marginTop: 2,
     },
-    blocoPillTexto: { fontSize: 10, fontWeight: "700", color: colors.primaryDark },
+    blocoPillTexto: { fontSize: 11, fontWeight: "700", color: colors.primaryDark },
 
+    segmented: {
+      flexDirection: "row",
+      backgroundColor: colors.sand,
+      borderRadius: radius.md,
+      padding: 5,
+      gap: 5,
+    },
+    segment: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      paddingVertical: 10,
+      borderRadius: radius.sm,
+    },
+    segmentActive: { backgroundColor: colors.surface, ...shadow.card },
+    segmentText: { fontWeight: "700", color: colors.textSecondary, fontSize: 14 },
+    segmentTextActive: { color: colors.primaryDark },
     voltar: { flexDirection: "row", alignItems: "center", gap: 6 },
     voltarTexto: { fontSize: 14, fontWeight: "700", color: colors.primaryDark },
   });
