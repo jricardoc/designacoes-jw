@@ -99,7 +99,7 @@ export default function IrmaoScreen() {
   }, [dispDirigente]);
 
   // Marcar "Irmã" depois de ter marcado funções de irmão deixaria o cadastro dizendo que ela
-  // é indicadora. As que não valem mais caem sozinhas.
+  // é indicadora, e o privilégio some da tela mas continuaria gravado. Os dois caem sozinhos.
   useEffect(() => {
     if (!genero) return;
     setFuncoes((antes) => {
@@ -107,6 +107,7 @@ export default function IrmaoScreen() {
       const filtradas = antes.filter((f) => validas.includes(f));
       return filtradas.length === antes.length ? antes : filtradas;
     });
+    if (genero === "irma") setPrivilegio(null);
   }, [genero]);
 
   const toggleFuncao = (f: FuncaoId) =>
@@ -280,7 +281,7 @@ export default function IrmaoScreen() {
           <TextInput
             value={nome}
             onChangeText={setNome}
-            placeholder="Nome do irmão"
+            placeholder="Nome completo"
             placeholderTextColor={colors.textMuted}
             style={styles.input}
           />
@@ -309,6 +310,12 @@ export default function IrmaoScreen() {
             })}
           </View>
 
+          {/* No cadastro NOVO o tratamento já foi escolhido no primeiro passo — repetir aqui
+              seria perguntar duas vezes a mesma coisa. Na EDIÇÃO ele fica: é o único jeito de
+              corrigir alguém que entrou com o tratamento errado (a migração das pessoas do
+              carrinho chutou "irmã" para todo mundo, por exemplo). */}
+          {irmaoId ? (
+            <>
           <Text style={[styles.label, { marginTop: 18 }]}>Tratamento</Text>
           <Text style={styles.hint}>
             Como se fala com a pessoa nas mensagens de confirmação.
@@ -341,6 +348,8 @@ export default function IrmaoScreen() {
               );
             })}
           </View>
+            </>
+          ) : null}
 
           <Text style={[styles.label, { marginTop: 18 }]}>WhatsApp</Text>
           <Text style={styles.hint}>
@@ -356,6 +365,9 @@ export default function IrmaoScreen() {
             style={styles.input}
           />
 
+          {/* Ancião e servo ministerial são privilégios de irmãos. */}
+          {genero !== "irma" ? (
+            <>
           <Text style={[styles.label, { marginTop: 18 }]}>Privilégio</Text>
           <Text style={styles.hint}>Opcional. Toque de novo para remover.</Text>
           <View style={styles.chips}>
@@ -382,6 +394,9 @@ export default function IrmaoScreen() {
               );
             })}
           </View>
+
+            </>
+          ) : null}
 
           {isAV ? (
             <Animated.View entering={FadeInDown.duration(220)} style={{ marginTop: 18 }}>
