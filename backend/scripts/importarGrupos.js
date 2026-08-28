@@ -228,6 +228,21 @@ const GRUPOS = [
 const APELIDOS = {
     'Jucélia D. S. G. Pinto': 'Jucélia dos Santos Gomes',
     'Miguel A. de Jesus': 'Miguel Alves',
+    // O documento traz uma Tania so e o cadastro tem duas ('Assad' e 'Alvim'). O 'A.' nao
+    // decide qual das duas e — quem conhece a congregacao decidiu.
+    'Tânia Maria A. de Mello': 'Tânia Alvim',
+
+    // Aqui o documento nao trocou o sobrenome: ABREVIOU justamente o nome que o cadastro
+    // escreve por extenso. Nenhum criterio pega — `pedacos` descarta as iniciais, entao de
+    // "Edgar B. d. Santos" sobra "edgar santos", que nao encosta em "edgar bispo". Promover
+    // a inicial a criterio geral seria pior: "A." serve para Alvim, Assad, Andrade e Araujo.
+    // Em todos os seis ha um no documento e um no cadastro, e a confirmacao veio do usuario.
+    'Ana Lúcia P. S. Rodrigues': 'Ana Portela',
+    'Edgar B. d. Santos': 'Edgar Bispo',
+    'Everton A. Oliveira Reis': 'Everton Alisson',
+    'Kaique K. B. Elesbão': 'Kaique Kevin',
+    'Matheus L. Santos': 'Matheus Lino',
+    'Givaldo J. Santana': 'Givaldo de Jesus',
 };
 
 /**

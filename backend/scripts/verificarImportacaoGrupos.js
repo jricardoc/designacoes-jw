@@ -30,8 +30,11 @@ const CADASTRO = cadastroDe([
     'Maria Eduarda dos S. Gomes de Araújo', 'Edleuza Gomes de Souza', 'Dinalva Sousa Santana',
     'João Felipe Lima', 'Manoel Alves Neto', 'Harison Mendes', 'Jessé Gonçalves',
     'Henzel Almeida', 'Jucimar Carvalho', 'Aloísio Rodrigues', 'Kauã Elesbão',
-    'Marisol', 'Olga', 'Raquel', 'Tânia', 'Tânia Assad', 'Zenaildes', 'Mônica Cêli Lima',
+    'Marisol', 'Olga', 'Raquel', 'Tânia', 'Tânia Assad', 'Tânia Alvim', 'Zenaildes',
+    'Mônica Cêli Lima',
     'Fabiana Alvim Melo Moura', 'Cláudio da Silva Oliveira', 'Cosmírio Carvalho',
+    'Ana Portela', 'Edgar Bispo', 'Everton Alisson', 'Kaique Kevin', 'Matheus Lino',
+    'Givaldo de Jesus',
 ]);
 
 sec('o cadastro incompleto casa com o documento completo');
@@ -100,9 +103,22 @@ sec('a inicial do documento levanta suspeita, mas nunca casa sozinha');
     chk(podeSerAbreviacao(doDocumento, doCadastro) === esperado,
         `"${doDocumento}" x "${doCadastro}" ${esperado ? 'levanta suspeita' : 'nao levanta'}`);
 });
-// A suspeita nao pode virar casamento: o Edgar continua sendo criado, e nao fundido.
-chk(acharPessoa('Edgar B. d. Santos', cadastroDe(['Edgar Bispo'])) === null,
-    'suspeitar nao e casar: "Edgar B. d. Santos" segue como pessoa nova');
+// A suspeita NAO casa ninguem — quem casa e a tabela APELIDOS, depois de alguem confirmar.
+// Por isso o par aqui e inventado: os reais ja foram confirmados e vivem em APELIDOS.
+chk(podeSerAbreviacao('Fulano B. d. Santos', 'Fulano Bispo') === true,
+    'o par inventado levanta a mesma suspeita que o do Edgar');
+chk(acharPessoa('Fulano B. d. Santos', cadastroDe(['Fulano Bispo'])) === null,
+    'suspeitar nao e casar: sem apelido, continua sendo pessoa nova');
+
+// A chave do apelido tem de ser o nome EXATO do documento. Errar um acento ali nao quebra
+// nada: o apelido simplesmente nunca e consultado, e a duplicata volta a nascer calada.
+sec('toda chave de APELIDOS existe na lista do documento');
+const doDocumento = new Set(
+    GRUPOS.flatMap((g) => [g.dirigente[0], g.ajudante[0], ...g.membros.map(([n]) => n)]),
+);
+Object.keys(APELIDOS).forEach((chave) => {
+    chk(doDocumento.has(chave), `"${chave}" esta escrito igual na lista`);
+});
 
 sec('o que NAO pode casar');
 // Sobrenome em comum nao e a mesma pessoa.
