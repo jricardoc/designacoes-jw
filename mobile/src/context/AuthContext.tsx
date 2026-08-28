@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { AppState } from "react-native";
-import { apiRequest } from "@/api/client";
+import { ApiError, apiRequest } from "@/api/client";
 import { removerPushToken } from "@/api/hooks/usePush";
 import { tokenStore } from "@/api/tokenStore";
 import type { LoginResponse, Usuario } from "@/api/types";
@@ -45,10 +45,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       try {
-        const me = await apiRequest<Usuario>("/auth/me");
+        // COM teto de tempo. Sem ele, um backend no ar mas sem responder (é o que
+        // acontece nos segundos de um redeploy) deixa esta chamada pendurada para
+        // sempre — e como `initializing` só cai no `finally`, o app fica na tela
+        // "Carregando..." indefinidamente, sem nem chegar na tela de login.
+        const me = await apiRequest<Usuario>("/auth/me", { timeoutMs: 8000 });
         setUsuarioState(me);
-      } catch {
-        await tokenStore.clear();
+      } catch (erro) {
+        // Só apaga o token quando o SERVIDOR o recusou. Antes qualquer erro apagava,
+        // incluindo "sem conexão" (status 0): um soluço de rede — ou um redeploy —
+        // deslogava o irmão, que tinha de digitar a senha de novo sem nada de errado
+        // com a sessão dele.
+        if (erro instanceof ApiError && (erro.status === 401 || erro.status === 403)) {
+          await tokenStore.clear();
+        }
       } finally {
         setInitializing(false);
       }

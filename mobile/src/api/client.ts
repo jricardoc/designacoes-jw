@@ -14,6 +14,16 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
   /** Skip auth header (e.g. login). */
   skipAuth?: boolean;
+  /**
+   * Teto de tempo em ms. Sem ele não há nenhum: o `fetch` do React Native espera
+   * indefinidamente, então um backend NO AR mas sem responder (container reiniciando,
+   * portal cativo do Wi-Fi) deixa a chamada pendurada para sempre.
+   *
+   * Não vale para tudo por padrão de propósito — o upload da programação em PDF pode
+   * demorar bastante numa rede ruim, e cortá-lo seria pior que esperar. Ligue onde o
+   * usuário fica preso esperando.
+   */
+  timeoutMs?: number;
 };
 
 /**
@@ -24,7 +34,7 @@ export async function apiRequest<T = unknown>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, skipAuth, headers, ...rest } = options;
+  const { body, skipAuth, headers, timeoutMs, ...rest } = options;
 
   const finalHeaders: Record<string, string> = {
     Accept: "application/json",
@@ -43,11 +53,17 @@ export async function apiRequest<T = unknown>(
     if (token) finalHeaders.Authorization = `Bearer ${token}`;
   }
 
+  const controlador = timeoutMs ? new AbortController() : null;
+  const relogio = controlador
+    ? setTimeout(() => controlador.abort(), timeoutMs)
+    : null;
+
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
       ...rest,
       headers: finalHeaders,
+      signal: controlador?.signal ?? rest.signal,
       body:
         body === undefined
           ? undefined
@@ -56,7 +72,11 @@ export async function apiRequest<T = unknown>(
             : JSON.stringify(body),
     });
   } catch {
+    // O abort do teto de tempo cai aqui junto com a falha de rede, e para quem chama
+    // dá no mesmo: o servidor não respondeu. Status 0 = não foi o servidor que recusou.
     throw new ApiError("Sem conexão com o servidor", 0);
+  } finally {
+    if (relogio) clearTimeout(relogio);
   }
 
   if (response.status === 204) {
