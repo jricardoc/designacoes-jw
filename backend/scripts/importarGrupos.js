@@ -166,7 +166,11 @@ const GRUPOS = [
         ],
     },
     {
-        grupo: 'Luiz Roberto',
+        grupo: 'Luis Roberto',
+        // Semeado como "Luiz Roberto" e corrigido a mao para "Luis Roberto". As tres grafias
+        // (Luiz / Luis / Luís) caem na mesma chave, entao a busca normalizada acha o grupo
+        // seja qual for. O script NAO renomeia: a grafia e escolha de quem cadastra.
+        nomesAnteriores: ['Luiz Roberto', 'Luís Roberto'],
         dirigente: ['Luis R. L. Sampaio', 'irmao'],
         ajudante: ['Matheus L. Santos', 'irmao'],
         membros: [
@@ -203,8 +207,34 @@ const GRUPOS = [
 // Casamento de nomes
 // --------------------------------------------------------------------------
 
+/**
+ * Casos que NENHUM algoritmo deveria resolver sozinho: o documento e o cadastro usam
+ * sobrenomes DIFERENTES para a mesma pessoa (nome de casada, sobrenome de um lado so).
+ * Juntar isso e conhecimento de quem convive com a congregacao, nao de quem le string.
+ *
+ * Cada par foi confirmado pelo usuario. Acrescentar aqui e o jeito certo de ensinar um caso
+ * novo — mais seguro que afrouxar o criterio geral, que passaria a fundir gente diferente.
+ *
+ *   documento -> como esta no cadastro
+ */
+const APELIDOS = {
+    'Jucélia D. S. G. Pinto': 'Jucélia dos Santos Gomes',
+    'Miguel A. de Jesus': 'Miguel Alves',
+};
+
+/**
+ * Sem acento, em minusculas — e com Z virando S.
+ *
+ * A troca de Z por S nao e capricho: em nome brasileiro as duas grafias sao a mesma pessoa e
+ * convivem no mesmo cadastro. "Luiz"/"Luis", "Souza"/"Sousa", "Izabel"/"Isabel". Sem isso o
+ * dirigente do quinto grupo nao casaria com o proprio registro.
+ */
 const semAcento = (t) =>
-    String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    String(t || '')
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .toLowerCase()
+        .replace(/z/g, 's');
 
 const chaveNome = (nome) => semAcento(nome).replace(/\s+/g, ' ').trim();
 
@@ -228,6 +258,14 @@ function pedacos(nome) {
  * causa de um script.
  */
 function acharPessoa(nome, cadastro) {
+    const apelido = APELIDOS[nome];
+    if (apelido) {
+        const porApelido = cadastro.filter((c) => c.chave === chaveNome(apelido));
+        if (porApelido.length === 1) {
+            return { pessoa: porApelido[0], criterio: 'par confirmado a mao' };
+        }
+    }
+
     const alvo = pedacos(nome);
     if (alvo.length === 0) return null;
 
@@ -239,7 +277,21 @@ function acharPessoa(nome, cadastro) {
             (alvo.every((p) => c.pedacos.includes(p)) && alvo.length > 0) ||
             (c.pedacos.length > 0 && c.pedacos.every((p) => alvo.includes(p))),
     );
-    if (contem.length === 1) return { pessoa: contem[0], criterio: 'um nome contem o outro' };
+    if (contem.length === 1) {
+        // Registro de UM nome so ("Marisol", "Olga", "Tânia") casa com qualquer nome que
+        // comece igual — e a unica evidencia e o primeiro nome. Isso e o que faz "Marisol"
+        // achar "Marisol Santos", e e indispensavel: metade do cadastro veio do carrinho so
+        // com o primeiro nome. Mas se houver OUTRO registro comecando igual, o primeiro nome
+        // deixa de identificar alguem: com "Tânia" e "Tânia Assad" no cadastro, escolher a
+        // incompleta seria chute. Ai e melhor criar e avisar.
+        const soPrimeiroNome = contem[0].pedacos.length === 1;
+        const concorrentes = soPrimeiroNome
+            ? cadastro.filter((c) => c.pedacos[0] === contem[0].pedacos[0]).length
+            : 1;
+        if (concorrentes === 1) {
+            return { pessoa: contem[0], criterio: 'um nome contem o outro' };
+        }
+    }
 
     const primeiroUltimo = cadastro.filter(
         (c) =>
@@ -269,6 +321,8 @@ async function main() {
         pedacos: pedacos(i.nome),
     }));
 
+    const todosOsGrupos = await prisma.grupoCampo.findMany();
+
     const totalLista = GRUPOS.reduce((s, g) => s + g.membros.length + 2, 0);
     console.log(`cadastrados hoje: ${cadastro.length}`);
     console.log(`pessoas na lista: ${totalLista}\n`);
@@ -281,15 +335,28 @@ async function main() {
 
     for (const bloco of GRUPOS) {
         // O grupo pode nao existir ainda (se `seed:grupos` nao rodou).
-        let grupo = await prisma.grupoCampo.findFirst({
-            where: { nome: bloco.grupo },
-        });
+        // A busca e por chave NORMALIZADA, e nao por string exata. O grupo pode estar
+        // gravado com qualquer grafia — "Luiz Roberto", "Luis Roberto", "Luís Roberto" — e
+        // uma comparacao literal criaria um segundo grupo com o mesmo dono. As grafias
+        // conhecidas entram em `nomesAnteriores` para o caso de a normalizacao nao bastar.
+        const chavesDoGrupo = new Set(
+            [bloco.grupo, ...(bloco.nomesAnteriores ?? [])].map(chaveNome),
+        );
+        let grupo = todosOsGrupos.find((g) => chavesDoGrupo.has(chaveNome(g.nome))) ?? null;
+
+        if (grupo && grupo.nome !== bloco.grupo) {
+            // Nao renomeia: a grafia gravada e escolha de quem cadastra, e o script so
+            // precisa saber que e o mesmo grupo.
+            console.log(`GRUPO "${bloco.grupo}" = "${grupo.nome}" (grafia diferente, mesmo grupo)`);
+        }
+
         if (!grupo) {
             console.log(`GRUPO "${bloco.grupo}": nao existe, ${simular ? 'seria criado' : 'criando'}`);
             if (!simular) {
                 grupo = await prisma.grupoCampo.create({
                     data: { nome: bloco.grupo, ordem: GRUPOS.indexOf(bloco) },
                 });
+                todosOsGrupos.push(grupo);
             }
         }
         console.log(`\n--- ${bloco.grupo} ---`);
@@ -398,9 +465,15 @@ async function main() {
     }
 }
 
-main()
-    .catch((e) => {
-        console.error('\nFALHOU:', e.message);
-        process.exitCode = 1;
-    })
-    .finally(() => prisma.$disconnect());
+// So roda quando chamado direto. Requerido como modulo (pelo verificar:importacao-grupos),
+// expoe as funcoes puras e nao toca no banco.
+if (require.main === module) {
+    main()
+        .catch((e) => {
+            console.error('FALHOU:', e.message);
+            process.exitCode = 1;
+        })
+        .finally(() => prisma.$disconnect());
+}
+
+module.exports = { GRUPOS, APELIDOS, _internos: { chaveNome, pedacos, acharPessoa } };

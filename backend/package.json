@@ -18,7 +18,8 @@
     "unificar:pessoas": "node scripts/unificarPessoas.js",
     "pessoas:duplicados": "node scripts/duplicadosPessoas.js",
     "seed:grupos": "node scripts/seedGrupos.js",
-    "importar:grupos": "node scripts/importarGrupos.js"
+    "importar:grupos": "node scripts/importarGrupos.js",
+    "verificar:importacao-grupos": "node scripts/verificarImportacaoGrupos.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",
