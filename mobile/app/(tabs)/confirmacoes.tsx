@@ -101,7 +101,6 @@ export default function ConfirmacoesScreen() {
           title="Confirmações"
           description="Acesso restrito"
           icon="lock-closed"
-          showBack
         />
         <EmptyState
           icon="lock-closed-outline"
@@ -130,7 +129,6 @@ export default function ConfirmacoesScreen() {
               : `${pendentes} ${pendentes === 1 ? "parte esperando resposta" : "partes esperando resposta"}`
         }
         icon="checkmark-done"
-        showBack
       />
 
       {isLoading ? (

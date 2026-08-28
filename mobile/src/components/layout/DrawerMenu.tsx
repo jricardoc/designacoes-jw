@@ -52,7 +52,7 @@ const ITENS: ItemMenu[] = [
     chave: "confirmacoes",
     rotulo: "Confirmações",
     icone: "checkmark-done-outline",
-    href: "/confirmacoes",
+    href: "/(tabs)/confirmacoes",
     escopo: "confirmacoes",
   },
   { chave: "conta", rotulo: "Conta", icone: "person-outline", href: "/(tabs)/conta" },

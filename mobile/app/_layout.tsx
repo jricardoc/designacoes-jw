@@ -43,7 +43,6 @@ function AuthGate() {
       <Stack.Screen name="escala/[id]" />
       <Stack.Screen name="reuniao/meses" />
       <Stack.Screen name="cumprimento" />
-      <Stack.Screen name="confirmacoes" />
       <Stack.Screen name="reuniao/semana/[id]" />
       <Stack.Screen name="territorio/[numero]" />
       <Stack.Screen name="irmao" />
