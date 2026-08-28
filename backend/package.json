@@ -15,7 +15,8 @@
     "verificar:rodizio-quadro": "node scripts/verificarRodizioQuadro.js",
     "verificar:confirmacoes": "node scripts/verificarConfirmacoes.js",
     "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js",
-    "unificar:pessoas": "node scripts/unificarPessoas.js"
+    "unificar:pessoas": "node scripts/unificarPessoas.js",
+    "pessoas:duplicados": "node scripts/duplicadosPessoas.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

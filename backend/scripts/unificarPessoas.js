@@ -22,8 +22,11 @@
  * -------------
  *  1. Marca genero='irmao' em todo `Irmao` que ainda esta sem genero.
  *  2. Para cada `CarrinhoPublicador`:
- *       - se ja existe um `Irmao` com o mesmo nome (comparado sem acento/caixa), reaproveita
- *         esse registro — e o caso do Walney, que estava nas duas listas e e IRMAO;
+ *       - se ja existe um `Irmao` com o mesmo nome (sem acento/caixa) OU cujo nome CONTENHA
+ *         o do publicador, reaproveita esse registro — e o caso do Walney, que o carrinho
+ *         registra como "Walney" e o cadastro como "Walney Souza". A primeira versao so
+ *         comparava por igualdade, nao casou nenhum dos 33 e duplicou quem estava nas duas
+ *         listas;
  *       - se nao existe, cria um `Irmao` com genero='irma', sem funcao nenhuma.
  *     O telefone do carrinho e copiado quando o irmao ainda nao tem um. Nunca sobrescreve:
  *     um numero ja cadastrado a mao vale mais que o importado.
@@ -37,6 +40,7 @@
  * pior do que conviver com uma tabela orfa por uns dias.
  */
 const prisma = require('../src/prisma');
+const { tokenize } = require('../src/services/MatchIrmaosService');
 
 const simular = process.argv.includes('--simular');
 
@@ -76,6 +80,25 @@ async function main() {
 
     // ---- 2. publicadores viram Irmao ---------------------------------------
     const porNome = new Map(irmaos.map((i) => [chaveNome(i.nome), i]));
+    let comTokens = irmaos.map((i) => ({ irmao: i, tokens: tokenize(i.nome) }));
+
+    /**
+     * Acha o Irmao que ja e esta pessoa.
+     *
+     * Primeiro por igualdade de nome. Nao achando, aceita quem CONTEM o nome inteiro do
+     * publicador ("walney" ⊂ "walney souza") — e so quando ha UM candidato: "Jose" dentro de
+     * "Jose Santos" e "Jose Ricardo" nao identifica ninguem, e ai e melhor criar um registro a
+     * mais do que fundir duas pessoas diferentes.
+     */
+    const acharExistente = (nome) => {
+        const exato = porNome.get(chaveNome(nome));
+        if (exato) return exato;
+
+        const alvo = tokenize(nome);
+        if (alvo.length === 0) return null;
+        const contem = comTokens.filter((c) => alvo.every((t) => c.tokens.includes(t)));
+        return contem.length === 1 ? contem[0].irmao : null;
+    };
     const mapaPublicadorParaIrmao = new Map(); // publicadorId -> irmaoId
 
     let criados = 0;
@@ -83,12 +106,12 @@ async function main() {
     let telefonesCopiados = 0;
 
     for (const p of publicadores) {
-        const existente = porNome.get(chaveNome(p.nome));
+        const existente = acharExistente(p.nome);
 
         if (existente) {
             reaproveitados += 1;
             mapaPublicadorParaIrmao.set(p.id, existente.id);
-            log(`   ja existe em Irmao: "${p.nome}" -> mantem genero '${existente.genero || 'irmao'}'`);
+            log(`   ja existe em Irmao: "${p.nome}" = "${existente.nome}" -> mantem genero '${existente.genero || 'irmao'}'`);
 
             // Telefone so entra quando falta: nao sobrescreve o que foi cadastrado a mao.
             if (p.telefone && !existente.telefone) {
@@ -119,6 +142,7 @@ async function main() {
             },
         });
         porNome.set(chaveNome(novo.nome), novo);
+        comTokens = [...comTokens, { irmao: novo, tokens: tokenize(novo.nome) }];
         mapaPublicadorParaIrmao.set(p.id, novo.id);
         log(`   criado: "${novo.nome}" (irma)`);
     }
