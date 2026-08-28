@@ -337,7 +337,20 @@ model CarrinhoEscala {
   createdAt    DateTime            @default(now())
 
   @@unique([turnoId, publicadorId])
-  @@unique([turnoId, irmaoId])
+  // A UNIQUE de (turnoId, irmaoId) NAO entra aqui ainda, e isso e deliberado.
+  //
+  // A producao aplica o schema com `prisma db push` (comando do painel do EasyPanel), e ele
+  // RECUSA criar constraint UNIQUE sem --accept-data-loss: ele nao confere se ha duplicata,
+  // so avisa que poderia haver. Como o comando de boot e encadeado com `&&`, o `npm start`
+  // nunca e alcancado e o container reinicia em loop — foi o que derrubou a API em
+  // 2026-08-27.
+  //
+  // A protecao contra o mesmo irmao duas vezes no mesmo turno continua valendo pela UNIQUE de
+  // cima enquanto `publicadorId` existir. Quando a unificacao terminar, a de irmaoId entra
+  // assim: rodar a SQL a mao uma vez no console do Postgres
+  //     CREATE UNIQUE INDEX "CarrinhoEscala_turnoId_irmaoId_key" ON "CarrinhoEscala"("turnoId","irmaoId");
+  // e SO ENTAO reintroduzir a linha aqui — com o indice ja existindo, o db push acha schema e
+  // banco iguais e o boot passa.
 }
 
 // Configuração das Saídas de Campo (locais/horários por dia da semana)

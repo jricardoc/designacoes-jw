@@ -5,6 +5,10 @@
 --
 -- Nada e removido aqui. CarrinhoPublicador e publicadorId so saem depois que
 -- `npm run unificar:pessoas` rodar em producao e o resultado for conferido.
+--
+-- Sem a UNIQUE de (turnoId, irmaoId) de proposito: a producao aplica o schema com
+-- `prisma db push`, que recusa criar constraint UNIQUE e derruba o boot em loop. Ver o
+-- comentario em CarrinhoEscala no schema.prisma.
 
 -- AlterTable
 ALTER TABLE "Irmao" ADD COLUMN     "genero" TEXT,
@@ -29,9 +33,6 @@ CREATE TABLE "ConfirmacaoDesignacao" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ConfirmacaoDesignacao_data_campo_nome_key" ON "ConfirmacaoDesignacao"("data", "campo", "nome");
-
--- CreateIndex
-CREATE UNIQUE INDEX "CarrinhoEscala_turnoId_irmaoId_key" ON "CarrinhoEscala"("turnoId", "irmaoId");
 
 -- AddForeignKey
 ALTER TABLE "CarrinhoEscala" ADD CONSTRAINT "CarrinhoEscala_irmaoId_fkey" FOREIGN KEY ("irmaoId") REFERENCES "Irmao"("id") ON DELETE CASCADE ON UPDATE CASCADE;
