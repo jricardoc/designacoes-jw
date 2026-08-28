@@ -12,7 +12,7 @@
  * G. d. Silva") e o cadastro esta incompleto ("Marisol", "Olga").
  */
 const { GRUPOS, APELIDOS, _internos } = require('./importarGrupos');
-const { chaveNome, pedacos, acharPessoa, podeSerAbreviacao } = _internos;
+const { chaveNome, pedacos, acharPessoa, podeSerAbreviacao, comecaPorOutroNome } = _internos;
 
 let falhas = 0;
 const chk = (ok, m) => { console.log(`${ok ? '  OK  ' : ' FALHA'} ${m}`); if (!ok) falhas++; };
@@ -34,7 +34,7 @@ const CADASTRO = cadastroDe([
     'Mônica Cêli Lima',
     'Fabiana Alvim Melo Moura', 'Cláudio da Silva Oliveira', 'Cosmírio Carvalho',
     'Ana Portela', 'Edgar Bispo', 'Everton Alisson', 'Kaique Kevin', 'Matheus Lino',
-    'Givaldo de Jesus',
+    'Givaldo de Jesus', 'Fátima Lopes',
 ]);
 
 sec('o cadastro incompleto casa com o documento completo');
@@ -112,6 +112,24 @@ chk(acharPessoa('Fulano B. d. Santos', cadastroDe(['Fulano Bispo'])) === null,
 
 // A chave do apelido tem de ser o nome EXATO do documento. Errar um acento ali nao quebra
 // nada: o apelido simplesmente nunca e consultado, e a duplicata volta a nascer calada.
+sec('quem se cadastrou pelo nome de tratamento nao some calado');
+// O casamento exige primeiro nome igual, senao "Matheus Santos" casa com "Erick Matheus
+// Santos". O preco e "Fátima Lopes": o registro cabe inteiro no nome do documento, mas
+// comeca por outro nome. Sem este aviso ela viraria cadastro novo em silencio — o CONFERIR
+// nao pega, porque compara primeiro nome com primeiro nome.
+// O par real ja foi confirmado e vive em APELIDOS; o criterio sozinho continua recusando.
+chk(acharPessoa('Fulana de Tal P. Lopez', cadastroDe(['Tal Lopes'])) === null,
+    'sem apelido, o criterio nao casa quem comeca por outro primeiro nome');
+chk(acharPessoa('Maria de Fatima P. Lopez', cadastroDe(['Fátima Lopes']))?.criterio === 'par confirmado a mao',
+    'o par real so casa porque alguem confirmou');
+chk(comecaPorOutroNome('Maria de Fatima P. Lopez', 'Fátima Lopes'),
+    'mas o par aparece na lista de suspeitos');
+// E o que motivou a regra continua separado, sem virar suspeita nem casamento.
+chk(!comecaPorOutroNome('Érick Matheus B. Santos', 'Matheus Lino'),
+    '"Érick Matheus B. Santos" x "Matheus Lino" nem suspeita levanta');
+chk(!comecaPorOutroNome('Marisol Santos', 'Marisol'),
+    'quem ja casa pelo primeiro nome nao entra na lista de suspeitos');
+
 sec('toda chave de APELIDOS existe na lista do documento');
 const doDocumento = new Set(
     GRUPOS.flatMap((g) => [g.dirigente[0], g.ajudante[0], ...g.membros.map(([n]) => n)]),
@@ -124,6 +142,10 @@ sec('o que NAO pode casar');
 // Sobrenome em comum nao e a mesma pessoa.
 chk(acharPessoa('Maria Helena S. Santos', cadastroDe(['Maria Helena G. S. Santana'])) === null,
     'duas "Maria Helena" com sobrenome diferente ficam separadas');
+// O caso que fundiu duas irmas na rodada de 28/08/2026. Existia um criterio de "primeiro e
+// ultimo nome iguais" e, numa lista com dezessete Marias, ele nao identifica ninguem.
+chk(acharPessoa('Maria Eduarda dos S. G. de Araújo', cadastroDe(['Maria Helena R. Araujo'])) === null,
+    'Maria Eduarda nao vira Maria Helena por causa do "Araujo" no fim');
 chk(acharPessoa('José dos Santos Cruz', CADASTRO) === null,
     '"José dos Santos Cruz" nao vira o "José Ricardo" do cadastro');
 chk(acharPessoa('Marcia Vieira Santos', cadastroDe(['Marcia Nunes de Jesus'])) === null,
@@ -131,6 +153,21 @@ chk(acharPessoa('Marcia Vieira Santos', cadastroDe(['Marcia Nunes de Jesus'])) =
 // Empate nunca escolhe.
 chk(acharPessoa('Tânia Maria A. de Mello', cadastroDe(['Tânia', 'Tânia Assad'])) === null,
     'com dois "Tânia" no cadastro, ninguem e escolhido');
+
+sec('nenhum nome do documento casa com OUTRO nome do documento');
+// Os 128 sao pessoas distintas. Entao, tirando ela mesma da lista, nenhuma pode achar
+// nenhuma — e o que garante que gravar de verdade da o MESMO resultado que simular. Enquanto
+// quem era criado voltava para a lista de casamento, a ordem do documento decidia quem
+// existia: cinco nomes foram engolidos por gente cadastrada segundos antes.
+const nomesDoDocumento = [...doDocumento];
+const engolidos = [];
+nomesDoDocumento.forEach((nome) => {
+    const resto = cadastroDe(nomesDoDocumento.filter((outro) => outro !== nome));
+    const r = acharPessoa(nome, resto);
+    if (r) engolidos.push(`"${nome}" -> "${r.pessoa.nome}" (${r.criterio})`);
+});
+chk(engolidos.length === 0,
+    `nenhum dos 128 acha outro dos 128${engolidos.length ? ': ' + engolidos.join('; ') : ''}`);
 
 sec('nenhum nome do documento casa com DOIS do cadastro');
 // O criterio recusa empate, mas empate frequente seria sinal de criterio frouxo demais.

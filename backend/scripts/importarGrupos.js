@@ -243,6 +243,11 @@ const APELIDOS = {
     'Kaique K. B. Elesbão': 'Kaique Kevin',
     'Matheus L. Santos': 'Matheus Lino',
     'Givaldo J. Santana': 'Givaldo de Jesus',
+
+    // Cadastrada pelo nome de tratamento: o registro cabe inteiro no nome do documento, mas
+    // comeca por outro nome. Ja estava casada assim no banco antes da regra do primeiro nome
+    // entrar; sem o apelido, a proxima rodada criaria uma segunda Fatima.
+    'Maria de Fatima P. Lopez': 'Fátima Lopes',
 };
 
 /**
@@ -276,9 +281,13 @@ function pedacos(nome) {
 /**
  * Acha a pessoa no cadastro. Devolve { pessoa, criterio } ou null.
  *
- * Tres criterios, do mais seguro para o menos. Nenhum deles aceita empate: se dois cadastros
- * casam, ninguem e escolhido — dois "Maria Santos" diferentes nao podem virar um so por
- * causa de um script.
+ * Dois criterios: nome igual e um nome contendo o outro. Nenhum deles aceita empate — se
+ * dois cadastros casam, ninguem e escolhido: dois "Maria Santos" diferentes nao podem virar
+ * um so por causa de um script.
+ *
+ * `cadastro` e SEMPRE a lista de quem ja existia ANTES da rodada. Quem e criado agora nao
+ * entra: os 128 nomes do documento sao pessoas distintas (a verificacao prova), entao um
+ * nome do documento casar com outro so pode ser engano.
  */
 function acharPessoa(nome, cadastro) {
     const apelido = APELIDOS[nome];
@@ -295,10 +304,15 @@ function acharPessoa(nome, cadastro) {
     const exato = cadastro.filter((c) => c.chave === chaveNome(nome));
     if (exato.length === 1) return { pessoa: exato[0], criterio: 'nome igual' };
 
+    // O PRIMEIRO NOME tem de ser o mesmo. Sem essa exigencia "Matheus Santos" esta contido
+    // em "Erick Matheus Santos" e os dois irmaos viram um so. Nenhum casamento legitimo
+    // perde nada: em todos eles a duvida e do sobrenome para tras — "Marisol" x "Marisol
+    // Santos", "Harison Mendes" x "Harison Mendes de P. Araujo".
     const contem = cadastro.filter(
         (c) =>
-            (alvo.every((p) => c.pedacos.includes(p)) && alvo.length > 0) ||
-            (c.pedacos.length > 0 && c.pedacos.every((p) => alvo.includes(p))),
+            c.pedacos[0] === alvo[0] &&
+            ((alvo.every((p) => c.pedacos.includes(p)) && alvo.length > 0) ||
+                (c.pedacos.length > 0 && c.pedacos.every((p) => alvo.includes(p)))),
     );
     if (contem.length === 1) {
         // Registro de UM nome so ("Marisol", "Olga", "Tânia") casa com qualquer nome que
@@ -316,17 +330,10 @@ function acharPessoa(nome, cadastro) {
         }
     }
 
-    const primeiroUltimo = cadastro.filter(
-        (c) =>
-            c.pedacos.length > 1 &&
-            alvo.length > 1 &&
-            c.pedacos[0] === alvo[0] &&
-            c.pedacos[c.pedacos.length - 1] === alvo[alvo.length - 1],
-    );
-    if (primeiroUltimo.length === 1) {
-        return { pessoa: primeiroUltimo[0], criterio: 'primeiro e ultimo nome' };
-    }
-
+    // NAO existe um terceiro criterio de "primeiro e ultimo nome iguais". Ele existiu e
+    // fundiu "Maria Eduarda dos S. G. de Araujo" com "Maria Helena R. Araujo": numa lista
+    // com dezessete Marias, "primeiro + ultimo" nao identifica ninguem. Nenhum casamento
+    // legitimo dependia dele — os que pareciam depender ja caem na contencao.
     return null;
 }
 
@@ -376,6 +383,26 @@ function podeSerAbreviacao(doDocumento, doCadastro) {
     return porInicial > 0;
 }
 /**
+ * O registro cabe inteiro dentro do nome do documento (ou o contrario), mas comeca por OUTRO
+ * primeiro nome: "Fátima Lopes" x "Maria de Fatima P. Lopez".
+ *
+ * Tambem so avisa. O casamento exige primeiro nome igual porque sem isso "Matheus Santos"
+ * casa com "Erick Matheus Santos" — mas quem se cadastrou pelo nome de tratamento cai
+ * justamente aqui, e sem este aviso viraria um cadastro novo em silencio: o aviso comum nao
+ * pega, ja que os primeiros nomes sao diferentes.
+ */
+function comecaPorOutroNome(doDocumento, doCadastro) {
+    const documento = pedacos(doDocumento);
+    const cadastro = pedacos(doCadastro);
+    if (documento.length < 2 || cadastro.length < 2) return false;
+    if (cadastro[0] === documento[0]) return false;
+    return (
+        cadastro.every((parte) => documento.includes(parte)) ||
+        documento.every((parte) => cadastro.includes(parte))
+    );
+}
+
+/**
  * Renomeia a pessoa E as referencias por TEXTO a ela.
  *
  * `Designacao.irmao1/irmao2` e `EscalaDirigente.principal` guardam o NOME, nao a chave — sao
@@ -416,6 +443,12 @@ async function main() {
     console.log(`cadastrados hoje: ${cadastro.length}`);
     console.log(`pessoas na lista: ${totalLista}\n`);
 
+    // Quem nasce nesta rodada fica FORA de `cadastro`: senao a segunda "Maria" do documento
+    // acha a primeira e as duas viram uma so — foi o que aconteceu na rodada de 28/08/2026,
+    // e e por isso que a simulacao dava 58 casados e a gravacao dava 63. Aqui eles servem so
+    // para o aviso: e util saber que "Laura Julia" nasce ao lado de "Laura Bispo".
+    const criadosAgora = [];
+    const reivindicados = new Map();
     const avisos = [];
     const completados = [];
     const podemCompletar = [];
@@ -472,6 +505,20 @@ async function main() {
             let pessoa;
 
             if (achado) {
+                // Dois nomes do documento apontando para o mesmo registro seria a fusao de
+                // duas pessoas — o erro caro. Nao ha conserto automatico: o script para e
+                // mostra o par, porque continuar significaria escolher qual das duas some.
+                const dono = reivindicados.get(achado.pessoa.id);
+                if (dono) {
+                    throw new Error(
+                        `"${item.nome}" e "${dono}" casaram com o MESMO cadastro ` +
+                            `("${achado.pessoa.nome}"). Sao pessoas diferentes — nada foi mexido ` +
+                            'depois deste ponto. Acerte o nome no cadastro ou ponha o par certo ' +
+                            'em APELIDOS.',
+                    );
+                }
+                if (achado.pessoa.id) reivindicados.set(achado.pessoa.id, item.nome);
+
                 casados += 1;
                 pessoa = achado.pessoa;
                 if (achado.criterio !== 'nome igual') {
@@ -479,7 +526,18 @@ async function main() {
                 }
             } else {
                 // Alguem com o mesmo primeiro nome ja cadastrado? E onde a duplicata escapa.
-                const mesmoPrimeiro = cadastro.filter(
+                const todosOsRegistros = [...cadastro, ...criadosAgora];
+                // Quem comeca por outro primeiro nome escapa do aviso comum — por isso entra
+                // direto na lista de suspeitos, sem passar pelo CONFERIR.
+                todosOsRegistros
+                    .filter((c) => comecaPorOutroNome(item.nome, c.nome))
+                    .forEach((c) => {
+                        provaveis.push(
+                            `"${item.nome}" (documento)  =?  "${c.nome}" (cadastro, comeca por outro nome)`,
+                        );
+                    });
+
+                const mesmoPrimeiro = todosOsRegistros.filter(
                     (c) => c.pedacos[0] && c.pedacos[0] === pedacos(item.nome)[0],
                 );
                 if (mesmoPrimeiro.length > 0) {
@@ -503,8 +561,12 @@ async function main() {
                         data: { nome: item.nome, funcoes: [], genero: item.genero },
                         select: { id: true, nome: true, genero: true, grupoId: true },
                     });
-                    cadastro.push({ ...pessoa, chave: chaveNome(pessoa.nome), pedacos: pedacos(pessoa.nome) });
                 }
+                criadosAgora.push({
+                    ...pessoa,
+                    chave: chaveNome(pessoa.nome),
+                    pedacos: pedacos(pessoa.nome),
+                });
             }
 
             // Nome do cadastro mais curto que o do documento: o documento e a lista oficial
@@ -571,8 +633,10 @@ async function main() {
 
     if (provaveis.length > 0) {
         console.log(`\n=== PROVAVEL MESMA PESSOA (${provaveis.length}) ===`);
-        console.log('Aqui uma inicial do documento cai bem em cima do sobrenome do cadastro');
-        console.log('("Edgar B. d. Santos" x "Edgar Bispo"). Se for a mesma pessoa, o par TEM DE');
+        console.log('Pares que o criterio nao casa mas que costumam ser a mesma pessoa: uma');
+        console.log('inicial caindo em cima do sobrenome ("Edgar B. d. Santos" x "Edgar Bispo"),');
+        console.log('ou o cadastro pelo nome de tratamento ("Maria de Fatima P. Lopez" x "Fátima');
+        console.log('Lopes"). Se for a mesma pessoa, o par TEM DE');
         console.log('entrar na tabela APELIDOS do script ANTES de rodar de verdade: depois de');
         console.log('criada, a duplicata so sai a mao — pessoas:duplicados so olha quem veio do');
         console.log('carrinho e nao pega estes.');
@@ -610,4 +674,4 @@ if (require.main === module) {
         .finally(() => prisma.$disconnect());
 }
 
-module.exports = { GRUPOS, APELIDOS, _internos: { chaveNome, pedacos, acharPessoa, podeSerAbreviacao } };
+module.exports = { GRUPOS, APELIDOS, _internos: { chaveNome, pedacos, acharPessoa, podeSerAbreviacao, comecaPorOutroNome } };
