@@ -14,6 +14,20 @@ function normalizarPrivilegio(valor) {
     return PRIVILEGIOS.includes(valor) ? valor : null;
 }
 
+/**
+ * Texto curto guardado como esta, so aparado. Vazio limpa; `undefined` (chave ausente no PUT)
+ * mantem o que estava — mesma regra do privilegio e do telefone, para um PUT parcial de outra
+ * tela nao apagar o campo sem querer.
+ *
+ * @returns {string|null|undefined}
+ */
+function normalizarTexto(valor) {
+    if (valor === undefined) return undefined;
+    if (valor === null) return null;
+    const limpo = String(valor).trim();
+    return limpo || null;
+}
+
 /** Como se fala com a pessoa. Nao e sexo biologico — por isso os valores tem esse nome. */
 const GENEROS = new Set(['irmao', 'irma']);
 
@@ -90,7 +104,7 @@ class IrmaoController {
     // Criar novo irmao
     async create(req, res) {
         try {
-            const { nome, funcoes, nivelAudioVideo, privilegio, telefone, genero } = req.body;
+            const { nome, funcoes, nivelAudioVideo, privilegio, telefone, genero, grupo } = req.body;
 
             if (!nome) {
                 return res.status(400).json({ error: 'Nome e obrigatorio' });
@@ -103,7 +117,8 @@ class IrmaoController {
                     nivelAudioVideo: nivelAudioVideo || 'experiente',
                     privilegio: normalizarPrivilegio(privilegio) ?? null,
                     telefone: normalizarTelefone(telefone) ?? null,
-                    genero: normalizarGenero(genero) ?? null
+                    genero: normalizarGenero(genero) ?? null,
+                    grupo: normalizarTexto(grupo) ?? null
                 }
             });
 
@@ -121,7 +136,7 @@ class IrmaoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone, genero } = req.body;
+            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone, genero, grupo } = req.body;
 
             const updateData = {};
             if (nome !== undefined) updateData.nome = String(nome).trim();
@@ -154,6 +169,9 @@ class IrmaoController {
 
             const generoNormalizado = normalizarGenero(genero);
             if (generoNormalizado !== undefined) updateData.genero = generoNormalizado;
+
+            const grupoNormalizado = normalizarTexto(grupo);
+            if (grupoNormalizado !== undefined) updateData.grupo = grupoNormalizado;
 
             // Uma transacao: ou o irmao e as designacoes dele andam juntos, ou nada muda.
             const [irmao] = await prisma.$transaction([

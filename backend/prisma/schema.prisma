@@ -113,6 +113,10 @@ model Irmao {
   // valores tem o nome que tem. Opcional so por causa da transicao: o script de migracao
   // preenche todo mundo, e quem entrar depois preenche na tela de Pessoas.
   genero             String?
+  // Grupo de campo do publicador ("Grupo 1", "Grupo 2"...). Texto livre de proposito: o
+  // rotulo vem da congregacao e muda com ela, e a limpeza do salao e organizada por grupo —
+  // e o que liga esta coluna ao campo `limpeza` da programacao importada. Preenchido a mao.
+  grupo              String?
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio         String?
@@ -335,8 +339,6 @@ model CarrinhoEscala {
   irmaoId      Int?
   irmao        Irmao?              @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
   createdAt    DateTime            @default(now())
-
-  @@unique([turnoId, publicadorId])
   // A UNIQUE de (turnoId, irmaoId) NAO entra aqui ainda, e isso e deliberado.
   //
   // A producao aplica o schema com `prisma db push` (comando do painel do EasyPanel), e ele
@@ -351,6 +353,8 @@ model CarrinhoEscala {
   //     CREATE UNIQUE INDEX "CarrinhoEscala_turnoId_irmaoId_key" ON "CarrinhoEscala"("turnoId","irmaoId");
   // e SO ENTAO reintroduzir a linha aqui — com o indice ja existindo, o db push acha schema e
   // banco iguais e o boot passa.
+
+  @@unique([turnoId, publicadorId])
 }
 
 // Configuração das Saídas de Campo (locais/horários por dia da semana)

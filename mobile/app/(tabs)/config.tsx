@@ -162,8 +162,15 @@ export default function ConfigScreen() {
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color="#C6BAA0" />
                   </View>
-                  {irmao.privilegio || irmao.funcoes.length > 0 ? (
+                  {irmao.grupo || irmao.privilegio || irmao.funcoes.length > 0 ? (
                     <View style={styles.funcoesRow}>
+                      {/* O grupo vem primeiro: com 70 publicadores, e por ele que se confere
+                          quem ainda falta preencher e quem cuida da limpeza de cada semana. */}
+                      {irmao.grupo ? (
+                        <View style={styles.grupoTag}>
+                          <Text style={styles.grupoTagText}>{irmao.grupo}</Text>
+                        </View>
+                      ) : null}
                       <PrivilegioBadge privilegio={irmao.privilegio} size="sm" abreviado />
                       {irmao.funcoes.map((f) => (
                         <View
@@ -278,6 +285,13 @@ const criarEstilos = (colors: Cores) =>
   irmaoInitials: { fontSize: 13, fontWeight: "700", color: colors.brown },
   irmaoNome: { flex: 1, fontWeight: "600", color: colors.text, fontSize: 16 },
   funcoesRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 11 },
+  grupoTag: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.sm,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  grupoTagText: { fontSize: 11.5, fontWeight: "700", color: colors.textSecondary },
   funcaoTag: { borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3 },
   funcaoTagText: { fontSize: 11, fontWeight: "700" },
   empty: { color: colors.textMuted, textAlign: "center", padding: 20 },

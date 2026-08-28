@@ -121,6 +121,8 @@ export interface Irmao {
   /** Só dígitos, com DDD ("71999998888"). Abre o WhatsApp já com o texto na tela de Confirmações. */
   telefone?: string | null;
   genero?: GeneroPessoa | null;
+  /** Grupo de campo ("Grupo 1", "Grupo 2"...). Texto livre — é por ele que sai a limpeza. */
+  grupo?: string | null;
   ativo: boolean;
   indisponibilidades?: Indisponibilidade[];
   dirigenteSaidas?: DirigenteSaida[];

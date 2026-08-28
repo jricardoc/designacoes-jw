@@ -77,6 +77,7 @@ export default function IrmaoScreen() {
   const [privilegio, setPrivilegio] = useState<PrivilegioId | null>(null);
   const [genero, setGenero] = useState<GeneroPessoa | null>(null);
   const [telefone, setTelefone] = useState("");
+  const [grupo, setGrupo] = useState("");
   const [ativo, setAtivo] = useState(true);
   const [saidas, setSaidas] = useState<number[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -89,6 +90,7 @@ export default function IrmaoScreen() {
       setPrivilegio(existente.privilegio ?? null);
       setGenero(existente.genero ?? null);
       setTelefone(existente.telefone ?? "");
+      setGrupo(existente.grupo ?? "");
       setAtivo(existente.ativo);
       setHydrated(true);
     }
@@ -134,6 +136,7 @@ export default function IrmaoScreen() {
   const saving = criar.isPending || atualizar.isPending;
 
   const summary = [
+    grupo.trim(),
     privilegioLabel(privilegio),
     funcoes.length
       ? `${funcoes.length} ${funcoes.length === 1 ? "função" : "funções"}`
@@ -174,6 +177,7 @@ export default function IrmaoScreen() {
           privilegio,
           genero,
           telefone,
+          grupo,
           ativo,
         });
       } else {
@@ -184,6 +188,7 @@ export default function IrmaoScreen() {
           privilegio,
           genero,
           telefone,
+          grupo,
         });
         savedId = novo.id;
       }
@@ -362,6 +367,18 @@ export default function IrmaoScreen() {
             placeholder="(71) 99999-8888"
             placeholderTextColor={colors.textMuted}
             keyboardType="phone-pad"
+            style={styles.input}
+          />
+
+          <Text style={[styles.label, { marginTop: 18 }]}>Grupo</Text>
+          <Text style={styles.hint}>
+            O grupo de campo do publicador. É por ele que sai a limpeza do salão.
+          </Text>
+          <TextInput
+            value={grupo}
+            onChangeText={setGrupo}
+            placeholder="Grupo 1"
+            placeholderTextColor={colors.textMuted}
             style={styles.input}
           />
 
