@@ -1,6 +1,7 @@
 'use strict';
 
 const LembreteDesignacoesService = require('./LembreteDesignacoesService');
+const LembreteTarefasService = require('./LembreteTarefasService');
 
 /**
  * Agendador dos lembretes: acorda de 15 em 15 minutos e despacha o que venceu.
@@ -32,12 +33,22 @@ function msAteProximoTique(agora = new Date()) {
 }
 
 async function tique() {
+    // Os dois lembretes andam no MESMO tique, mas em try/catch separados: eles falham por
+    // motivos diferentes (um le a programacao, o outro os quadros) e uma excecao num deles
+    // nao pode calar o outro. Antes de existir o segundo bloco, um erro nas designacoes
+    // levaria junto os avisos de tarefa da congregacao inteira.
     try {
         await LembreteDesignacoesService.processarTick();
     } catch (erro) {
         // Uma falha de envio nao pode matar o agendamento seguinte: sem isso, um push com
         // erro deixaria a congregacao sem lembrete ate o proximo restart.
         console.error('[lembretes] falha no tique:', erro);
+    }
+
+    try {
+        await LembreteTarefasService.processarTick();
+    } catch (erro) {
+        console.error('[tarefas] falha no tique:', erro);
     }
 }
 

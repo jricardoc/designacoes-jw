@@ -19,7 +19,10 @@
     "pessoas:duplicados": "node scripts/duplicadosPessoas.js",
     "seed:grupos": "node scripts/seedGrupos.js",
     "importar:grupos": "node scripts/importarGrupos.js",
-    "verificar:importacao-grupos": "node scripts/verificarImportacaoGrupos.js"
+    "verificar:importacao-grupos": "node scripts/verificarImportacaoGrupos.js",
+    "verificar:limpeza-grupos": "node scripts/verificarLimpezaGrupos.js",
+    "verificar:tarefas": "node scripts/verificarTarefas.js",
+    "vincular:limpeza": "node scripts/vincularLimpeza.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

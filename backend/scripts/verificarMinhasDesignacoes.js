@@ -33,10 +33,14 @@ sec('campos com varios nomes');
 chk(campoMenciona(T('Olga Pereira e Souza'), 'Olga Pereira e Souza / Maria de Lourdes'),
   '" e " nao e separador: faz parte do nome');
 chk(campoMenciona(T('Maria de Lourdes'), 'Olga Pereira e Souza / Maria de Lourdes'), 'acha o segundo nome da dupla');
+// O texto abaixo e uma linha de limpeza, mas a LIMPEZA ja nao passa por aqui: ela virou
+// tarefa e casa por GRUPO (ver LimpezaGrupoService e verificarLimpezaGrupos.js). O caso
+// continua valendo como teste de `campoMenciona` com "&" separando varios nomes, que e o
+// formato de outros campos da programacao.
 chk(campoMenciona(T('Átilas Santos'), 'Grupos 2 do Átilas Santos & Grupo 3 do Marcelo Santana'),
-  'limpeza: acha o grupo do irmao');
+  '"&" separa: acha o nome do primeiro pedaco');
 chk(!campoMenciona(T('José Santos'), 'Grupos 2 do Átilas Santos & Grupo 3 do Marcelo Santana'),
-  'limpeza: nao acha quem nao esta no texto');
+  'e nao acha quem nao esta em pedaco nenhum');
 
 sec('valores que nao sao nome');
 ['-', '__DELETADO__', '', null, 'A definir', 'Sala B'].forEach(v =>

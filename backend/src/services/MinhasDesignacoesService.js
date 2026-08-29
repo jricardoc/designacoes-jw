@@ -83,7 +83,14 @@ function campoMenciona(tokensIrmao, valor) {
 
 // --- colunas de SemanaReuniao que guardam nome -----------------------------
 // `momento`: "meio" usa a data da reuniao de meio de semana; "fds" usa o domingo que fecha a
-// mesma semana; "semana" nao tem dia proprio (limpeza vale a semana inteira).
+// mesma semana.
+//
+// A LIMPEZA nao esta aqui, e a ausencia e proposital. Ela e escalada por GRUPO
+// ("Limpeza: Grupo 4 Elvandy LIma"), nao por nome, entao casar por nome so alcancava o irmao
+// que da nome ao grupo e deixava de fora todo o resto do grupo — que e quem limpa. Ela virou
+// tarefa: services/TarefasService.js a monta a partir do grupo de campo do irmao, e ela
+// aparece na secao Tarefas da tela de inicio. Mante-la nos dois lugares mostraria o mesmo
+// card duas vezes na mesma tela.
 const CAMPOS_REUNIAO = [
     { campo: 'presidente', rotulo: 'Presidente da reunião', momento: 'meio' },
     { campo: 'conselheiroB', rotulo: 'Conselheiro da Sala B', momento: 'meio' },
@@ -120,8 +127,6 @@ const CAMPOS_REUNIAO = [
     { campo: 'fds_mecanica_indicadores', rotulo: 'Indicador', momento: 'fds' },
     { campo: 'fds_mecanica_microfone', rotulo: 'Microfone volante', momento: 'fds' },
     { campo: 'fds_mecanica_portao', rotulo: 'Portão / estacionamento', momento: 'fds' },
-
-    { campo: 'limpeza', rotulo: 'Limpeza do salão', momento: 'semana' },
 ];
 
 /**
@@ -249,13 +254,10 @@ async function listarPorIrmao(irmao) {
                     tipo: 'reuniao',
                     data,
                     titulo: rotulo,
-                    detalhe: momento === 'semana'
-                        ? semana.faixaData
-                        : (momento === 'fds' ? 'Reunião do fim de semana' : 'Reunião do meio de semana'),
+                    detalhe: momento === 'fds' ? 'Reunião do fim de semana' : 'Reunião do meio de semana',
                     origem: { tipo: 'reuniao', id: reuniao.id, titulo: semana.faixaData, status: 'publicado' },
-                    // A limpeza vale a semana inteira, e uma data reconciliada com o rótulo
-                    // merece ressalva na tela.
-                    aproximada: momento === 'semana' || !data || corrigida,
+                    // Data reconciliada com o rótulo da semana merece ressalva na tela.
+                    aproximada: !data || corrigida,
                 }));
             }
         }

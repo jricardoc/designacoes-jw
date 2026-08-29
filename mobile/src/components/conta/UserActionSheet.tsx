@@ -17,13 +17,14 @@ interface Props {
   onClose: () => void;
   onToggleAdmin: (u: Usuario) => void;
   onEscopos: (u: Usuario) => void;
+  onTarefas: (u: Usuario) => void;
   onResetSenha: (u: Usuario) => void;
   onExcluir: (u: Usuario) => void;
   onVincular: (u: Usuario) => void;
 }
 
 /** Bottom sheet de ações de um usuário (Conta → Usuários), fiel ao design. */
-export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onResetSenha, onExcluir, onVincular }: Props) {
+export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onTarefas, onResetSenha, onExcluir, onVincular }: Props) {
   const { colors, styles } = useTema(criarEstilos);
   return (
     <Sheet visible={!!user} onClose={onClose} scroll>
@@ -79,6 +80,20 @@ export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onRes
                     : "Nenhuma área — só leitura"
               }
               onPress={() => onEscopos(user)}
+            />
+            {/* Vem logo depois das areas porque a dupla se le junta: o que ele PODE
+                mexer, e o que ele DEVE fazer. Sao decisoes vizinhas e do mesmo dono. */}
+            <Action
+              iconBg={colors.tealBg}
+              icon="checkbox-outline"
+              iconColor={colors.teal}
+              title="Tarefas"
+              sub={
+                user.tarefas?.length
+                  ? `${user.tarefas.length} tarefa(s) do sistema`
+                  : "Link do Zoom, quadros, confirmações..."
+              }
+              onPress={() => onTarefas(user)}
             />
             <Action
               iconBg={colors.sand}

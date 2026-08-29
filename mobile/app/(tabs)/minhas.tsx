@@ -4,9 +4,11 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "r
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useConfig } from "@/api/hooks/useMisc";
 import { useMinhasDesignacoes } from "@/api/hooks/useMinhasDesignacoes";
+import { useTarefas } from "@/api/hooks/useTarefas";
 import type { Compromisso, Config, TipoCompromisso } from "@/api/types";
 import { GradientHeader, Loading } from "@/components/ui";
 import { CompromissoSheet } from "@/components/minhas/CompromissoSheet";
+import { ListaTarefas } from "@/components/tarefas/ListaTarefas";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
 import { MESES, radius, shadow, type Cores } from "@/theme";
@@ -50,8 +52,6 @@ const tiposDe = (colors: Cores): Record<TipoCompromisso, VisualTipo> => ({
     bg: colors.tealBg,
   },
 });
-
-const ORDEM_TIPOS: TipoCompromisso[] = ["designacao", "dirigente", "reuniao"];
 
 function rotuloDoMes(dataISO: string | null): string {
   if (!dataISO) return "Sem data definida";
@@ -231,13 +231,6 @@ function primeiroNome(nome: string | null | undefined): string {
 export default function InicioScreen() {
   const { colors, styles, statusConfig } = useTema(criarEstilos);
   const TIPOS = tiposDe(colors);
-  // O número do painel fica direto sobre o cartão (colors.surface), não sobre o
-  // chip claro — por isso usa o tom forte da categoria, não o `color` dela.
-  const corNumero: Record<TipoCompromisso, string> = {
-    designacao: colors.primaryDark,
-    dirigente: colors.amber,
-    reuniao: colors.teal,
-  };
   const { usuario } = useAuth();
   const [filtro, setFiltro] = useState<"proximas" | "todas">("proximas");
   // O compromisso aberto na folha de detalhes. Guarda o objeto, não o id: a lista se
@@ -251,6 +244,9 @@ export default function InicioScreen() {
   // é saída de campo. Enquanto não chega, o corte por hora fica desligado — ver
   // `aindaPorVir`.
   const { data: config, isSuccess: configPronta } = useConfig();
+  // A lista de tarefas vem em consulta própria: ela depende dos quadros e da programação,
+  // não das designações do irmão, e uma falha ali não pode levar a tela junto.
+  const { data: tarefas, refetch: recarregarTarefas } = useTarefas();
 
   /**
    * O relógio da tela. Sem ele o corte por hora só mudaria quando a tela
@@ -287,11 +283,6 @@ export default function InicioScreen() {
     // sai daqui na mesma hora em que termina, sem esperar a virada do dia.
     const proximos = todos.filter((c) => aindaPorVir(c, agora, config, configPronta));
 
-    const porTipo: Record<TipoCompromisso, number> = { designacao: 0, dirigente: 0, reuniao: 0 };
-    for (const c of todos) {
-      if (porTipo[c.tipo] !== undefined) porTipo[c.tipo] += 1;
-    }
-
     /**
      * O primeiro que vem — e ele precisa ter data. Um compromisso sem data
      * nunca "passa", então promovê-lo ao destaque o deixaria fixo no topo para
@@ -302,9 +293,7 @@ export default function InicioScreen() {
     return {
       todos,
       proximos,
-      porTipo,
       proximo,
-      total: data?.totais?.total ?? todos.length,
       // Contagem local, não a do backend: a dele é por data e diria "1
       // compromisso pela frente" para a reunião que acabou de terminar.
       totalProximas: proximos.length,
@@ -341,7 +330,19 @@ export default function InicioScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.scroll}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              // Puxar para atualizar recarrega as DUAS listas. Só as designações deixaria a
+              // seção de Tarefas parada — e é justamente ela que muda quando alguém publica
+              // um quadro ou importa a programação.
+              onRefresh={() => {
+                refetch();
+                recarregarTarefas();
+              }}
+              tintColor={colors.primary}
+            />
+          }
         >
           {!data?.vinculado ? (
             <View style={styles.aviso}>
@@ -412,49 +413,10 @@ export default function InicioScreen() {
                 </Animated.View>
               ) : null}
 
-              <Animated.View entering={FadeInDown.duration(240)}>
-                <Text style={styles.secaoLabel}>Seu resumo</Text>
-
-                <View style={styles.destaques}>
-                  <View style={styles.destaque}>
-                    <View style={[styles.destaqueIcone, { backgroundColor: colors.successBg }]}>
-                      <Ionicons name="checkmark-done" size={16} color={colors.primaryDark} />
-                    </View>
-                    <Text style={styles.destaqueNumero}>{resumo.total}</Text>
-                    <Text style={styles.destaqueLabel}>
-                      {resumo.total === 1 ? "vez designado" : "vezes designado"}
-                    </Text>
-                  </View>
-
-                  <View style={styles.destaque}>
-                    <View style={[styles.destaqueIcone, { backgroundColor: colors.warningBg }]}>
-                      <Ionicons name="hourglass" size={16} color={colors.amber} />
-                    </View>
-                    <Text style={styles.destaqueNumero}>{resumo.totalProximas}</Text>
-                    <Text style={styles.destaqueLabel}>
-                      {resumo.totalProximas === 1 ? "compromisso por vir" : "compromissos por vir"}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.painel}>
-                  {ORDEM_TIPOS.map((id, i) => {
-                    const tipo = TIPOS[id];
-                    return (
-                      <View key={id} style={[styles.painelLinha, i > 0 && styles.painelLinhaBorda]}>
-                        <View style={[styles.iconeBox, { backgroundColor: tipo.bg }]}>
-                          <Ionicons name={tipo.icon} size={15} color={tipo.color} />
-                        </View>
-                        <Text style={styles.painelTexto}>{tipo.label}</Text>
-                        <Text style={[styles.painelNumero, { color: corNumero[id] }]}>
-                          {resumo.porTipo[id]}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-
-              </Animated.View>
+              {/* Onde ficava "Seu resumo". A contagem de designações era um número
+                  bonito que não pedia nada de ninguém; o que o irmão precisa ver ao
+                  abrir o app é o que ESTÁ NA MÃO DELE e vence. */}
+              <ListaTarefas tarefas={tarefas?.tarefas ?? []} grupo={tarefas?.grupo?.nome} />
 
               <Animated.View entering={FadeInDown.delay(60).duration(240)}>
                 <Text style={styles.secaoLabel}>Cargos e privilégio</Text>
@@ -612,28 +574,6 @@ const criarEstilos = (colors: Cores) =>
       marginTop: 6,
     },
 
-    destaques: { flexDirection: "row", gap: 10, marginBottom: 10 },
-    destaque: {
-      flex: 1,
-      backgroundColor: colors.surface,
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.border,
-      padding: 14,
-      gap: 2,
-      ...shadow.card,
-    },
-    destaqueIcone: {
-      width: 30,
-      height: 30,
-      borderRadius: 9,
-      alignItems: "center",
-      justifyContent: "center",
-      marginBottom: 8,
-    },
-    destaqueNumero: { fontSize: 26, fontWeight: "700", color: colors.text, letterSpacing: -0.6 },
-    destaqueLabel: { fontSize: 12, color: colors.textSecondary, lineHeight: 16 },
-
     painel: {
       backgroundColor: colors.surface,
       borderRadius: radius.md,
@@ -643,10 +583,6 @@ const criarEstilos = (colors: Cores) =>
       paddingVertical: 4,
       marginBottom: 10,
     },
-    painelLinha: { flexDirection: "row", alignItems: "center", gap: 11, paddingVertical: 11 },
-    painelLinhaBorda: { borderTopWidth: 1, borderTopColor: colors.border },
-    painelTexto: { flex: 1, fontSize: 13.5, color: colors.textSecondary },
-    painelNumero: { fontSize: 16, fontWeight: "700" },
     /**
      * O cartão de destaque. Mesma faixa de categoria à esquerda dos itens da
      * lista, mais grossa, para o topo da tela ler como "isto aqui é o que

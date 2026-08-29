@@ -49,6 +49,10 @@ class UsuarioController {
                     isAdmin: true,
                     escopos: true,
                     irmaoId: true,
+                    // As tarefas de sistema entram na LISTA (e nao so na folha de edicao)
+                    // para o admin ver de relance quem ficou com o que — sem isso, saber
+                    // se alguem ja tem a tarefa do Zoom exigiria abrir usuario por usuario.
+                    tarefas: { select: { tipo: true } },
                     createdAt: true
                 },
                 orderBy: { nome: 'asc' }
@@ -56,7 +60,11 @@ class UsuarioController {
 
             // Anota o cargo (servo ministerial / anciao) de quem tambem esta cadastrado como
             // irmao. Uma query extra para a lista inteira, sem N+1.
-            return res.json(await PrivilegioService.anotarUsuarios(usuarios));
+            // Achata { tarefas: [{tipo}] } em uma lista de strings: o app so quer os ids,
+            // e devolver objeto obrigaria a tela a desembrulhar duas vezes.
+            const comTarefas = usuarios.map(u => ({ ...u, tarefas: u.tarefas.map(t => t.tipo) }));
+
+            return res.json(await PrivilegioService.anotarUsuarios(comTarefas));
         } catch (error) {
             console.error('Erro ao listar usuarios:', error);
             return res.status(500).json({ error: 'Erro interno' });

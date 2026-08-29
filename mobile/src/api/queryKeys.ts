@@ -34,4 +34,10 @@ export const qk = {
   notificacoesRemotas: (usuarioId: number | string) =>
     ["notificacoes-remotas", String(usuarioId)] as const,
   carrinho: ["carrinho"] as const,
+  // As tarefas do próprio irmão. Sem o id do usuário na chave porque o logout limpa o
+  // cache inteiro (ver AuthContext) — igual a `minhasDesignacoes`.
+  tarefas: ["tarefas"] as const,
+  catalogoTarefas: ["catalogo-tarefas"] as const,
+  tarefasUsuario: (usuarioId: number | string) =>
+    ["tarefas-usuario", String(usuarioId)] as const,
 };

@@ -35,6 +35,74 @@ export interface OpcaoEscopo {
   descricao: string;
 }
 
+// --- Tarefas do sistema -----------------------------------------------------
+
+/**
+ * As tarefas que o admin geral distribui, mais a limpeza.
+ *
+ * `limpeza` está aqui porque ela APARECE na lista, mas ela não se atribui: vem do grupo de
+ * campo do irmão. O backend recusa atribuí-la (ver RegrasTarefas.sanearTarefas), e por isso
+ * ela também não entra em `TarefaAtribuivel`.
+ */
+export type TipoTarefa =
+  | "zoom"
+  | "quadroDirigentes"
+  | "quadroDesignacoes"
+  | "confirmacoes"
+  | "compartilharQuadro"
+  | "limpeza";
+
+/** O que o admin pode marcar na folha de tarefas — tudo menos a limpeza. */
+export type TarefaAtribuivel = Exclude<TipoTarefa, "limpeza">;
+
+/** Uma tarefa do catálogo, como o backend a descreve. */
+export interface OpcaoTarefa {
+  id: TarefaAtribuivel;
+  label: string;
+  descricao: string;
+  cadencia: "reuniao" | "semana" | "mes";
+  cadenciaLabel: string;
+  icone: string;
+}
+
+/**
+ * Uma ocorrência pendente na lista do irmão.
+ *
+ * `concluivel` é falso nas tarefas de quadro: elas se concluem sozinhas quando o quadro do
+ * mês seguinte é publicado, e a tela não desenha botão para elas.
+ */
+export interface Tarefa {
+  /** "zoom|2026-09-03" — estável, serve de key e identifica a ocorrência. */
+  id: string;
+  tipo: TipoTarefa;
+  label: string;
+  icone: string;
+  cadencia: "reuniao" | "semana" | "mes";
+  cadenciaLabel: string;
+  conclusao: "manual" | "quadro" | "nenhuma";
+  concluivel: boolean;
+  acao: { titulo: string; destino: string } | null;
+  /** A data ISO que identifica a repetição. É o que volta no "concluir". */
+  ocorrencia: string;
+  titulo: string;
+  detalhe: string | null;
+  vencimentoISO: string | null;
+  /** "Vence hoje", "Atrasada há 2 dias" — montado no backend para não divergir do prazo. */
+  prazo: string;
+  diasAteVencer: number | null;
+  atrasada: boolean;
+  grupo: { id: number; nome: string } | null;
+}
+
+export interface RespostaTarefas {
+  hoje: string;
+  designadas: TarefaAtribuivel[];
+  grupo: { id: number; nome: string } | null;
+  tarefas: Tarefa[];
+  total: number;
+  atrasadas: number;
+}
+
 export interface Usuario {
   id: number;
   nickname: string;
@@ -43,6 +111,11 @@ export interface Usuario {
   isAdmin: boolean;
   /** Áreas administráveis de quem não é admin geral. */
   escopos?: EscopoAdmin[];
+  /**
+   * Tarefas de sistema atribuídas a ele. Só vem na listagem do admin (`GET /usuarios`) —
+   * o irmão comum lê as próprias em `GET /tarefas`, que traz as ocorrências e os prazos.
+   */
+  tarefas?: TarefaAtribuivel[];
   createdAt?: string;
   /**
    * Cargo resolvido no backend cruzando o nome do usuário com o cadastro de irmãos.

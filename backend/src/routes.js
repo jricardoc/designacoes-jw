@@ -18,6 +18,7 @@ const ConfirmacaoController = require('./controllers/ConfirmacaoController');
 const GrupoCampoController = require('./controllers/GrupoCampoController');
 const TerritorioController = require('./controllers/TerritorioController');
 const PushTokenController = require('./controllers/PushTokenController');
+const TarefasController = require('./controllers/TarefasController');
 const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
 const requireAdmin = require('./middleware/requireAdmin');
 const { ESCOPOS, requireEscopo } = require('./middleware/escopos');
@@ -65,6 +66,11 @@ routes.put('/usuarios/:id/admin', requireAdmin, UsuarioController.toggleAdmin);
 // Niveis de admin por area (designacoes, dirigentes, reunioes, carrinho). Quem
 // concede e sempre o admin geral. Ver src/middleware/escopos.js.
 routes.put('/usuarios/:id/escopos', requireAdmin, UsuarioController.atualizarEscopos);
+// Tarefas do sistema (link do Zoom, montar os quadros, confirmacoes, compartilhar o quadro).
+// Separadas dos escopos de proposito: escopo diz onde a pessoa PODE mexer, tarefa diz o que
+// ela DEVE fazer. Ver src/services/RegrasTarefas.js.
+routes.get('/usuarios/:id/tarefas', requireAdmin, TarefasController.doUsuario);
+routes.put('/usuarios/:id/tarefas', requireAdmin, TarefasController.definir);
 // Catalogo dos escopos, para a tela desenhar as opcoes sem duplicar os textos.
 routes.get('/usuarios/escopos/catalogo', requireAdmin, UsuarioController.catalogoEscopos);
 routes.put('/usuarios/:id/reset-senha', requireAdmin, UsuarioController.resetSenha);
@@ -111,6 +117,17 @@ routes.delete('/carrinho/publicadores/:id', podeCarrinho, CarrinhoController.exc
 
 // ==================== MINHAS DESIGNACOES ====================
 routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
+
+// ==================== TAREFAS DO SISTEMA ====================
+// A lista e sempre do PROPRIO usuario logado: nao ha rota para ver nem concluir a tarefa
+// de outro irmao. Atribuir e do admin geral e mora junto de /usuarios, mais abaixo.
+routes.get('/tarefas', TarefasController.index);
+// POST e nao DELETE para o desfazer porque os dois mandam corpo (tipo + ocorrencia), e
+// corpo em DELETE nao atravessa proxy de forma confiavel.
+routes.post('/tarefas/concluir', TarefasController.concluir);
+// Catalogo aberto a quem esta logado: sao os mesmos textos que a tela do admin desenha, e
+// nenhum deles e informacao reservada.
+routes.get('/tarefas/catalogo', TarefasController.catalogo);
 
 // ==================== PUSH ====================
 // O aparelho registra o token no login e apaga no logout; o lembrete das 19h

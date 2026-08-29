@@ -95,6 +95,12 @@ model Usuario {
   pushTokens           PushToken[]
   prefNotificacao      PreferenciaNotificacao?
   notificacoesEnviadas NotificacaoEnviada[]
+  // As tarefas de sistema que o admin geral atribuiu a ele, e as ocorrencias que ele ja
+  // deu por cumpridas. Ficam FORA de `escopos` de proposito: escopo diz onde a pessoa
+  // PODE mexer, tarefa diz o que ela DEVE fazer — quem compartilha o link do Zoom nao
+  // precisa administrar area nenhuma.
+  tarefas              TarefaDesignada[]
+  tarefasConcluidas    TarefaConcluida[]
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
 }
@@ -150,6 +156,12 @@ model GrupoCampo {
   nome         String  @unique
   // Ordem de exibicao; empate cai no nome. Serve para a lista nao dancar a cada renomeacao.
   ordem        Int     @default(0)
+  // O numero com que a PROGRAMACAO chama este grupo ("Limpeza: Grupo 4 Elvandy LIma").
+  // Nao e a `ordem`: a ordem e de exibicao no app e nada obriga as duas a coincidirem —
+  // hoje nao coincidem. Existe porque o nome do grupo no documento chega abreviado e com
+  // caixa trocada, e o numero e o unico pedaco estavel; `scripts/vincularLimpeza.js`
+  // aprende esse numero a partir do proprio documento. Nulo = casa so por nome.
+  numero       Int?
   ativo        Boolean @default(true)
   publicadores Irmao[] @relation("GrupoPublicadores")
 
@@ -517,4 +529,58 @@ model PreferenciaNotificacao {
   antecedencias String[] // ids de RegrasLembrete: "7d", "3d", "1d", "3h", "1h"
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+// ==========================================================================
+// TAREFAS DO SISTEMA
+// ==========================================================================
+
+// O que o admin geral pos no colo de cada irmao: mandar o link do Zoom, montar o
+// quadro, fazer as confirmacoes, compartilhar o quadro no grupo.
+//
+// E uma tabela separada de `Usuario.escopos` porque as duas coisas nao sao a mesma:
+// escopo e PERMISSAO (onde a pessoa pode mexer), tarefa e RESPONSABILIDADE (o que ela
+// tem de fazer, e ate quando). Quem manda o link do Zoom nao administra area nenhuma,
+// e quem administra as reunioes nao necessariamente e quem manda o link.
+//
+// Nao guarda prazo nem ocorrencia: o "quando" de cada tarefa e DERIVADO da programacao
+// importada e dos quadros (ver services/RegrasTarefas.js). Gravar as ocorrencias aqui
+// significaria criar linha para cada semana de cada irmao e mante-las em dia a cada
+// reimportacao do mes — que e justamente o que apaga e recria as semanas.
+model TarefaDesignada {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  // Ver TIPOS em src/services/RegrasTarefas.js.
+  tipo      String
+  createdAt DateTime @default(now())
+
+  // Uma linha por tarefa por irmao: a mesma tarefa pode ser de varios irmaos, mas o
+  // mesmo irmao nao acumula a mesma tarefa duas vezes.
+  @@unique([usuarioId, tipo])
+  @@index([tipo])
+}
+
+// O check da tarefa: esta OCORRENCIA desta tarefa deste irmao esta cumprida.
+//
+// `ocorrencia` e sempre uma data ISO (YYYY-MM-DD) e identifica de qual repeticao se
+// fala — a reuniao (tarefa por reuniao), a reuniao de meio de semana que representa a
+// semana (tarefa semanal) ou o dia 1o do mes alvo (tarefa mensal). Data, e nao o id da
+// SemanaReuniao, pelo mesmo motivo de AssistenciaReuniao e ConfirmacaoDesignacao:
+// reimportar o mes recria as semanas com ids novos, e um "ja fiz" nao pode se perder
+// porque alguem reimportou o PDF.
+//
+// As tarefas de quadro NAO passam por aqui: elas se dao por cumpridas quando o quadro
+// do mes seguinte e PUBLICADO (ver RegrasTarefas.CONCLUSAO_AUTOMATICA). Um botao de
+// "concluir" ali deixaria o irmao silenciar um prazo sem ter feito o quadro.
+model TarefaConcluida {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  tipo        String
+  ocorrencia  String
+  concluidoEm DateTime @default(now())
+
+  @@unique([usuarioId, tipo, ocorrencia])
+  @@index([usuarioId, tipo])
 }
