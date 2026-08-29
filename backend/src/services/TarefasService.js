@@ -320,9 +320,14 @@ function montarParaUsuario({ contexto, designadas, concluidas, grupoId }) {
                 // `detalhe`, que e prosa de card ("O quadro atual termina em 31/08").
                 referencia: oc.referencia,
                 vencimentoISO: oc.vencimentoISO,
-                prazo: Regras.rotuloDoPrazo(oc.vencimentoISO, hojeISO),
+                // A informativa nao "vence": ela so avisa quando e. Ver rotuloInformativo.
+                prazo: tipo.conclusao === 'nenhuma'
+                    ? Regras.rotuloInformativo(oc.vencimentoISO, hojeISO)
+                    : Regras.rotuloDoPrazo(oc.vencimentoISO, hojeISO),
                 diasAteVencer: dias,
-                atrasada: dias !== null && dias < 0,
+                // A informativa nunca fica "atrasada": nao ha entrega para atrasar, e pintar
+                // o card de vermelho cobraria do irmao uma coisa que e do grupo inteiro.
+                atrasada: tipo.conclusao !== 'nenhuma' && dias !== null && dias < 0,
                 grupo: oc.grupo,
             });
         }

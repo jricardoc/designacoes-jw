@@ -187,6 +187,9 @@ const criarEstilos = (colors: Cores) =>
     notaTexto: { flex: 1, fontSize: 12.5, color: colors.teal, lineHeight: 17 },
     botao: {
       marginTop: spacing.lg,
+      // A folha já reserva a área segura embaixo, mas o botão encostava nela: com a lista
+      // rolada até o fim ele ficava rente à borda do aparelho, sem ar nenhum para o polegar.
+      marginBottom: spacing.md,
       backgroundColor: colors.primary,
       borderRadius: radius.lg,
       paddingVertical: 14,

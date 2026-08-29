@@ -398,13 +398,15 @@ export default function ContaScreen() {
                       <Text style={styles.adminBadgeSmText}>Admin</Text>
                     </View>
                   ) : null}
-                  {u.id === usuario?.id ? (
-                    <Text style={styles.voce}>Você</Text>
-                  ) : (
-                    <Pressable style={styles.menuBtn} onPress={() => setMenuUser(u)} hitSlop={6}>
-                      <Ionicons name="ellipsis-horizontal" size={18} color="#9A8F7D" />
-                    </Pressable>
-                  )}
+                  {u.id === usuario?.id ? <Text style={styles.voce}>Você</Text> : null}
+                  {/* O "..." aparece TAMBÉM na própria linha. Antes ele dava lugar ao
+                      rótulo "Você", e com isso o admin geral não conseguia designar uma
+                      tarefa a si mesmo — justamente quem costuma montar os quadros. As
+                      ações que o backend recusa em si mesmo (admin, áreas, excluir) somem
+                      dentro da folha; ver UserActionSheet. */}
+                  <Pressable style={styles.menuBtn} onPress={() => setMenuUser(u)} hitSlop={6}>
+                    <Ionicons name="ellipsis-horizontal" size={18} color="#9A8F7D" />
+                  </Pressable>
                 </View>
               ))}
             </View>
@@ -434,6 +436,7 @@ export default function ContaScreen() {
 
       <UserActionSheet
         user={menuUser}
+        ehVoce={menuUser?.id === usuario?.id}
         onClose={() => setMenuUser(null)}
         onToggleAdmin={doToggleAdmin}
         onEscopos={(u) => { setMenuUser(null); setEscoposUser(u); }}

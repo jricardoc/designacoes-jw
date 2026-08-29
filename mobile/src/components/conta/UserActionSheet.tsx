@@ -14,6 +14,15 @@ function initials(name?: string | null) {
 
 interface Props {
   user: Usuario | null;
+  /**
+   * A linha aberta é a do próprio admin?
+   *
+   * Muda o que a folha oferece: o backend recusa em si mesmo trocar admin, mexer nas áreas
+   * e excluir a conta (é assim que ninguém se tranca fora). Mostrar botões que voltariam
+   * 400 seria pior do que não mostrar. Tarefa, essa, vale para si mesmo — quem monta os
+   * quadros costuma ser justamente o admin geral.
+   */
+  ehVoce?: boolean;
   onClose: () => void;
   onToggleAdmin: (u: Usuario) => void;
   onEscopos: (u: Usuario) => void;
@@ -24,7 +33,7 @@ interface Props {
 }
 
 /** Bottom sheet de ações de um usuário (Conta → Usuários), fiel ao design. */
-export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onTarefas, onResetSenha, onExcluir, onVincular }: Props) {
+export function UserActionSheet({ user, ehVoce, onClose, onToggleAdmin, onEscopos, onTarefas, onResetSenha, onExcluir, onVincular }: Props) {
   const { colors, styles } = useTema(criarEstilos);
   return (
     <Sheet visible={!!user} onClose={onClose} scroll>
@@ -59,28 +68,32 @@ export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onTar
               sub={user.irmaoId ? user.irmao?.nome ?? "Vinculado" : "Sem vínculo, ele não vê as próprias designações"}
               onPress={() => onVincular(user)}
             />
-            <Action
-              iconBg="#EAEFDC"
-              icon="shield-checkmark-outline"
-              iconColor={colors.primary}
-              title={user.isAdmin ? "Remover admin" : "Tornar admin"}
-              sub={user.isAdmin ? "Remove o acesso de administrador" : "Concede acesso de administrador"}
-              onPress={() => onToggleAdmin(user)}
-            />
-            <Action
-              iconBg={colors.infoBg}
-              icon="options-outline"
-              iconColor={colors.primaryDark}
-              title="Áreas de acesso"
-              sub={
-                user.isAdmin
-                  ? "Admin geral já administra tudo"
-                  : user.escopos?.length
-                    ? user.escopos.join(", ")
-                    : "Nenhuma área — só leitura"
-              }
-              onPress={() => onEscopos(user)}
-            />
+            {ehVoce ? null : (
+              <>
+                <Action
+                  iconBg="#EAEFDC"
+                  icon="shield-checkmark-outline"
+                  iconColor={colors.primary}
+                  title={user.isAdmin ? "Remover admin" : "Tornar admin"}
+                  sub={user.isAdmin ? "Remove o acesso de administrador" : "Concede acesso de administrador"}
+                  onPress={() => onToggleAdmin(user)}
+                />
+                <Action
+                  iconBg={colors.infoBg}
+                  icon="options-outline"
+                  iconColor={colors.primaryDark}
+                  title="Áreas de acesso"
+                  sub={
+                    user.isAdmin
+                      ? "Admin geral já administra tudo"
+                      : user.escopos?.length
+                        ? user.escopos.join(", ")
+                        : "Nenhuma área — só leitura"
+                  }
+                  onPress={() => onEscopos(user)}
+                />
+              </>
+            )}
             {/* Vem logo depois das areas porque a dupla se le junta: o que ele PODE
                 mexer, e o que ele DEVE fazer. Sao decisoes vizinhas e do mesmo dono. */}
             <Action
@@ -95,24 +108,37 @@ export function UserActionSheet({ user, onClose, onToggleAdmin, onEscopos, onTar
               }
               onPress={() => onTarefas(user)}
             />
-            <Action
-              iconBg={colors.sand}
-              icon="key-outline"
-              iconColor={colors.brown}
-              title="Redefinir senha"
-              sub='Volta a senha para "jw1010"'
-              onPress={() => onResetSenha(user)}
-            />
-            <Action
-              iconBg="#F6E7E0"
-              icon="trash-outline"
-              iconColor={colors.red}
-              title="Excluir usuário"
-              titleColor={colors.red}
-              sub="Remove o acesso permanentemente"
-              onPress={() => onExcluir(user)}
-              last
-            />
+            {ehVoce ? (
+              <View style={styles.notaVoce}>
+                <Ionicons name="information-circle-outline" size={16} color={colors.teal} />
+                <Text style={styles.notaVoceTexto}>
+                  Trocar o próprio admin, as próprias áreas ou excluir a própria conta não é
+                  possível — é o que impede alguém de se trancar fora. Para mudar a sua senha,
+                  use a seção de senha desta tela.
+                </Text>
+              </View>
+            ) : (
+              <>
+                <Action
+                  iconBg={colors.sand}
+                  icon="key-outline"
+                  iconColor={colors.brown}
+                  title="Redefinir senha"
+                  sub='Volta a senha para "jw1010"'
+                  onPress={() => onResetSenha(user)}
+                />
+                <Action
+                  iconBg="#F6E7E0"
+                  icon="trash-outline"
+                  iconColor={colors.red}
+                  title="Excluir usuário"
+                  titleColor={colors.red}
+                  sub="Remove o acesso permanentemente"
+                  onPress={() => onExcluir(user)}
+                  last
+                />
+              </>
+            )}
           </View>
         </>
       ) : null}
@@ -158,6 +184,16 @@ function Action({
 
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
+    notaVoce: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 10,
+      backgroundColor: colors.tealBg,
+      borderRadius: 14,
+      padding: 14,
+      marginTop: 8,
+    },
+    notaVoceTexto: { flex: 1, fontSize: 12.5, color: colors.teal, lineHeight: 17 },
     header: {
       flexDirection: "row",
       alignItems: "center",

@@ -286,6 +286,22 @@ function rotuloDoPrazo(vencimentoISO, hojeISO) {
     return `Faltam ${dias} dias`;
 }
 
+/**
+ * O mesmo, para a tarefa que so INFORMA: "Hoje", "Amanhã", "Em 5 dias".
+ *
+ * Sem "vence" e sem "atrasada" porque nao ha nada a cumprir nem prazo a perder — a limpeza
+ * do salao e a semana do grupo, e nao uma entrega. Dizer "Vence amanhã" ali cobrava uma
+ * coisa que ninguem pediu, e de um grupo inteiro.
+ */
+function rotuloInformativo(vencimentoISO, hojeISO) {
+    const dias = diasAte(vencimentoISO, hojeISO);
+    if (dias === null) return 'Sem data definida';
+    if (dias === 0) return 'Hoje';
+    if (dias === 1) return 'Amanhã';
+    if (dias < 0) return 'Esta semana';
+    return `Em ${dias} dias`;
+}
+
 // ---------------------------------------------------------------------------
 // Avisos (push)
 // ---------------------------------------------------------------------------
@@ -430,6 +446,7 @@ module.exports = {
     estaVisivel,
     diasAte,
     rotuloDoPrazo,
+    rotuloInformativo,
     avisosDe,
     instanteDoAviso,
     textoDoAviso,

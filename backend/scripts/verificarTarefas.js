@@ -176,6 +176,36 @@ console.log('\n=== 7b. O texto do quadro concorda em genero e cita o MES ===\n')
     eq(card.detalhe, 'O quadro atual termina em 31/08', 'e o detalhe continua sendo o texto da tela');
 }
 
+console.log('\n=== 7c. A limpeza informa, nao cobra ===\n');
+{
+    // O irmao pediu: na limpeza nao cabe "Vence amanha". Ela nao e entrega de ninguem —
+    // e a semana do GRUPO —, entao ela diz quando e, e so.
+    eq(Regras.rotuloInformativo('2026-09-06', '2026-09-05'), 'Amanhã', 'vespera: so "Amanhã"');
+    eq(Regras.rotuloInformativo('2026-09-06', '2026-09-06'), 'Hoje', 'no dia: so "Hoje"');
+    eq(Regras.rotuloInformativo('2026-09-06', '2026-09-01'), 'Em 5 dias', 'antes: "Em N dias"');
+    ok(!/[Vv]ence/.test(Regras.rotuloInformativo('2026-09-06', '2026-09-05')), 'a palavra "vence" nao aparece');
+
+    const oc = Tarefas._internos.ocorrenciaDe(tipo('limpeza'), {
+        alvoISO: '2026-09-03', titulo: 'Limpeza do salão', grupo: { id: 7, nome: 'Edilson Santos' },
+    });
+    const ctx = { hojeISO: '2026-09-05', grupos: [], porTipo: { limpeza: [oc] } };
+    const [card] = Tarefas.montarParaUsuario({
+        contexto: ctx, designadas: [], concluidas: new Set(), grupoId: 7,
+    });
+    eq(card.prazo, 'Amanhã', 'e o card da limpeza usa esse rotulo');
+    eq(card.atrasada, false, 'a limpeza nunca fica "atrasada"');
+    eq(card.concluivel, false, 'nem oferece check');
+}
+{
+    // Mas a tarefa que E entrega continua cobrando, com todas as letras.
+    const oc = Tarefas._internos.ocorrenciaDe(tipo('zoom'), { alvoISO: '2026-09-03', titulo: 'Zoom' });
+    const ctx = { hojeISO: '2026-09-02', grupos: [], porTipo: { zoom: [oc] } };
+    const [card] = Tarefas.montarParaUsuario({
+        contexto: ctx, designadas: ['zoom'], concluidas: new Set(), grupoId: null,
+    });
+    eq(card.prazo, 'Vence hoje', 'o Zoom continua dizendo "Vence hoje"');
+}
+
 console.log('\n=== 8. Recorte por usuario ===\n');
 const contexto = {
     hojeISO: '2026-09-01',

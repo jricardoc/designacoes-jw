@@ -1,4 +1,4 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import {
   Modal,
   Pressable,
@@ -7,11 +7,21 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
   FadeOut,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { motion, type Cores } from "@/theme";
@@ -52,6 +62,14 @@ const entradaDaFolha = (deslocamento: number) =>
   FadeInDown.duration(motion.entrada)
     .easing(CURVA)
     .withInitialValues({ opacity: 1, transform: [{ translateY: deslocamento }] });
+
+/**
+ * Quanto arrastar para baixo para a folha fechar, em pixels — ou, em vez disso, com que
+ * velocidade soltar. O limite por velocidade existe para o "peteleco" curto e rápido, que
+ * nunca percorre a distância mas é claramente um gesto de descartar.
+ */
+const LIMITE_ARRASTO = 110;
+const LIMITE_VELOCIDADE = 800;
 
 interface SheetProps {
   visible: boolean;
@@ -102,6 +120,61 @@ export function Sheet({
   const tetoDaFolha = alturaDaJanela * maxHeightPct - alturaTeclado;
   const tetoDaRolagem = Math.max(120, tetoDaFolha - ALTURA_DO_CABECALHO - recuoInferior);
 
+  /**
+   * O quanto o dedo já puxou a folha para baixo.
+   *
+   * A alça sempre foi só desenho: ela promete um gesto que não existia, e quem tentava
+   * arrastar concluía que a folha estava travada. Aqui ela passa a valer.
+   */
+  const arrasto = useSharedValue(0);
+
+  // Zera ao reabrir. O componente não desmonta quando `visible` vira falso (o Modal só para
+  // de renderizar o conteúdo), então sem isto a folha reabriria já arrastada para baixo.
+  useEffect(() => {
+    if (visible) arrasto.value = 0;
+  }, [visible, arrasto]);
+
+  /**
+   * Uma FÁBRICA, e não um gesto só: dois `GestureDetector` não podem compartilhar a mesma
+   * instância de gesto (a alça e o corpo aparecem juntos nas folhas sem rolagem), e reusar
+   * uma delas faz o RNGH reclamar e um dos dois parar de responder.
+   *
+   * `hitSlop` alarga a pegada da alça sem mexer no desenho dela: 21px de altura é pouco
+   * para o polegar, e crescer o padding empurraria o conteúdo de todas as folhas do app.
+   */
+  const criarPuxar = () =>
+    Gesture.Pan()
+      .hitSlop({ top: 12, bottom: 24 })
+      // Só para baixo: puxar para cima não deve descolar a folha do rodapé.
+      .onChange((evento) => {
+        arrasto.value = Math.max(0, arrasto.value + evento.changeY);
+      })
+      .onEnd((evento) => {
+        if (arrasto.value > LIMITE_ARRASTO || evento.velocityY > LIMITE_VELOCIDADE) {
+          // Termina o movimento que o dedo começou antes de avisar quem abriu — fechar no
+          // meio do caminho faria a folha sumir de um quadro para o outro.
+          arrasto.value = withTiming(alturaDaJanela, { duration: motion.saida }, (fim) => {
+            if (fim) runOnJS(onClose)();
+          });
+        } else {
+          arrasto.value = withSpring(0, { damping: 22, stiffness: 240 });
+        }
+      });
+
+  const puxarPelaAlca = criarPuxar();
+  const puxarPeloCorpo = criarPuxar();
+
+  const estiloDoArrasto = useAnimatedStyle(() => ({
+    transform: [{ translateY: arrasto.value }],
+  }));
+
+  /**
+   * A alça sempre arrasta. O CORPO só arrasta quando não há rolagem: com um ScrollView
+   * dentro, os dois gestos disputariam o mesmo dedo e a folha desceria enquanto a lista
+   * rolava. Nas folhas com rolagem, a alça (e o cabeçalho em volta dela) é a pegada.
+   */
+  const corpoArrastavel = !scroll;
+
   return (
     <Modal
       visible={visible}
@@ -113,13 +186,20 @@ export function Sheet({
       {/* O recuo do teclado vai na RAIZ: ela ocupa a tela toda e alinha a folha embaixo,
           então empurrá-la para cima levanta a folha inteira. O teto de altura da folha já
           desconta o teclado à parte (ver tetoDaFolha). */}
-      <View style={[styles.root, { paddingBottom: alturaTeclado }]}>
+      {/* O Modal do React Native monta numa árvore de views SEPARADA, fora do
+          GestureHandlerRootView do _layout — e ali dentro os gestos simplesmente não
+          chegam. Por isso a raiz do gesture handler é repetida aqui. */}
+      <GestureHandlerRootView style={[styles.root, { paddingBottom: alturaTeclado }]}>
         <AnimatedPressable
           entering={FadeIn.duration(motion.fundo)}
           exiting={FadeOut.duration(motion.saida)}
           style={styles.backdrop}
           onPress={onClose}
         />
+        {/* O arrasto mora numa view POR FORA da que anima a entrada. As duas mexem em
+            `translateY`, e na mesma view o estilo animado do arrasto (que começa em 0)
+            atropelaria a animação de subida logo no primeiro quadro. */}
+        <Animated.View style={estiloDoArrasto}>
         <Animated.View
           entering={entradaDaFolha(alturaDaJanela)}
           style={[
@@ -133,9 +213,11 @@ export function Sheet({
             },
           ]}
         >
-          <View style={styles.handleWrap}>
-            <View style={styles.handle} />
-          </View>
+          <GestureDetector gesture={puxarPelaAlca}>
+            <View style={styles.handleWrap}>
+              <View style={styles.handle} />
+            </View>
+          </GestureDetector>
           {scroll ? (
             // `keyboardShouldPersistTaps` evita que o primeiro toque no botão de salvar seja
             // gasto só fechando o teclado.
@@ -147,11 +229,18 @@ export function Sheet({
             >
               {children}
             </ScrollView>
+          ) : corpoArrastavel ? (
+            // Sem rolagem, a folha inteira é pegada — é o que o dedo espera de um cartão
+            // que sobe de baixo.
+            <GestureDetector gesture={puxarPeloCorpo}>
+              <View>{children}</View>
+            </GestureDetector>
           ) : (
             children
           )}
         </Animated.View>
-      </View>
+        </Animated.View>
+      </GestureHandlerRootView>
     </Modal>
   );
 }

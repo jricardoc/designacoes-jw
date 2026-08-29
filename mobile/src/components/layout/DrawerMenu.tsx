@@ -154,11 +154,17 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
 
           <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
             {ITENS.filter((item) => {
+              // A ORDEM importa, e o item sem restrição nenhuma é visível para todo irmão
+              // logado. Antes o último ramo era `ehAdminGeral(usuario)`, o que exigia admin
+              // geral de TODO item sem escopo — Início, Designações, Território, Conta,
+              // Ajustes... Para quem não é admin geral o menu abria vazio.
+              //
+              // Publicadores é só do admin geral (`somenteAdmin`). As saídas de campo, que
+              // davam acesso a quem cuida de dirigentes, saíram de lá para o Território.
+              if (item.somenteAdmin) return ehAdminGeral(usuario);
               // `podeGerenciar` já contempla o admin geral em qualquer escopo.
               if (item.escopo) return podeGerenciar(usuario, item.escopo);
-              // Publicadores é só do admin geral. As saídas de campo, que davam acesso a
-              // quem cuida de dirigentes, saíram de lá para o Território.
-              return ehAdminGeral(usuario);
+              return true;
             }).map((item) => {
               const ativo = item.chave === atual;
               return (
