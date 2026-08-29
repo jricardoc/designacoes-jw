@@ -97,12 +97,25 @@ function mesmoNomeDeGrupo(textoA, textoB) {
 // ---------------------------------------------------------------------------
 
 /**
- * Separadores entre os grupos da semana.
+ * Onde a linha se parte.
  *
- * "&" e "/" apenas — " e " nao serve porque faz parte de nomes reais ("Olga Pereira e
- * Souza"). Mesma decisao de `fragmentos` em MinhasDesignacoesService, e pelo mesmo motivo.
+ * O corte NAO e feito nos separadores, e sim ANTES de cada "Grupo"/"Grupos" — a fronteira
+ * de verdade da linha. A primeira versao cortava so em "&", "/" e ",", e a producao mostrou
+ * por que isso nao basta: metade das semanas usa " e " ("Grupo 2 do Átilas Santos e Grupo 5
+ * do Elvandy Lima"). A linha inteira virava um fragmento so, batia com DOIS grupos, e o
+ * criterio conservador recusava os dois — perdendo as duas metades em vez de nenhuma.
+ *
+ * E " e " nao pode simplesmente entrar na lista de separadores: ele faz parte de nomes reais
+ * ("Olga Pereira e Souza"), e cortar ali partiria a pessoa ao meio. Cortar antes de "Grupo"
+ * resolve os dois casos de uma vez, e ainda aguenta separador nenhum.
+ *
+ * Os separadores continuam na expressao para a linha que, por algum motivo, listar os grupos
+ * sem repetir a palavra ("Grupo 1 Edilson & Marcelo Santana").
  */
-const SEPARADORES = /[/&]|(?:,\s*)/;
+const SEPARADORES = /[/&,]|(?=\bgrupos?\b)/i;
+
+/** Sobra de separador no fim do pedaco depois do corte ("... Santos e ", "... Santos & "). */
+const SOBRA = /(?:\s+e|[&/,])\s*$/i;
 
 /** Texto que aparece no lugar do grupo quando ainda nao ha escala. */
 const LIXO = new Set(['', '-', '--', 'a definir', 'a definir.', 'x']);
@@ -122,7 +135,9 @@ function separarFragmentos(limpeza) {
 
     return texto
         .split(SEPARADORES)
-        .map(pedaco => pedaco.trim())
+        // O corte por lookahead deixa o separador no FIM do pedaco anterior ("Átilas Santos
+        // e "), e nao no comeco do seguinte. Sem tirar isso, o "e" solto entraria no nome.
+        .map(pedaco => pedaco.trim().replace(SOBRA, '').trim())
         .filter(pedaco => pedaco && !LIXO.has(pedaco.toLowerCase()))
         .map(bruto => {
             // "Grupos 5 do Luis Roberto" -> numero 5, nome "Luis Roberto".
@@ -189,35 +204,70 @@ function gruposDaSemana(limpeza, grupos) {
     return { grupos: encontrados, naoCasados };
 }
 
+/** Um numero recente so vale contra o passado se mais de uma semana o confirmar. */
+const MINIMO_APOIO = 2;
+
 /**
  * Aprende o numero de cada grupo a partir dos textos da programacao.
  *
- * A logica: quando um fragmento casa por NOME e traz um numero, aquele numero e o do grupo.
- * Duas semanas discordando sobre o numero do mesmo grupo derrubam o aprendizado dele — ou o
- * documento se contradiz, ou o casamento por nome errou, e nos dois casos gravar seria pior
- * do que nao gravar.
+ * A logica base: quando um fragmento casa por NOME e traz um numero, aquele numero e o do
+ * grupo. O que complica e que a numeracao MUDA — a congregacao ja teve seis grupos (havia um
+ * "Grupo 3 do Helber Dias" em Marco/2026), e quando um grupo sai os outros sao renumerados.
+ * O historico entao contradiz o presente de propria autoria, sem erro nenhum envolvido.
  *
- * @returns {{ aprendidos: Map<number, number>, conflitos: object[] }}
+ * Por isso a regra e por RECENCIA, e nao por unanimidade: vale o numero das semanas mais
+ * novas, desde que ao menos `MINIMO_APOIO` semanas o usem. O apoio minimo e o que impede um
+ * erro de digitacao na ultima semana de renumerar o grupo sozinho; e a recencia e o que
+ * impede o passado, que e mais volumoso, de congelar a numeracao antiga para sempre.
+ *
+ * @param {{texto: string, quando?: string}[]} entradas em qualquer ordem; `quando` e uma
+ *        chave cronologica ordenavel (a data ISO da reuniao). Sem ela, a entrada conta como
+ *        a mais antiga — nunca como a mais nova, para nao decidir a numeracao.
+ * @returns {{ aprendidos: Map<number, number>, conflitos: object[] }} os conflitos vem
+ *        SEMPRE, inclusive os resolvidos: quem roda o script precisa ver que houve
+ *        divergencia e qual numero ganhou.
  */
-function aprenderNumeros(textos, grupos) {
-    const vistos = new Map(); // grupoId -> Set de numeros
-    for (const texto of textos) {
+function aprenderNumeros(entradas, grupos) {
+    const ordenadas = [...entradas].sort(
+        (a, b) => String(a.quando || '').localeCompare(String(b.quando || ''))
+    );
+
+    // grupoId -> numeros observados, do mais antigo para o mais recente.
+    const vistos = new Map();
+    for (const { texto } of ordenadas) {
         for (const fragmento of separarFragmentos(texto)) {
             if (fragmento.numero === null) continue;
             const casados = grupos.filter(g => mesmoNomeDeGrupo(g.nome, fragmento.nome));
             if (casados.length !== 1) continue;
             const id = casados[0].id;
-            if (!vistos.has(id)) vistos.set(id, new Set());
-            vistos.get(id).add(fragmento.numero);
+            if (!vistos.has(id)) vistos.set(id, []);
+            vistos.get(id).push(fragmento.numero);
         }
     }
 
     const aprendidos = new Map();
     const conflitos = [];
-    for (const [id, numeros] of vistos) {
-        if (numeros.size === 1) aprendidos.set(id, [...numeros][0]);
-        else conflitos.push({ grupoId: id, numeros: [...numeros].sort((a, b) => a - b) });
+
+    for (const [grupoId, lista] of vistos) {
+        const recente = lista[lista.length - 1];
+        const descartados = [...new Set(lista.filter(n => n !== recente))].sort((a, b) => a - b);
+
+        if (descartados.length === 0) {
+            aprendidos.set(grupoId, recente);
+            continue;
+        }
+
+        const apoio = lista.filter(n => n === recente).length;
+        if (apoio >= MINIMO_APOIO) {
+            aprendidos.set(grupoId, recente);
+            conflitos.push({ grupoId, numero: recente, apoio, descartados, resolvido: true });
+        } else {
+            // O numero mais novo aparece uma vez so e briga com o passado: pode ser
+            // renumeracao comecando ou pode ser engano, e nao da para saber qual.
+            conflitos.push({ grupoId, numeros: [...new Set(lista)].sort((a, b) => a - b), resolvido: false });
+        }
     }
+
     return { aprendidos, conflitos };
 }
 
@@ -270,5 +320,5 @@ module.exports = {
     separarFragmentos,
     casarFragmento,
     aprenderNumeros,
-    _internos: { normalizar, tokens, mesmaPalavra, mesmoNomeDeGrupo, MINIMO_PREFIXO },
+    _internos: { normalizar, tokens, mesmaPalavra, mesmoNomeDeGrupo, MINIMO_PREFIXO, MINIMO_APOIO },
 };

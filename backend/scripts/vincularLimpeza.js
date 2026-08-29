@@ -18,15 +18,28 @@
  * numero que veio junto. Dai em diante o casamento passa a ser por numero, e o nome vira so
  * conferencia.
  *
+ * A NUMERACAO MUDA COM O TEMPO. A congregacao ja teve seis grupos (havia um "Grupo 3 do
+ * Helber Dias" em Marco/2026), e quando um grupo sai os outros sao renumerados — o historico
+ * passa a contradizer o presente sem erro nenhum envolvido. Por isso o script decide por
+ * RECENCIA: vale o numero das semanas mais novas, desde que duas o confirmem. Toda divergencia
+ * e impressa, inclusive as que ele resolve sozinho.
+ *
  * O QUE ELE NAO FAZ: nao inventa numero. Grupo que nunca apareceu numa linha de limpeza fica
- * sem numero e continua casando por nome, como hoje. Duas semanas discordando sobre o numero
- * do mesmo grupo tambem nao gravam nada — e sinal de que o casamento por nome errou, e chutar
- * ali colocaria o grupo errado para limpar o salao.
+ * sem numero e continua casando por nome, como hoje. E um numero novo que aparece uma vez so,
+ * brigando com o passado, nao grava nada: pode ser renumeracao comecando ou pode ser engano,
+ * e chutar ali colocaria o grupo errado para limpar o salao.
  */
 const prisma = require('../src/prisma');
 const Limpeza = require('../src/services/LimpezaGrupoService');
 
 const simular = process.argv.includes('--simular');
+
+/** "dd/MM/yyyy" -> "yyyy-MM-dd", que ordena cronologicamente como texto. Sem data, null. */
+function chaveCronologica(semana) {
+    const m = String(semana.dataReuniao || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (!m) return null;
+    return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+}
 
 async function main() {
     console.log(simular ? '=== SIMULACAO (nada e gravado) ===\n' : '=== VINCULAR LIMPEZA AOS GRUPOS ===\n');
@@ -44,7 +57,7 @@ async function main() {
 
     const semanas = await prisma.semanaReuniao.findMany({
         where: { limpeza: { not: null } },
-        select: { faixaData: true, limpeza: true },
+        select: { faixaData: true, dataReuniao: true, limpeza: true },
         orderBy: { id: 'asc' },
     });
 
@@ -71,7 +84,11 @@ async function main() {
 
     // ---- 2. o numero aprendido --------------------------------------------
     console.log('\n--- Numeracao aprendida do documento ---\n');
-    const { aprendidos, conflitos } = Limpeza.aprenderNumeros(semanas.map(s => s.limpeza), grupos);
+    // A ordem cronologica sai da DATA da reuniao, nao do `id`: reimportar um mes recria as
+    // semanas dele com ids novos e o passado passaria a parecer o presente — que e
+    // exatamente o que faria a numeracao antiga ganhar da atual.
+    const entradas = semanas.map(s => ({ texto: s.limpeza, quando: chaveCronologica(s) }));
+    const { aprendidos, conflitos } = Limpeza.aprenderNumeros(entradas, grupos);
 
     const porId = new Map(grupos.map(g => [g.id, g]));
     let paraGravar = 0;
@@ -95,7 +112,19 @@ async function main() {
 
     for (const conflito of conflitos) {
         const nome = porId.get(conflito.grupoId)?.nome ?? `#${conflito.grupoId}`;
-        console.log(`   !! ${nome}: o documento o chama de Grupo ${conflito.numeros.join(' e de Grupo ')} — nao gravo nada`);
+        if (conflito.resolvido) {
+            // Normal quando a congregacao ja teve outra quantidade de grupos: o historico
+            // usa a numeracao velha. Aparece assim mesmo para nao decidir isso em silencio.
+            console.log(
+                `   ~  ${nome}: o historico ja o chamou de Grupo ${conflito.descartados.join(' e ')}; ` +
+                `fico com o Grupo ${conflito.numero} (${conflito.apoio} semanas recentes)`
+            );
+        } else {
+            console.log(
+                `   !! ${nome}: o documento o chama de Grupo ${conflito.numeros.join(' e de Grupo ')}, ` +
+                'e o mais novo aparece uma vez so — nao gravo nada'
+            );
+        }
     }
 
     // ---- 3. grava -----------------------------------------------------------
