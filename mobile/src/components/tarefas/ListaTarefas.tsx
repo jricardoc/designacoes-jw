@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-nati
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useConcluirTarefa } from "@/api/hooks/useTarefas";
 import type { Tarefa } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { useToast } from "@/components/ui";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -43,6 +44,7 @@ export function ListaTarefas({ tarefas, grupo }: Props) {
   const { colors, styles } = useTema(criarEstilos);
   const concluir = useConcluirTarefa();
   const toast = useToast();
+  const { celebrar } = useCelebracao();
   /**
    * Qual card está sendo marcado agora. Guarda o id, e não um booleano: com dois toques
    * rápidos em cards diferentes, um booleano deixaria os dois girando.
@@ -61,8 +63,11 @@ export function ListaTarefas({ tarefas, grupo }: Props) {
     concluir.mutate(
       { tipo: t.tipo, ocorrencia: t.ocorrencia },
       {
-        onSuccess: () => toast.show("Tarefa concluída!"),
-        // Sem este aviso a falha seria muda: o card continuaria na lista e o irmão
+        // Comemora em vez do toast: o toast some num canto e trata cumprir uma tarefa como
+        // qualquer outro salvamento. O card já sai da lista sozinho — o que faltava era o
+        // reconhecimento.
+        onSuccess: () => celebrar(t.titulo),
+        // A falha continua sendo toast, e nunca comemoração: o card segue na lista e o irmão
         // tocaria de novo achando que o toque não pegou.
         onError: (erro) =>
           toast.show(erro instanceof Error ? erro.message : "Não deu para concluir", "error"),

@@ -114,15 +114,17 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   const grupo = segments[0] as string | undefined;
   const atual = grupo === "(tabs)" ? ((segments[1] as string | undefined) ?? "index") : (grupo ?? "");
 
-  const ir = (item: ItemMenu) => {
+  const irPara = (chave: string, href: Href) => {
     onClose();
-    if (item.chave === atual) return; // já está nela: navegar só remontaria a tela
-    // Todos os itens são irmãos dentro de (tabs), como eram as abas: trocar de
+    if (chave === atual) return; // já está nela: navegar só remontaria a tela
+    // Todos os destinos são irmãos dentro de (tabs), como eram as abas: trocar de
     // item TROCA a tela. `navigate` empilharia mais uma cópia a cada toque (o
     // StackRouter só reaproveita a rota do topo), e o voltar do Android refaria
     // todo o passeio pelo menu em vez de sair do app.
-    router.replace(item.href);
+    router.replace(href);
   };
+
+  const ir = (item: ItemMenu) => irPara(item.chave, item.href);
 
   if (!montado) return null;
 
@@ -195,8 +197,17 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
             })}
           </ScrollView>
 
+          {/* O rodapé é o atalho para a Conta. Ele já mostrava nome e @nickname, e desde
+              que Conta saiu da lista (foi para a barra flutuante) tocar no próprio nome é o
+              gesto que sobra — um cartão de perfil que não abre o perfil só decepciona. */}
           {usuario ? (
-            <View style={styles.rodape}>
+            <Pressable
+              onPress={() => irPara("conta", "/(tabs)/conta")}
+              accessibilityRole="button"
+              accessibilityLabel={`Abrir a conta de ${usuario.nome}`}
+              accessibilityState={{ selected: atual === "conta" }}
+              style={({ pressed }) => [styles.rodape, pressed && styles.rodapePressionado]}
+            >
               <View style={styles.avatar}>
                 <Text style={styles.avatarTexto}>
                   {usuario.nome.trim().charAt(0).toUpperCase()}
@@ -210,7 +221,10 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
                   @{usuario.nickname}
                 </Text>
               </View>
-            </View>
+              {/* A seta é o que diz que isto se toca. Sem ela o rodapé continua lendo como
+                  legenda, e ninguém descobre o atalho. */}
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </Pressable>
           ) : null}
         </Animated.View>
       </View>
@@ -278,9 +292,15 @@ const criarEstilos = (colors: Cores) =>
       alignItems: "center",
       gap: spacing.md,
       paddingTop: spacing.md,
+      // Alarga a área de toque para a borda do painel sem mexer no desenho: o recuo
+      // horizontal é devolvido pela margem negativa.
+      paddingHorizontal: spacing.lg,
+      marginHorizontal: -spacing.lg,
+      paddingBottom: spacing.sm,
       borderTopWidth: 1,
       borderTopColor: colors.border,
     },
+    rodapePressionado: { backgroundColor: colors.surfaceMuted },
     avatar: {
       width: 38,
       height: 38,

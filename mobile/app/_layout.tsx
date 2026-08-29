@@ -5,6 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ProvedorCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { SplashAnimated } from "@/components/SplashAnimated";
 import { Loading, ToastProvider } from "@/components/ui";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -75,8 +76,13 @@ export default function RootLayout() {
                 instante. */}
             <TemaProvider>
               <ToastProvider>
-                <BarraStatus />
-                <AuthGate />
+                {/* Dentro do tema (o confete usa as cores dele) e por cima de tudo: a
+                    comemoração cobre a tela inteira, e é disparada tanto pela lista de
+                    tarefas quanto pelo botão de teste, em telas diferentes. */}
+                <ProvedorCelebracao>
+                  <BarraStatus />
+                  <AuthGate />
+                </ProvedorCelebracao>
               </ToastProvider>
             </TemaProvider>
             {!splashDone ? <SplashAnimated onDone={() => setSplashDone(true)} /> : null}

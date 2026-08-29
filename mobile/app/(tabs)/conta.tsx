@@ -25,6 +25,7 @@ import { ConfirmDialog, GradientHeader, useConfirm, useToast } from "@/component
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { EscoposSheet } from "@/components/conta/EscoposSheet";
 import { useDefinirTarefas } from "@/api/hooks/useTarefas";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { TarefasSheet } from "@/components/conta/TarefasSheet";
 import { UserActionSheet } from "@/components/conta/UserActionSheet";
 import { VincularIrmaoSheet } from "@/components/conta/VincularIrmaoSheet";
@@ -129,6 +130,7 @@ export default function ContaScreen() {
   const toggleAdmin = useToggleAdmin();
   const salvarEscopos = useAtualizarEscopos();
   const salvarTarefas = useDefinirTarefas();
+  const { celebrar } = useCelebracao();
   const resetSenha = useResetSenhaUsuario();
   const excluirUsuario = useExcluirUsuario();
   const { data: irmaosLivres } = useIrmaosDisponiveis(null, isAdmin && showNovo);
@@ -205,7 +207,19 @@ export default function ContaScreen() {
 
   return (
     <View style={styles.screen}>
-      <GradientHeader title="Conta" description="Perfil e usuários" />
+      <GradientHeader
+        title="Conta"
+        description="Perfil e usuários"
+        /* TEMPORÁRIO — botão de prévia da comemoração de tarefa cumprida. É só para
+           conferir o efeito sem precisar concluir uma tarefa de verdade; sai daqui
+           quando o visual estiver aprovado. Some junto o `celebrar` acima. */
+        right={
+          <Pressable style={styles.testarBtn} onPress={() => celebrar("Prévia do efeito.")} hitSlop={8}>
+            <Ionicons name="sparkles-outline" size={16} color={colors.textOnPrimary} />
+            <Text style={styles.testarBtnTexto}>Testar efeito</Text>
+          </Pressable>
+        }
+      />
 
       <ScrollView {...rolagem} contentContainerStyle={[styles.scroll, recuo]} automaticallyAdjustKeyboardInsets>
         {/* Perfil */}
@@ -474,6 +488,17 @@ export default function ContaScreen() {
 
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
+    // TEMPORÁRIO — vai embora junto com o botão de prévia no cabeçalho.
+    testarBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.primary,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      borderRadius: radius.pill,
+    },
+    testarBtnTexto: { color: colors.textOnPrimary, fontSize: 13, fontWeight: "700" },
   screen: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 18, paddingTop: 4 },
 
