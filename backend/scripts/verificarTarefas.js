@@ -14,6 +14,7 @@
  */
 const Regras = require('../src/services/RegrasTarefas');
 const Tarefas = require('../src/services/TarefasService');
+const Painel = require('../src/services/PainelTarefasService');
 
 let falhas = 0;
 const eq = (achado, esperado, descricao) => {
@@ -282,6 +283,69 @@ eq(Regras.sanearTarefas(['zoom', 'zoom', 'inventada']), ['zoom'], 'repetido e de
 eq(Regras.sanearTarefas(['limpeza']), [], 'limpeza nunca entra por atribuicao');
 eq(Regras.sanearTarefas('zoom'), [], 'o que nao e lista vira lista vazia');
 eq(Regras.CATALOGO.length, 5, 'o catalogo oferece as cinco tarefas atribuiveis');
+
+console.log('\n=== 11. Painel do admin: as contas puras ===\n');
+{
+    // --- a linha do tempo dos quadros ---
+    // O prazo de um quadro e o ULTIMO DIA COBERTO PELO ANTERIOR. O primeiro da lista nunca
+    // e avaliado: nao existe anterior de onde tirar prazo.
+    const quadros = [
+        { mes: 7, ano: 2026, ultimoDia: '2026-07-31', publicadoEm: null, publicadoPor: null },
+        { mes: 8, ano: 2026, ultimoDia: '2026-08-31', publicadoEm: new Date('2026-07-28T10:00:00Z'), publicadoPor: { nome: 'Andre' } },
+        { mes: 9, ano: 2026, ultimoDia: '2026-09-30', publicadoEm: new Date('2026-09-04T10:00:00Z'), publicadoPor: { nome: 'Andre' } },
+        { mes: 10, ano: 2026, ultimoDia: '2026-10-31', publicadoEm: null, publicadoPor: null },
+    ];
+    const linhas = Painel._internos.linhaDoTempoDosQuadros(quadros, 'quadroDesignacoes', '2026-01-01');
+    const porRef = new Map(linhas.map(l => [l.referencia, l]));
+
+    eq(linhas.length, 3, 'quatro quadros dao tres avaliacoes (o primeiro nao tem prazo)');
+    eq(porRef.get('agosto de 2026').vencimentoISO, '2026-07-31', 'agosto vencia no fim de julho');
+    eq(porRef.get('agosto de 2026').situacao, 'noPrazo', 'e saiu em 28/07: no prazo');
+    eq(porRef.get('setembro de 2026').situacao, 'atrasado', 'setembro saiu em 04/09: atrasado');
+    eq(porRef.get('setembro de 2026').diasDeAtraso, 4, 'quatro dias');
+    eq(porRef.get('outubro de 2026').situacao, 'semRegistro',
+        'publicado antes de a data existir nao vira "pontual" por omissao');
+    eq(porRef.get('outubro de 2026').diasDeAtraso, null, 'e nao inventa dias de atraso');
+
+    const recorte = Painel._internos.linhaDoTempoDosQuadros(quadros, 'quadroDesignacoes', '2026-09-01');
+    eq(recorte.map(l => l.referencia), ['outubro de 2026'],
+        'a janela corta pelo PRAZO, nao pela data de publicacao');
+}
+{
+    // --- o corte por data de atribuicao ---
+    const oc = (alvo) => Tarefas._internos.ocorrenciaDe(tipo('confirmacoes'), { alvoISO: alvo, titulo: 'x' });
+    const contexto = { porTipo: { confirmacoes: ['2026-07-02', '2026-08-06', '2026-09-03'].map(oc) } };
+
+    const veterano = {
+        id: 1, nome: 'Veterano',
+        tarefas: [{ tipo: 'confirmacoes', createdAt: new Date('2026-01-01T00:00:00Z') }],
+        tarefasConcluidas: [{ tipo: 'confirmacoes', ocorrencia: '2026-07-02', concluidoEm: new Date('2026-07-01T12:00:00Z') }],
+    };
+    const novato = {
+        id: 2, nome: 'Novato',
+        tarefas: [{ tipo: 'confirmacoes', createdAt: new Date('2026-09-01T00:00:00Z') }],
+        tarefasConcluidas: [],
+    };
+    const semNada = { id: 3, nome: 'SemNada', tarefas: [], tarefasConcluidas: [] };
+
+    const d = Painel._internos.desempenhoManual([veterano, novato, semNada], contexto, '2026-06-01', '2026-09-30');
+    const porNome = new Map(d.porPessoa.map(p => [p.nome, p]));
+
+    eq(porNome.get('Veterano').previstas, 3, 'quem tinha a tarefa desde janeiro responde pelas tres');
+    eq(porNome.get('Veterano').cumpridas, 1, 'e cumpriu uma');
+    eq(porNome.get('Veterano').noPrazo, 1, 'no prazo');
+    eq(porNome.get('Novato').previstas, 1,
+        'quem recebeu a tarefa em setembro NAO carrega julho e agosto');
+    ok(!porNome.has('SemNada'), 'quem nunca teve tarefa nao vira linha de 0%');
+    eq(d.geral.previstas, 4, 'o geral soma so o que era de alguem');
+}
+{
+    // --- o prazo vale ate o FIM do dia ---
+    const noPrazo = Painel._internos.concluiuNoPrazo;
+    ok(noPrazo(new Date('2026-07-01T23:30:00Z'), '2026-07-01'), 'concluir no proprio dia do prazo conta');
+    ok(!noPrazo(new Date('2026-07-02T12:00:00Z'), '2026-07-01'), 'no dia seguinte, nao');
+    ok(!noPrazo(null, '2026-07-01'), 'sem check nao ha prazo cumprido');
+}
 
 console.log(`\n${falhas === 0 ? 'TUDO OK' : `${falhas} FALHA(S)`}\n`);
 process.exit(falhas === 0 ? 0 : 1);

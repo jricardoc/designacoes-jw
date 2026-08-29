@@ -189,4 +189,83 @@ async function processarTick(agora = new Date()) {
     return processarTarefas({ usarTrava: true, exigirJanela: true, agora });
 }
 
-module.exports = { processarTarefas, processarTick, GRACA_MS, _internos: { chaveDaRegra } };
+/**
+ * O empurrãozinho que o admin dispara do painel, agora.
+ *
+ * NAO passa pela trava nem pela janela: e uma cobranca deliberada, feita por gente olhando a
+ * tela, e nao um disparo automatico. Travar seria pior do que repetir — o admin que tocou duas
+ * vezes queria mesmo insistir.
+ *
+ * Recusa o que nao esta pendente de verdade. Cobrar uma tarefa que o irmao ja cumpriu (ou que
+ * nem e dele) e o tipo de erro que faz a congregacao parar de confiar no aviso.
+ */
+async function lembrarAgora({ usuarioId, tipo, ocorrencia, agora = new Date() }) {
+    const usuario = await prisma.usuario.findUnique({
+        where: { id: usuarioId },
+        select: {
+            id: true,
+            nome: true,
+            irmaoId: true,
+            pushTokens: { select: { token: true } },
+            tarefas: { select: { tipo: true } },
+            tarefasConcluidas: { select: { tipo: true, ocorrencia: true } },
+        },
+    });
+    if (!usuario) return { ok: false, motivo: 'USUARIO_NAO_ENCONTRADO' };
+    if (usuario.pushTokens.length === 0) return { ok: false, motivo: 'SEM_APARELHO' };
+
+    const contexto = await TarefasService.carregarContexto(agora);
+    const grupo = TarefasService.grupoDoUsuario(usuario, contexto.grupos);
+
+    const pendentes = TarefasService.montarParaUsuario({
+        contexto,
+        designadas: usuario.tarefas.map(t => t.tipo),
+        concluidas: new Set(usuario.tarefasConcluidas.map(c => `${c.tipo}|${c.ocorrencia}`)),
+        grupoId: grupo?.id ?? null,
+    });
+
+    const tarefa = pendentes.find(t => t.tipo === tipo && t.ocorrencia === ocorrencia);
+    if (!tarefa) return { ok: false, motivo: 'NAO_PENDENTE' };
+
+    const titulo = `Lembrete: ${tarefa.label}`;
+    const corpo = `${tarefa.titulo} — ${tarefa.prazo.toLowerCase()}.`;
+
+    let notifId = null;
+    try {
+        const registro = await prisma.notificacaoEnviada.create({
+            data: {
+                usuarioId: usuario.id,
+                titulo,
+                corpo,
+                data: { screen: 'minhas', tarefa: tarefa.tipo, ocorrencia: tarefa.ocorrencia },
+            },
+        });
+        notifId = registro.id;
+    } catch (erro) {
+        console.error('[tarefas] Nao gravei o historico do lembrete manual:', erro.message);
+    }
+
+    const resultado = await ExpoPushService.enviar(
+        usuario.pushTokens.map(({ token }) => ({
+            to: token,
+            title: titulo,
+            body: corpo,
+            data: {
+                screen: 'minhas',
+                tarefa: tarefa.tipo,
+                ocorrencia: tarefa.ocorrencia,
+                ...(notifId ? { notifId } : {}),
+            },
+        })),
+    );
+
+    return { ok: true, enviados: resultado.enviados, falhas: resultado.falhas, nome: usuario.nome };
+}
+
+module.exports = {
+    processarTarefas,
+    processarTick,
+    lembrarAgora,
+    GRACA_MS,
+    _internos: { chaveDaRegra },
+};

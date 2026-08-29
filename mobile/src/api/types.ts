@@ -94,8 +94,89 @@ export interface Tarefa {
   /** "Vence hoje", "Atrasada há 2 dias" — montado no backend para não divergir do prazo. */
   prazo: string;
   diasAteVencer: number | null;
+  situacao: SituacaoTarefa;
+  /** @deprecated `situacao === "atrasada"` diz o mesmo. Mantido para builds antigos. */
   atrasada: boolean;
   grupo: { id: number; nome: string } | null;
+}
+
+/** Em que pé a tarefa está. Uma definição só, vinda do backend (ver RegrasTarefas). */
+export type SituacaoTarefa = "atrasada" | "alerta" | "emDia" | "informativa";
+
+// --- Painel do admin --------------------------------------------------------
+
+export interface PendenciaTarefa {
+  usuarioId: number;
+  nome: string;
+  tipo: TipoTarefa;
+  label: string;
+  icone: string;
+  ocorrencia: string;
+  titulo: string;
+  detalhe: string | null;
+  vencimentoISO: string | null;
+  prazo: string;
+  diasAteVencer: number | null;
+  situacao: SituacaoTarefa;
+  /** Sem aparelho registrado o lembrete não chega — a tela não oferece o botão. */
+  temAparelho: boolean;
+}
+
+export interface DesempenhoDePessoa {
+  usuarioId: number;
+  nome: string;
+  previstas: number;
+  cumpridas: number;
+  noPrazo: number;
+  /** 0–1. */
+  taxa: number;
+}
+
+export interface DesempenhoDeTarefa {
+  tipo: TarefaAtribuivel;
+  label: string;
+  previstas: number;
+  cumpridas: number;
+  noPrazo: number;
+  /** `null` quando não houve nenhuma ocorrência na janela — não é zero, é sem dado. */
+  taxa: number | null;
+}
+
+export interface QuadroNoPainel {
+  tipo: "quadroDesignacoes" | "quadroDirigentes";
+  label: string;
+  referencia: string;
+  vencimentoISO: string;
+  publicadoEm: string | null;
+  publicadoPor: string | null;
+  diasDeAtraso: number | null;
+  /** `semRegistro` = publicado antes de o app guardar a data. Não conta como pontual. */
+  situacao: "noPrazo" | "atrasado" | "semRegistro";
+}
+
+export interface MembroDaEquipe {
+  id: number;
+  nome: string;
+  nickname: string;
+  vinculado: boolean;
+  temAparelho: boolean;
+  tarefas: TarefaAtribuivel[];
+}
+
+export interface PainelTarefas {
+  hoje: string;
+  janelaDias: number;
+  inicioISO: string;
+  resumo: { pessoasComTarefa: number; pendentes: number; atrasadas: number; alerta: number };
+  pendencias: PendenciaTarefa[];
+  semResponsavel: { id: TarefaAtribuivel; label: string }[];
+  desempenho: {
+    geral: { previstas: number; cumpridas: number; noPrazo: number; taxa: number | null };
+    porPessoa: DesempenhoDePessoa[];
+    porTarefa: DesempenhoDeTarefa[];
+  };
+  quadros: QuadroNoPainel[];
+  equipe: MembroDaEquipe[];
 }
 
 export interface RespostaTarefas {

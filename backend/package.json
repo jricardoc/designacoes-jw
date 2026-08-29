@@ -22,7 +22,8 @@
     "verificar:importacao-grupos": "node scripts/verificarImportacaoGrupos.js",
     "verificar:limpeza-grupos": "node scripts/verificarLimpezaGrupos.js",
     "verificar:tarefas": "node scripts/verificarTarefas.js",
-    "vincular:limpeza": "node scripts/vincularLimpeza.js"
+    "vincular:limpeza": "node scripts/vincularLimpeza.js",
+    "backfill:publicacoes": "node scripts/backfillPublicacoes.js"
   },
   "dependencies": {
     "@prisma/client": "^6.1.0",

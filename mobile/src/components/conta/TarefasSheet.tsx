@@ -2,13 +2,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { useCatalogoTarefas, useTarefasDoUsuario } from "@/api/hooks/useTarefas";
-import type { TarefaAtribuivel, Usuario } from "@/api/types";
+import type { TarefaAtribuivel } from "@/api/types";
 import { Sheet } from "@/components/ui";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
 interface Props {
-  user: Usuario | null;
+  /**
+   * Só o que a folha de fato usa. Antes era `Usuario` inteiro, e isso a prendia à tela de
+   * Conta: o painel de tarefas lista a equipe num formato próprio e teria de forjar um
+   * usuário completo só para abrir esta folha.
+   */
+  user: { id: number; nome: string } | null;
   salvando?: boolean;
   onClose: () => void;
   onSalvar: (tarefas: TarefaAtribuivel[]) => void;

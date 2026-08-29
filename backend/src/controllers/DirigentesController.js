@@ -255,9 +255,26 @@ class DirigentesController {
             const { id } = req.params;
             const { status } = req.body;
 
+            const atual = await prisma.quadroDirigente.findUnique({
+                where: { id: parseInt(id) },
+                select: { status: true, publicadoEm: true }
+            });
+            if (!atual) {
+                return res.status(404).json({ error: 'Quadro nao encontrado' });
+            }
+
+            const dados = { status };
+            // Mesmo carimbo do quadro de designacoes, e pelo mesmo motivo: e daqui que o
+            // painel de tarefas sabe se a escala saiu antes de a anterior acabar. So na
+            // primeira publicacao — republicar nao reescreve a entrega original.
+            if (status === 'publicado' && atual.status !== 'publicado' && !atual.publicadoEm) {
+                dados.publicadoEm = new Date();
+                dados.publicadoPorId = req.user.id;
+            }
+
             const atualizado = await prisma.quadroDirigente.update({
                 where: { id: parseInt(id) },
-                data: { status }
+                data: dados
             });
 
             return res.json(atualizado);

@@ -381,9 +381,11 @@ function montarParaUsuario({ contexto, designadas, concluidas, grupoId }) {
                     ? Regras.rotuloInformativo(oc.vencimentoISO, hojeISO)
                     : Regras.rotuloDoPrazo(oc.vencimentoISO, hojeISO),
                 diasAteVencer: dias,
-                // A informativa nunca fica "atrasada": nao ha entrega para atrasar, e pintar
-                // o card de vermelho cobraria do irmao uma coisa que e do grupo inteiro.
-                atrasada: tipo.conclusao !== 'nenhuma' && dias !== null && dias < 0,
+                // 'atrasada' | 'alerta' | 'emDia' | 'informativa'. E o que a tela do irmao e
+                // o painel do admin usam para pintar — uma definicao so, ver RegrasTarefas.
+                situacao: Regras.situacaoDe(dias, tipo),
+                // Mantido por compatibilidade com o app: `situacao` diz o mesmo e mais.
+                atrasada: Regras.situacaoDe(dias, tipo) === 'atrasada',
                 grupo: oc.grupo,
             });
         }

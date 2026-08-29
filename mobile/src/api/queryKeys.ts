@@ -40,4 +40,7 @@ export const qk = {
   catalogoTarefas: ["catalogo-tarefas"] as const,
   tarefasUsuario: (usuarioId: number | string) =>
     ["tarefas-usuario", String(usuarioId)] as const,
+  // A janela entra na chave: 30 e 90 dias são consultas diferentes, e uma não pode
+  // servir de cache para a outra.
+  painelTarefas: (janelaDias: number) => ["painel-tarefas", janelaDias] as const,
 };

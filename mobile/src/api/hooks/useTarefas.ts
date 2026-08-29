@@ -3,6 +3,7 @@ import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
 import type {
   OpcaoTarefa,
+  PainelTarefas,
   RespostaTarefas,
   TarefaAtribuivel,
   TipoTarefa,
@@ -94,5 +95,35 @@ export function useDefinirTarefas() {
       // O admin pode estar designando para si mesmo — e aí a própria tela de início muda.
       qc.invalidateQueries({ queryKey: qk.tarefas });
     },
+  });
+}
+
+/**
+ * O painel do admin geral. `enabled` para a consulta não sair antes de a tela saber que
+ * quem está olhando é admin — o backend recusaria com 403 e o erro apareceria à toa.
+ */
+export function usePainelTarefas(janelaDias: number, enabled = true) {
+  return useQuery({
+    queryKey: qk.painelTarefas(janelaDias),
+    queryFn: () => apiRequest<PainelTarefas>(`/tarefas/painel?janela=${janelaDias}`),
+    enabled,
+    // Lê a programação e os quadros inteiros: não é consulta para repetir a cada foco.
+    staleTime: 2 * 60_000,
+  });
+}
+
+/** Cobra um irmão, agora, sobre uma pendência específica. */
+export function useLembrarTarefa() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (corpo: { usuarioId: number; tipo: TipoTarefa; ocorrencia: string }) =>
+      apiRequest<{ mensagem: string; enviados: number }>("/tarefas/lembrar", {
+        method: "POST",
+        body: corpo,
+      }),
+    // A pendência continua pendente (o irmão ainda não fez), mas outra coisa pode ter mudado
+    // desde que a tela carregou — recarregar é barato e evita cobrar duas vezes algo que já
+    // foi cumprido enquanto o admin olhava.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["painel-tarefas"] }),
   });
 }

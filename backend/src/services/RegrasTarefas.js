@@ -275,6 +275,30 @@ function diasAte(vencimentoISO, hojeISO) {
     return Math.round(ms / 86400000);
 }
 
+/**
+ * Quantos dias antes do vencimento a tarefa entra em ALERTA.
+ *
+ * 1 dia: alerta e "e para agora", nao "esta chegando". Alargar isso pinta metade da lista de
+ * ambar e a cor para de querer dizer alguma coisa.
+ */
+const LIMIAR_DE_ALERTA = 1;
+
+/**
+ * Em que pe a tarefa esta: 'atrasada' | 'alerta' | 'emDia' | 'informativa'.
+ *
+ * Mora AQUI, e nao na tela, porque agora duas telas leem isto — a lista do irmao e o painel
+ * do admin. Cada uma com o proprio `if` acabaria pintando a mesma tarefa de cores
+ * diferentes em lugares diferentes.
+ */
+function situacaoDe(diasAteVencer, tipo) {
+    // A informativa (limpeza) nunca cobra: nao ha entrega para atrasar.
+    if (tipo && tipo.conclusao === 'nenhuma') return 'informativa';
+    if (diasAteVencer === null || diasAteVencer === undefined) return 'emDia';
+    if (diasAteVencer < 0) return 'atrasada';
+    if (diasAteVencer <= LIMIAR_DE_ALERTA) return 'alerta';
+    return 'emDia';
+}
+
 /** "Vence hoje", "Vence amanhã", "Atrasada há 2 dias", "Faltam 5 dias". */
 function rotuloDoPrazo(vencimentoISO, hojeISO) {
     const dias = diasAte(vencimentoISO, hojeISO);
@@ -434,6 +458,10 @@ module.exports = {
     tipoPorId,
     sanearTarefas,
     rotuloDaCadencia,
+    // Reexportado de RegrasLembrete: quem faz conta de dia neste assunto olha para este
+    // modulo, e obrigar o painel a importar os dois so para somar dias espalharia a origem
+    // da mesma aritmetica por dois lugares.
+    somarDias,
     diaDaSemanaISO,
     segundaDaSemanaISO,
     domingoDaSemanaISO,
@@ -447,6 +475,8 @@ module.exports = {
     diasAte,
     rotuloDoPrazo,
     rotuloInformativo,
+    situacaoDe,
+    LIMIAR_DE_ALERTA,
     avisosDe,
     instanteDoAviso,
     textoDoAviso,

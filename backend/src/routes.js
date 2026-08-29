@@ -128,6 +128,10 @@ routes.post('/tarefas/concluir', TarefasController.concluir);
 // Catalogo aberto a quem esta logado: sao os mesmos textos que a tela do admin desenha, e
 // nenhum deles e informacao reservada.
 routes.get('/tarefas/catalogo', TarefasController.catalogo);
+// Painel do admin geral: como a congregacao inteira esta indo. Fora do escopo de qualquer
+// area — quem cobra tarefa e quem distribui tarefa, e isso e do admin geral.
+routes.get('/tarefas/painel', requireAdmin, TarefasController.painel);
+routes.post('/tarefas/lembrar', requireAdmin, TarefasController.lembrar);
 
 // ==================== PUSH ====================
 // O aparelho registra o token no login e apaga no logout; o lembrete das 19h

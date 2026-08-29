@@ -2,6 +2,8 @@
 
 const prisma = require('../prisma');
 const TarefasService = require('../services/TarefasService');
+const PainelTarefasService = require('../services/PainelTarefasService');
+const LembreteTarefasService = require('../services/LembreteTarefasService');
 const Regras = require('../services/RegrasTarefas');
 
 /**
@@ -12,7 +14,10 @@ const Regras = require('../services/RegrasTarefas');
  * decidir quem administra uma area.
  *
  * Quem LE a propria lista e qualquer irmao logado, e so a propria: nao ha rota para ver a
- * lista de outro. A tela de inicio e o unico consumidor.
+ * lista de outro.
+ *
+ * A excecao e o PAINEL (`/tarefas/painel`), que ve a congregacao inteira e por isso exige
+ * admin geral — quem cobra a tarefa e quem a distribui.
  */
 class TarefasController {
     /** As tarefas pendentes do usuario logado — o To-Do da tela de inicio. */
@@ -59,6 +64,58 @@ class TarefasController {
         } catch (error) {
             console.error('[tarefas] falha ao concluir:', error);
             return res.status(500).json({ error: 'Erro ao salvar a tarefa' });
+        }
+    }
+
+    /**
+     * O painel do admin geral: pendencias de todo mundo, desempenho e os quadros mes a mes.
+     *
+     * `janela` em dias, para o admin trocar o recorte sem build novo. Limitada a um ano:
+     * acima disso a leitura da programacao inteira comeca a pesar e o numero deixa de dizer
+     * algo sobre como a congregacao esta HOJE.
+     */
+    async painel(req, res) {
+        try {
+            const bruto = parseInt(req.query.janela, 10);
+            const janelaDias = Number.isInteger(bruto) && bruto > 0 ? Math.min(bruto, 365) : undefined;
+
+            const painel = await PainelTarefasService.montar(
+                janelaDias ? { janelaDias } : {},
+            );
+            return res.json(painel);
+        } catch (error) {
+            console.error('[tarefas] falha ao montar o painel:', error);
+            return res.status(500).json({ error: 'Erro ao carregar o painel' });
+        }
+    }
+
+    /** Cobra um irmao, agora, sobre uma pendencia especifica. */
+    async lembrar(req, res) {
+        try {
+            const { usuarioId, tipo, ocorrencia } = req.body || {};
+            if (!Number.isInteger(usuarioId)) {
+                return res.status(400).json({ error: 'Informe `usuarioId`.' });
+            }
+
+            const resultado = await LembreteTarefasService.lembrarAgora({ usuarioId, tipo, ocorrencia });
+
+            if (!resultado.ok) {
+                const mensagens = {
+                    USUARIO_NAO_ENCONTRADO: 'Usuário não encontrado.',
+                    SEM_APARELHO: 'Esse irmão não tem aparelho registrado — o aviso não chegaria.',
+                    NAO_PENDENTE: 'Essa tarefa não está mais pendente para ele.',
+                };
+                return res.status(400).json({ error: mensagens[resultado.motivo] || 'Não deu para lembrar.' });
+            }
+
+            return res.json({
+                enviados: resultado.enviados,
+                falhas: resultado.falhas,
+                mensagem: `Lembrete enviado para ${resultado.nome}.`,
+            });
+        } catch (error) {
+            console.error('[tarefas] falha ao lembrar:', error);
+            return res.status(500).json({ error: 'Erro ao enviar o lembrete' });
         }
     }
 

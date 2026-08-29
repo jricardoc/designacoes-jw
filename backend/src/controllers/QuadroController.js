@@ -215,6 +215,14 @@ class QuadroController {
             if (titulo) updateData.titulo = titulo;
             if (status) updateData.status = status;
 
+            // Carimba QUANDO e por QUEM na primeira publicacao. So na primeira: republicar
+            // depois de arquivar nao pode reescrever a data que decide se o quadro saiu no
+            // prazo — o painel de tarefas mede a entrega original, nao a ultima mexida.
+            if (status === 'publicado' && quadro.status !== 'publicado' && !quadro.publicadoEm) {
+                updateData.publicadoEm = new Date();
+                updateData.publicadoPorId = req.user.id;
+            }
+
             const atualizado = await prisma.quadro.update({
                 where: { id: parseInt(id) },
                 data: updateData

@@ -14,6 +14,15 @@ model Quadro {
   ano         Int // 2026
   titulo      String // "Quadro de Designacoes JANEIRO 2026"
   status      String       @default("rascunho") // rascunho, publicado, arquivado
+  // QUANDO e por QUEM o quadro foi publicado.
+  //
+  // Existe para o painel de tarefas medir se o quadro saiu no prazo — `updatedAt` nao serve
+  // (muda a cada edicao de celula) e `status` sozinho so diz que saiu, nao quando. Para os
+  // quadros ja publicados antes desta coluna existir, `scripts/backfillPublicacoes.js`
+  // preenche a partir do Historico, que ja registrava a acao "publicou".
+  publicadoEm    DateTime?
+  publicadoPorId Int?
+  publicadoPor   Usuario?  @relation("QuadrosPublicados", fields: [publicadoPorId], references: [id], onDelete: SetNull)
   designacoes Designacao[]
   historicos  Historico[]
   createdAt   DateTime     @default(now())
@@ -101,6 +110,8 @@ model Usuario {
   // precisa administrar area nenhuma.
   tarefas              TarefaDesignada[]
   tarefasConcluidas    TarefaConcluida[]
+  quadrosPublicados    Quadro[]                @relation("QuadrosPublicados")
+  escalasPublicadas    QuadroDirigente[]       @relation("EscalasPublicadas")
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
 }
@@ -440,6 +451,12 @@ model QuadroDirigente {
   ano       Int // 2026
   titulo    String
   status    String            @default("rascunho")
+  // Igual ao Quadro acima. Aqui NAO ha de onde preencher para tras: a escala de dirigentes
+  // nunca escreveu no Historico (que so tem FK para Quadro), entao a medicao comeca do dia
+  // em que esta coluna passou a ser gravada — e o painel diz isso em vez de mostrar zero.
+  publicadoEm    DateTime?
+  publicadoPorId Int?
+  publicadoPor   Usuario?     @relation("EscalasPublicadas", fields: [publicadoPorId], references: [id], onDelete: SetNull)
   escalas   EscalaDirigente[]
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt

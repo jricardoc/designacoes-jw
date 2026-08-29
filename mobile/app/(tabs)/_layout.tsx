@@ -44,6 +44,7 @@ export default function LayoutDoMenu() {
             <Stack.Screen name="territorio" />
             <Stack.Screen name="reuniao" />
             <Stack.Screen name="confirmacoes" />
+            <Stack.Screen name="tarefas" />
             <Stack.Screen name="carrinho" />
             <Stack.Screen name="conta" />
             <Stack.Screen name="config" />

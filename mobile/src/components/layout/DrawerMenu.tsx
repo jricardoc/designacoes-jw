@@ -62,6 +62,9 @@ const ITENS: ItemMenu[] = [
     href: "/(tabs)/confirmacoes",
     escopo: "confirmacoes",
   },
+  // Acompanhar as tarefas da congregação inteira (e designá-las) é do admin geral, pela
+  // mesma razão que o cadastro: quem cobra a tarefa é quem a distribui.
+  { chave: "tarefas", rotulo: "Tarefas", icone: "clipboard-outline", href: "/(tabs)/tarefas", somenteAdmin: true },
   // Cadastro das pessoas da congregação: só o admin geral. As saídas de campo, que também
   // moravam aqui, foram para o Território.
   { chave: "config", rotulo: "Publicadores", icone: "people-circle-outline", href: "/(tabs)/config", somenteAdmin: true },
