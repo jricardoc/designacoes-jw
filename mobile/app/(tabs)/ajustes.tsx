@@ -18,6 +18,7 @@ import { GruposDeCampo } from "@/components/config/GruposDeCampo";
 import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema, type TemaPreferido } from "@/theme/TemaContext";
+import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 /**
  * Ajustes do APP — aparência, atalhos e o nome da congregação.
@@ -54,6 +55,10 @@ const OPCOES_TEMA: {
 ];
 
 export default function AjustesScreen() {
+  // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
+  // (carregando / vazio / lista), e espalhar o hook lá dentro o tornaria uma
+  // chamada condicional — proibido, e quebra na primeira troca de estado.
+  const { rolagem, recuo } = useBarraFlutuante();
   const { usuario } = useAuth();
   const { data: config } = useConfig();
   const atualizarConfig = useAtualizarConfig();
@@ -90,7 +95,7 @@ export default function AjustesScreen() {
         icon="settings"
       />
 
-      <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
+      <ScrollView {...rolagem} contentContainerStyle={[styles.scroll, recuo]} automaticallyAdjustKeyboardInsets>
         {/* Congregação — do admin geral, não do aparelho. */}
         {ehAdminGeral(usuario) ? (
           <>
@@ -255,7 +260,7 @@ export default function AjustesScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     screen: { flex: 1, backgroundColor: colors.background },
-    scroll: { padding: 18, paddingBottom: 44, gap: spacing.md },
+    scroll: { padding: 18, gap: spacing.md },
     secao: {
       fontSize: 13,
       fontWeight: "700",

@@ -242,6 +242,29 @@ eq(
 );
 ok(montar({ designadas: ['quadroDesignacoes'] })[0].concluivel === false, 'e ela nao oferece botao de concluir');
 
+console.log('\n=== 8b. A acao da ocorrencia ganha da do tipo ===\n');
+{
+    // A tarefa de compartilhar sabe DE QUAL quadro se trata, e leva direto nele. O tipo
+    // sozinho so consegue apontar para a lista, e ai o irmao tem de procurar o mes.
+    const comQuadro = Tarefas._internos.ocorrenciaDe(tipo('compartilharQuadro'), {
+        alvoISO: '2026-08-30', titulo: 'Compartilhar',
+        acao: { titulo: 'Abrir o quadro', destino: 'quadro', id: 42 },
+    });
+    const semQuadro = Tarefas._internos.ocorrenciaDe(tipo('compartilharQuadro'), {
+        alvoISO: '2026-08-30', titulo: 'Compartilhar',
+    });
+    const monta = (oc) => Tarefas.montarParaUsuario({
+        contexto: { hojeISO: '2026-08-29', grupos: [], porTipo: { compartilharQuadro: [oc] } },
+        designadas: ['compartilharQuadro'], concluidas: new Set(), grupoId: null,
+    })[0];
+
+    eq(monta(comQuadro).acao, { titulo: 'Abrir o quadro', destino: 'quadro', id: 42 },
+        'com quadro conhecido, o card leva na tela DAQUELE quadro');
+    eq(monta(semQuadro).acao, tipo('compartilharQuadro').acao,
+        'sem quadro conhecido, cai na acao do tipo (a lista)');
+    eq(monta(semQuadro).acao.id, undefined, 'e sem id nenhum');
+}
+
 console.log('\n=== 9. Ordem: o mais urgente primeiro ===\n');
 {
     const lista = montar({ designadas: ['zoom', 'confirmacoes', 'quadroDesignacoes'], grupoId: 7 });

@@ -1,14 +1,14 @@
 import { Stack } from "expo-router";
 import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BarraFlutuante } from "@/components/layout/BarraFlutuante";
+import { ProvedorRolagem } from "@/components/layout/contextoRolagem";
 import { BarraGlobalProvider } from "@/components/layout/contextoBarra";
 import { usePushNotifications } from "@/notifications/usePushNotifications";
 import { useSincronizarNotificacoes } from "@/notifications/useSincronizarNotificacoes";
 import { useTema } from "@/theme/TemaContext";
 
 export default function LayoutDoMenu() {
-  const insets = useSafeAreaInsets();
   const { colors } = useTema();
 
   // Registra o dispositivo para notificações push após o login.
@@ -18,31 +18,43 @@ export default function LayoutDoMenu() {
 
   // A pasta continua "(tabs)" de propósito: o nome entre parênteses não entra na
   // URL, então trocar a tab bar pelo menu lateral não mexeu em nenhuma rota.
-  // O recuo de baixo é o que a tab bar reservava: sem ele o fim das listas fica
-  // debaixo da barra de navegação do sistema.
+  //
+  // SEM recuo embaixo, e isso é decisão. O recuo que morava aqui pintava uma faixa da cor do
+  // fundo no fim de TODA tela: o conteúdo parava antes da borda e nada rolava por baixo da
+  // barra flutuante — que é justamente o que dá o efeito de vidro. Agora quem reserva o
+  // espaço é cada tela, pelo `recuo` de `useBarraFlutuante`, que já soma a área segura.
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, paddingBottom: insets.bottom }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <AppHeader />
-      <BarraGlobalProvider value>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: colors.background },
-            animation: "fade",
-          }}
-        >
-          <Stack.Screen name="minhas" />
-          <Stack.Screen name="index" />
-          <Stack.Screen name="dirigentes" />
-          <Stack.Screen name="territorio" />
-          <Stack.Screen name="reuniao" />
-          <Stack.Screen name="confirmacoes" />
-          <Stack.Screen name="carrinho" />
-          <Stack.Screen name="conta" />
-          <Stack.Screen name="config" />
-          <Stack.Screen name="ajustes" />
-        </Stack>
-      </BarraGlobalProvider>
+      {/* O provedor envolve as telas E a barra: é ele que leva a rolagem de uma para a
+          outra. Fora dele a barra não encolheria ao rolar. Um Provider não desenha view
+          nenhuma, então o Stack continua sendo o filho que ocupa a altura. */}
+      <ProvedorRolagem>
+        <BarraGlobalProvider value>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: colors.background },
+              animation: "fade",
+            }}
+          >
+            <Stack.Screen name="minhas" />
+            <Stack.Screen name="index" />
+            <Stack.Screen name="dirigentes" />
+            <Stack.Screen name="territorio" />
+            <Stack.Screen name="reuniao" />
+            <Stack.Screen name="confirmacoes" />
+            <Stack.Screen name="carrinho" />
+            <Stack.Screen name="conta" />
+            <Stack.Screen name="config" />
+            <Stack.Screen name="ajustes" />
+          </Stack>
+        </BarraGlobalProvider>
+
+        {/* Depois do Stack, para ficar por cima dele. O menu lateral continua sendo o mapa
+            inteiro do app; esta barra é o atalho dos cinco destinos do dia a dia. */}
+        <BarraFlutuante />
+      </ProvedorRolagem>
     </View>
   );
 }

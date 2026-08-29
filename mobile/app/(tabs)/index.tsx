@@ -17,8 +17,13 @@ import { useAuth } from "@/context/AuthContext";
 import { podeGerenciar } from "@/utils/permissoes";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 export default function DesignacoesScreen() {
+  // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
+  // (carregando / vazio / lista), e espalhar o hook lá dentro o tornaria uma
+  // chamada condicional — proibido, e quebra na primeira troca de estado.
+  const { rolagem, recuo } = useBarraFlutuante();
   const { styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
   const podeEditar = podeGerenciar(usuario, "designacoes");
@@ -37,7 +42,8 @@ export default function DesignacoesScreen() {
         <Loading label="Carregando quadros..." />
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          {...rolagem}
+          contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
           }
@@ -116,7 +122,7 @@ export default function DesignacoesScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.background },
-    scroll: { padding: 16, paddingBottom: 40 },
+    scroll: { padding: 16 },
     titleRow: {
       flexDirection: "row",
       alignItems: "center",

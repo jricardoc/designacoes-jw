@@ -21,6 +21,7 @@ import { useAuth } from "@/context/AuthContext";
 import { podeGerenciar } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 /**
  * Confirmação das partes de estudante.
@@ -49,6 +50,10 @@ function dataLegivel(data: string): string {
 }
 
 export default function ConfirmacoesScreen() {
+  // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
+  // (carregando / vazio / lista), e espalhar o hook lá dentro o tornaria uma
+  // chamada condicional — proibido, e quebra na primeira troca de estado.
+  const { rolagem, recuo } = useBarraFlutuante();
   const { colors, styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
   const toast = useToast();
@@ -135,7 +140,8 @@ export default function ConfirmacoesScreen() {
         <Loading />
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          {...rolagem}
+          contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
           }
@@ -368,7 +374,7 @@ const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     tela: { flex: 1, backgroundColor: colors.background },
     flex: { flex: 1 },
-    scroll: { padding: 16, paddingBottom: 40, gap: 14 },
+    scroll: { padding: 16, gap: 14 },
 
     filtros: { flexDirection: "row", gap: 8 },
     filtro: {

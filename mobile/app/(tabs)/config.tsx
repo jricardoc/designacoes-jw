@@ -19,8 +19,13 @@ import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { FUNCOES, funcaoColor, funcaoLabel } from "@/utils/funcoes";
+import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 export default function ConfigScreen() {
+  // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
+  // (carregando / vazio / lista), e espalhar o hook lá dentro o tornaria uma
+  // chamada condicional — proibido, e quebra na primeira troca de estado.
+  const { rolagem, recuo } = useBarraFlutuante();
   const { colors, styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
   const { data: irmaos, isLoading } = useIrmaos();
@@ -78,7 +83,7 @@ export default function ConfigScreen() {
       {isLoading ? (
           <Loading />
         ) : (
-          <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
+          <ScrollView {...rolagem} contentContainerStyle={[styles.scroll, recuo]} automaticallyAdjustKeyboardInsets>
             <View style={styles.searchWrap}>
               <Ionicons name="search" size={17} color={colors.textMuted} style={styles.searchIcon} />
               <TextInput
@@ -222,7 +227,7 @@ const criarEstilos = (colors: Cores) =>
   segmentText: { fontWeight: "700", color: colors.textSecondary, fontSize: 13.5 },
   segmentTextActive: { color: colors.primaryDark },
 
-  scroll: { padding: 18, paddingBottom: 44 },
+  scroll: { padding: 18 },
 
   // search
   searchWrap: { justifyContent: "center" },

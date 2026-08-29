@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { podeGerenciar } from "@/utils/permissoes";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 /** Acentos fora da busca: "itapua" tem que achar "Itapuã". */
 const normalizar = (t: string) =>
@@ -58,6 +59,10 @@ function Thumb({
 }
 
 export default function TerritorioScreen() {
+  // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
+  // (carregando / vazio / lista), e espalhar o hook lá dentro o tornaria uma
+  // chamada condicional — proibido, e quebra na primeira troca de estado.
+  const { rolagem, recuo } = useBarraFlutuante();
   const { usuario } = useAuth();
   // Saída de campo é da área de dirigentes — é o escopo que o backend exige em
   // /saidas-campo. Sem ele a aba nem aparece.
@@ -150,7 +155,7 @@ export default function TerritorioScreen() {
       ) : null}
 
       {aba === "saidas" && podeSaidas ? (
-        <ScrollView contentContainerStyle={styles.scrollSaidas}>
+        <ScrollView {...rolagem} contentContainerStyle={[styles.scrollSaidas, recuo]}>
           <SaidasDeCampo />
         </ScrollView>
       ) : isLoading ? (
@@ -165,10 +170,11 @@ export default function TerritorioScreen() {
         </EmptyState>
       ) : (
         <FlatList
+          {...rolagem}
           data={territorios}
           keyExtractor={(t) => String(t.numero)}
           renderItem={renderItem}
-          contentContainerStyle={styles.lista}
+          contentContainerStyle={[styles.lista, recuo]}
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
           }
@@ -228,7 +234,7 @@ const criarEstilos = (colors: Cores) =>
     segmentText: { fontWeight: "700", color: colors.textSecondary, fontSize: 13.5 },
     segmentTextActive: { color: colors.primaryDark },
     scrollSaidas: { padding: 16 },
-    lista: { padding: 16, paddingBottom: 40, gap: 10 },
+    lista: { padding: 16, gap: 10 },
     topo: { gap: 6, marginBottom: 6 },
     contagem: { fontSize: 12.5, color: colors.textSecondary },
     card: {

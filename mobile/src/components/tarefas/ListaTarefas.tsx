@@ -20,7 +20,12 @@ import { useTema } from "@/theme/TemaContext";
  * datas governam o push, e duas contas separadas acabariam discordando sobre a mesma tarefa.
  */
 
-/** Para onde cada tarefa leva. As chaves são o `acao.destino` que o backend manda. */
+/**
+ * Para onde cada tarefa leva. As chaves são o `acao.destino` que o backend manda.
+ *
+ * `"quadro"` não está aqui de propósito: ele precisa do id da ocorrência e é resolvido em
+ * `abrir`, não por tabela.
+ */
 const DESTINOS: Record<string, string> = {
   reuniao: "/(tabs)/reuniao",
   dirigentes: "/(tabs)/dirigentes",
@@ -67,7 +72,14 @@ export function ListaTarefas({ tarefas, grupo }: Props) {
   };
 
   const abrir = (t: Tarefa) => {
-    const destino = t.acao ? DESTINOS[t.acao.destino] : null;
+    if (!t.acao) return;
+    // Destino de ITEM: o backend manda o id junto e o toque cai direto na tela daquele
+    // quadro. É o que separa "abre a lista de quadros e procura agosto" de "abre agosto".
+    if (t.acao.destino === "quadro" && t.acao.id) {
+      router.push(`/quadro/${t.acao.id}` as never);
+      return;
+    }
+    const destino = DESTINOS[t.acao.destino];
     if (destino) router.push(destino as never);
   };
 

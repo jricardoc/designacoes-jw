@@ -50,8 +50,14 @@ function datasDaSemana(semana) {
     return { meioISO: chaveISO(meio), fdsISO: chaveISO(domingoDaSemana(dataReuniao)) };
 }
 
-/** Monta a ocorrencia ja com os limites calculados, para nao repetir a conta em cada uso. */
-function ocorrenciaDe(tipo, { alvoISO, ocorrencia, titulo, detalhe, referencia, grupo }) {
+/**
+ * Monta a ocorrencia ja com os limites calculados, para nao repetir a conta em cada uso.
+ *
+ * `acao` sobrescreve a do TIPO quando a ocorrencia sabe para onde levar melhor do que ele.
+ * O tipo so consegue dizer "abre a lista de quadros"; a ocorrencia sabe DE QUAL quadro se
+ * trata, e leva direto nele.
+ */
+function ocorrenciaDe(tipo, { alvoISO, ocorrencia, titulo, detalhe, referencia, grupo, acao }) {
     const vencimentoISO = Regras.vencimentoDe(tipo, alvoISO);
     return {
         tipo: tipo.id,
@@ -64,6 +70,7 @@ function ocorrenciaDe(tipo, { alvoISO, ocorrencia, titulo, detalhe, referencia, 
         detalhe: detalhe || null,
         referencia: referencia || null,
         grupo: grupo || null,
+        acao: acao || null,
     };
 }
 
@@ -171,6 +178,42 @@ async function ocorrenciaDoQuadroDirigentes(hojeISO) {
     });
 }
 
+/**
+ * De cada DIA de reuniao para o quadro de designacoes que o cobre.
+ *
+ * O mapa e montado a partir das proprias linhas do quadro, e nao do par (mes, ano): um quadro
+ * comeca na segunda da semana que contem o dia 1 e termina no ultimo dia escalado, entao a
+ * reuniao de 03/09 tanto pode estar no quadro de setembro quanto ainda no de agosto. Perguntar
+ * "que quadro tem uma linha nesta data?" acerta os dois casos sem regra de borda.
+ */
+async function mapaDeQuadrosPorDia() {
+    const quadros = await prisma.quadro.findMany({
+        select: {
+            id: true,
+            mes: true,
+            ano: true,
+            titulo: true,
+            status: true,
+            designacoes: { select: { data: true } },
+        },
+    });
+
+    const porDia = new Map();
+    for (const quadro of quadros) {
+        for (const { data } of quadro.designacoes) {
+            const iso = chaveISO(resolverDataDeQuadro(data, quadro.mes, quadro.ano));
+            if (!iso) continue;
+            // Dois quadros cobrindo o mesmo dia nao deveria acontecer; se acontecer, o
+            // publicado ganha — e ele que a congregacao esta usando.
+            const atual = porDia.get(iso);
+            if (!atual || (atual.status !== 'publicado' && quadro.status === 'publicado')) {
+                porDia.set(iso, quadro);
+            }
+        }
+    }
+    return porDia;
+}
+
 // ---------------------------------------------------------------------------
 // Contexto
 // ---------------------------------------------------------------------------
@@ -184,18 +227,20 @@ async function ocorrenciaDoQuadroDirigentes(hojeISO) {
 async function carregarContexto(agora = new Date()) {
     const hojeISO = hojeEmBahia(agora);
 
-    const [reunioes, grupos, ocorrenciaDesignacoes, ocorrenciaDirigentes] = await Promise.all([
-        prisma.reuniao.findMany({
-            select: {
-                semanas: {
-                    select: { id: true, faixaData: true, dataReuniao: true, limpeza: true },
+    const [reunioes, grupos, quadrosPorDia, ocorrenciaDesignacoes, ocorrenciaDirigentes] =
+        await Promise.all([
+            prisma.reuniao.findMany({
+                select: {
+                    semanas: {
+                        select: { id: true, faixaData: true, dataReuniao: true, limpeza: true },
+                    },
                 },
-            },
-        }),
-        Limpeza.carregarGrupos(),
-        ocorrenciaDoQuadroDesignacoes(hojeISO),
-        ocorrenciaDoQuadroDirigentes(hojeISO),
-    ]);
+            }),
+            Limpeza.carregarGrupos(),
+            mapaDeQuadrosPorDia(),
+            ocorrenciaDoQuadroDesignacoes(hojeISO),
+            ocorrenciaDoQuadroDirigentes(hojeISO),
+        ]);
 
     const porTipo = {
         zoom: [],
@@ -228,11 +273,21 @@ async function carregarContexto(agora = new Date()) {
                     detalhe: rotulo,
                     referencia: rotulo,
                 }));
+                // Leva DIRETO no quadro daquela reuniao, e nao na lista: a tarefa e sobre
+                // um quadro especifico, e quem vai compartilhar ja sabe qual — fazer o irmao
+                // procurar o mes na lista e um passo que a tarefa podia ter poupado.
+                // Sem quadro cobrindo o dia, cai na lista (a `acao` do tipo).
+                const quadro = quadrosPorDia.get(dataISO);
                 porTipo.compartilharQuadro.push(ocorrenciaDe(tipoCompartilhar, {
                     alvoISO: dataISO,
                     titulo: 'Compartilhar o quadro de designações',
-                    detalhe: rotulo,
+                    detalhe: quadro
+                        ? `${rotulo} · ${quadro.titulo}`
+                        : rotulo,
                     referencia: rotulo,
+                    acao: quadro
+                        ? { titulo: 'Abrir o quadro', destino: 'quadro', id: quadro.id }
+                        : null,
                 }));
             }
 
@@ -311,7 +366,8 @@ function montarParaUsuario({ contexto, designadas, concluidas, grupoId }) {
                 cadenciaLabel: Regras.rotuloDaCadencia(tipo.cadencia),
                 conclusao: tipo.conclusao,
                 concluivel: tipo.conclusao === 'manual',
-                acao: tipo.acao,
+                // A da ocorrencia ganha da do tipo: ela e mais especifica.
+                acao: oc.acao || tipo.acao,
                 ocorrencia: oc.ocorrencia,
                 titulo: oc.titulo,
                 detalhe: oc.detalhe,
@@ -456,5 +512,5 @@ module.exports = {
     grupoDoUsuario,
     concluir,
     hojeEmBahia,
-    _internos: { datasDaSemana, prazoDoQuadro, referenciaDoMes, rotuloDaReuniao, ocorrenciaDe },
+    _internos: { datasDaSemana, prazoDoQuadro, referenciaDoMes, rotuloDaReuniao, ocorrenciaDe, mapaDeQuadrosPorDia },
 };

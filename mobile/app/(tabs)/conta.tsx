@@ -32,6 +32,7 @@ import { useIrmaosDisponiveis } from "@/api/hooks/useMinhasDesignacoes";
 import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 function initials(name?: string | null) {
   if (!name) return "?";
@@ -92,6 +93,10 @@ function Field({
 }
 
 export default function ContaScreen() {
+  // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
+  // (carregando / vazio / lista), e espalhar o hook lá dentro o tornaria uma
+  // chamada condicional — proibido, e quebra na primeira troca de estado.
+  const { rolagem, recuo } = useBarraFlutuante();
   const { colors, styles } = useTema(criarEstilos);
   const { usuario, logout, refreshUsuario } = useAuth();
   const toast = useToast();
@@ -202,7 +207,7 @@ export default function ContaScreen() {
     <View style={styles.screen}>
       <GradientHeader title="Conta" description="Perfil e usuários" />
 
-      <ScrollView contentContainerStyle={styles.scroll} automaticallyAdjustKeyboardInsets>
+      <ScrollView {...rolagem} contentContainerStyle={[styles.scroll, recuo]} automaticallyAdjustKeyboardInsets>
         {/* Perfil */}
         <View style={styles.card}>
           <View style={styles.profileTop}>
@@ -470,7 +475,7 @@ export default function ContaScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
-  scroll: { padding: 18, paddingTop: 4, paddingBottom: 40 },
+  scroll: { padding: 18, paddingTop: 4 },
 
   card: {
     backgroundColor: colors.surface,

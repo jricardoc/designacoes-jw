@@ -24,6 +24,7 @@ import { podeGerenciar } from "@/utils/permissoes";
 import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { datasDaSemana } from "@/utils/semanaReuniao";
+import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 /**
  * A semana da programação que contém o dia de hoje (segunda a domingo,
@@ -67,6 +68,10 @@ function separarMeses(reunioes: Reuniao[] | undefined): {
 }
 
 export default function ReuniaoScreen() {
+  // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
+  // (carregando / vazio / lista), e espalhar o hook lá dentro o tornaria uma
+  // chamada condicional — proibido, e quebra na primeira troca de estado.
+  const { rolagem, recuo } = useBarraFlutuante();
   const { colors, styles } = useTema(criarEstilos);
   // Importar programação muda dados da congregação inteira: só admin. PDF e
   // compartilhar continuam para todos — são exportações de leitura.
@@ -160,7 +165,8 @@ export default function ReuniaoScreen() {
         <Loading label="Carregando reuniões..." />
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          {...rolagem}
+          contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching || assistencias.isRefetching}
@@ -257,7 +263,7 @@ export default function ReuniaoScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.background },
-    scroll: { padding: 16, paddingBottom: 40, gap: 20 },
+    scroll: { padding: 16, gap: 20 },
     mesGroup: { gap: 12 },
     mesTitulo: {
       fontSize: 18,

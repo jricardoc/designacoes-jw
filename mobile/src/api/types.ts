@@ -81,7 +81,11 @@ export interface Tarefa {
   cadenciaLabel: string;
   conclusao: "manual" | "quadro" | "nenhuma";
   concluivel: boolean;
-  acao: { titulo: string; destino: string } | null;
+  /**
+   * Para onde o card leva. `id` só vem quando o destino é uma tela de item — hoje só
+   * `"quadro"`, que abre exatamente o quadro daquela reunião em vez da lista.
+   */
+  acao: { titulo: string; destino: string; id?: number } | null;
   /** A data ISO que identifica a repetição. É o que volta no "concluir". */
   ocorrencia: string;
   titulo: string;
