@@ -262,10 +262,23 @@ function nomeDeTratamento(nomeCompleto) {
  * @param {Date} [agora]         injetavel para o teste fixar o relogio
  * @returns {string|null} null quando nao ha nome
  */
-function textoConfirmacaoDesignacao(nomeCompleto, agora = new Date()) {
+function textoConfirmacaoDesignacao(nomeCompleto, agora = new Date(), designacao = null) {
     const nome = nomeDeTratamento(nomeCompleto);
     if (!nome) return null;
-    return TEXTO_CONFIRMACAO(saudacaoDaHora(agora), nome);
+
+    const abertura = TEXTO_CONFIRMACAO(saudacaoDaHora(agora), nome);
+
+    // A designacao em NEGRITO, depois de uma linha em branco.
+    //
+    // Sem ela a mensagem perguntava "tudo certo com a sua designacao?" sem dizer QUAL — e do
+    // outro lado o irmao muitas vezes tem mais de uma na semana, ou nem lembra de cabeca. O
+    // negrito e o do WhatsApp (asteriscos), o mesmo que os convites de Zoom ja usam.
+    const detalhe = String(designacao || '').trim();
+    if (!detalhe) return abertura;
+
+    return `${abertura}
+
+${negrito(detalhe)}`;
 }
 
 module.exports = {

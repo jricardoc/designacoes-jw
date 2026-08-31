@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { router, useSegments, type Href } from "expo-router";
+import { router, useSegments } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ABAS, chaveDaRotaAtual, type Aba } from "./abas";
 import { useBarraCompacta } from "./contextoRolagem";
 import {
   ALTURA_DA_BARRA,
@@ -32,25 +33,6 @@ import { useTema } from "@/theme/TemaContext";
  * formato de todas as rotas. Então a barra lê a rota atual por `useSegments` e navega por
  * `router.replace`, exatamente como o menu lateral já faz.
  */
-
-interface Aba {
-  /** O nome do arquivo da rota — é por ele que a aba acende. */
-  chave: string;
-  rotulo: string;
-  href: Href;
-  icone: keyof typeof Ionicons.glyphMap;
-  iconeAtivo: keyof typeof Ionicons.glyphMap;
-  /** Glifos com muito ar interno parecem menores; compensa-se por aba. */
-  tamanho?: number;
-}
-
-const ABAS: Aba[] = [
-  { chave: "minhas", rotulo: "Início", href: "/(tabs)/minhas", icone: "home-outline", iconeAtivo: "home" },
-  { chave: "index", rotulo: "Designações", href: "/(tabs)", icone: "clipboard-outline", iconeAtivo: "clipboard" },
-  { chave: "dirigentes", rotulo: "Dirigentes", href: "/(tabs)/dirigentes", icone: "people-outline", iconeAtivo: "people" },
-  { chave: "reuniao", rotulo: "Reunião", href: "/(tabs)/reuniao", icone: "calendar-outline", iconeAtivo: "calendar" },
-  { chave: "conta", rotulo: "Conta", href: "/(tabs)/conta", icone: "person-circle-outline", iconeAtivo: "person-circle", tamanho: 28 },
-];
 
 // --- Geometria (ver geometriaBarra.ts, compartilhado com as telas). ---
 const ALTURA = ALTURA_DA_BARRA;
@@ -109,10 +91,7 @@ export function BarraFlutuante() {
 
   const escuro = esquema === "escuro";
 
-  // Mesma leitura de rota do menu lateral: divergir faria a aba acender numa tela e o menu
-  // marcar outra.
-  const grupo = segments[0] as string | undefined;
-  const atual = grupo === "(tabs)" ? ((segments[1] as string | undefined) ?? "index") : (grupo ?? "");
+  const atual = chaveDaRotaAtual(segments as string[]);
   const indiceAtivo = ABAS.findIndex((a) => a.chave === atual);
 
   /**

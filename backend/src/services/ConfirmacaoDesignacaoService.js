@@ -14,6 +14,14 @@ const { reconciliarDataReuniao } = require('../utils/semanaReuniao');
  * o objetivo da tela e a rotina semanal de falar com os estudantes, nao listar a reuniao toda.
  */
 
+/**
+ * Como a sala e escrita para gente.
+ *
+ * Estava so no app; subiu para ca porque agora a MENSAGEM tambem precisa dela, e duas listas
+ * acabariam divergindo — a tela dizendo "Salão Principal" e o WhatsApp, "principal".
+ */
+const ROTULO_DA_SALA = { principal: 'Salão Principal', salaB: 'Sala B' };
+
 // Os campos que entram na tela, com um rotulo legivel e a sala. A ordem e a da reuniao.
 const CAMPOS_CONFIRMACAO = [
     { campo: 'tesouro3_principal', parte: 'Leitura da Bíblia', sala: 'principal', tituloDe: 'tesouro3_titulo' },
@@ -55,7 +63,11 @@ function chaveData(data) {
 }
 
 /**
- * O telefone cadastrado de quem tem a parte, quando da para saber quem e.
+ * QUEM e a pessoa da parte, no cadastro — e por ela, o telefone.
+ *
+ * Devolve o IRMAO inteiro, e nao so o numero, porque a tela passou a oferecer o cadastro do
+ * telefone ali mesmo: para gravar e preciso saber em qual ficha, e para o irmao conferir
+ * antes de salvar e preciso mostrar o nome que casou.
  *
  * O nome vem da programacao como TEXTO e boa parte das irmas nao esta no cadastro, entao isto
  * e uma tentativa, nao uma garantia. Usa o mesmo criterio de semelhanca da importacao
@@ -63,7 +75,7 @@ function chaveData(data) {
  * tempo. So aceita quando ha UM candidato: empate entre dois "Ricardo" mandaria a mensagem
  * para o telefone errado, o que e pior do que nao ter telefone nenhum.
  */
-function acharTelefone(nome, irmaosTok) {
+function acharIrmao(nome, irmaosTok) {
     const tokens = tokenize(nome);
     if (tokens.length === 0) return null;
 
@@ -76,7 +88,7 @@ function acharTelefone(nome, irmaosTok) {
     const vencedores = pontuados.filter(x => x.forca === melhor);
     if (vencedores.length !== 1) return null;
 
-    return vencedores[0].i.telefone || null;
+    return vencedores[0].i;
 }
 
 /**
@@ -134,8 +146,12 @@ async function listar({ incluirPassadas = false, agora = new Date() } = {}) {
             const partes = [];
             for (const { campo, parte, sala, tituloDe } of CAMPOS_CONFIRMACAO) {
                 for (const nome of nomesDoCampo(semana[campo])) {
-                    const texto = textoConfirmacaoDesignacao(nome, agora);
-                    const telefone = acharTelefone(nome, irmaosTok);
+                    const titulo = tituloLimpo(semana[tituloDe]);
+                    // A MESMA linha que a tela mostra sob o nome, para a mensagem falar da
+                    // designacao exata: "Leitura da Bíblia (4 min) - Salão Principal".
+                    const designacao = `${titulo || parte} - ${ROTULO_DA_SALA[sala] ?? sala}`;
+                    const texto = textoConfirmacaoDesignacao(nome, agora, designacao);
+                    const irmao = acharIrmao(nome, irmaosTok);
                     partes.push({
                         // A identidade de uma linha para o PUT: a mesma chave da tabela.
                         data: dataReuniao,
@@ -143,12 +159,19 @@ async function listar({ incluirPassadas = false, agora = new Date() } = {}) {
                         nome,
                         parte,
                         sala,
-                        titulo: tituloLimpo(semana[tituloDe]),
+                        titulo,
+                        designacao,
                         confirmou: respondidas.get(`${dataReuniao}|${campo}|${nome}`) ?? null,
                         texto,
+                        // Quem casou no cadastro. `null` quando ninguem casou ou houve empate
+                        // — e ai a tela nao oferece cadastrar numero, porque nao saberia em
+                        // qual ficha gravar.
+                        irmaoId: irmao?.id ?? null,
+                        irmaoNome: irmao?.nome ?? null,
+                        telefone: irmao?.telefone ?? null,
                         // null quando o irmao nao esta no cadastro ou nao tem numero: a tela
                         // esconde a opcao de WhatsApp direto em vez de abrir link quebrado.
-                        whatsapp: telefone ? linkWhatsApp(telefone, texto) : null,
+                        whatsapp: irmao?.telefone ? linkWhatsApp(irmao.telefone, texto) : null,
                     });
                 }
             }
@@ -189,5 +212,5 @@ module.exports = {
     registrar,
     CAMPOS_CONFIRMACAO,
     CAMPOS_VALIDOS,
-    _internos: { nomesDoCampo, tituloLimpo, chaveData, linkWhatsApp, acharTelefone },
+    _internos: { nomesDoCampo, tituloLimpo, chaveData, linkWhatsApp, acharIrmao, ROTULO_DA_SALA },
 };

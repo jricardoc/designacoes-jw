@@ -2,6 +2,7 @@ import { Stack } from "expo-router";
 import { View } from "react-native";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BarraFlutuante } from "@/components/layout/BarraFlutuante";
+import { NavegacaoPorGesto } from "@/components/layout/NavegacaoPorGesto";
 import { ProvedorRolagem } from "@/components/layout/contextoRolagem";
 import { BarraGlobalProvider } from "@/components/layout/contextoBarra";
 import { usePushNotifications } from "@/notifications/usePushNotifications";
@@ -31,25 +32,29 @@ export default function LayoutDoMenu() {
           nenhuma, então o Stack continua sendo o filho que ocupa a altura. */}
       <ProvedorRolagem>
         <BarraGlobalProvider value>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.background },
-              animation: "fade",
-            }}
-          >
-            <Stack.Screen name="minhas" />
-            <Stack.Screen name="index" />
-            <Stack.Screen name="dirigentes" />
-            <Stack.Screen name="territorio" />
-            <Stack.Screen name="reuniao" />
-            <Stack.Screen name="confirmacoes" />
-            <Stack.Screen name="tarefas" />
-            <Stack.Screen name="carrinho" />
-            <Stack.Screen name="conta" />
-            <Stack.Screen name="config" />
-            <Stack.Screen name="ajustes" />
-          </Stack>
+          {/* Envolve só o Stack, e não a barra: arrastar SOBRE a pílula é para tocar nela,
+              não para trocar de tela. */}
+          <NavegacaoPorGesto>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+                animation: "fade",
+              }}
+            >
+              <Stack.Screen name="minhas" />
+              <Stack.Screen name="index" />
+              <Stack.Screen name="dirigentes" />
+              <Stack.Screen name="territorio" />
+              <Stack.Screen name="reuniao" />
+              <Stack.Screen name="confirmacoes" />
+              <Stack.Screen name="tarefas" />
+              <Stack.Screen name="carrinho" />
+              <Stack.Screen name="conta" />
+              <Stack.Screen name="config" />
+              <Stack.Screen name="ajustes" />
+            </Stack>
+          </NavegacaoPorGesto>
         </BarraGlobalProvider>
 
         {/* Depois do Stack, para ficar por cima dele. O menu lateral continua sendo o mapa

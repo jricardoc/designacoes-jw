@@ -752,8 +752,19 @@ export interface ParteParaConfirmar {
   titulo: string | null;
   /** null = ainda sem resposta, true = vai cumprir, false = não vai. */
   confirmou: boolean | null;
-  /** A mensagem pronta, montada pelo backend com a saudação da hora. */
+  /** "Leitura da Bíblia (4 min) - Salão Principal": a mesma linha que a tela mostra. */
+  designacao: string;
+  /** A mensagem pronta, montada pelo backend com a saudação da hora e a designação. */
   texto: string;
+  /**
+   * Quem casou no cadastro. `null` quando ninguém casou ou houve empate entre dois nomes
+   * parecidos — e aí a tela não oferece cadastrar número, porque não saberia em qual ficha
+   * gravar. O `irmaoNome` existe para conferir antes de salvar: o casamento é por
+   * semelhança, e gravar na ficha errada é pior do que não gravar.
+   */
+  irmaoId: number | null;
+  irmaoNome: string | null;
+  telefone: string | null;
   /** Link do WhatsApp já com o texto. null quando não há telefone cadastrado. */
   whatsapp: string | null;
 }

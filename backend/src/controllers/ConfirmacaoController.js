@@ -1,5 +1,6 @@
 'use strict';
 
+const prisma = require('../prisma');
 const ConfirmacaoDesignacaoService = require('../services/ConfirmacaoDesignacaoService');
 
 /**
@@ -62,6 +63,59 @@ class ConfirmacaoController {
         } catch (error) {
             console.error('Erro ao registrar confirmação:', error);
             return res.status(500).json({ error: 'Erro ao salvar a confirmação' });
+        }
+    }
+
+    /**
+     * PUT /confirmacoes/telefone
+     * Body: { irmaoId, telefone }
+     *
+     * Grava o WhatsApp de quem tem parte, direto da tela de Confirmacoes.
+     *
+     * Existe como rota PROPRIA, e nao reaproveitando `PUT /irmaos/:id`, por causa da
+     * permissao: aquela exige admin geral, e quem faz as confirmacoes tem so o escopo da
+     * area. Dar admin geral a essas pessoas para elas poderem digitar um telefone seria
+     * pagar caro demais; esta rota faz UMA coisa e nada mais — nem nome, nem funcoes, nem
+     * privilegio passam por aqui.
+     */
+    async salvarTelefone(req, res) {
+        try {
+            const { irmaoId, telefone } = req.body || {};
+
+            if (!Number.isInteger(irmaoId)) {
+                return res.status(400).json({ error: 'Informe `irmaoId`.' });
+            }
+
+            // So digitos. Quem cadastra digita "(71) 99999-8888", e guardar a pontuacao
+            // faria o link do WhatsApp quebrar mais tarde, longe daqui.
+            const digitos = String(telefone ?? '').replace(/\D/g, '');
+
+            // Vazio APAGA o numero — e o caminho de quem cadastrou errado e quer voltar
+            // atras sem inventar um numero falso.
+            if (digitos.length > 0 && (digitos.length < 10 || digitos.length > 13)) {
+                return res.status(400).json({
+                    error: 'Número inválido. Use DDD + número, como 71999998888.',
+                });
+            }
+
+            const irmao = await prisma.irmao.findUnique({
+                where: { id: irmaoId },
+                select: { id: true, nome: true },
+            });
+            if (!irmao) {
+                return res.status(404).json({ error: 'Pessoa não encontrada no cadastro.' });
+            }
+
+            const atualizado = await prisma.irmao.update({
+                where: { id: irmaoId },
+                data: { telefone: digitos.length > 0 ? digitos : null },
+                select: { id: true, nome: true, telefone: true },
+            });
+
+            return res.json({ irmao: atualizado });
+        } catch (error) {
+            console.error('Erro ao salvar o telefone:', error);
+            return res.status(500).json({ error: 'Erro ao salvar o número' });
         }
     }
 }

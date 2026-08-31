@@ -41,3 +41,26 @@ export function useRegistrarConfirmacao() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["confirmacoes"] }),
   });
 }
+
+/**
+ * Grava o WhatsApp de quem tem parte, sem sair da tela de Confirmações.
+ *
+ * Vai por uma rota estreita própria, e não pelo cadastro de Irmãos: aquele exige admin geral,
+ * e quem faz as confirmações tem só o escopo da área. Mandar string vazia APAGA o número —
+ * é a saída de quem cadastrou errado.
+ */
+export function useSalvarTelefone() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ irmaoId, telefone }: { irmaoId: number; telefone: string }) =>
+      apiRequest<{ irmao: { id: number; nome: string; telefone: string | null } }>(
+        "/confirmacoes/telefone",
+        { method: "PUT", body: { irmaoId, telefone } },
+      ),
+    onSuccess: () => {
+      // As duas listas mostram o número: a de confirmações (no link) e a de pessoas.
+      qc.invalidateQueries({ queryKey: ["confirmacoes"] });
+      qc.invalidateQueries({ queryKey: qk.irmaos });
+    },
+  });
+}

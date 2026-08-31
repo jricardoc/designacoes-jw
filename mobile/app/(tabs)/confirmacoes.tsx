@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
+  ActivityIndicator,
   Linking,
   Pressable,
   RefreshControl,
@@ -8,12 +9,14 @@ import {
   Share,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import {
   useConfirmacoes,
   useRegistrarConfirmacao,
+  useSalvarTelefone,
 } from "@/api/hooks/useConfirmacoes";
 import type { ParteParaConfirmar, ReuniaoParaConfirmar } from "@/api/types";
 import { EmptyState, GradientHeader, Loading, Sheet, useToast } from "@/components/ui";
@@ -22,6 +25,17 @@ import { podeGerenciar } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+
+/** "71999998888" -> "71 99999-8888". Só para LER; o que se grava continua só dígitos. */
+function formatarTelefone(bruto: string | null): string {
+  const d = String(bruto ?? "").replace(/\D/g, "");
+  const semPais = d.startsWith("55") && d.length > 11 ? d.slice(2) : d;
+  if (semPais.length < 10) return semPais || "sem número";
+  const ddd = semPais.slice(0, 2);
+  const resto = semPais.slice(2);
+  const meio = resto.length > 8 ? resto.slice(0, 5) : resto.slice(0, 4);
+  return `${ddd} ${meio}-${resto.slice(meio.length)}`;
+}
 
 /**
  * Confirmação das partes de estudante.
@@ -66,6 +80,43 @@ export default function ConfirmacoesScreen() {
   );
   const registrar = useRegistrarConfirmacao();
   const [compartilhando, setCompartilhando] = useState<ParteParaConfirmar | null>(null);
+  /** O formulário do número está aberto? E com o que dentro. */
+  const [editandoNumero, setEditandoNumero] = useState(false);
+  const [numero, setNumero] = useState("");
+  const salvarTelefone = useSalvarTelefone();
+
+  /**
+   * Abre a folha SEMPRE com o formulário fechado.
+   *
+   * Sem isto, abrir a folha de um irmão logo depois de cadastrar o número de outro traria o
+   * campo aberto e preenchido com o número alheio — pronto para ser salvo na ficha errada.
+   */
+  const abrirFolha = (parte: ParteParaConfirmar) => {
+    setEditandoNumero(false);
+    setNumero(parte.telefone ?? "");
+    setCompartilhando(parte);
+  };
+
+  const fecharFolha = () => {
+    setCompartilhando(null);
+    setEditandoNumero(false);
+  };
+
+  const gravarNumero = async () => {
+    if (!compartilhando?.irmaoId) return;
+    try {
+      const { irmao } = await salvarTelefone.mutateAsync({
+        irmaoId: compartilhando.irmaoId,
+        telefone: numero,
+      });
+      toast.show(irmao.telefone ? "Número salvo!" : "Número removido.");
+      // A folha fecha: a lista precisa recarregar para o link do WhatsApp vir montado pelo
+      // backend, e manter a folha aberta mostraria o estado velho.
+      fecharFolha();
+    } catch (erro) {
+      toast.show(erro instanceof Error ? erro.message : "Não deu para salvar", "error");
+    }
+  };
 
   const responder = (parte: ParteParaConfirmar, confirmou: boolean | null) => {
     registrar.mutate(
@@ -186,41 +237,113 @@ export default function ConfirmacoesScreen() {
                 reuniao={reuniao}
                 index={i}
                 onResponder={responder}
-                onCompartilhar={setCompartilhando}
+                onCompartilhar={abrirFolha}
               />
             ))
           )}
         </ScrollView>
       )}
 
-      <Sheet visible={!!compartilhando} onClose={() => setCompartilhando(null)} scroll>
+      <Sheet visible={!!compartilhando} onClose={fecharFolha} scroll>
         {compartilhando ? (
           <View style={styles.folha}>
             <Text style={styles.folhaTitulo}>Falar com {compartilhando.nome}</Text>
             <Text style={styles.folhaTexto}>{compartilhando.texto}</Text>
 
+            {/* Com número: abre a conversa. Sem número, mas com ficha no cadastro: o MESMO
+                botão vira "Cadastrar número", no mesmo lugar. Sem ficha nenhuma não há onde
+                gravar, e aí só resta explicar. */}
             {compartilhando.whatsapp ? (
-              <Pressable style={styles.opcao} onPress={() => abrirWhatsApp(compartilhando)}>
+              <>
+                <Pressable style={styles.opcao} onPress={() => abrirWhatsApp(compartilhando)}>
+                  <View style={[styles.opcaoIcone, { backgroundColor: colors.successBg }]}>
+                    <Ionicons name="logo-whatsapp" size={20} color={colors.greenDark} />
+                  </View>
+                  <View style={styles.flex}>
+                    <Text style={styles.opcaoTitulo}>Abrir no WhatsApp</Text>
+                    <Text style={styles.opcaoDescricao}>
+                      Vai direto para a conversa, com a mensagem já escrita
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </Pressable>
+
+                {compartilhando.irmaoId && !editandoNumero ? (
+                  <Pressable
+                    style={styles.editarNumero}
+                    onPress={() => setEditandoNumero(true)}
+                    hitSlop={6}
+                  >
+                    <Ionicons name="create-outline" size={14} color={colors.primaryDark} />
+                    <Text style={styles.editarNumeroTexto}>
+                      Editar número ({formatarTelefone(compartilhando.telefone)})
+                    </Text>
+                  </Pressable>
+                ) : null}
+              </>
+            ) : compartilhando.irmaoId && !editandoNumero ? (
+              <Pressable style={styles.opcao} onPress={() => setEditandoNumero(true)}>
                 <View style={[styles.opcaoIcone, { backgroundColor: colors.successBg }]}>
                   <Ionicons name="logo-whatsapp" size={20} color={colors.greenDark} />
                 </View>
                 <View style={styles.flex}>
-                  <Text style={styles.opcaoTitulo}>Abrir no WhatsApp</Text>
+                  <Text style={styles.opcaoTitulo}>Cadastrar número de WhatsApp</Text>
                   <Text style={styles.opcaoDescricao}>
-                    Vai direto para a conversa, com a mensagem já escrita
+                    Depois de salvar, a conversa abre direto daqui
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </Pressable>
-            ) : (
+            ) : !compartilhando.irmaoId ? (
               <View style={styles.semNumero}>
                 <Ionicons name="information-circle-outline" size={17} color={colors.textMuted} />
                 <Text style={styles.semNumeroTexto}>
-                  Sem telefone cadastrado para este nome. Cadastre o número em Irmãos para
-                  abrir a conversa direto.
+                  Este nome não foi encontrado no cadastro — ou casou com mais de uma pessoa.
+                  Cadastre a pessoa em Publicadores para poder guardar o número aqui.
                 </Text>
               </View>
-            )}
+            ) : null}
+
+            {/* O formulário, logo abaixo do botão que o abriu. */}
+            {editandoNumero && compartilhando.irmaoId ? (
+              <View style={styles.formulario}>
+                {/* O nome da FICHA, não o da programação: o casamento é por semelhança, e
+                    quem vai salvar precisa ver em quem está mexendo antes de confirmar. */}
+                <Text style={styles.formularioAlvo}>
+                  Salvando na ficha de{" "}
+                  <Text style={styles.formularioNome}>{compartilhando.irmaoNome}</Text>
+                </Text>
+
+                <View style={styles.campoLinha}>
+                  <TextInput
+                    style={styles.campo}
+                    value={numero}
+                    onChangeText={setNumero}
+                    placeholder="71 99999-8888"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="phone-pad"
+                    autoFocus
+                    maxLength={20}
+                    accessibilityLabel="Número de WhatsApp com DDD"
+                  />
+                  <Pressable
+                    style={[styles.salvar, salvarTelefone.isPending && styles.pressionado]}
+                    onPress={gravarNumero}
+                    disabled={salvarTelefone.isPending}
+                  >
+                    {salvarTelefone.isPending ? (
+                      <ActivityIndicator size="small" color={colors.textOnPrimary} />
+                    ) : (
+                      <Text style={styles.salvarTexto}>Salvar</Text>
+                    )}
+                  </Pressable>
+                </View>
+
+                <Text style={styles.formularioAjuda}>
+                  Com DDD. O 55 do Brasil entra sozinho.
+                </Text>
+              </View>
+            ) : null}
 
             <Pressable style={styles.opcao} onPress={() => compartilharTexto(compartilhando)}>
               <View style={[styles.opcaoIcone, { backgroundColor: colors.infoBg }]}>
@@ -454,4 +577,46 @@ const criarEstilos = (colors: Cores) =>
     opcaoDescricao: { fontSize: 12.5, color: colors.textSecondary, marginTop: 2, lineHeight: 17 },
     semNumero: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingHorizontal: 2 },
     semNumeroTexto: { flex: 1, fontSize: 12.5, color: colors.textMuted, lineHeight: 17 },
+
+    editarNumero: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      alignSelf: "flex-start",
+      paddingHorizontal: 2,
+      marginTop: -4,
+    },
+    editarNumeroTexto: { fontSize: 12.5, color: colors.primaryDark, fontWeight: "600" },
+
+    formulario: {
+      gap: 8,
+      backgroundColor: colors.surfaceMuted,
+      borderRadius: radius.md,
+      padding: 12,
+    },
+    formularioAlvo: { fontSize: 12.5, color: colors.textSecondary },
+    formularioNome: { fontWeight: "700", color: colors.text },
+    campoLinha: { flexDirection: "row", alignItems: "center", gap: 8 },
+    campo: {
+      flex: 1,
+      height: 44,
+      borderRadius: radius.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 12,
+      fontSize: 15,
+      color: colors.text,
+    },
+    salvar: {
+      height: 44,
+      minWidth: 84,
+      borderRadius: radius.sm,
+      backgroundColor: colors.primary,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 14,
+    },
+    salvarTexto: { color: colors.textOnPrimary, fontWeight: "700", fontSize: 14.5 },
+    formularioAjuda: { fontSize: 11.5, color: colors.textMuted },
   });

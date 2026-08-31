@@ -173,6 +173,9 @@ routes.put('/dirigentes/escala/cumprimento', podeDirigentes, CumprimentoControll
 // (no link de WhatsApp) e quem confirmou ou recusou, que nao e informacao de todos.
 routes.get('/confirmacoes', podeConfirmacoes, ConfirmacaoController.index);
 routes.put('/confirmacoes', podeConfirmacoes, ConfirmacaoController.registrar);
+// O WhatsApp de quem tem parte, gravado da propria tela. Rota estreita de proposito: mexe SO
+// no telefone, e por isso pode viver no escopo de confirmacoes em vez de exigir admin geral.
+routes.put('/confirmacoes/telefone', podeConfirmacoes, ConfirmacaoController.salvarTelefone);
 
 // ==================== GRUPOS DE CAMPO ====================
 // Leitura livre: a tela de cadastro precisa da lista para montar o seletor, e nome de grupo
