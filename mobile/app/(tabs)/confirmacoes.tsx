@@ -26,15 +26,32 @@ import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
-/** "71999998888" -> "71 99999-8888". Só para LER; o que se grava continua só dígitos. */
-function formatarTelefone(bruto: string | null): string {
-  const d = String(bruto ?? "").replace(/\D/g, "");
-  const semPais = d.startsWith("55") && d.length > 11 ? d.slice(2) : d;
-  if (semPais.length < 10) return semPais || "sem número";
-  const ddd = semPais.slice(0, 2);
-  const resto = semPais.slice(2);
-  const meio = resto.length > 8 ? resto.slice(0, 5) : resto.slice(0, 4);
-  return `${ddd} ${meio}-${resto.slice(meio.length)}`;
+/**
+ * "71999998888" -> "(71) 99999-8888".
+ *
+ * Serve para LER e para DIGITAR — a mesma função nos dois lugares, senão o número apareceria
+ * de um jeito no rótulo e de outro no campo. O que se grava continua só dígitos: o backend
+ * descarta a pontuação, e guardar a máscara quebraria o link do WhatsApp lá na frente.
+ *
+ * Formata em qualquer estágio, inclusive incompleto, porque é aplicada a cada tecla.
+ */
+function mascaraTelefone(bruto: string | null): string {
+  const digitos = String(bruto ?? "").replace(/\D/g, "");
+  // O 55 do Brasil não se digita: ele é acrescentado na hora de montar o link. Guardado no
+  // banco por quem digitou antes, some daqui para não ocupar o lugar do DDD.
+  const semPais = digitos.startsWith("55") && digitos.length > 11 ? digitos.slice(2) : digitos;
+  const d = semPais.slice(0, 11);
+
+  if (d.length === 0) return "";
+  if (d.length <= 2) return `(${d}`;
+
+  const ddd = d.slice(0, 2);
+  const resto = d.slice(2);
+  if (resto.length <= 4) return `(${ddd}) ${resto}`;
+
+  // Celular tem 9 dígitos, fixo tem 8 — o hífen muda de lugar conforme o número cresce.
+  const corte = resto.length > 8 ? 5 : 4;
+  return `(${ddd}) ${resto.slice(0, corte)}-${resto.slice(corte)}`;
 }
 
 /**
@@ -93,13 +110,28 @@ export default function ConfirmacoesScreen() {
    */
   const abrirFolha = (parte: ParteParaConfirmar) => {
     setEditandoNumero(false);
-    setNumero(parte.telefone ?? "");
+    setNumero(mascaraTelefone(parte.telefone));
     setCompartilhando(parte);
   };
 
   const fecharFolha = () => {
     setCompartilhando(null);
     setEditandoNumero(false);
+  };
+
+  /**
+   * Aplica a máscara a cada tecla.
+   *
+   * O `if` existe por causa do APAGAR: quando o dedo apaga um caractere da máscara — o
+   * parêntese, o espaço, o hífen —, a contagem de dígitos não muda, e remascarar devolveria
+   * o caractere na hora. O campo ficaria travado, como se o backspace não funcionasse. Nesse
+   * caso, apaga-se o último DÍGITO, que é o que a pessoa quis dizer.
+   */
+  const aoDigitarNumero = (texto: string) => {
+    const novos = texto.replace(/\D/g, "");
+    const antes = numero.replace(/\D/g, "");
+    const finais = texto.length < numero.length && novos === antes ? novos.slice(0, -1) : novos;
+    setNumero(mascaraTelefone(finais));
   };
 
   const gravarNumero = async () => {
@@ -276,7 +308,7 @@ export default function ConfirmacoesScreen() {
                   >
                     <Ionicons name="create-outline" size={14} color={colors.primaryDark} />
                     <Text style={styles.editarNumeroTexto}>
-                      Editar número ({formatarTelefone(compartilhando.telefone)})
+                      Editar número ({mascaraTelefone(compartilhando.telefone)})
                     </Text>
                   </Pressable>
                 ) : null}
@@ -318,12 +350,12 @@ export default function ConfirmacoesScreen() {
                   <TextInput
                     style={styles.campo}
                     value={numero}
-                    onChangeText={setNumero}
-                    placeholder="71 99999-8888"
+                    onChangeText={aoDigitarNumero}
+                    placeholder="(71) 99999-8888"
                     placeholderTextColor={colors.textMuted}
                     keyboardType="phone-pad"
                     autoFocus
-                    maxLength={20}
+                    maxLength={15}
                     accessibilityLabel="Número de WhatsApp com DDD"
                   />
                   <Pressable
@@ -384,14 +416,24 @@ function GrupoReuniao({
       style={styles.grupo}
     >
       <View style={styles.grupoTopo}>
-        <View style={styles.flex}>
-          <Text style={styles.grupoData}>{dataLegivel(reuniao.data)}</Text>
-          <Text style={styles.grupoFaixa}>{reuniao.faixaData}</Text>
+        <View style={[styles.grupoIcone, { backgroundColor: colors.infoBg }]}>
+          <Ionicons name="calendar" size={15} color={colors.primaryDark} />
         </View>
+        <View style={styles.flex}>
+          {/* A semana vem ACIMA e menor, como sobrancelha: ela é o contexto. A data da
+              reunião é o assunto, e fica com o peso. */}
+          <Text style={styles.grupoFaixa}>{reuniao.faixaData}</Text>
+          <Text style={styles.grupoData}>{dataLegivel(reuniao.data)}</Text>
+        </View>
+        {/* O chip ficou sobre a faixa tonalizada, e não mais sobre o branco do cartão: a
+            borda na própria cor devolve o contraste que o fundo comeu. */}
         <View
           style={[
             styles.contador,
-            { backgroundColor: pendentes === 0 ? colors.successBg : colors.warningBg },
+            {
+              backgroundColor: pendentes === 0 ? colors.successBg : colors.warningBg,
+              borderColor: pendentes === 0 ? `${colors.greenDark}33` : `${colors.amber}33`,
+            },
           ]}
         >
           <Text
@@ -514,18 +556,57 @@ const criarEstilos = (colors: Cores) =>
       backgroundColor: colors.surface,
       borderRadius: radius.lg,
       padding: 14,
-      gap: 4,
+      // Sem `gap`: as linhas de nome se encostam e a divisória entre elas basta. Com o gap,
+      // a borda da primeira linha ficava solta alguns pixels abaixo da faixa, parecendo
+      // um risco perdido no meio do cartão.
       ...shadow.card,
     },
+    /**
+     * O cabeçalho é uma FAIXA, não um texto maior.
+     *
+     * Diferença de tamanho e peso sozinha não bastava: "Quinta, 03/09" em 15.5/800 ao lado
+     * dos nomes em 14.5/600 lia como mais um nome da lista, um pouco mais escuro. Com fundo
+     * próprio, ícone e a semana em versalete, o olho separa a moldura do conteúdo antes de
+     * ler qualquer palavra.
+     *
+     * As margens negativas cancelam o padding do cartão para a faixa atravessá-lo inteiro; o
+     * padding daqui devolve o recuo do texto. O raio de cima repete o do cartão em vez de
+     * recortar por `overflow: hidden`, que no iOS apagaria a sombra junto.
+     */
     grupoTopo: {
       flexDirection: "row",
       alignItems: "center",
       gap: 10,
-      marginBottom: 8,
+      marginHorizontal: -14,
+      marginTop: -14,
+      paddingHorizontal: 14,
+      paddingVertical: 11,
+      backgroundColor: colors.surfaceMuted,
+      borderTopLeftRadius: radius.lg,
+      borderTopRightRadius: radius.lg,
     },
-    grupoData: { fontSize: 15.5, fontWeight: "800", color: colors.text },
-    grupoFaixa: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-    contador: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: radius.sm },
+    grupoIcone: {
+      width: 30,
+      height: 30,
+      borderRadius: radius.sm,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    grupoFaixa: {
+      fontSize: 10.5,
+      fontWeight: "700",
+      letterSpacing: 0.7,
+      textTransform: "uppercase",
+      color: colors.textMuted,
+    },
+    grupoData: {
+      fontSize: 17,
+      fontWeight: "800",
+      color: colors.text,
+      letterSpacing: -0.3,
+      marginTop: 1,
+    },
+    contador: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: radius.sm, borderWidth: 1 },
     contadorTexto: { fontSize: 11.5, fontWeight: "800" },
 
     linha: {
