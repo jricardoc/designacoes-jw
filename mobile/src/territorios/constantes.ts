@@ -82,7 +82,14 @@ export const AVISOS: Record<string, string> = {
  * campo: 300 caracteres no total).
  */
 export const juntarEnderecoEDescricao = (endereco: string, descricao: string) =>
-  [endereco.trim(), descricao.trim()].filter(Boolean).join("\n");
+  [umaLinha(endereco), umaLinha(descricao)].filter(Boolean).join("\n");
+
+/**
+ * Quebra de linha vira espaço. Texto colado de outro app (o cartão do app antigo, por exemplo)
+ * chega com várias linhas, e a quebra é o que separa o endereço da descrição: sem isto, a 2ª
+ * linha colada na Rua virava "descrição" e o número da casa ia parar no fim dela.
+ */
+export const umaLinha = (texto: string) => texto.replace(/\s*[\r\n]+\s*/g, " ").trim();
 
 export function separarEnderecoEDescricao(texto: string | null | undefined) {
   const [endereco, ...resto] = (texto ?? "").split("\n");
