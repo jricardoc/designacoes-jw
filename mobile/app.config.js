@@ -6,15 +6,19 @@
 // do projeto no expo.dev. Assim o repositório público não carrega a conta de ninguém, e cada
 // um aponta o app para o próprio servidor e a própria conta do Expo. Ver docs/APP.md.
 //
-// O .env é carregado aqui mesmo porque o EAS CLI não o lê ao resolver esta config — e é ela
-// que diz ao `eas build` qual projeto do expo.dev usar.
+// O .env é lido aqui mesmo, à mão: o EAS CLI resolve esta config com EXPO_NO_DOTENV=1, e o
+// carregador do Expo obedece. Sem isto o `eas build` montava o app genérico
+// (com.exemplo.servirmais) — e o EAS gerava uma chave de assinatura nova para ele.
+// Variável já definida (painel do expo.dev, terminal) vence o arquivo.
 const fs = require("fs");
 const path = require("path");
 
-try {
-  require("@expo/env").load(__dirname, { silent: true });
-} catch {
-  // Sem @expo/env (não deveria acontecer: vem com o expo), valem só as variáveis do sistema.
+const arquivoEnv = path.join(__dirname, ".env");
+if (fs.existsSync(arquivoEnv)) {
+  for (const linha of fs.readFileSync(arquivoEnv, "utf8").split(/\r?\n/)) {
+    const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/i.exec(linha);
+    if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^(["'])(.*)\1$/, "$2");
+  }
 }
 
 module.exports = ({ config }) => {
