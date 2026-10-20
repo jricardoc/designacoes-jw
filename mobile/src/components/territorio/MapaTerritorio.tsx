@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import MapView, { Marker, Polygon, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, Polygon, PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from "react-native-maps";
 import type { Ponto, TipoMarcacao } from "@/api/types";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -82,11 +82,26 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
   // Pinos com view própria precisam desenhar uma vez com rastreio ligado (senão saem em branco
   // no Android); depois desliga, que é o que mantém o mapa leve ao arrastar.
   const [rastrear, setRastrear] = useState(true);
+  const assinatura = pinos.map((p) => `${p.chave}:${p.pendente ? 1 : 0}`).join("|");
   useEffect(() => {
     setRastrear(true);
     const t = setTimeout(() => setRastrear(false), 1000);
     return () => clearTimeout(t);
-  }, [pinos.length, areas.length]);
+  }, [assinatura, areas.length]);
+
+  // Pino que SAI do mapa às vezes fica desenhado no mapa nativo (react-native-maps na nova
+  // arquitetura): sobrava o fantasma desbotado do pino que estava na fila, ou o do pino
+  // removido. Quando algum pino some, o mapa é montado de novo, na mesma região.
+  const vistos = useRef<Set<string>>(new Set());
+  const [geracao, setGeracao] = useState(0);
+  const regiao = useRef<Region | null>(null);
+  useEffect(() => {
+    const atuais = new Set(pinos.map((p) => p.chave));
+    const sumiu = [...vistos.current].some((c) => !atuais.has(c));
+    vistos.current = atuais;
+    if (sumiu) setGeracao((g) => g + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assinatura]);
 
   const todos = useMemo(
     () => areas.flatMap((a) => a.pontos.map(([latitude, longitude]) => ({ latitude, longitude }))),
@@ -123,6 +138,7 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
 
   return (
     <MapView
+      key={geracao}
       ref={mapa}
       provider={provedor}
       style={[styles.mapa, style]}
@@ -132,9 +148,13 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
       showsCompass={false}
       toolbarEnabled={false}
       initialRegion={
-        inicial ? { ...inicial, latitudeDelta: 0.01, longitudeDelta: 0.01 } : undefined
+        regiao.current ?? (inicial ? { ...inicial, latitudeDelta: 0.01, longitudeDelta: 0.01 } : undefined)
       }
-      onMapReady={enquadrar}
+      // Remontado por causa de um pino que saiu: fica onde estava, sem reenquadrar.
+      onMapReady={geracao === 0 ? enquadrar : undefined}
+      onRegionChangeComplete={(r) => {
+        regiao.current = r;
+      }}
       onLongPress={
         onLongPress
           ? (e) => onLongPress({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude })
