@@ -68,7 +68,10 @@ npx eas-cli build --platform android --profile preview --local
 
 ### Atualizar o app depois
 
-Mudou algo no código do app? Gere um build novo. Para o Android aceitar como atualização
+Mudou algo no código do app? Gere um build novo. Se a mudança for nativa (biblioteca nova,
+permissão, chave), suba também a `version` no `mobile/app.json`: ela é a versão de runtime
+(`runtimeVersion: appVersion`), e é ela que impede uma atualização pelo ar de chegar a um build
+que não tem o código nativo dela. Para o Android aceitar como atualização
 (e não como outro app), duas coisas precisam ser iguais entre as versões: o `APP_ID` e a
 **chave de assinatura**, que o Expo guarda para você no projeto (`eas credentials`).
 
