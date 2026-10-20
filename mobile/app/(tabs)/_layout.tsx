@@ -8,6 +8,7 @@ import { BarraGlobalProvider } from "@/components/layout/contextoBarra";
 import { usePushNotifications } from "@/notifications/usePushNotifications";
 import { useSincronizarNotificacoes } from "@/notifications/useSincronizarNotificacoes";
 import { useSincronizarFila } from "@/territorios/fila";
+import { BloqueioBiometria } from "@/components/BloqueioBiometria";
 import { useTema } from "@/theme/TemaContext";
 
 export default function LayoutDoMenu() {
@@ -65,6 +66,8 @@ export default function LayoutDoMenu() {
             inteiro do app; esta barra é o atalho dos cinco destinos do dia a dia. */}
         <BarraFlutuante />
       </ProvedorRolagem>
+      {/* Face ID / digital ao abrir o app, para quem ligou na Conta. Por cima de tudo. */}
+      <BloqueioBiometria />
     </View>
   );
 }
