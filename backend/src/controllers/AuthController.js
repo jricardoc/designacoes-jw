@@ -199,7 +199,9 @@ class AuthController {
             res.set('Content-Type', tipoDaImagem(foto.imagem) || 'application/octet-stream');
             // private: a resposta so existe porque a requisicao levou Authorization.
             res.set('Cache-Control', 'private, max-age=31536000');
-            return res.send(foto.imagem);
+            // Buffer.from: o Prisma 6 devolve Bytes como Uint8Array, e o res.send do Express
+            // serializa Uint8Array como JSON ({"0":255,...}) — o app recebia texto, nao a foto.
+            return res.send(Buffer.from(foto.imagem));
         } catch (error) {
             console.error('Erro ao buscar foto:', error);
             return res.status(500).json({ error: 'Erro interno do servidor' });
