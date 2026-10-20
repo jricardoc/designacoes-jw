@@ -12,7 +12,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { useImagemTerritorio, useTerritorios } from "@/api/hooks/useTerritorios";
+import { useImagemProtegida } from "@/api/hooks/useImagemProtegida";
+import { useTerritorios } from "@/api/hooks/useTerritorios";
 import { Button, EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -26,7 +27,7 @@ export default function TerritorioDetalheScreen() {
   const { colors, styles } = useTema(criarEstilos);
   const { numero } = useLocalSearchParams<{ numero: string }>();
   const { data, isLoading, isError, refetch } = useTerritorios();
-  const imagem = useImagemTerritorio();
+  const imagem = useImagemProtegida();
   const toast = useToast();
 
   const [visao, setVisao] = useState<Visao>("mapa");

@@ -395,6 +395,8 @@ export function gerarHtmlSemana(
     meio?: { diaMes: string; diaSemana: string } | null;
     fds?: { diaMes: string; diaSemana: string } | null;
   },
+  /** O nome da congregação (Config.subtitulo), no canto do cabeçalho. */
+  congregacao = "",
 ): string {
   // `keyof` de propósito: um nome de campo digitado errado vira erro de compilação em vez de
   // uma seção que some em silêncio do PDF.
@@ -459,8 +461,8 @@ export function gerarHtmlSemana(
           <div class="faixa">${esc(faixa)}</div>
         </div>
         <div class="cong">
-          <h2>Programação da Congregação</h2>
-          <h3>Norte de Itapuã</h3>
+          <h2>Programação da reunião</h2>
+          ${congregacao ? `<h3>${esc(congregacao)}</h3>` : ""}
         </div>
       </div>
       <div class="cols">

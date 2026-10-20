@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Trash2 } from "lucide-react";
 import { useAuth } from '../../context/AuthContext';
+import { useCongregacao } from '../../utils/useCongregacao';
 import ConfirmModal from '../ConfirmModal';
 import './styles.css';
 
@@ -76,7 +77,7 @@ export default function TabelaQuadro({
 
   // Titulo e subtitulo padrao
   const titulo = `Quadro de Designações ${mesLongo} ${quadro?.ano || 2026}`;
-  const subtitulo = "Congregação Norte de Itapuã";
+  const subtitulo = useCongregacao();
 
   // Carregar irmaos do backend
   useEffect(() => {

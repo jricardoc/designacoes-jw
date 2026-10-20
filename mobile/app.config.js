@@ -1,18 +1,49 @@
+/* global __dirname */
 // Config dinâmica do Expo.
 //
-// Mantém todo o app.json e apenas resolve o google-services.json (que contém a
-// API key do Firebase e NÃO deve ser versionado) a partir de um EAS file secret
-// no build. Localmente cai no ./google-services.json (ignorado pelo git).
+// O app.json traz só padrões genéricos. O que é de cada congregação vem de variáveis de
+// ambiente — do arquivo mobile/.env (copie o .env.example) ou das "Environment variables"
+// do projeto no expo.dev. Assim o repositório público não carrega a conta de ninguém, e cada
+// um aponta o app para o próprio servidor e a própria conta do Expo. Ver docs/APP.md.
 //
-// Para o build na nuvem funcionar, crie o secret uma vez (na pasta mobile/):
-//   eas secret:create --scope project --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json
-module.exports = ({ config }) => ({
-  ...config,
-  android: {
-    ...config.android,
-    googleServicesFile:
-      process.env.GOOGLE_SERVICES_JSON ??
-      config.android?.googleServicesFile ??
-      "./google-services.json",
-  },
-});
+// O .env é carregado aqui mesmo porque o EAS CLI não o lê ao resolver esta config — e é ela
+// que diz ao `eas build` qual projeto do expo.dev usar.
+const fs = require("fs");
+const path = require("path");
+
+try {
+  require("@expo/env").load(__dirname, { silent: true });
+} catch {
+  // Sem @expo/env (não deveria acontecer: vem com o expo), valem só as variáveis do sistema.
+}
+
+module.exports = ({ config }) => {
+  const env = process.env;
+  const projectId = env.EAS_PROJECT_ID;
+  const appId = env.APP_ID || config.ios.bundleIdentifier;
+  // Push no Android precisa do google-services.json do Firebase. Sem ele o app funciona,
+  // só não recebe notificação — por isso é opcional, e não quebra o build.
+  const googleServices =
+    env.GOOGLE_SERVICES_JSON ||
+    (fs.existsSync(path.join(__dirname, "google-services.json"))
+      ? "./google-services.json"
+      : undefined);
+
+  return {
+    ...config,
+    name: env.APP_NAME || config.name,
+    ...(env.EXPO_OWNER && { owner: env.EXPO_OWNER }),
+    ios: { ...config.ios, bundleIdentifier: appId },
+    android: {
+      ...config.android,
+      package: appId,
+      ...(googleServices && { googleServicesFile: googleServices }),
+    },
+    ...(projectId && { updates: { ...config.updates, url: `https://u.expo.dev/${projectId}` } }),
+    extra: {
+      ...config.extra,
+      apiUrl: env.EXPO_PUBLIC_API_URL || config.extra?.apiUrl,
+      ...(projectId && { eas: { projectId } }),
+    },
+  };
+};

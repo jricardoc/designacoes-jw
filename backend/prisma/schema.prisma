@@ -77,6 +77,10 @@ model Config {
   // instante nenhum de onde subtrair as horas.
   horaMeioSemana  String   @default("19:30")
   horaFimDeSemana String   @default("09:00")
+  // Dados do Zoom que entram nos convites: { meio: {link, id, senha, salaAberta}, fds: {...} }.
+  // No banco, e nao no codigo, para cada congregacao preencher os seus pela tela de Ajustes
+  // (e para link e senha nao irem parar num repositorio publico).
+  zoom            Json?
   updatedAt       DateTime @updatedAt
 }
 
@@ -96,7 +100,7 @@ model Usuario {
   escopos              String[]                @default([])
   // Vinculo com o cadastro da congregacao. E o que permite ao irmao ver as proprias
   // designacoes: sem ele so restaria casar por nome, que falha em silencio quando o nome do
-  // login difere do cadastro ("Henzel D. Almeida" vs "Henzel Almeida").
+  // login difere do cadastro ("Hugo D. Almeida" vs "Hugo Almeida").
   // @unique: uma conta por irmao. SetNull para que excluir um irmao nao apague a conta.
   irmaoId              Int?                    @unique
   irmao                Irmao?                  @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
@@ -112,8 +116,22 @@ model Usuario {
   tarefasConcluidas    TarefaConcluida[]
   quadrosPublicados    Quadro[]                @relation("QuadrosPublicados")
   escalasPublicadas    QuadroDirigente[]       @relation("EscalasPublicadas")
+  // Quando a foto de perfil mudou; null = sem foto. Fica aqui (e a imagem em FotoUsuario)
+  // para o app saber se ha foto, e montar a URL com versao, sem carregar os bytes.
+  fotoEm               DateTime?
+  foto                 FotoUsuario?
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
+}
+
+// A foto de perfil (JPEG pequeno, ~30 KB). Tabela propria para nenhuma consulta de usuario
+// arrastar os bytes sem querer; no banco, e nao em disco, para a instalacao nao precisar de
+// volume e o backup do Postgres ja levar as fotos junto.
+model FotoUsuario {
+  usuarioId Int      @id
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  imagem    Bytes
+  updatedAt DateTime @updatedAt
 }
 
 // Cadastro de irmaos com suas funcoes
@@ -167,7 +185,7 @@ model GrupoCampo {
   nome         String  @unique
   // Ordem de exibicao; empate cai no nome. Serve para a lista nao dancar a cada renomeacao.
   ordem        Int     @default(0)
-  // O numero com que a PROGRAMACAO chama este grupo ("Limpeza: Grupo 4 Elvandy LIma").
+  // O numero com que a PROGRAMACAO chama este grupo ("Limpeza: Grupo 4 Evaldo LIma").
   // Nao e a `ordem`: a ordem e de exibicao no app e nada obriga as duas a coincidirem —
   // hoje nao coincidem. Existe porque o nome do grupo no documento chega abreviado e com
   // caixa trocada, e o numero e o unico pedaco estavel; `scripts/vincularLimpeza.js`
@@ -423,7 +441,7 @@ model SaidaCampo {
   id                    Int                   @id @default(autoincrement())
   diaSemana             String // "segunda", "terca", "quarta", "quinta", "sexta", "sabado"
   turno                 Int                   @default(1) // 1 para dias normais, 1-4 para sábado
-  local                 String // "Ex-Combatentes - Casa dos irmãos Walney e Olga"
+  local                 String // "Ex-Combatentes - Casa dos irmãos Wagner e Odete"
   horario               String // "08:45"
   ativo                 Boolean               @default(true)
   dirigentesDisponiveis DirigenteSaidaCampo[]

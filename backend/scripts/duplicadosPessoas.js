@@ -9,15 +9,15 @@
  * POR QUE ISTO EXISTE
  * -------------------
  * `unificarPessoas.js` casa nome por igualdade exata (sem acento e sem caixa). Isso e cego
- * para a diferenca mais comum entre as duas listas: o carrinho registra "Walney" e o cadastro
- * registra "Walney Souza". Na migracao de 2026-08-27 nenhum dos 33 publicadores casou, e quem
+ * para a diferenca mais comum entre as duas listas: o carrinho registra "Wagner" e o cadastro
+ * registra "Wagner Souza". Na migracao de 2026-08-27 nenhum dos 33 publicadores casou, e quem
  * ja existia em `Irmao` ganhou um segundo registro — com o genero errado, porque o script
  * assume 'irma' para quem vem do carrinho.
  *
  * COMO ELE ACHA
  * -------------
  * Nao da para usar o `matchStrength` da importacao aqui: ele da a MESMA forca (2) para
- * "Walney" x "Walney Souza" e para "Jose Santos" x "Jose Ricardo" — o primeiro par e a mesma
+ * "Wagner" x "Wagner Souza" e para "Jose Santos" x "Jose Rafael" — o primeiro par e a mesma
  * pessoa, o segundo sao dois irmaos diferentes. Criterio bom para sugerir, pessimo para
  * apagar registro.
  *
@@ -25,7 +25,7 @@
  *   - de um lado, os registros CRIADOS por ela: nome identico ao de um CarrinhoPublicador;
  *   - do outro, os que ja existiam;
  *   - e o par so vale quando TODOS os nomes do criado aparecem no que ja existia
- *     ("walney" ⊂ "walney souza"). "Jose Santos" nao esta contido em "Jose Ricardo", entao
+ *     ("walney" ⊂ "walney souza"). "Jose Santos" nao esta contido em "Jose Rafael", entao
  *     esse par nem e cogitado.
  *
  * Quando um criado casa com MAIS DE UM que ja existia, ninguem e apagado: o script mostra os
@@ -37,7 +37,7 @@
  * sempre o do cadastro antigo. Do duplicado vem o que ele tiver de util: as escalas do
  * carrinho, e o telefone quando o principal nao tem. Depois o duplicado e apagado.
  *
- * O genero do principal e PRESERVADO. E o que conserta o Walney: ele volta a ser 'irmao'.
+ * O genero do principal e PRESERVADO. E o que conserta o Wagner: ele volta a ser 'irmao'.
  */
 const prisma = require('../src/prisma');
 const { tokenize } = require('../src/services/MatchIrmaosService');
@@ -156,7 +156,7 @@ async function main() {
         // Telefone so entra quando falta em quem fica.
         const dados = {};
         if (!fica.telefone && sai.telefone) dados.telefone = sai.telefone;
-        // Genero: se quem fica esta sem, herda; se tem, MANTEM — e o que devolve o Walney
+        // Genero: se quem fica esta sem, herda; se tem, MANTEM — e o que devolve o Wagner
         // para 'irmao' em vez de deixar o 'irma' que a migracao chutou.
         if (!fica.genero && sai.genero) dados.genero = sai.genero;
         if (Object.keys(dados).length > 0) {

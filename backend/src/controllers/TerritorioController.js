@@ -8,8 +8,11 @@ const path = require('path');
  * Os cartoes NAO vivem no banco: sao imagens estaticas geradas a partir dos
  * PDFs oficiais pelo script territorio/extrair.py (na raiz do repositorio),
  * que escreve as imagens e o manifesto em backend/public/territorios/.
- * Atualizar os cartoes = rodar o script de novo + deploy. Sem tabela, sem
- * upload: o arquivo de territorios muda poucas vezes por ano.
+ * Sem tabela, sem upload: o arquivo de territorios muda poucas vezes por ano.
+ *
+ * A pasta NAO vai para o Git — os mapas sao de cada congregacao. Em producao ela
+ * e um volume montado em /app/public/territorios; sem ela (instalacao nova), a
+ * lista sai vazia e a tela mostra o estado vazio.
  */
 
 const PASTA = path.join(__dirname, '..', '..', 'public', 'territorios');
@@ -22,6 +25,7 @@ let versoes = null;
 
 function carregarManifesto() {
     if (!manifesto) {
+        if (!fs.existsSync(MANIFESTO)) return { territorios: [] };
         manifesto = JSON.parse(fs.readFileSync(MANIFESTO, 'utf-8'));
         // Versao por CONTEUDO de cada imagem, anexada a URL como ?v=. Sem isso
         // um cartao re-extraido (mesmo nome de arquivo) nunca chega a quem ja o

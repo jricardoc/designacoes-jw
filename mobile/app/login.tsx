@@ -2,8 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -11,10 +12,21 @@ import {
   Text,
   View,
 } from "react-native";
+import { useConfigPublica } from "@/api/hooks/useMisc";
 import { Button, TextField } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import {
+  ativarBiometria,
+  atualizarBiometria,
+  biometriaAtiva,
+  biometriaJaOferecida,
+  desativarBiometria,
+  lerComBiometria,
+  marcarBiometriaOferecida,
+  nomeDaBiometria,
+} from "@/utils/biometria";
 
 export default function LoginScreen() {
   const { colors, styles } = useTema(criarEstilos);
@@ -24,17 +36,67 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
+  // Nome da biometria do aparelho ("Face ID", "digital"); null = não tem ou não cadastrou.
+  const [biometria, setBiometria] = useState<string | null>(null);
+  const [bioAtiva, setBioAtiva] = useState(false);
+  const { data: publica } = useConfigPublica();
+
+  const entrarComBiometria = async (nome: string | null = biometria) => {
+    setErro("");
+    const cred = await lerComBiometria().catch(() => null);
+    if (!cred) return;
+    setLoading(true);
+    const result = await login(cred.nickname, cred.senha);
+    setLoading(false);
+    if (result.success) {
+      router.replace("/(tabs)/minhas");
+    } else if (result.status === 401) {
+      // A senha guardada não vale mais (trocada em outro aparelho ou redefinida pelo admin).
+      await desativarBiometria();
+      setBioAtiva(false);
+      setNickname(cred.nickname);
+      setErro(`Sua senha mudou. Entre com a nova senha para voltar a usar ${nome ?? "a biometria"}.`);
+    } else {
+      setErro(result.error || "Erro ao fazer login");
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const nome = await nomeDaBiometria();
+      const ativa = nome ? await biometriaAtiva() : false;
+      setBiometria(nome);
+      setBioAtiva(ativa);
+      // Abre sozinho: quem ativou a biometria quer entrar sem tocar em nada.
+      if (ativa) await entrarComBiometria(nome);
+    })().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async () => {
     setErro("");
     setLoading(true);
-    const result = await login(nickname.trim(), senha);
+    const nick = nickname.trim();
+    const result = await login(nick, senha);
     setLoading(false);
-    if (result.success) {
-      router.replace("/(tabs)/minhas");
-    } else {
+    if (!result.success) {
       setErro(result.error || "Erro ao fazer login");
+      return;
     }
+    // Biometria já ligada para esta conta: guarda a senha que acabou de funcionar.
+    await atualizarBiometria(nick, { senha }).catch(() => {});
+    if (biometria && !bioAtiva && !(await biometriaJaOferecida())) {
+      await marcarBiometriaOferecida();
+      Alert.alert(
+        `Entrar com ${biometria}?`,
+        "Nas próximas vezes você entra sem digitar a senha. Dá para desligar na tela Conta.",
+        [
+          { text: "Agora não", style: "cancel" },
+          { text: "Ativar", onPress: () => ativarBiometria({ nickname: nick, senha }) },
+        ],
+      );
+    }
+    router.replace("/(tabs)/minhas");
   };
 
   return (
@@ -89,9 +151,22 @@ export default function LoginScreen() {
                 fullWidth
                 style={{ marginTop: 4 }}
               />
+
+              {bioAtiva && biometria ? (
+                <Button
+                  label={`Entrar com ${biometria}`}
+                  icon={/digital|Touch/.test(biometria) ? "finger-print" : "scan-outline"}
+                  variant="secondary"
+                  onPress={() => entrarComBiometria()}
+                  disabled={loading}
+                  fullWidth
+                />
+              ) : null}
             </View>
 
-            <Text style={styles.footer}>Congregação Norte de Itapuã</Text>
+            {publica?.congregacao ? (
+              <Text style={styles.footer}>{publica.congregacao}</Text>
+            ) : null}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

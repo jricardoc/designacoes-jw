@@ -2,14 +2,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { apiRequest } from "@/api/client";
 import {
+  useAlterarFoto,
   useAlterarNickname,
   useAlterarNome,
   useAlterarSenha,
@@ -21,7 +25,17 @@ import {
   useUsuarios,
 } from "@/api/hooks/useMisc";
 import type { EscopoAdmin, TarefaAtribuivel, Usuario } from "@/api/types";
-import { ConfirmDialog, GradientHeader, useConfirm, useToast } from "@/components/ui";
+import {
+  Avatar,
+  Button,
+  ConfirmDialog,
+  GradientHeader,
+  SelectSheet,
+  Sheet,
+  TextField,
+  useConfirm,
+  useToast,
+} from "@/components/ui";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { EscoposSheet } from "@/components/conta/EscoposSheet";
 import { useDefinirTarefas } from "@/api/hooks/useTarefas";
@@ -33,14 +47,14 @@ import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
-
-function initials(name?: string | null) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  const a = parts[0]?.[0] ?? "";
-  const b = parts.length > 1 ? parts[parts.length - 1][0] : "";
-  return (a + b).toUpperCase() || "?";
-}
+import {
+  ativarBiometria,
+  atualizarBiometria,
+  biometriaAtiva,
+  desativarBiometria,
+  nomeDaBiometria,
+} from "@/utils/biometria";
+import { escolherFotoPerfil } from "@/utils/fotoPerfil";
 
 /** Campo de texto estilizado conforme o design (rótulo maiúsculo, ícone, fundo areia). */
 function Field({
@@ -114,6 +128,20 @@ export default function ContaScreen() {
   const [escoposUser, setEscoposUser] = useState<Usuario | null>(null);
   const [tarefasUser, setTarefasUser] = useState<Usuario | null>(null);
   const [novoIrmaoId, setNovoIrmaoId] = useState<number | null>(null);
+  const [fotoMenu, setFotoMenu] = useState(false);
+  // Biometria deste aparelho: nome ("Face ID", "digital") quando existe, e se está ligada.
+  const [bioNome, setBioNome] = useState<string | null>(null);
+  const [bioLigada, setBioLigada] = useState(false);
+  const [senhaBio, setSenhaBio] = useState<string | null>(null);
+  const [confirmandoBio, setConfirmandoBio] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const nome = await nomeDaBiometria();
+      setBioNome(nome);
+      setBioLigada(nome ? await biometriaAtiva() : false);
+    })().catch(() => {});
+  }, []);
 
   useEffect(() => {
     setNome(usuario?.nome ?? "");
@@ -123,6 +151,7 @@ export default function ContaScreen() {
   const alterarNome = useAlterarNome();
   const alterarNickname = useAlterarNickname();
   const alterarSenha = useAlterarSenha();
+  const alterarFoto = useAlterarFoto();
   const isAdmin = !!usuario?.isAdmin;
   const { data: usuarios } = useUsuarios(isAdmin);
   const criarUsuario = useCriarUsuario();
@@ -148,10 +177,62 @@ export default function ContaScreen() {
   const salvarPerfil = () =>
     run(async () => {
       if (nome.trim() !== (usuario?.nome ?? "")) await alterarNome.mutateAsync(nome.trim());
-      if (nickname.trim() !== (usuario?.nickname ?? ""))
+      if (usuario && nickname.trim() !== usuario.nickname) {
         await alterarNickname.mutateAsync(nickname.trim());
+        await atualizarBiometria(usuario.nickname, { nickname: nickname.trim() });
+      }
       await refreshUsuario();
     }, "Perfil atualizado!");
+
+  const trocarFoto = async (opcao: string) => {
+    setFotoMenu(false);
+    try {
+      let imagem: string | null = null;
+      if (opcao !== "remover") {
+        // No iOS o seletor não abre enquanto a folha ainda está fechando.
+        if (Platform.OS === "ios") await new Promise((r) => setTimeout(r, 400));
+        imagem = await escolherFotoPerfil(opcao === "camera" ? "camera" : "galeria");
+        if (!imagem) return;
+      }
+      await alterarFoto.mutateAsync(imagem);
+      await refreshUsuario();
+      toast.show(imagem ? "Foto atualizada!" : "Foto removida");
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Erro ao trocar a foto", "error");
+    }
+  };
+
+  const alternarBiometria = async (ligar: boolean) => {
+    if (ligar) {
+      setSenhaBio("");
+      return;
+    }
+    await desativarBiometria();
+    setBioLigada(false);
+    toast.show(`${bioNome} desligado neste aparelho`);
+  };
+
+  const confirmarBiometria = async () => {
+    if (!usuario || !senhaBio) return;
+    setConfirmandoBio(true);
+    try {
+      // Confere a senha antes de guardar: guardada errada, a biometria só falharia no
+      // próximo login, longe daqui.
+      await apiRequest("/auth/login", {
+        method: "POST",
+        body: { nickname: usuario.nickname, senha: senhaBio },
+        skipAuth: true,
+      });
+      await ativarBiometria({ nickname: usuario.nickname, senha: senhaBio });
+      setBioLigada(true);
+      setSenhaBio(null);
+      toast.show(`${bioNome} ativado!`);
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Erro ao ativar", "error");
+    } finally {
+      setConfirmandoBio(false);
+    }
+  };
 
   const doToggleAdmin = (u: Usuario) => {
     setMenuUser(null);
@@ -180,10 +261,15 @@ export default function ContaScreen() {
     setMenuUser(null);
     confirm.confirm({
       title: "Redefinir senha",
-      message: `Redefinir a senha de ${u.nome} para "jw1010"?`,
+      message: `Redefinir a senha de ${u.nome} para a senha padrão?`,
       confirmText: "Redefinir",
       onConfirm: async () => {
-        await run(() => resetSenha.mutateAsync(u.id), "Senha redefinida para jw1010");
+        try {
+          const r = await resetSenha.mutateAsync(u.id);
+          toast.show(`Senha redefinida para ${r?.senha ?? "a senha padrão"}`);
+        } catch (err) {
+          toast.show(err instanceof Error ? err.message : "Erro", "error");
+        }
         confirm.close();
       },
     });
@@ -211,9 +297,24 @@ export default function ContaScreen() {
         {/* Perfil */}
         <View style={styles.card}>
           <View style={styles.profileTop}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{initials(usuario?.nome)}</Text>
-            </View>
+            {usuario ? (
+              <Pressable
+                onPress={() => setFotoMenu(true)}
+                disabled={alterarFoto.isPending}
+                accessibilityRole="button"
+                accessibilityLabel="Trocar foto de perfil"
+              >
+                <Avatar
+                  usuario={usuario}
+                  tamanho={58}
+                  fundo={colors.oliveSoft}
+                  corTexto={colors.textOnPrimary}
+                />
+                <View style={styles.fotoBadge}>
+                  <Ionicons name="camera" size={12} color={colors.textOnPrimary} />
+                </View>
+              </Pressable>
+            ) : null}
             <View style={styles.flex}>
               <Text style={styles.profileName} numberOfLines={1}>
                 {usuario?.nome}
@@ -291,6 +392,7 @@ export default function ContaScreen() {
               run(async () => {
                 if (!senhaAtual || !novaSenha) throw new Error("Preencha as senhas");
                 await alterarSenha.mutateAsync({ senhaAtual, novaSenha });
+                if (usuario) await atualizarBiometria(usuario.nickname, { senha: novaSenha });
                 setSenhaAtual("");
                 setNovaSenha("");
               }, "Senha alterada!")
@@ -299,6 +401,31 @@ export default function ContaScreen() {
             <Text style={styles.btnPrimaryText}>Alterar Senha</Text>
           </Pressable>
         </View>
+
+        {/* Biometria: só aparece em aparelho com Face ID/digital cadastrado. */}
+        {bioNome ? (
+          <View style={styles.card}>
+            <View style={styles.cardHeadRow}>
+              <View style={[styles.cardHead, styles.flex]}>
+                <Ionicons
+                  name={/digital|Touch/.test(bioNome) ? "finger-print" : "scan-outline"}
+                  size={18}
+                  color={colors.oliveSoft}
+                />
+                <View style={styles.flex}>
+                  <Text style={styles.cardTitle}>Entrar com {bioNome}</Text>
+                  <Text style={styles.cardSub}>Sem digitar a senha neste aparelho</Text>
+                </View>
+              </View>
+              <Switch
+                value={bioLigada}
+                onValueChange={alternarBiometria}
+                trackColor={{ true: colors.primary, false: colors.borderStrong }}
+                thumbColor="#fff"
+              />
+            </View>
+          </View>
+        ) : null}
 
         {/* Usuários (admin) */}
         {isAdmin ? (
@@ -361,11 +488,11 @@ export default function ContaScreen() {
 
                 <Pressable
                   style={[styles.btnPrimary, { marginTop: 14 }]}
-                  onPress={() =>
-                    run(async () => {
+                  onPress={async () => {
+                    try {
                       if (!novoNome.trim() || !novoNickname.trim())
                         throw new Error("Preencha nome e nickname");
-                      await criarUsuario.mutateAsync({
+                      const criado = await criarUsuario.mutateAsync({
                         nome: novoNome.trim(),
                         nickname: novoNickname.trim(),
                         irmaoId: novoIrmaoId,
@@ -374,8 +501,11 @@ export default function ContaScreen() {
                       setNovoNickname("");
                       setNovoIrmaoId(null);
                       setShowNovo(false);
-                    }, "Usuário criado! Senha: jw1010")
-                  }
+                      toast.show(`Usuário criado! Senha: ${criado.senhaInicial ?? "a senha padrão"}`);
+                    } catch (err) {
+                      toast.show(err instanceof Error ? err.message : "Erro", "error");
+                    }
+                  }}
                 >
                   <Text style={styles.btnPrimaryText}>Criar Usuário</Text>
                 </Pressable>
@@ -385,9 +515,7 @@ export default function ContaScreen() {
             <View style={{ marginTop: 4 }}>
               {usuarios?.map((u) => (
                 <View key={u.id} style={styles.userRow}>
-                  <View style={styles.userAvatar}>
-                    <Text style={styles.userInitials}>{initials(u.nome)}</Text>
-                  </View>
+                  <Avatar usuario={u} tamanho={40} fundo={colors.sand} corTexto={colors.brown} />
                   <View style={styles.flex}>
                     <Text style={styles.userName} numberOfLines={1}>
                       {u.nome}
@@ -467,6 +595,44 @@ export default function ContaScreen() {
         onClose={() => setVinculandoUser(null)}
         onVinculado={refreshUsuario}
       />
+      <SelectSheet
+        visible={fotoMenu}
+        title="Foto de perfil"
+        allowClear={false}
+        options={[
+          { value: "galeria", label: "Escolher da galeria" },
+          { value: "camera", label: "Tirar foto" },
+          ...(usuario?.fotoEm
+            ? [{ value: "remover", label: "Remover foto", color: colors.red }]
+            : []),
+        ]}
+        onSelect={trocarFoto}
+        onClose={() => setFotoMenu(false)}
+      />
+      <Sheet visible={senhaBio !== null} onClose={() => setSenhaBio(null)}>
+        <View style={styles.bioSheet}>
+          <Text style={styles.cardTitle}>Ativar {bioNome}</Text>
+          <Text style={styles.cardSub}>
+            Confirme sua senha. Ela fica guardada no chaveiro deste aparelho e só sai com o seu{" "}
+            {bioNome}.
+          </Text>
+          <TextField
+            label="Senha"
+            icon="lock-closed"
+            secure
+            value={senhaBio ?? ""}
+            onChangeText={setSenhaBio}
+            onSubmitEditing={confirmarBiometria}
+          />
+          <Button
+            label="Ativar"
+            onPress={confirmarBiometria}
+            loading={confirmandoBio}
+            disabled={!senhaBio}
+            fullWidth
+          />
+        </View>
+      </Sheet>
       <ConfirmDialog config={confirm.config} onClose={confirm.close} />
     </View>
   );
@@ -496,15 +662,20 @@ const criarEstilos = (colors: Cores) =>
   cardSub: { fontSize: 12.5, color: colors.textMuted, marginTop: 5 },
 
   profileTop: { flexDirection: "row", alignItems: "center", gap: 14 },
-  avatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 999,
-    backgroundColor: colors.oliveSoft,
+  fotoBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.surface,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: colors.textOnPrimary, fontSize: 20, fontWeight: "700" },
+  bioSheet: { gap: 14, paddingBottom: 8 },
   profileName: { fontSize: 20, fontWeight: "600", color: colors.text },
   profileNick: { fontSize: 13, color: colors.textMuted, marginTop: 3 },
   linhaCargo: { flexDirection: "row", alignItems: "center", gap: 6, flexWrap: "wrap" },
@@ -603,15 +774,6 @@ const criarEstilos = (colors: Cores) =>
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 999,
-    backgroundColor: colors.sand,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  userInitials: { fontSize: 13, fontWeight: "700", color: colors.brown },
   userName: { fontSize: 15, fontWeight: "600", color: colors.text },
   userNick: { fontSize: 12.5, color: colors.textMuted, marginTop: 1 },
   adminBadgeSm: {

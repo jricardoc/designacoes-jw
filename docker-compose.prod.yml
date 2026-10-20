@@ -1,0 +1,69 @@
+# PRODUCAO num servidor proprio (VPS) com Docker. Passo a passo em docs/INSTALACAO.md.
+#
+#   cp .env.example .env        # preencha a secao "Producao"
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Sobe o banco, a API, o painel web e o Caddy, que pede e renova o certificado HTTPS sozinho
+# (o app de celular so conversa com a API por HTTPS). Os dominios do .env precisam apontar
+# para o IP deste servidor ANTES de subir.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-servirmais}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-designacoes}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-servirmais} -d ${POSTGRES_DB:-designacoes}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-servirmais}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-designacoes}
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
+      FRONTEND_URL: https://${WEB_DOMAIN}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
+      SENHA_PADRAO: ${SENHA_PADRAO:-}
+      FUSO_HORARIO: ${FUSO_HORARIO:-America/Sao_Paulo}
+    volumes:
+      # Mapas de territorio (opcional): coloque a pasta "territorios" ao lado deste arquivo.
+      - ./territorios:/app/public/territorios:ro
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_API_URL: https://${API_DOMAIN}
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [backend, frontend]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?defina API_DOMAIN no .env}
+      WEB_DOMAIN: ${WEB_DOMAIN:?defina WEB_DOMAIN no .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+
+volumes:
+  postgres_data:
+  caddy_data:

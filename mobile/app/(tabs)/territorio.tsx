@@ -11,7 +11,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { useImagemTerritorio, useTerritorios } from "@/api/hooks/useTerritorios";
+import { useImagemProtegida } from "@/api/hooks/useImagemProtegida";
+import { useTerritorios } from "@/api/hooks/useTerritorios";
 import type { Territorio } from "@/api/types";
 import { Button, EmptyState, GradientHeader, Loading, TextField } from "@/components/ui";
 import { SaidasDeCampo } from "@/components/config/SaidasDeCampo";
@@ -21,7 +22,7 @@ import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
-/** Acentos fora da busca: "itapua" tem que achar "Itapuã". */
+/** Acentos fora da busca: "joao" tem que achar "João". */
 const normalizar = (t: string) =>
   t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
@@ -71,7 +72,7 @@ export default function TerritorioScreen() {
 
   const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading, isError, refetch, isRefetching } = useTerritorios();
-  const imagem = useImagemTerritorio();
+  const imagem = useImagemProtegida();
   const [busca, setBusca] = useState("");
 
   const territorios = useMemo(() => {
@@ -197,11 +198,19 @@ export default function TerritorioScreen() {
             </View>
           }
           ListEmptyComponent={
-            <EmptyState
-              icon="map-outline"
-              title="Nenhum território encontrado"
-              message="Tente outro número ou outra localidade."
-            />
+            busca.trim() ? (
+              <EmptyState
+                icon="map-outline"
+                title="Nenhum território encontrado"
+                message="Tente outro número ou outra localidade."
+              />
+            ) : (
+              <EmptyState
+                icon="map-outline"
+                title="Nenhum território cadastrado"
+                message="Os mapas aparecem aqui quando forem adicionados ao servidor."
+              />
+            )
           }
         />
       )}

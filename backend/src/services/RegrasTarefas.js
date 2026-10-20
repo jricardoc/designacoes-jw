@@ -14,7 +14,7 @@ const { somarDias, instanteDe } = require('./RegrasLembrete');
  * quando aviso?". Aqui: "o irmao TEM DE FAZER uma coisa, ate quando, e ela ja foi feita?".
  *
  * TODO instante devolvido daqui e um "relogio da congregacao" (Date com os campos de
- * America/Bahia empacotados como UTC), igual ao de RegrasLembrete — os dois sao comparados
+ * do fuso da congregacao empacotados como UTC), igual ao de RegrasLembrete — os dois sao comparados
  * entre si no agendador, entao precisam viver no mesmo espaco.
  */
 
@@ -412,7 +412,7 @@ function textoDoAviso(tipo, aviso, { alvoISO, vencimentoISO, referencia }) {
                 titulo: 'Confirmações da semana',
                 corpo:
                     'Fale com quem tem parte nesta semana e anote quem confirmou.\n\n' +
-                    'Confira também se o irmão Marcelo já postou o quadro no grupo — ' +
+                    'Confira também se o quadro já foi postado no grupo — ' +
                     'é por ele que se sabe quem ainda precisa confirmar.',
             };
         }

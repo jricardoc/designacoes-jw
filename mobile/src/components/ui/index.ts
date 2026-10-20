@@ -10,3 +10,4 @@ export { Sheet } from "./Sheet";
 export { TextField } from "./TextField";
 export { ToastProvider, useToast } from "./Toast";
 export { useConfirm } from "./useConfirm";
+export { Avatar, iniciais } from "./Avatar";

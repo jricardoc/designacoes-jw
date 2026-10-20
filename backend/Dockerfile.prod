@@ -25,4 +25,8 @@ EXPOSE 3001
 #
 # Ao mudar o schema: `npx prisma migrate dev --name descricao` em desenvolvimento, e
 # commitar a pasta prisma/migrations junto.
-CMD ["sh", "-c", "{ npx prisma migrate deploy || echo '>>> AVISO: prisma migrate deploy FALHOU. O schema do banco pode estar desatualizado. Rode `npx prisma migrate status` para investigar. <<<'; } && npm start"]
+#
+# `npm run migrar` (scripts/migrar.js) e o `migrate deploy` com um caso a mais: banco VAZIO,
+# de instalacao nova, recebe o schema inteiro de uma vez — as migrations antigas sozinhas nao
+# reconstroem o banco do zero.
+CMD ["sh", "-c", "{ npm run migrar || echo '>>> AVISO: a migracao do banco FALHOU. O schema do banco pode estar desatualizado. Rode `npx prisma migrate status` para investigar. <<<'; } && npm start"]

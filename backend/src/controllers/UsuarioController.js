@@ -3,7 +3,10 @@ const bcrypt = require('bcrypt');
 const PrivilegioService = require('../services/PrivilegioService');
 const { sanearEscopos, CATALOGO_ESCOPOS, ESCOPOS_VALIDOS } = require('../middleware/escopos');
 
-const SENHA_PADRAO = 'jw1010';
+// Senha de quem e criado ou tem a senha redefinida pelo admin. Configuravel porque o codigo e
+// publico: com o padrao, qualquer um que leia o repositorio conhece a senha inicial. As
+// respostas devolvem o valor para a tela mostrar ao admin.
+const SENHA_PADRAO = process.env.SENHA_PADRAO || 'jw1010';
 
 /**
  * Valida o irmao que se quer vincular a uma conta.
@@ -49,6 +52,7 @@ class UsuarioController {
                     isAdmin: true,
                     escopos: true,
                     irmaoId: true,
+                    fotoEm: true,
                     // As tarefas de sistema entram na LISTA (e nao so na folha de edicao)
                     // para o admin ver de relance quem ficou com o que — sem isso, saber
                     // se alguem ja tem a tarefa do Zoom exigiria abrir usuario por usuario.
@@ -189,7 +193,10 @@ class UsuarioController {
                 }
             });
 
-            return res.status(201).json(await PrivilegioService.anotarUsuario(usuario));
+            return res.status(201).json({
+                ...(await PrivilegioService.anotarUsuario(usuario)),
+                senhaInicial: SENHA_PADRAO
+            });
         } catch (error) {
             console.error('Erro ao criar usuario:', error);
             return res.status(500).json({ error: 'Erro interno' });
@@ -420,7 +427,7 @@ class UsuarioController {
                 data: { senha: senhaHash }
             });
 
-            return res.json({ message: 'Senha resetada para padrao' });
+            return res.json({ message: 'Senha resetada para padrao', senha: SENHA_PADRAO });
         } catch (error) {
             if (error.code === 'P2025') {
                 return res.status(404).json({ error: 'Usuario nao encontrado' });

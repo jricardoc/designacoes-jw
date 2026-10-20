@@ -112,7 +112,7 @@ export function PontoSheet({ visible, ponto, onClose }: Props) {
       <TextInput
         value={nome}
         onChangeText={setNome}
-        placeholder="Ex.: Mussurunga - Miguel"
+        placeholder="Ex.: Mussurunga - Murilo"
         placeholderTextColor={colors.textMuted}
         style={styles.input}
       />

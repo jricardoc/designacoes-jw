@@ -20,6 +20,7 @@ import PageHeader from "../../components/PageHeader";
 import html2canvas from "html2canvas";
 import Swal from "sweetalert2";
 import EditableField from "../../components/EditableField";
+import { semPrefixo, useCongregacao } from "../../utils/useCongregacao";
 import ImportarIndisponibilidadeModal from "../../components/reuniao/ImportarIndisponibilidadeModal";
 
 // Os avisos da importação carregam texto do arquivo de origem (o rótulo da semana). Como o
@@ -38,6 +39,7 @@ const escaparHtml = (texto) =>
   );
 
 export default function Reuniao() {
+  const congregacao = semPrefixo(useCongregacao());
   const { authFetch } = useAuth();
   const [reunioes, setReunioes] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -415,7 +417,7 @@ export default function Reuniao() {
                             </div>
                             <div className="mes-semana">{semana.faixaData}</div>
                             <div className="congregacao-nome">
-                              Congregação: Norte de Itapuã
+                              Congregação: {congregacao}
                             </div>
                           </div>
 
@@ -708,7 +710,7 @@ export default function Reuniao() {
                                 <div className="dir-fim">
                                   <span className="label-fim">Cong:</span>
                                   <span className="valor-fim">
-                                    <EditableField value={semana.fds_congregacao} fieldName="fds_congregacao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="Norte de Itapuã" />
+                                    <EditableField value={semana.fds_congregacao} fieldName="fds_congregacao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback={congregacao} />
                                   </span>
                                 </div>
                               </div>

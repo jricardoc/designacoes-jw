@@ -23,8 +23,8 @@
  *  1. Marca genero='irmao' em todo `Irmao` que ainda esta sem genero.
  *  2. Para cada `CarrinhoPublicador`:
  *       - se ja existe um `Irmao` com o mesmo nome (sem acento/caixa) OU cujo nome CONTENHA
- *         o do publicador, reaproveita esse registro — e o caso do Walney, que o carrinho
- *         registra como "Walney" e o cadastro como "Walney Souza". A primeira versao so
+ *         o do publicador, reaproveita esse registro — e o caso do Wagner, que o carrinho
+ *         registra como "Wagner" e o cadastro como "Wagner Souza". A primeira versao so
  *         comparava por igualdade, nao casou nenhum dos 33 e duplicou quem estava nas duas
  *         listas;
  *       - se nao existe, cria um `Irmao` com genero='irma', sem funcao nenhuma.
@@ -89,7 +89,7 @@ async function main() {
      *
      * Primeiro por igualdade de nome. Nao achando, aceita quem CONTEM o nome inteiro do
      * publicador ("walney" ⊂ "walney souza") — e so quando ha UM candidato: "Jose" dentro de
-     * "Jose Santos" e "Jose Ricardo" nao identifica ninguem, e ai e melhor criar um registro a
+     * "Jose Santos" e "Jose Rafael" nao identifica ninguem, e ai e melhor criar um registro a
      * mais do que fundir duas pessoas diferentes.
      */
     const acharExistente = (nome) => {

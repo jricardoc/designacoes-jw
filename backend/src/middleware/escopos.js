@@ -68,13 +68,17 @@ function sanearEscopos(valor) {
 /**
  * O usuario pode mexer nesta area?
  *
- * Admin geral passa em tudo. `req.user.escopos` pode vir indefinido em token
+ * Admin geral passa em tudo; a funcao Audio e Video passa em reunioes. `req.user.escopos` pode vir indefinido em token
  * antigo ou usuario carregado antes desta mudanca — tratado como lista vazia.
  */
 function temEscopo(user, escopo) {
     if (!user) return false;
     if (user.isAdmin) return true;
-    return Array.isArray(user.escopos) && user.escopos.includes(escopo);
+    if (Array.isArray(user.escopos) && user.escopos.includes(escopo)) return true;
+    // Quem tem a funcao Audio e Video no cadastro opera a reuniao (programacao, assistencia,
+    // compartilhar) sem o admin precisar conceder o escopo um por um. Vale so com a conta
+    // vinculada ao irmao: `req.user.irmao` vem do authMiddleware.
+    return escopo === ESCOPOS.REUNIOES && !!user.irmao?.funcoes?.includes('audioVideo');
 }
 
 /**

@@ -13,7 +13,7 @@ const { reconciliarDataReuniao, domingoDaSemana } = require('../utils/semanaReun
  *   - SemanaReuniao.<31 colunas>        (programacao da reuniao, importada de Excel/PDF)
  *
  * As duas primeiras vem de dropdowns alimentados por Irmao.nome, entao batem exatamente. A
- * terceira e digitada/importada e nao bate: aparece "Cosmirio Carvalho" sem acento, ou o nome
+ * terceira e digitada/importada e nao bate: aparece "Aurelio Carvalho" sem acento, ou o nome
  * de um orador visitante que nem esta no cadastro. Por isso o casamento e por tokens.
  *
  * O criterio e DELIBERADAMENTE restritivo (ver `mesmaPessoa`): e melhor deixar de mostrar um
@@ -42,14 +42,14 @@ function tokens(texto) {
  * Os dois textos designam a mesma pessoa?
  *
  * Exige CONTENCAO TOTAL de tokens (um nome contido no outro) com pelo menos 2 tokens em
- * comum. Bater so o primeiro nome nao basta - e o que impede "Marcelo Rodrigues", orador
- * visitante, de aparecer na lista do irmao "Marcelo Santana"; e "José Ricardo" de cair na
- * lista de "Ricardo Carvalho".
+ * comum. Bater so o primeiro nome nao basta - e o que impede "Mauro Rodrigues", orador
+ * visitante, de aparecer na lista do irmao "Mauro Santana"; e "José Rafael" de cair na
+ * lista de "Rafael Carvalho".
  */
 function mesmaPessoa(tokensIrmao, texto) {
     const t = tokens(texto);
     if (t.length < 2 || tokensIrmao.length < 2) {
-        // Nome de uma palavra so (ex.: "Walney"): exigimos igualdade exata.
+        // Nome de uma palavra so (ex.: "Wagner"): exigimos igualdade exata.
         return t.length > 0 && normalizar(texto) === tokensIrmao.join(' ');
     }
     const contidos = (a, b) => a.every(x => b.includes(x));
@@ -59,7 +59,7 @@ function mesmaPessoa(tokensIrmao, texto) {
 /**
  * Um campo pode trazer varios nomes ("Fulano / Beltrano", "Grupo 2 do Fulano & Grupo 3 do
  * Beltrano"). Separamos por "/" e "&" apenas: " e " nao serve como separador porque faz
- * parte de nomes reais ("Olga Pereira e Souza").
+ * parte de nomes reais ("Odete Pereira e Souza").
  */
 function fragmentos(valor) {
     return String(valor || '')
@@ -86,7 +86,7 @@ function campoMenciona(tokensIrmao, valor) {
 // mesma semana.
 //
 // A LIMPEZA nao esta aqui, e a ausencia e proposital. Ela e escalada por GRUPO
-// ("Limpeza: Grupo 4 Elvandy LIma"), nao por nome, entao casar por nome so alcancava o irmao
+// ("Limpeza: Grupo 4 Evaldo LIma"), nao por nome, entao casar por nome so alcancava o irmao
 // que da nome ao grupo e deixava de fora todo o resto do grupo — que e quem limpa. Ela virou
 // tarefa: services/TarefasService.js a monta a partir do grupo de campo do irmao, e ela
 // aparece na secao Tarefas da tela de inicio. Mante-la nos dois lugares mostraria o mesmo

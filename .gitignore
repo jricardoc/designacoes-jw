@@ -7,7 +7,12 @@
 !.gitignore
 !.easignore
 !docker-compose.yml
+!docker-compose.prod.yml
+!Caddyfile
 !.env.example
+!LICENSE
+!docs/
+!docs/**
 
 # Manter pastas backend e frontend
 !backend/
@@ -38,6 +43,10 @@ mobile/google-service-account*.json
 # Config do Firebase do cliente — contém API key; fornecer via EAS secret no build
 mobile/google-services.json
 mobile/GoogleService-Info.plist
+
+# Mapas de territorio sao de cada congregacao: em producao vivem num volume montado em
+# /app/public/territorios (ver docs/INSTALACAO.md), nunca no repositorio publico.
+backend/public/territorios/
 
 # Ignorar arquivos de ambiente (manter .env.example)
 .env

@@ -9,12 +9,14 @@
  * conferir os limites.
  *
  * TODO instante aqui e um "relogio da congregacao": um Date cujos campos UTC carregam a
- * hora local de America/Bahia. Comparar dois desses e valido porque ambos estao no mesmo
+ * hora local do fuso da congregacao (FUSO_HORARIO). Comparar dois desses e valido porque ambos estao no mesmo
  * espaco — e evita depender do fuso do servidor, que roda em UTC no deploy e no fuso da
  * maquina em desenvolvimento.
  */
 
-const FUSO = 'America/Bahia';
+// Fuso da congregacao, IANA ("America/Manaus", "Europe/Lisbon"). Os lembretes, a saudacao das
+// mensagens e o "hoje" das designacoes seguem ele, nunca o relogio do servidor (UTC no deploy).
+const FUSO = process.env.FUSO_HORARIO || 'America/Sao_Paulo';
 
 const FORMATADOR_RELOGIO = new Intl.DateTimeFormat('en-CA', {
     timeZone: FUSO,

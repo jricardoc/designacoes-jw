@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import { useConfig } from "@/api/hooks/useMisc";
 import type { Reuniao, SemanaReuniao } from "@/api/types";
 import { useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
@@ -36,6 +37,7 @@ export function useSemanaAcoes() {
   // PDF e compartilhar continuam para todos — são exportações de leitura.
   const podeRegistrarAssistencia = podeGerenciar(usuario, "reunioes");
   const toast = useToast();
+  const { data: config } = useConfig();
 
   // Mesma mecânica do quadro: montar o cartão fora da tela é o que dispara a captura.
   const [alvoImagem, setAlvoImagem] = useState<Alvo | null>(null);
@@ -61,6 +63,7 @@ export function useSemanaAcoes() {
         alvo.reuniao,
         alvo.semana,
         datasDaSemana(alvo.semana),
+        config?.subtitulo,
       );
       await exportarPdf(html, nomeArquivo(alvo, "pdf"));
     } catch (err) {

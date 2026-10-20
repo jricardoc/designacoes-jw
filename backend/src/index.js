@@ -20,7 +20,7 @@ const PORT = process.env.PORT || 3001;
 // FRONTEND_URL aceita VARIAS origens separadas por virgula. E o que permite
 // servir o site em dois dominios ao mesmo tempo durante uma troca — o antigo
 // continua funcionando enquanto o novo propaga o DNS e os aparelhos migram:
-//   FRONTEND_URL=https://servirmais.site,https://designacoes.jricardodev.com.br
+//   FRONTEND_URL=https://novo.exemplo.com,https://antigo.exemplo.com
 // A barra final e removida porque o header Origin nunca a envia; com ela, a
 // comparacao falharia em silencio e o site quebraria so em producao.
 const allowedOrigins = [
@@ -64,6 +64,9 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// A foto de perfil vai em base64 no JSON e passa do limite padrao de 100 KB. Limite maior SO
+// nesta rota; o parser global abaixo pula o corpo que ja foi lido aqui.
+app.use('/auth/foto', express.json({ limit: '1mb' }));
 app.use(express.json());
 
 // Middleware de autenticacao

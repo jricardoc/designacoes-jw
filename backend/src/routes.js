@@ -55,6 +55,11 @@ routes.post('/auth/login', loginLimiter, AuthController.login);
 routes.get('/auth/me', AuthController.me);
 routes.put('/auth/senha', AuthController.alterarSenha);
 routes.put('/auth/nome', AuthController.alterarNome);
+// Foto de perfil: cada um muda a propria; ver a dos outros e livre para quem esta logado.
+// O corpo do PUT tem limite proprio (maior que o padrao) em index.js.
+routes.put('/auth/foto', AuthController.salvarFoto);
+routes.delete('/auth/foto', AuthController.removerFoto);
+routes.get('/usuarios/:id/foto', AuthController.foto);
 
 // ==================== USUARIOS (Admin) ====================
 routes.get('/usuarios', requireAdmin, UsuarioController.index);
@@ -77,6 +82,8 @@ routes.put('/usuarios/:id/reset-senha', requireAdmin, UsuarioController.resetSen
 routes.delete('/usuarios/:id', requireAdmin, UsuarioController.delete);
 
 // ==================== CONFIG ====================
+// O nome da congregacao, para a tela de login (antes de haver sessao). Publica: so isso.
+routes.get('/config/publica', ConfigController.publica);
 routes.get('/config', ConfigController.getConfig);
 routes.put('/config', requireAdmin, ConfigController.updateConfig);
 routes.post('/config/reset', requireAdmin, ConfigController.resetDatabase);

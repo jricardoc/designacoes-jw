@@ -18,28 +18,28 @@ const iso = (d) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
 const T = (n) => tokens(n);
 
 sec('casamento de nomes: o que DEVE casar');
-chk(mesmaPessoa(T('Cosmírio Carvalho'), 'Cosmirio Carvalho'), 'acento ignorado (a importacao grava sem acento)');
-chk(mesmaPessoa(T('Henzel Almeida'), 'Henzel D. Almeida'), 'inicial no meio do nome');
+chk(mesmaPessoa(T('Aurélio Carvalho'), 'Aurelio Carvalho'), 'acento ignorado (a importacao grava sem acento)');
+chk(mesmaPessoa(T('Hugo Almeida'), 'Hugo D. Almeida'), 'inicial no meio do nome');
 chk(mesmaPessoa(T('José Santos'), 'jose  santos'), 'caixa e espaco duplo');
 
 sec('casamento de nomes: o que NAO PODE casar');
-chk(!mesmaPessoa(T('Marcelo Santana'), 'Marcelo Rodrigues'), 'orador visitante com o mesmo primeiro nome');
-chk(!mesmaPessoa(T('Ricardo Carvalho'), 'José Ricardo'), 'primeiro nome de um e sobrenome do outro');
-chk(!mesmaPessoa(T('Nicholas Santos'), 'Nicholas Silva'), 'mesmo primeiro nome, sobrenome diferente');
-chk(!mesmaPessoa(T('Cosmírio Carvalho'), 'Jucimar Carvalho'), 'so o sobrenome em comum');
-chk(!mesmaPessoa(T('Walney'), 'Walney Souza'), 'nome de uma palavra exige igualdade exata');
+chk(!mesmaPessoa(T('Mauro Santana'), 'Mauro Rodrigues'), 'orador visitante com o mesmo primeiro nome');
+chk(!mesmaPessoa(T('Rafael Carvalho'), 'José Rafael'), 'primeiro nome de um e sobrenome do outro');
+chk(!mesmaPessoa(T('Nathan Santos'), 'Nathan Silva'), 'mesmo primeiro nome, sobrenome diferente');
+chk(!mesmaPessoa(T('Aurélio Carvalho'), 'Joelson Carvalho'), 'so o sobrenome em comum');
+chk(!mesmaPessoa(T('Wagner'), 'Wagner Souza'), 'nome de uma palavra exige igualdade exata');
 
 sec('campos com varios nomes');
-chk(campoMenciona(T('Olga Pereira e Souza'), 'Olga Pereira e Souza / Maria de Lourdes'),
+chk(campoMenciona(T('Odete Pereira e Souza'), 'Odete Pereira e Souza / Maria de Lourdes'),
   '" e " nao e separador: faz parte do nome');
-chk(campoMenciona(T('Maria de Lourdes'), 'Olga Pereira e Souza / Maria de Lourdes'), 'acha o segundo nome da dupla');
+chk(campoMenciona(T('Maria de Lourdes'), 'Odete Pereira e Souza / Maria de Lourdes'), 'acha o segundo nome da dupla');
 // O texto abaixo e uma linha de limpeza, mas a LIMPEZA ja nao passa por aqui: ela virou
 // tarefa e casa por GRUPO (ver LimpezaGrupoService e verificarLimpezaGrupos.js). O caso
 // continua valendo como teste de `campoMenciona` com "&" separando varios nomes, que e o
 // formato de outros campos da programacao.
-chk(campoMenciona(T('Átilas Santos'), 'Grupos 2 do Átilas Santos & Grupo 3 do Marcelo Santana'),
+chk(campoMenciona(T('Álvaro Santos'), 'Grupos 2 do Álvaro Santos & Grupo 3 do Mauro Santana'),
   '"&" separa: acha o nome do primeiro pedaco');
-chk(!campoMenciona(T('José Santos'), 'Grupos 2 do Átilas Santos & Grupo 3 do Marcelo Santana'),
+chk(!campoMenciona(T('José Santos'), 'Grupos 2 do Álvaro Santos & Grupo 3 do Mauro Santana'),
   'e nao acha quem nao esta em pedaco nenhum');
 
 sec('valores que nao sao nome');
@@ -76,14 +76,14 @@ chk(r.meio === null && r.fds === null, 'semana sem data nao quebra');
 
 sec('sugestao de vinculo usuario -> irmao');
 const irmaos = [
-  { id: 1, nome: 'Ricardo Carvalho' }, { id: 2, nome: 'Henzel Almeida' },
-  { id: 3, nome: 'Marcelo Santana' }, { id: 4, nome: 'Cosmírio Carvalho' },
+  { id: 1, nome: 'Rafael Carvalho' }, { id: 2, nome: 'Hugo Almeida' },
+  { id: 3, nome: 'Mauro Santana' }, { id: 4, nome: 'Aurélio Carvalho' },
 ];
-chk(V.sugerirIrmao('Ricardo Carvalho', irmaos)?.confianca === 'exata', 'nome identico -> exata');
-chk(V.sugerirIrmao('Henzel D. Almeida', irmaos)?.confianca === 'provavel', 'inicial extra -> provavel');
-chk(V.sugerirIrmao('Helber Dias', irmaos) === null, 'quem nao e irmao nao recebe sugestao');
+chk(V.sugerirIrmao('Rafael Carvalho', irmaos)?.confianca === 'exata', 'nome identico -> exata');
+chk(V.sugerirIrmao('Hugo D. Almeida', irmaos)?.confianca === 'provavel', 'inicial extra -> provavel');
+chk(V.sugerirIrmao('Heitor Dias', irmaos) === null, 'quem nao e irmao nao recebe sugestao');
 chk(V.sugerirIrmao('Carvalho', irmaos) === null, 'so sobrenome, e ambiguo entre dois -> sem sugestao');
-chk(V.sugerirIrmao('Ricardo Carvalho', irmaos, new Set([1])) === null, 'irmao ja vinculado a outra conta nao e sugerido');
+chk(V.sugerirIrmao('Rafael Carvalho', irmaos, new Set([1])) === null, 'irmao ja vinculado a outra conta nao e sugerido');
 
 console.log(`\n${falhas === 0 ? '*** TODAS AS VERIFICACOES PASSARAM ***' : `*** ${falhas} FALHA(S) ***`}`);
 process.exit(falhas === 0 ? 0 : 1);

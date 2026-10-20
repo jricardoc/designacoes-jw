@@ -210,6 +210,8 @@ export interface Usuario {
   /** Vínculo com o cadastro da congregação. Sem ele não há "Minhas Designações". */
   irmaoId?: number | null;
   irmao?: { id: number; nome: string; funcoes: FuncaoId[] } | null;
+  /** Quando a foto de perfil mudou (ISO); null/ausente = sem foto, mostra as iniciais. */
+  fotoEm?: string | null;
 }
 
 export interface LoginResponse {
@@ -225,6 +227,21 @@ export interface Config {
   /** "HH:MM" — início da reunião, usado pelos lembretes de "N horas antes". */
   horaMeioSemana?: string;
   horaFimDeSemana?: string;
+  /** Dados do Zoom que entram nos convites (Ajustes, admin geral). */
+  zoom?: ConfigZoom | null;
+}
+
+export interface ZoomReuniao {
+  link?: string;
+  id?: string;
+  senha?: string;
+  /** "19:00" — quando a sala abre. */
+  salaAberta?: string;
+}
+
+export interface ConfigZoom {
+  meio?: ZoomReuniao;
+  fds?: ZoomReuniao;
 }
 
 /** Uma opção de tipo de notificação ou de antecedência, como o backend a descreve. */

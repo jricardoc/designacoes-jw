@@ -20,9 +20,9 @@ const sec = (t) => console.log(`\n=== ${t} ===`);
 
 // 03/09/2026 e uma quinta; o domingo que fecha essa semana e 06/09.
 const IRMAOS = [
-    { id: 1, nome: 'Edilson Santos' },
+    { id: 1, nome: 'Ednaldo Santos' },
     { id: 2, nome: 'José Santos' },
-    { id: 3, nome: 'Miguel Alves' },
+    { id: 3, nome: 'Murilo Alves' },
 ];
 const preview = (semanas) => buildIndisponibilidadePreview(semanas, IRMAOS);
 const datasDe = (p, irmaoId) => {
@@ -38,9 +38,9 @@ const partesEm = (p, irmaoId, data) => {
 sec('parte de meio de semana x parte de fim de semana');
 const p1 = preview([{
     dataReuniao: '03/09/2026',
-    presidente: 'Edilson Santos',
+    presidente: 'Ednaldo Santos',
     fds_presidente: 'José Santos',
-    fds_leitor: 'Miguel Alves',
+    fds_leitor: 'Murilo Alves',
 }]);
 chk(datasDe(p1, 1).join() === '03/09', 'parte de meio de semana marca a quinta');
 chk(datasDe(p1, 2).join() === '06/09', 'presidente do fim de semana marca o DOMINGO, nao a quinta');
@@ -49,9 +49,9 @@ chk(datasDe(p1, 3).join() === '06/09', 'leitor de A Sentinela marca o domingo');
 sec('mesmo irmao servindo nos dois dias da semana');
 const p2 = preview([{
     dataReuniao: '03/09/2026',
-    presidente: 'Edilson Santos',
-    oracaoInicial: 'Edilson Santos',
-    fds_leitor: 'Edilson Santos',
+    presidente: 'Ednaldo Santos',
+    oracaoInicial: 'Ednaldo Santos',
+    fds_leitor: 'Ednaldo Santos',
 }]);
 chk(datasDe(p2, 1).join() === '03/09,06/09',
     'vira DUAS datas — era o bug: as duas partes caiam na mesma quinta');
@@ -68,10 +68,10 @@ const p4 = preview([{ dataReuniao: '30/12/2026', fds_orador: 'José Santos' }]);
 chk(datasDe(p4, 2).join() === '03/01', 'semana que atravessa o ano nao quebra');
 
 sec('reuniao no proprio domingo e datas ilegiveis');
-const p5 = preview([{ dataReuniao: '06/09/2026', presidente: 'Edilson Santos', fds_presidente: 'José Santos' }]);
+const p5 = preview([{ dataReuniao: '06/09/2026', presidente: 'Ednaldo Santos', fds_presidente: 'José Santos' }]);
 chk(datasDe(p5, 1).join() === '06/09' && datasDe(p5, 2).join() === '06/09',
     'se a data ja for domingo, os dois momentos caem nela');
-const p6 = preview([{ dataReuniao: null, presidente: 'Edilson Santos', fds_presidente: 'José Santos' }]);
+const p6 = preview([{ dataReuniao: null, presidente: 'Ednaldo Santos', fds_presidente: 'José Santos' }]);
 chk(p6.confirmados.length === 0, 'semana sem data nao inventa indisponibilidade');
 chk(preview([]).confirmados.length === 0, 'lista vazia nao quebra');
 

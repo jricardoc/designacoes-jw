@@ -7,7 +7,7 @@
  * POR QUE ISSO EXISTE
  * Designacao.irmao1/irmao2 guardam o nome como TEXTO, nao como chave estrangeira. Quem foi
  * renomeado no cadastro depois de ja estar escalado deixou o nome antigo para tras nas
- * designacoes ("Claudio Oliveira" x "Cláudio da Silva Oliveira"), e os quadros mais antigos
+ * designacoes ("Flavio Oliveira" x "Flávio da Silva Oliveira"), e os quadros mais antigos
  * ainda tem nomes so de primeiro nome, herdados do seed. Um nome orfao custa caro:
  *
  *   - o irmao nao ve as proprias designacoes (MinhasDesignacoesService casa por igualdade
@@ -36,11 +36,11 @@ const { tokenize, matchStrength } = require('../src/services/MatchIrmaosService'
 const MAPA_MANUAL = {
     // Grafia diferente ("ley" x "lei"): nao ha token em comum alem do sobrenome, e o unico
     // palpite do matcher seria "Cristian Assad", que e OUTRO irmao.
-    'Cristiandley Assad': 'Cristiandlei S. Assad',
-    'Cristiandley': 'Cristiandlei S. Assad',
-    // "Elesbão" tambem aparece em "Carlos Elesbão" e "Kauã Elesbão", entao o sobrenome nao
+    'Cristiano Assad': 'Cristiandlei S. Assad',
+    'Cristiano': 'Cristiandlei S. Assad',
+    // "Sebastião" tambem aparece em "Carlos Sebastião" e "Cauê Sebastião", entao o sobrenome nao
     // decide; quem decide e o primeiro nome.
-    'Kaique Elesbão': 'Kaique Kevin',
+    'Kevin Sebastião': 'Kevin Kevin',
     // Nao existe no cadastro nem parecido: sai do quadro e a vaga de janeiro fica em branco.
     'Rudá': ''
 };

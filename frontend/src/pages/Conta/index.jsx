@@ -176,7 +176,8 @@ export default function Conta() {
         }),
       });
       if (res.ok) {
-        addToast(`Usuário ${novoNome} criado! Senha: jw1010`, 'success');
+        const criado = await res.json();
+        addToast(`Usuário ${novoNome} criado! Senha: ${criado.senhaInicial ?? 'a senha padrão'}`, 'success');
         setNovoNome('');
         setNovoNickname('');
         setNovoIrmaoId('');
@@ -202,9 +203,12 @@ export default function Conta() {
   };
   const handleResetSenha = async (id, nm) => {
     setMenuId(null);
-    if (!confirm(`Redefinir senha de ${nm} para "jw1010"?`)) return;
+    if (!confirm(`Redefinir a senha de ${nm} para a senha padrão?`)) return;
     const res = await authFetch(`/usuarios/${id}/reset-senha`, { method: 'PUT' });
-    if (res.ok) addToast(`Senha de ${nm} redefinida para jw1010`, 'success');
+    if (res.ok) {
+      const { senha } = await res.json();
+      addToast(`Senha de ${nm} redefinida para ${senha ?? 'a senha padrão'}`, 'success');
+    }
   };
   const handleDeletar = async (id, nm) => {
     setMenuId(null);

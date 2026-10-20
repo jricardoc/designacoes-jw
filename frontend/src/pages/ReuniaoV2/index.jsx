@@ -26,8 +26,10 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import Swal from "sweetalert2";
 import EditableField from "../../components/EditableField";
+import { semPrefixo, useCongregacao } from "../../utils/useCongregacao";
 
 export default function ReuniaoV2() {
+  const congregacao = semPrefixo(useCongregacao());
   const { authFetch } = useAuth();
   const navigate = useNavigate();
   const [reunioes, setReunioes] = useState([]);
@@ -422,7 +424,7 @@ export default function ReuniaoV2() {
                           </div>
                           <div className="v2-poster-title">
                             <h2>Programação da Congregação</h2>
-                            <h3>Norte de Itapuã</h3>
+                            <h3>{congregacao}</h3>
                           </div>
                         </div>
 
@@ -849,7 +851,7 @@ export default function ReuniaoV2() {
                                 </div>
                                 <div className="v2-f-sub">
                                   Congregação:{" "}
-                                  <EditableField value={semana.fds_congregacao} fieldName="fds_congregacao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback="Norte de Itapuã" />
+                                  <EditableField value={semana.fds_congregacao} fieldName="fds_congregacao" onSave={(f, v) => handleFieldUpdate(semana.id, f, v)} fallback={congregacao} />
                                 </div>
                               </div>
                               <div className="v2-fim-card">

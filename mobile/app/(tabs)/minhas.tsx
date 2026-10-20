@@ -132,9 +132,8 @@ function semHoraDefinida(c: Compromisso): boolean {
  * lembrete push discordarem sobre o mesmo compromisso.
  *
  * Ressalva conhecida: aqui a hora é interpretada no fuso do APARELHO, enquanto o
- * backend fixa America/Bahia. Para quem está na Bahia dá no mesmo; num aparelho
- * com outro fuso o corte desliza junto. Acertar isso exigiria carregar o fuso da
- * congregação, e não vale a complexidade enquanto o app é de uma congregação só.
+ * backend usa o da congregação (FUSO_HORARIO). Para quem mora na cidade da
+ * congregação dá no mesmo; num aparelho com outro fuso o corte desliza junto.
  */
 function horaDoCompromisso(c: Compromisso, config?: Config): string {
   const propria = horaPropria(c);

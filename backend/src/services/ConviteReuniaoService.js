@@ -14,26 +14,9 @@
  */
 
 // ---------------------------------------------------------------------------
-// O que muda com mais frequencia fica todo junto aqui em cima.
-// (Se um dia isto precisar ser editavel pela tela, o caminho e mover para a
-//  tabela Config; por enquanto um deploy resolve e nao ha tela para manter.)
+// O nome da congregacao e os dados do Zoom vem da tabela Config (tela de Ajustes,
+// admin geral): cada congregacao preenche os seus, sem deploy.
 // ---------------------------------------------------------------------------
-
-const NOME_CONGREGACAO = 'Norte de Itapuã';
-
-const ZOOM_MEIO_SEMANA = {
-    link: 'https://jworg.zoom.us/j/84981240952',
-    id: '849 8124 0952',
-    senha: 'jw1010',
-    salaAberta: '19:00',
-};
-
-const ZOOM_FIM_DE_SEMANA = {
-    link: 'https://jworg.zoom.us/j/84423800527',
-    id: '844 2380 0527',
-    senha: 'jw1010',
-    salaAberta: '08:30',
-};
 
 // Uma constante so, usada nos dois convites: o aviso tem que ser identico —
 // e ja saiu diferente uma vez (faltava no meio de semana e estava sem negrito).
@@ -43,6 +26,8 @@ const MESES = [
     '', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
+
+const { FUSO } = require('./RegrasLembrete');
 
 // Sentinela gravada pela web para marcar uma linha como excluida.
 const SENTINELA_DELETADO = '__DELETADO__';
@@ -119,6 +104,24 @@ function temaEntreAspas(tema) {
     return `“${tema}”`;
 }
 
+/**
+ * "Congregação Vila Nova" (como a tela de Ajustes guarda) -> "Vila Nova": o
+ * convite ja diz "A Congregação ..." e repetiria a palavra.
+ */
+function nomeCongregacao(subtitulo) {
+    return String(subtitulo || '').trim().replace(/^congrega[çc][ãa]o\s+/i, '');
+}
+
+function abertura(congregacao) {
+    const nome = nomeCongregacao(congregacao);
+    return negrito(nome
+        ? `A Congregação ${nome} convida você para uma reunião Zoom`
+        : 'A congregação convida você para uma reunião Zoom');
+}
+
+/** Reuniao com link ou ID do Zoom preenchido: sem os dois, o convite nao leva a lugar nenhum. */
+const temZoom = (zoom) => !!(zoom && (limpo(zoom.link) || limpo(zoom.id)));
+
 // ---------------------------------------------------------------------------
 // Os textos
 // ---------------------------------------------------------------------------
@@ -129,21 +132,21 @@ function temaEntreAspas(tema) {
  * Em negrito: a linha de abertura e a linha da semana (data + leitura) — que e a
  * informacao que o irmao procura quando bate o olho na mensagem.
  */
-function conviteMeioSemana(semana) {
+function conviteMeioSemana(semana, zoom = {}, nossaCongregacao = '') {
     const faixa = faixaPorExtenso(semana);
     const leitura = limpo(semana && semana.leituraSemanal);
     const linhaSemana = leitura ? `${faixa} - ${leitura}` : faixa;
 
     return [
-        negrito(`A Congregação ${NOME_CONGREGACAO} convida você para uma reunião Zoom`),
+        abertura(nossaCongregacao),
         negrito(linhaSemana),
-        `Sala aberta: ${ZOOM_MEIO_SEMANA.salaAberta}`,
-        ZOOM_MEIO_SEMANA.link,
-        `ID da reunião: ${ZOOM_MEIO_SEMANA.id}`,
-        `Senha de acesso: ${ZOOM_MEIO_SEMANA.senha}`,
+        limpo(zoom.salaAberta) && `Sala aberta: ${zoom.salaAberta}`,
+        limpo(zoom.link),
+        limpo(zoom.id) && `ID da reunião: ${zoom.id}`,
+        limpo(zoom.senha) && `Senha de acesso: ${zoom.senha}`,
         negrito(AVISO_REDES_SOCIAIS),
         '"Uma boa Reunião a todos"',
-    ].join('\n\n');
+    ].filter(Boolean).join('\n\n');
 }
 
 /**
@@ -153,7 +156,7 @@ function conviteMeioSemana(semana) {
  * rotulos ("Orador:") ficam sem marcacao — negrito na linha inteira deixa o
  * bloco pesado e some com o destaque, que e justamente o nome e o tema.
  */
-function conviteFimDeSemana(semana) {
+function conviteFimDeSemana(semana, zoom = {}, nossaCongregacao = '') {
     const orador = limpo(semana && semana.fds_orador);
     const tema = limpo(semana && semana.fds_tema);
     const congregacao = limpo(semana && semana.fds_congregacao);
@@ -161,22 +164,24 @@ function conviteFimDeSemana(semana) {
     const faixa = faixaPorExtenso(semana).toUpperCase();
     const linhaData = fds ? `${faixa} DE ${fds.getFullYear()}` : faixa;
 
-    const blocos = [
-        negrito(`A Congregação ${NOME_CONGREGACAO} convida você para uma reunião Zoom`),
-    ];
+    const blocos = [abertura(nossaCongregacao)];
     if (orador) blocos.push(`Orador: ${negrito(orador)}`);
     if (tema) blocos.push(`Tema: ${negrito(temaEntreAspas(tema))}`);
     if (congregacao) blocos.push(`Congregação: ${negrito(congregacao)}`);
+    const acesso = [
+        limpo(zoom.id) && `ID da reunião: ${zoom.id}`,
+        limpo(zoom.senha) && `Senha de acesso: ${zoom.senha}`,
+    ].filter(Boolean).join('\n');
     blocos.push(
         negrito(linhaData),
-        `Abertura da sala: ${ZOOM_FIM_DE_SEMANA.salaAberta}`,
-        `Entrar na reunião Zoom\n${ZOOM_FIM_DE_SEMANA.link}`,
-        `ID da reunião: ${ZOOM_FIM_DE_SEMANA.id}\nSenha de acesso: ${ZOOM_FIM_DE_SEMANA.senha}`,
+        limpo(zoom.salaAberta) && `Abertura da sala: ${zoom.salaAberta}`,
+        limpo(zoom.link) && `Entrar na reunião Zoom\n${zoom.link}`,
+        acesso,
         negrito(AVISO_REDES_SOCIAIS),
         'Uma boa reunião a todos.'
     );
 
-    return blocos.join('\n\n');
+    return blocos.filter(Boolean).join('\n\n');
 }
 
 /**
@@ -184,24 +189,33 @@ function conviteFimDeSemana(semana) {
  *
  * `id` e o que o app usa como key; `icone` e um nome do Ionicons. Acrescentar uma
  * opcao aqui a faz aparecer no app sem build novo.
+ *
+ * `config` e a linha da tabela Config. O convite de uma reuniao so aparece depois que o
+ * Zoom dela e preenchido em Ajustes — numa instalacao nova, a lista sai vazia.
  */
-function montarOpcoes(semana) {
-    return [
-        {
+function montarOpcoes(semana, config) {
+    const zoom = (config && config.zoom) || {};
+    const nossaCongregacao = config && config.subtitulo;
+    const opcoes = [];
+    if (temZoom(zoom.meio)) {
+        opcoes.push({
             id: 'zoom-meio',
             titulo: 'Zoom — meio de semana',
             descricao: 'Convite em texto com o link e a leitura da semana',
             icone: 'videocam-outline',
-            texto: conviteMeioSemana(semana),
-        },
-        {
+            texto: conviteMeioSemana(semana, zoom.meio, nossaCongregacao),
+        });
+    }
+    if (temZoom(zoom.fds)) {
+        opcoes.push({
             id: 'zoom-fds',
             titulo: 'Zoom — fim de semana',
             descricao: 'Convite em texto com orador, tema e link',
             icone: 'videocam-outline',
-            texto: conviteFimDeSemana(semana),
-        },
-    ];
+            texto: conviteFimDeSemana(semana, zoom.fds, nossaCongregacao),
+        });
+    }
+    return opcoes;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,12 +227,10 @@ function montarOpcoes(semana) {
 const TEXTO_CONFIRMACAO = (saudacao, nome) =>
     `${saudacao} ${nome}! Tudo certinho com a sua designação?`;
 
-const FUSO_CONGREGACAO = 'America/Bahia';
-
 // A hora do servidor e UTC; quem manda e o relogio da congregacao. Mesmo criterio de
 // LembreteDesignacoesService, que ja formata datas nesse fuso pelo mesmo motivo.
 const FORMATADOR_HORA = new Intl.DateTimeFormat('en-GB', {
-    timeZone: FUSO_CONGREGACAO,
+    timeZone: FUSO,
     hour: '2-digit',
     hour12: false,
 });
@@ -233,7 +245,7 @@ function saudacaoDaHora(agora = new Date()) {
 }
 
 // Primeiros nomes que quase nunca vem sozinhos: cumprimentar so "Maria" numa congregacao
-// com varias Marias nao identifica ninguem. Com dois nomes, "Maria Eduarda" resolve.
+// com varias Marias nao identifica ninguem. Com dois nomes, "Maria Fernanda" resolve.
 const NOMES_COMPOSTOS = new Set([
     'maria', 'ana', 'jose', 'joao', 'luiz', 'luis', 'antonio', 'carlos', 'pedro', 'paulo',
 ]);
@@ -243,7 +255,7 @@ const semAcento = (texto) =>
 
 /**
  * O nome como se fala com a pessoa: o primeiro nome, e o segundo junto quando o primeiro e
- * daqueles que pedem companhia. O arquivo importado traz o nome inteiro ("Maria Eduarda dos
+ * daqueles que pedem companhia. O arquivo importado traz o nome inteiro ("Maria Fernanda dos
  * S. Gomes de Araujo"), que numa mensagem direta soa como formulario.
  */
 function nomeDeTratamento(nomeCompleto) {
@@ -287,7 +299,7 @@ module.exports = {
     conviteFimDeSemana,
     textoConfirmacaoDesignacao,
     _internos: {
-        negrito, faixaPorExtenso, datasDaSemana, temaEntreAspas, limpo,
+        negrito, faixaPorExtenso, datasDaSemana, temaEntreAspas, limpo, nomeCongregacao,
         saudacaoDaHora, nomeDeTratamento,
     },
 };

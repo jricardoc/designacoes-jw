@@ -48,8 +48,9 @@ services:
       - ./backend:/app
       - /app/node_modules
     # Garante que o Prisma gere o cliente e aplique as migrations ao iniciar
+    # (banco vazio recebe o schema inteiro — ver backend/scripts/migrar.js)
     command: >
-      sh -c "npx prisma generate && npx prisma migrate deploy && npm run dev"
+      sh -c "npx prisma generate && npm run migrar && npm run dev"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
       interval: 30s

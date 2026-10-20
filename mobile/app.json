@@ -13,7 +13,6 @@
       "policy": "fingerprint"
     },
     "updates": {
-      "url": "https://u.expo.dev/fb0e366c-d0bf-441a-8faa-b70bd7c34242",
       "fallbackToCacheTimeout": 0
     },
     "assetBundlePatterns": [
@@ -21,14 +20,13 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.norteitapua.designacoesjw",
+      "bundleIdentifier": "com.exemplo.servirmais",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.norteitapua.designacoesjw",
-      "googleServicesFile": "./google-services.json",
+      "package": "com.exemplo.servirmais",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundImage": "./assets/adaptive-bg.png"
@@ -58,18 +56,27 @@
         {
           "color": "#5E6A46"
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Permitir que o $(PRODUCT_NAME) use o Face ID para você entrar sem digitar a senha."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que o $(PRODUCT_NAME) acesse suas fotos para a foto de perfil.",
+          "cameraPermission": "Permitir que o $(PRODUCT_NAME) use a câmera para tirar a foto de perfil.",
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
-      "apiUrl": "https://api.servirmais.site",
-      "router": {},
-      "eas": {
-        "projectId": "fb0e366c-d0bf-441a-8faa-b70bd7c34242"
-      }
-    },
-    "owner": "ocaradocopytrade"
+      "router": {}
+    }
   }
 }

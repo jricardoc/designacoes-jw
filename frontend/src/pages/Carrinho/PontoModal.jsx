@@ -81,7 +81,7 @@ export default function PontoModal({ ponto, onClose }) {
             className="crr-input"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder="Ex.: Mussurunga - Miguel"
+            placeholder="Ex.: Mussurunga - Murilo"
             autoFocus
           />
 

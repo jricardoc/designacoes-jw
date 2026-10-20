@@ -7,9 +7,9 @@
  * PRECISA DE BANCO. E idempotente: rodar de novo nao muda nada se ja estiver certo.
  *
  * POR QUE ISTO EXISTE
- * A programacao escala a limpeza assim: "Limpeza: Grupo 4 Elvandy LIma & Grupo 5 Luiz
- * Roberto". O nome ali chega abreviado, com caixa trocada e com Z/S trocados — e o cadastro
- * conhece o grupo como "Elvandyr Lima". O casamento por nome de LimpezaGrupoService aguenta
+ * A programacao escala a limpeza assim: "Limpeza: Grupo 4 Evaldo LIma & Grupo 5 Luiz
+ * Renato". O nome ali chega abreviado, com caixa trocada e com Z/S trocados — e o cadastro
+ * conhece o grupo como "Evaldor Lima". O casamento por nome de LimpezaGrupoService aguenta
  * esses defeitos, mas ele nao aguentaria o grupo ser REBATIZADO (o que acontece toda vez que
  * troca o dirigente, porque o grupo leva o nome de quem o dirige). O numero, esse, o
  * documento escreve sempre igual.
@@ -19,7 +19,7 @@
  * conferencia.
  *
  * A NUMERACAO MUDA COM O TEMPO. A congregacao ja teve seis grupos (havia um "Grupo 3 do
- * Helber Dias" em Marco/2026), e quando um grupo sai os outros sao renumerados — o historico
+ * Heitor Dias" em Marco/2026), e quando um grupo sai os outros sao renumerados — o historico
  * passa a contradizer o presente sem erro nenhum envolvido. Por isso o script decide por
  * RECENCIA: vale o numero das semanas mais novas, desde que duas o confirmem. Toda divergencia
  * e impressa, inclusive as que ele resolve sozinho.

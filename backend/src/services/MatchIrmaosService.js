@@ -58,7 +58,7 @@ const tokenize = (str) =>
  *   3 = alta   → um nome contém o outro por completo e o menor tem ≥2 tokens
  *                (ex.: "André Marques" = "André Marques", "José Santos" ⊂ "José Santos Lima")
  *   2 = média  → o primeiro nome de um aparece no outro, ou compartilham ≥2 tokens
- *                (ex.: "José Ricardo" × "Ricardo Carvalho" → batem em "Ricardo")
+ *                (ex.: "José Rafael" × "Rafael Carvalho" → batem em "Rafael")
  *   1 = fraca  → só um sobrenome em comum (ruído — ignorado)
  *   0 = nada
  */
@@ -187,7 +187,7 @@ function buildIndisponibilidadePreview(semanas, irmaosDB) {
                 oc.nomeOriginal,
             );
         } else {
-            // Empate entre vários (ex.: dois "Ricardo") → revisão manual.
+            // Empate entre vários (ex.: dois "Rafael") → revisão manual.
             const key = `${oc.nomeOriginal}__${oc.data}`;
             let amb = ambiguosMap.get(key);
             if (!amb) {

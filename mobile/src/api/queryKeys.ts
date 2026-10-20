@@ -29,6 +29,7 @@ export const qk = {
     ["irmaos-disponiveis", String(usuarioId ?? "todos")] as const,
   minhasDesignacoes: (escopo: string) => ["minhas-designacoes", escopo] as const,
   config: ["config"] as const,
+  configPublica: ["config", "publica"] as const,
   preferenciasNotificacao: ["preferencias-notificacao"] as const,
   // Por usuário: dois logins no mesmo aparelho não podem compartilhar cache.
   notificacoesRemotas: (usuarioId: number | string) =>
