@@ -90,6 +90,31 @@ Também dá para distribuir pelo TestFlight (até 10 mil testadores, sem cadastr
 - **Uma conta Apple gratuita + um Mac com Xcode** instala o app só no seu próprio iPhone, e ele
   expira a cada 7 dias. Serve para testar, não para distribuir.
 
+## Mapa do território (Google Maps)
+
+A tela de território mostra as quadras num mapa de verdade, com a sua localização e os pontos
+marcados pelo GPS. O mapa é o Google Maps, e ele pede uma **chave** por plataforma:
+
+| Variável no `mobile/.env` | Sem ela |
+|---|---|
+| `GOOGLE_MAPS_ANDROID_KEY` | O Android mostra o território sem o mapa (onde paramos, Não bater e "Como chegar" continuam). |
+| `GOOGLE_MAPS_IOS_KEY` | O iPhone usa o mapa da Apple. |
+
+Como criar (o uso no celular é gratuito e ilimitado, mas o Google pede uma conta de faturamento
+com cartão):
+
+1. No [Google Cloud Console](https://console.cloud.google.com), crie um projeto e ative o
+   faturamento.
+2. Em *APIs e serviços → Biblioteca*, ative **Maps SDK for Android** e **Maps SDK for iOS**.
+3. Em *Credenciais → Criar credencial → Chave de API*, crie uma chave para cada plataforma e
+   restrinja: a do Android ao seu `APP_ID` + impressão digital SHA-1 da assinatura
+   (`npx eas-cli credentials` mostra), a do iOS ao seu `APP_ID`.
+4. Ponha as chaves no `mobile/.env` e gere um build novo.
+
+A marcação por GPS **funciona sem internet**: o ponto fica guardado no celular e sobe sozinho
+quando a conexão volta. Para abrir territórios sem sinal, o app guarda uma cópia de todos eles
+a cada 6 horas.
+
 ## Notificações push (opcional)
 
 Os lembretes de designação chegam por push. No iPhone funcionam com a conta paga da Apple

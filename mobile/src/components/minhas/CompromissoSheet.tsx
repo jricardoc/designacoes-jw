@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import type { Compromisso } from "@/api/types";
-import { Sheet } from "@/components/ui";
+import { Button, Sheet } from "@/components/ui";
 import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
@@ -112,6 +113,20 @@ export function CompromissoSheet({
                 Data aproximada — confirme na programação antes de se programar por ela.
               </Text>
             </View>
+          ) : null}
+
+          {/* Território designado: o atalho leva direto ao mapa e ao "onde paramos". */}
+          {compromisso.origem?.tipo === "territorio" ? (
+            <Button
+              label="Abrir o território"
+              icon="map"
+              onPress={() => {
+                onClose();
+                router.push({ pathname: "/territorio/[numero]", params: { numero: compromisso.origem!.titulo } });
+              }}
+              fullWidth
+              style={{ marginTop: 14 }}
+            />
           ) : null}
         </ScrollView>
       ) : null}

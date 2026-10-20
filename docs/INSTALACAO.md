@@ -14,7 +14,7 @@ no ar, o primeiro acesso, a configuração inicial e o app nos celulares.
 3. [Instalar no servidor](#3-instalar-no-servidor) — [Opção A: VPS com Docker](#opção-a-vps-com-docker-compose) · [Opção B: EasyPanel](#opção-b-easypanel)
 4. [Primeiro acesso](#4-primeiro-acesso)
 5. [Configuração inicial no app](#5-configuração-inicial-no-app)
-6. [Mapas de território (opcional)](#6-mapas-de-território-opcional)
+6. [Territórios: My Maps e cartões](#6-territórios-my-maps-e-cartões)
 7. [O app no celular](#7-o-app-no-celular)
 8. [Backup e atualização](#8-backup-e-atualização)
 9. [Problemas comuns](#9-problemas-comuns)
@@ -164,17 +164,49 @@ Faça nesta ordem, logado como `admin`:
 | 3 | **Ajustes → Grupos de campo** | Os grupos (opcional). |
 | 4 | **Menu → Publicadores** | Cadastre os irmãos e marque as **funções** de cada um: microfone, indicador, áudio e vídeo, estacionamento, carrinho, dirigente. É delas que saem os quadros. |
 | 5 | **Conta → Usuários → Novo** | Crie o acesso de cada irmão e **vincule ao cadastro dele**. Sem o vínculo, ele não vê as próprias designações. A senha inicial é a `SENHA_PADRAO`. |
-| 6 | **Conta → ⋯ → Áreas de acesso** | Dê a cada responsável só a área dele (designações, dirigentes, reuniões, carrinho, confirmações). |
+| 6 | **Conta → ⋯ → Áreas de acesso** | Dê a cada responsável só a área dele (designações, dirigentes, reuniões, carrinho, confirmações, territórios). |
 | 7 | **Reunião → Importar PDF** | Envie a programação da reunião do mês (o PDF da apostila). |
+| 8 | **Território → Gerenciar → Mapas do My Maps** | Importe os territórios dos seus mapas do Google My Maps ([passo 6](#6-territórios-my-maps-e-cartões)). |
 
 > **Dica:** quem tem a função **Áudio e vídeo** no cadastro e a conta vinculada já recebe,
 > sozinho, acesso completo à tela de Reunião: importar a programação, registrar e compartilhar
-> a assistência. Não precisa dar a área "Reuniões" um por um.
+> a assistência. Do mesmo jeito, quem tem a função **Dirigente** já pode registrar saídas e
+> marcar pontos no território. Não precisa dar a área um por um.
 
-## 6. Mapas de território (opcional)
+## 6. Territórios: My Maps e cartões
 
-Os mapas não ficam no banco nem no repositório: são imagens numa pasta do servidor, lidas pela
-API. Sem a pasta, a tela de Território aparece vazia, sem erro.
+### Do Google My Maps (recomendado)
+
+Se a congregação desenha os territórios no [Google My Maps](https://www.google.com/maps/d/),
+o app usa esses mapas direto: **cada camada vira um território, cada polígono vira uma quadra**.
+
+1. No My Maps, abra o mapa → **Compartilhar** → "Qualquer pessoa com o link pode ver".
+2. No app, como admin (ou com a área Territórios): **Território → Gerenciar → Mapas do My Maps**.
+3. Cole os links (um por linha) e toque em **Ler os mapas**.
+4. Confira o **número** de cada território. O app sugere pelo nome; camadas repetidas em dois
+   mapas vêm desmarcadas.
+5. **Importar**.
+
+Mudou o desenho no My Maps? **Atualizar do My Maps** busca as mudanças sem perder números,
+saídas nem pontos marcados. O caminho contrário (gravar no My Maps pelo app) o Google não
+permite.
+
+Depois da importação, os dirigentes têm no território:
+- o mapa com as quadras, a localização deles e os pontos marcados;
+- **Marcar onde estou** pelo GPS (Paramos aqui, Próximo começa aqui, Trecho concluído, Não bater,
+  Observação), **com ou sem internet**;
+- **Registrar saída**: concluímos o território, ou onde paramos;
+- a lista **Não bater**, com reconfirmação a cada 3 meses;
+- histórico, designações (aparecem em "Minhas designações"), painel e o **S-13 em PDF**.
+
+Para o mapa aparecer dentro do app no Android, configure a chave do Google Maps
+([guia do app](APP.md#mapa-do-território-google-maps)).
+
+### Cartões em imagem (opcional)
+
+Os cartões escaneados continuam valendo como **"cartão original"** de cada território. Eles não
+ficam no banco nem no repositório: são imagens numa pasta do servidor, lidas pela API e casadas
+pelo número do território. Sem a pasta, nada quebra.
 
 Monte uma pasta assim:
 
@@ -206,6 +238,8 @@ Onde colocar:
   `docker compose -f docker-compose.prod.yml restart backend`.
 - **EasyPanel:** envie os arquivos para o volume montado em `/app/public/territorios`
   (pelo gerenciador de arquivos do painel ou por SFTP) e reinicie a API.
+
+Enquanto nada for importado do My Maps, a lista de territórios mostra só os cartões.
 
 ## 7. O app no celular
 

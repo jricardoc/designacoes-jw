@@ -263,6 +263,28 @@ async function listarPorIrmao(irmao) {
         }
     }
 
+    // 4. Territorios designados ------------------------------------------------
+    // Pelo id do irmao, e nao pelo nome: a designacao ja nasce ligada ao cadastro. Entra como
+    // "dirigente" para cair nos mesmos lembretes de saida de campo.
+    if (irmao.id) {
+        const territorios = await prisma.designacaoTerritorio.findMany({
+            where: { irmaoId: irmao.id },
+            include: { territorio: { select: { id: true, numero: true, nome: true } } },
+        });
+        for (const d of territorios) {
+            const [ano, mes, dia] = d.dia.split('-').map(Number);
+            compromissos.push(compromisso({
+                id: `territorio-${d.id}`,
+                tipo: 'dirigente',
+                data: new Date(ano, mes - 1, dia),
+                titulo: `Território ${d.territorio.numero}`,
+                detalhe: d.territorio.nome,
+                papel: 'Dirigente',
+                origem: { tipo: 'territorio', id: d.territorio.id, titulo: d.territorio.numero, status: 'publicado' },
+            }));
+        }
+    }
+
     return compromissos.sort((a, b) => {
         if (!a.dataISO) return 1;
         if (!b.dataISO) return -1;

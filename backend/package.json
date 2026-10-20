@@ -20,6 +20,7 @@
     "pessoas:duplicados": "node scripts/duplicadosPessoas.js",
     "verificar:limpeza-grupos": "node scripts/verificarLimpezaGrupos.js",
     "verificar:tarefas": "node scripts/verificarTarefas.js",
+    "verificar:territorios": "node scripts/verificarTerritorios.js",
     "vincular:limpeza": "node scripts/vincularLimpeza.js",
     "backfill:publicacoes": "node scripts/backfillPublicacoes.js"
   },

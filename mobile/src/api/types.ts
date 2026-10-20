@@ -26,7 +26,8 @@ export type EscopoAdmin =
   | "dirigentes"
   | "reunioes"
   | "carrinho"
-  | "confirmacoes";
+  | "confirmacoes"
+  | "territorios";
 
 /** Uma área do catálogo de permissões, como o backend a descreve. */
 export interface OpcaoEscopo {
@@ -446,15 +447,212 @@ export interface QuadroDirigente extends QuadroDirigenteResumo {
  * da API (ex.: "/territorios/arquivos/01-mapa.jpg") e exigem o header de
  * autenticação — prefixar com API_URL e mandar o Bearer no <Image>.
  */
-export interface Territorio {
-  numero: number;
-  localidade: string;
-  imagens: {
-    mapa: string;
-    /** Só os territórios 01-08 têm a versão de satélite. */
-    satelite: string | null;
-    thumb: string;
+// ===== Territórios =====
+
+export type SituacaoTerritorio = "concluido" | "andamento" | "nao_iniciado" | "sem_registro";
+export type TipoMarcacao = "parada" | "proximo" | "concluido" | "nao_bater" | "observacao";
+export type CasaTrabalhada = "sim" | "nao" | "incerto" | "outro_lugar";
+/** [latitude, longitude] */
+export type Ponto = [number, number];
+
+/** O "cartão original" em imagem, quando a instalação tem a pasta de cartões. */
+export interface ImagensCartao {
+  mapa: string | null;
+  satelite: string | null;
+  thumb: string | null;
+}
+
+export interface PermissoesTerritorio {
+  /** Registrar saída e marcar pontos (dirigentes e a área Territórios). */
+  marcar: boolean;
+  /** Importar do My Maps, editar, designar, revisar. */
+  gerenciar: boolean;
+}
+
+export interface TerritorioResumo {
+  /** null enquanto a instalação só tem os cartões (antes de importar do My Maps). */
+  id: number | null;
+  numero: string;
+  nome: string;
+  area: string | null;
+  apelidos: string | null;
+  cor: string | null;
+  quadras: number;
+  situacao: SituacaoTerritorio;
+  ultimaSaida: { dia: string; concluiu: boolean; autor: string | null } | null;
+  diasSemTrabalho: number | null;
+  naoBater: { total: number; vencidas: number };
+  conflitos: number;
+  designacao: { id: number; dia: string; dirigente: string } | null;
+  imagens: ImagensCartao | null;
+}
+
+export interface ListaTerritorios {
+  fonte: "banco" | "cartoes";
+  territorios: TerritorioResumo[];
+  permissoes: PermissoesTerritorio;
+  /** Preenchido quando a resposta veio da cópia guardada no celular (sem internet). */
+  copiaLocalDe?: string;
+}
+
+export interface Quadra {
+  id: number;
+  nome: string;
+  cor: string | null;
+  pontos: Ponto[];
+}
+
+export interface SaidaTerritorio {
+  id: number;
+  dia: string;
+  concluiu: boolean;
+  ondeParou: string | null;
+  casaTrabalhada: CasaTrabalhada | null;
+  proximoInicio: string | null;
+  pendente: string | null;
+  lat: number | null;
+  lng: number | null;
+  quadra: { id: number; nome: string } | null;
+  autor: { id: number; nome: string } | null;
+  status: "ativa" | "conflito" | "descartada";
+  createdAt: string;
+}
+
+export interface MarcacaoTerritorio {
+  id: number;
+  clientKey: string;
+  tipo: TipoMarcacao;
+  lat: number | null;
+  lng: number | null;
+  precisao: number | null;
+  texto: string | null;
+  quadraId: number | null;
+  marcadaEm: string;
+  autor: { id: number; nome: string } | null;
+  reconfirmadaEm: string | null;
+  precisaReconfirmar: boolean;
+}
+
+export interface AvisoTerritorio {
+  id: number;
+  tipo: "acesso_impedido" | "entrada_outra_rua" | "trecho_pendente" | "outro";
+  texto: string;
+  createdAt: string;
+}
+
+export interface DesignacaoTerritorio {
+  id: number;
+  dia: string;
+  concluidoEm: string | null;
+  dirigente: { id: number; nome: string };
+}
+
+export interface TerritorioDetalhe {
+  id: number;
+  numero: string;
+  nome: string;
+  area: string | null;
+  apelidos: string | null;
+  observacoes: string | null;
+  cor: string | null;
+  mymaps: { mid: string; camada: string } | null;
+  cicloDesde: string;
+  naoIniciado: boolean;
+  situacao: SituacaoTerritorio;
+  quadras: Quadra[];
+  ultimaSaida: SaidaTerritorio | null;
+  ondeParamos: SaidaTerritorio[];
+  marcacoes: MarcacaoTerritorio[];
+  avisos: AvisoTerritorio[];
+  designacoes: DesignacaoTerritorio[];
+  conflitos: number;
+  imagens: ImagensCartao | null;
+  permissoes: PermissoesTerritorio;
+  copiaLocalDe?: string;
+}
+
+export interface HistoricoTerritorio {
+  saidas: SaidaTerritorio[];
+  marcacoes: (Pick<MarcacaoTerritorio, "id" | "tipo" | "texto" | "lat" | "lng" | "marcadaEm" | "autor"> & {
+    ativo: boolean;
+  })[];
+}
+
+export interface MapaGeralTerritorios {
+  territorios: {
+    numero: string;
+    nome: string;
+    situacao: SituacaoTerritorio;
+    cor: string | null;
+    quadras: { nome: string; pontos: Ponto[] }[];
+  }[];
+}
+
+export interface CamadaMyMaps {
+  mid: string;
+  nomeMapa: string;
+  camada: string;
+  quadras: number;
+  nomesQuadras: string[];
+  cor: string | null;
+  territorioAtual: string | null;
+  repetida: boolean;
+  numeroSugerido: string | null;
+}
+
+export interface PreviaMyMaps {
+  mapas: { mid: string; nome: string | null; erro: string | null }[];
+  camadas: CamadaMyMaps[];
+}
+
+export interface PainelTerritorios {
+  dias: number;
+  resumo: {
+    total: number;
+    trabalhados: number;
+    concluidosNoCiclo: number;
+    designacoesProximos7: number;
+    naoBaterVencidas: number;
+    parados: number;
+    conflitos: number;
   };
+  maisTrabalhados: { numero: string; nome: string; dias: number }[];
+  maisTempoParados: { numero: string; nome: string; dias: number | null; nunca: boolean }[];
+  dirigentes: { nome: string; saidas: number; territorios: number; ultima: string }[];
+  concluidos: { numero: string; nome: string; dia: string; autor: string | null }[];
+  porMes: { mes: string; saidas: number }[];
+}
+
+export interface DesignacaoTerritorioLista {
+  id: number;
+  dia: string;
+  concluidoEm: string | null;
+  dirigente: { id: number; nome: string };
+  territorio: { id: number; numero: string; nome: string };
+}
+
+export interface ConflitoTerritorio {
+  id: number;
+  dia: string;
+  ondeParou: string | null;
+  casaTrabalhada: CasaTrabalhada | null;
+  proximoInicio: string | null;
+  createdAt: string;
+  territorio: { numero: string; nome: string };
+  autor: { id: number; nome: string } | null;
+  quadra: { nome: string } | null;
+}
+
+export interface S13 {
+  ano: number;
+  de: string;
+  ate: string;
+  territorios: {
+    numero: string;
+    nome: string;
+    ultimaConclusao: string | null;
+    designacoes: { dirigente: string; dia: string; concluidoEm: string | null }[];
+  }[];
 }
 
 // ===== Reuniões =====

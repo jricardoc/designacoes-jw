@@ -62,16 +62,17 @@ dirigente, e PDF da escala.
 <tr>
 <td valign="top">
 
-### 🛒 Carrinho e 🗺️ Território
-Pontos e turnos fixos do carrinho de publicações. Cartões de território com mapa e
-satélite, com busca e zoom.
+### 🗺️ Território com GPS
+Os territórios vêm direto do seu **Google My Maps**. O dirigente vê as quadras no mapa,
+**marca pelo GPS onde parou** (funciona **sem internet** e envia sozinho depois), registra a
+saída, mantém a lista **Não bater** e gera o **S-13** em PDF.
 
 </td>
 <td valign="top">
 
-### ✅ Confirmações e tarefas
-Mensagem pronta no WhatsApp para confirmar as partes de estudante. Tarefas
-(link do Zoom, montar o quadro…) atribuídas a cada responsável, com painel de prazos.
+### 🛒 Carrinho, ✅ confirmações e tarefas
+Pontos e turnos fixos do carrinho. Mensagem pronta no WhatsApp para confirmar as partes de
+estudante. Tarefas atribuídas a cada responsável, com painel de prazos.
 
 </td>
 </tr>

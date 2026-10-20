@@ -70,6 +70,12 @@
           "cameraPermission": "Permitir que o $(PRODUCT_NAME) use a câmera para tirar a foto de perfil.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permitir que o $(PRODUCT_NAME) use sua localização para marcar pontos no mapa do território."
+        }
       ]
     ],
     "experiments": {

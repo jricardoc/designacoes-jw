@@ -67,7 +67,7 @@ async function varrerBandeja() {
  */
 export function usePushNotifications() {
   const [pushToken, setPushToken] = useState<string | null>(null);
-  const [telaPendente, setTelaPendente] = useState<"minhas" | null>(null);
+  const [telaPendente, setTelaPendente] = useState<"minhas" | "territorio" | null>(null);
   const router = useRouter();
   // Fica falso enquanto o router não montou: na abertura fria o toque na
   // notificação chega antes de existir para onde navegar.
@@ -96,7 +96,7 @@ export function usePushNotifications() {
       const data = resposta.notification.request.content.data as
         | { screen?: string }
         | undefined;
-      if (data?.screen === "minhas") setTelaPendente("minhas");
+      if (data?.screen === "minhas" || data?.screen === "territorio") setTelaPendente(data.screen);
     };
 
     // Abertura fria: o toque chega ao nativo antes de haver listener em JS.
@@ -140,7 +140,7 @@ export function usePushNotifications() {
     // rodada de listeners de push. `dismissTo` volta para a instância que já
     // existe e o `navigate` seguinte resolve a tela de dentro.
     router.dismissTo("/(tabs)/minhas");
-    router.navigate("/(tabs)/minhas");
+    router.navigate(telaPendente === "territorio" ? "/(tabs)/territorio" : "/(tabs)/minhas");
   }, [telaPendente, navegacaoPronta, router]);
 
   return { pushToken };

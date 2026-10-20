@@ -23,6 +23,10 @@ module.exports = ({ config }) => {
   const appId = env.APP_ID || config.ios.bundleIdentifier;
   // Push no Android precisa do google-services.json do Firebase. Sem ele o app funciona,
   // só não recebe notificação — por isso é opcional, e não quebra o build.
+  // Google Maps dentro do app. Android: sem a chave o Google Maps não abre, e o app mostra o
+  // território sem o mapa. iPhone: sem a chave, vale o mapa da Apple.
+  const mapsAndroid = env.GOOGLE_MAPS_ANDROID_KEY;
+  const mapsIos = env.GOOGLE_MAPS_IOS_KEY;
   const googleServices =
     env.GOOGLE_SERVICES_JSON ||
     (fs.existsSync(path.join(__dirname, "google-services.json"))
@@ -33,16 +37,23 @@ module.exports = ({ config }) => {
     ...config,
     name: env.APP_NAME || config.name,
     ...(env.EXPO_OWNER && { owner: env.EXPO_OWNER }),
-    ios: { ...config.ios, bundleIdentifier: appId },
+    ios: {
+      ...config.ios,
+      bundleIdentifier: appId,
+      ...(mapsIos && { config: { ...config.ios?.config, googleMapsApiKey: mapsIos } }),
+    },
     android: {
       ...config.android,
       package: appId,
       ...(googleServices && { googleServicesFile: googleServices }),
+      ...(mapsAndroid && { config: { ...config.android?.config, googleMaps: { apiKey: mapsAndroid } } }),
     },
     ...(projectId && { updates: { ...config.updates, url: `https://u.expo.dev/${projectId}` } }),
     extra: {
       ...config.extra,
       apiUrl: env.EXPO_PUBLIC_API_URL || config.extra?.apiUrl,
+      // Só o "tem ou não tem" vai para o app; a chave fica na configuração nativa.
+      mapaGoogle: { android: !!mapsAndroid, ios: !!mapsIos },
       ...(projectId && { eas: { projectId } }),
     },
   };

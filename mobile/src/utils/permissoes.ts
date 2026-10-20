@@ -33,3 +33,11 @@ export function ehAdminGeral(usuario: Usuario | null | undefined): boolean {
 export function temAlgumEscopo(usuario: Usuario | null | undefined): boolean {
   return !!usuario?.isAdmin || (usuario?.escopos?.length ?? 0) > 0;
 }
+
+/**
+ * Pode registrar saída e marcar pontos no território? Dirigentes (função no cadastro, com a
+ * conta vinculada) e quem cuida da área. Espelha `podeMarcarTerritorio` do backend.
+ */
+export function podeMarcarTerritorio(usuario: Usuario | null | undefined): boolean {
+  return podeGerenciar(usuario, "territorios") || !!usuario?.irmao?.funcoes?.includes("dirigente");
+}

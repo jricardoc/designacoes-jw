@@ -25,6 +25,7 @@ const ESCOPOS = {
     REUNIOES: 'reunioes',
     CARRINHO: 'carrinho',
     CONFIRMACOES: 'confirmacoes',
+    TERRITORIOS: 'territorios',
 };
 
 /** Os valores aceitos ao conceder escopo a um usuario. */
@@ -57,6 +58,11 @@ const CATALOGO_ESCOPOS = [
         label: 'Confirmações',
         descricao: 'Falar com quem tem parte e anotar quem confirmou',
     },
+    {
+        id: ESCOPOS.TERRITORIOS,
+        label: 'Territórios',
+        descricao: 'Importar do My Maps, editar territórios, designar e revisar registros',
+    },
 ];
 
 /** Descarta o que nao esta no catalogo e remove repetido. */
@@ -79,6 +85,20 @@ function temEscopo(user, escopo) {
     // compartilhar) sem o admin precisar conceder o escopo um por um. Vale so com a conta
     // vinculada ao irmao: `req.user.irmao` vem do authMiddleware.
     return escopo === ESCOPOS.REUNIOES && !!user.irmao?.funcoes?.includes('audioVideo');
+}
+
+/**
+ * Pode registrar saida e marcar pontos no territorio? Quem cuida da area de territorios, e
+ * quem dirige saida de campo (funcao Dirigente no cadastro, com a conta vinculada). Ver e
+ * livre para todo irmao logado.
+ */
+function podeMarcarTerritorio(user) {
+    return temEscopo(user, ESCOPOS.TERRITORIOS) || !!user?.irmao?.funcoes?.includes('dirigente');
+}
+
+function requireMarcarTerritorio(req, res, next) {
+    if (podeMarcarTerritorio(req.user)) return next();
+    return res.status(403).json({ error: 'Só dirigentes e quem cuida dos territórios podem registrar.' });
 }
 
 /**
@@ -105,4 +125,6 @@ module.exports = {
     sanearEscopos,
     temEscopo,
     requireEscopo,
+    podeMarcarTerritorio,
+    requireMarcarTerritorio,
 };

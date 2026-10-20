@@ -20,7 +20,16 @@ export const qk = {
   confirmacoes: (passadas: boolean) => ["confirmacoes", passadas] as const,
   assistencias: ["assistencias"] as const,
   cumprimento: ["cumprimento"] as const,
+  // Tudo de território começa por "territorios": invalidar o prefixo renova lista, detalhe e
+  // painel de uma vez depois que a fila offline envia.
   territorios: ["territorios"] as const,
+  territorio: (numero: string) => ["territorios", "detalhe", numero] as const,
+  territoriosMapa: ["territorios", "mapa"] as const,
+  historicoTerritorio: (numero: string) => ["territorios", "historico", numero] as const,
+  painelTerritorios: (dias: number) => ["territorios", "painel", dias] as const,
+  designacoesTerritorio: ["territorios", "designacoes"] as const,
+  conflitosTerritorio: ["territorios", "conflitos"] as const,
+  dirigentesTerritorio: ["territorios", "dirigentes"] as const,
   compartilhamentosSemana: (semanaId: number | string) =>
     ["compartilhamentos-semana", String(semanaId)] as const,
   usuarios: ["usuarios"] as const,
