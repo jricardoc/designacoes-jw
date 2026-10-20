@@ -1,0 +1,235 @@
+import { Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import MapView, { Marker, Polygon, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
+import type { Ponto, TipoMarcacao } from "@/api/types";
+import { type Cores } from "@/theme";
+import { useTema } from "@/theme/TemaContext";
+import { MARCACOES } from "@/territorios/constantes";
+
+export interface AreaMapa {
+  chave: string;
+  nome: string;
+  pontos: Ponto[];
+  /** Cor do polígono; sem ela, a da marca. */
+  cor?: string | null;
+  /** Texto fixo no meio do polígono (o número, no mapa geral). */
+  rotulo?: string;
+}
+
+export interface PinoMapa {
+  chave: string;
+  tipo: TipoMarcacao;
+  lat: number;
+  lng: number;
+  /** Ainda na fila do celular, sem chegar ao servidor: pino tracejado. */
+  pendente?: boolean;
+}
+
+export interface MapaTerritorioRef {
+  /** Enquadra todos os polígonos de novo. */
+  enquadrar: () => void;
+  focar: (lat: number, lng: number) => void;
+}
+
+interface MapaTerritorioProps {
+  areas: AreaMapa[];
+  pinos?: PinoMapa[];
+  satelite?: boolean;
+  /** Segurar o dedo no mapa marca um ponto escolhido ali (em vez do GPS). */
+  onLongPress?: (ponto: { lat: number; lng: number }) => void;
+  onAreaPress?: (chave: string) => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+const extra = Constants.expoConfig?.extra as { mapaGoogle?: { android?: boolean; ios?: boolean } } | undefined;
+const noExpoGo = Constants.executionEnvironment === "storeClient";
+
+/**
+ * Dá para mostrar o mapa neste aparelho? No Android o Google Maps exige a chave no build (sem
+ * ela o app fecha ao abrir o mapa); no iPhone, sem a chave do Google, usamos o mapa da Apple.
+ * O Expo Go traz chave própria.
+ */
+export const mapaDisponivel =
+  Platform.OS === "ios" || noExpoGo || (Platform.OS === "android" && !!extra?.mapaGoogle?.android);
+
+const provedor = Platform.OS === "android" || extra?.mapaGoogle?.ios ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+
+const centro = (pontos: Ponto[]) => {
+  const n = pontos.length || 1;
+  const [lat, lng] = pontos.reduce(([a, b], [x, y]) => [a + x, b + y], [0, 0]);
+  return { latitude: lat / n, longitude: lng / n };
+};
+
+/** "#0288D1" -> "#0288D155" (o mesmo tom, transparente, para o preenchimento). */
+const transparente = (cor: string, alfa = "55") => (/^#[0-9a-f]{6}$/i.test(cor) ? `${cor}${alfa}` : cor);
+
+/**
+ * O mapa do território: as quadras do My Maps, os pontos marcados e a posição do irmão.
+ *
+ * Os pinos são views próprias (letra dentro de um círculo da cor do tipo), e não o pino padrão:
+ * no sol, na rua, a letra é o que se lê de relance — a cor sozinha não basta para daltônico.
+ */
+export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>(function MapaTerritorio(
+  { areas, pinos = [], satelite = false, onLongPress, onAreaPress, style },
+  ref,
+) {
+  const { colors, styles } = useTema(criarEstilos);
+  const mapa = useRef<MapView>(null);
+  // Pinos com view própria precisam desenhar uma vez com rastreio ligado (senão saem em branco
+  // no Android); depois desliga, que é o que mantém o mapa leve ao arrastar.
+  const [rastrear, setRastrear] = useState(true);
+  useEffect(() => {
+    setRastrear(true);
+    const t = setTimeout(() => setRastrear(false), 1000);
+    return () => clearTimeout(t);
+  }, [pinos.length, areas.length]);
+
+  const todos = useMemo(
+    () => areas.flatMap((a) => a.pontos.map(([latitude, longitude]) => ({ latitude, longitude }))),
+    [areas],
+  );
+
+  const enquadrar = () => {
+    if (todos.length === 0) return;
+    mapa.current?.fitToCoordinates(todos, {
+      edgePadding: { top: 48, right: 36, bottom: 48, left: 36 },
+      animated: true,
+    });
+  };
+
+  useImperativeHandle(ref, () => ({
+    enquadrar,
+    focar: (latitude, longitude) =>
+      mapa.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.002, longitudeDelta: 0.002 }, 500),
+  }));
+
+  if (!mapaDisponivel) {
+    return (
+      <View style={[styles.indisponivel, style]}>
+        <Ionicons name="map-outline" size={28} color={colors.textMuted} />
+        <Text style={styles.indisponivelTitulo}>Mapa indisponível neste aparelho</Text>
+        <Text style={styles.indisponivelTexto}>
+          Falta a chave do Google Maps neste app. Use “Como chegar” para abrir o Google Maps.
+        </Text>
+      </View>
+    );
+  }
+
+  const inicial = todos.length > 0 ? centro(areas.flatMap((a) => a.pontos)) : null;
+
+  return (
+    <MapView
+      ref={mapa}
+      provider={provedor}
+      style={[styles.mapa, style]}
+      mapType={satelite ? "hybrid" : "standard"}
+      showsUserLocation
+      showsMyLocationButton={false}
+      showsCompass={false}
+      toolbarEnabled={false}
+      initialRegion={
+        inicial ? { ...inicial, latitudeDelta: 0.01, longitudeDelta: 0.01 } : undefined
+      }
+      onMapReady={enquadrar}
+      onLongPress={
+        onLongPress
+          ? (e) => onLongPress({ lat: e.nativeEvent.coordinate.latitude, lng: e.nativeEvent.coordinate.longitude })
+          : undefined
+      }
+    >
+      {areas.map((a) => {
+        const cor = a.cor || colors.primary;
+        return (
+          <Polygon
+            key={a.chave}
+            coordinates={a.pontos.map(([latitude, longitude]) => ({ latitude, longitude }))}
+            fillColor={transparente(cor)}
+            strokeColor={cor}
+            strokeWidth={2}
+            tappable={!!onAreaPress}
+            onPress={onAreaPress ? () => onAreaPress(a.chave) : undefined}
+          />
+        );
+      })}
+
+      {areas
+        .filter((a) => a.rotulo)
+        .map((a) => (
+          <Marker
+            key={`rotulo-${a.chave}`}
+            coordinate={centro(a.pontos)}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={rastrear}
+            onPress={onAreaPress ? () => onAreaPress(a.chave) : undefined}
+          >
+            <View style={[styles.rotulo, { borderColor: a.cor || colors.primary }]}>
+              <Text style={styles.rotuloTexto}>{a.rotulo}</Text>
+            </View>
+          </Marker>
+        ))}
+
+      {pinos.map((p) => {
+        const tipo = MARCACOES[p.tipo];
+        const cor = tipo.cor(colors);
+        return (
+          <Marker
+            key={p.chave}
+            coordinate={{ latitude: p.lat, longitude: p.lng }}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={rastrear}
+            title={tipo.rotulo}
+            description={p.pendente ? "Aguardando internet para enviar" : undefined}
+          >
+            <View
+              style={[
+                styles.pino,
+                { backgroundColor: p.pendente ? colors.surface : cor, borderColor: cor },
+                p.pendente && styles.pinoPendente,
+              ]}
+            >
+              <Text style={[styles.pinoLetra, { color: p.pendente ? cor : "#fff" }]}>{tipo.letra}</Text>
+            </View>
+          </Marker>
+        );
+      })}
+    </MapView>
+  );
+});
+
+const criarEstilos = (colors: Cores) =>
+  StyleSheet.create({
+    mapa: { flex: 1 },
+    indisponivel: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 6,
+      padding: 20,
+      backgroundColor: colors.surfaceMuted,
+    },
+    indisponivelTitulo: { fontSize: 15, fontWeight: "700", color: colors.text, textAlign: "center" },
+    indisponivelTexto: { fontSize: 13, color: colors.textSecondary, textAlign: "center", lineHeight: 18 },
+    pino: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      borderWidth: 2.5,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    pinoPendente: { borderStyle: "dashed" },
+    pinoLetra: { fontSize: 15, fontWeight: "900" },
+    rotulo: {
+      minWidth: 30,
+      paddingHorizontal: 6,
+      height: 24,
+      borderRadius: 12,
+      borderWidth: 2,
+      backgroundColor: "#fff",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    rotuloTexto: { fontSize: 12, fontWeight: "800", color: "#2B2620" },
+  });

@@ -150,7 +150,7 @@ export function SaidaCampoModal({ visible, saida, onClose }: Props) {
       <TextInput
         value={host}
         onChangeText={setHost}
-        placeholder="Ex.: Casa do irmão Edilson"
+        placeholder="Ex.: Casa do irmão Ednaldo"
         placeholderTextColor={colors.textMuted}
         style={styles.input}
       />

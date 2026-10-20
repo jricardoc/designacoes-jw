@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { ApiError } from "@/api/client";
 import {
@@ -7,11 +7,14 @@ import {
   useExcluirAssistencia,
   useSalvarAssistencia,
 } from "@/api/hooks/useReunioes";
+import { useConfig } from "@/api/hooks/useMisc";
 import type { SemanaReuniao, TipoAssistencia } from "@/api/types";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { exportarImagem } from "@/utils/exportImagem";
 import { datasDaSemana, faixaSemana, type DataDaSemana } from "@/utils/semanaReuniao";
+import { AssistenciaShareCard } from "./AssistenciaShareCard";
 
 /** "dd/MM/yyyy" — a chave que o backend usa no upsert por (data, tipo). */
 const chaveData = (d: Date) =>
@@ -36,6 +39,9 @@ interface AssistenciaSheetProps {
  *
  * Só quem gerencia reuniões chega aqui (o botão no cartão da semana é
  * escondido dos demais); o backend nega a escrita de qualquer forma.
+ *
+ * "Compartilhar imagem" gera o cartão da contagem para o WhatsApp. Grava antes se o que
+ * está na tela difere do registro: a imagem não pode mostrar um número que o sistema não tem.
  */
 export function AssistenciaSheet({ semana, onClose }: AssistenciaSheetProps) {
   const { colors, styles } = useTema(criarEstilos);
@@ -43,6 +49,11 @@ export function AssistenciaSheet({ semana, onClose }: AssistenciaSheetProps) {
   const { data: assistencias } = useAssistencias();
   const salvar = useSalvarAssistencia();
   const excluir = useExcluirAssistencia();
+  const { data: config } = useConfig();
+  // Montar o cartão fora da tela é o que dispara a captura (mesma mecânica da semana).
+  const [imagem, setImagem] = useState<{ presencial: number; zoom: number } | null>(null);
+  const shotRef = useRef<View>(null);
+  const capturando = useRef(false);
 
   const datas = useMemo(
     () => (semana ? datasDaSemana(semana) : { inicio: null, meio: null, fds: null }),
@@ -103,6 +114,40 @@ export function AssistenciaSheet({ semana, onClose }: AssistenciaSheetProps) {
         err instanceof Error ? err.message : "Erro ao salvar a assistência",
         "error",
       );
+    }
+  };
+
+  const handleCompartilhar = async () => {
+    if (!dataSelecionada) return;
+    const valores = { presencial: numero(presencial), zoom: numero(zoom) };
+    try {
+      if (registro?.presencial !== valores.presencial || registro?.zoom !== valores.zoom) {
+        await salvar.mutateAsync({ data: chaveData(dataSelecionada.data), tipo, ...valores });
+      }
+      setImagem(valores);
+    } catch (err) {
+      toast.show(
+        err instanceof Error ? err.message : "Erro ao salvar a assistência",
+        "error",
+      );
+    }
+  };
+
+  /** Chamado pelo onLayout do cartão escondido — antes disso a imagem sai em branco. */
+  const capturar = async () => {
+    if (!imagem || !dataSelecionada || capturando.current) return;
+    capturando.current = true;
+    try {
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+      );
+      const marca = chaveData(dataSelecionada.data).replace(/\//g, "-");
+      await exportarImagem(shotRef, `assistencia-${tipo}-${marca}.png`);
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Erro ao gerar imagem", "error");
+    } finally {
+      setImagem(null);
+      capturando.current = false;
     }
   };
 
@@ -198,6 +243,16 @@ export function AssistenciaSheet({ semana, onClose }: AssistenciaSheetProps) {
             fullWidth
           />
 
+          <Button
+            label="Compartilhar imagem"
+            icon="share-social-outline"
+            variant="secondary"
+            onPress={handleCompartilhar}
+            loading={!!imagem}
+            disabled={total === 0 || salvar.isPending}
+            fullWidth
+          />
+
           {registro ? (
             <Pressable
               style={styles.remover}
@@ -212,6 +267,20 @@ export function AssistenciaSheet({ semana, onClose }: AssistenciaSheetProps) {
               )}
               <Text style={styles.removerTexto}>Remover este registro</Text>
             </Pressable>
+          ) : null}
+
+          {/* Fora da tela de propósito: precisa de layout para o view-shot capturar. */}
+          {imagem && dataSelecionada ? (
+            <View style={styles.shotHost} pointerEvents="none" onLayout={capturar}>
+              <AssistenciaShareCard
+                ref={shotRef}
+                tipo={tipo}
+                data={`${dataSelecionada.diaSemana}, ${dataSelecionada.diaMes}/${dataSelecionada.data.getFullYear()}`}
+                presencial={imagem.presencial}
+                zoom={imagem.zoom}
+                congregacao={config?.subtitulo}
+              />
+            </View>
           ) : null}
         </View>
       ) : null}
@@ -274,4 +343,7 @@ const criarEstilos = (colors: Cores) =>
       paddingVertical: 4,
     },
     removerTexto: { fontSize: 13.5, fontWeight: "700", color: colors.red },
+    // Longe da área visível, sem opacity 0: view invisível por opacidade sai em branco no
+    // print de alguns Android.
+    shotHost: { position: "absolute", left: -10000, top: 0 },
   });

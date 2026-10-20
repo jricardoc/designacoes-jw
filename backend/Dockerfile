@@ -21,4 +21,5 @@ EXPOSE 3001
 # uma coluna faltando degrada um endpoint, um crash loop derruba tudo.
 #
 # Ao mudar o schema: `npx prisma migrate dev --name descricao` e commitar prisma/migrations.
-CMD ["sh", "-c", "npx prisma generate && { npx prisma migrate deploy || echo '>>> AVISO: prisma migrate deploy FALHOU. Rode `npx prisma migrate status` para investigar. <<<'; } && npm run start"]
+# `npm run migrar`: migrate deploy, e o schema inteiro de uma vez quando o banco esta vazio.
+CMD ["sh", "-c", "npx prisma generate && { npm run migrar || echo '>>> AVISO: a migracao do banco FALHOU. Rode `npx prisma migrate status` para investigar. <<<'; } && npm run start"]

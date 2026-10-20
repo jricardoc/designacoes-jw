@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Lock, User, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { LogoMark } from '../../components/Logo';
+import { useCongregacao } from '../../utils/useCongregacao';
 
 export default function Login() {
+  const congregacao = useCongregacao();
   const [nickname, setNickname] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -222,7 +224,7 @@ export default function Login() {
           color: 'var(--t-muted)',
           fontSize: '0.85rem'
         }}>
-          Congregação Norte de Itapuã
+          {congregacao}
         </p>
       </div>
     </div>

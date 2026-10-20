@@ -143,7 +143,7 @@ console.log('\n=== 7. O texto do aviso de segunda cita o quadro no grupo ===\n')
     const { corpo } = Regras.textoDoAviso(tipo('confirmacoes'), aviso, {
         alvoISO: '2026-09-03', vencimentoISO: '2026-09-02',
     });
-    ok(/Marcelo/.test(corpo), 'o lembrete de segunda manda conferir o quadro do irmao Marcelo');
+    ok(/quadro já foi postado no grupo/.test(corpo), 'o lembrete de segunda manda conferir se o quadro foi postado no grupo');
     ok(/confirm/i.test(corpo), 'e continua sendo sobre confirmar as designacoes');
 }
 
@@ -187,7 +187,7 @@ console.log('\n=== 7c. A limpeza informa, nao cobra ===\n');
     ok(!/[Vv]ence/.test(Regras.rotuloInformativo('2026-09-06', '2026-09-05')), 'a palavra "vence" nao aparece');
 
     const oc = Tarefas._internos.ocorrenciaDe(tipo('limpeza'), {
-        alvoISO: '2026-09-03', titulo: 'Limpeza do salão', grupo: { id: 7, nome: 'Edilson Santos' },
+        alvoISO: '2026-09-03', titulo: 'Limpeza do salão', grupo: { id: 7, nome: 'Ednaldo Santos' },
     });
     const ctx = { hojeISO: '2026-09-05', grupos: [], porTipo: { limpeza: [oc] } };
     const [card] = Tarefas.montarParaUsuario({
@@ -218,7 +218,7 @@ const contexto = {
         quadroDesignacoes: [Tarefas._internos.ocorrenciaDe(tipo('quadroDesignacoes'), { alvoISO: '2026-08-31', ocorrencia: '2026-09-01', titulo: 'Montar' })],
         quadroDirigentes: [],
         limpeza: [
-            Tarefas._internos.ocorrenciaDe(tipo('limpeza'), { alvoISO: '2026-09-03', titulo: 'Limpeza do salão', grupo: { id: 7, nome: 'Edilson Santos' } }),
+            Tarefas._internos.ocorrenciaDe(tipo('limpeza'), { alvoISO: '2026-09-03', titulo: 'Limpeza do salão', grupo: { id: 7, nome: 'Ednaldo Santos' } }),
             Tarefas._internos.ocorrenciaDe(tipo('limpeza'), { alvoISO: '2026-09-03', titulo: 'Limpeza do salão', grupo: { id: 9, nome: 'Outro Grupo' } }),
         ],
     },
@@ -229,7 +229,7 @@ eq(montar({}).length, 0, 'sem tarefa atribuida e sem grupo, a lista e vazia');
 eq(montar({ designadas: ['zoom'] }).map(t => t.tipo), ['zoom'], 'so o que foi atribuido aparece');
 eq(montar({ designadas: ['zoom', 'confirmacoes'] }).length, 2, 'duas tarefas, dois cards');
 eq(montar({ designadas: ['limpeza'] }).length, 0, 'limpeza NAO se atribui a mao');
-eq(montar({ grupoId: 7 }).map(t => t.grupo.nome), ['Edilson Santos'], 'limpeza vem do grupo, e so a do grupo dele');
+eq(montar({ grupoId: 7 }).map(t => t.grupo.nome), ['Ednaldo Santos'], 'limpeza vem do grupo, e so a do grupo dele');
 eq(montar({ grupoId: 99 }).length, 0, 'grupo que nao limpa nesta semana nao ve nada');
 eq(
     montar({ designadas: ['zoom'], concluidas: new Set(['zoom|2026-09-03']) }).length,

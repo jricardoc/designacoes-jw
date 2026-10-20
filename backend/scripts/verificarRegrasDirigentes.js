@@ -31,7 +31,7 @@ const sec = (t) => console.log(`\n=== ${t} ===`);
 // Cenario principal: 6 irmaos, 12 turnos, e um deles so dirige na SEGUNDA.
 // --------------------------------------------------------------------------
 // Janeiro/2026: 05, 12, 19 e 26 caem na segunda-feira. Escolhemos as datas de modo que a
-// SEXTA vaga e a DECIMA SEGUNDA caiam numa segunda: assim Harison passa cinco turnos seguidos
+// SEXTA vaga e a DECIMA SEGUNDA caiam numa segunda: assim Haroldo passa cinco turnos seguidos
 // sendo pulado e mesmo assim continua na frente da fila. E o caso da planilha, em que ele
 // reaparece duas semanas depois sem ter servido no meio.
 const DIAS = [
@@ -48,15 +48,15 @@ const turnos12 = DIAS.map(([data, dia], i) => ({
   id: i + 1, data, dataObj: new Date(2026, 0, dia), saidaCampoId: 1, turno: 1, local: 'Casa A',
 }));
 
-// Harison nao aparece no historico -> "nunca serviu" -> frente da fila. Os outros cinco tem
-// `ordem` explicita, entao a fila inicial e deterministicamente [Harison, Bruno..Fabio].
+// Haroldo nao aparece no historico -> "nunca serviu" -> frente da fila. Os outros cinco tem
+// `ordem` explicita, entao a fila inicial e deterministicamente [Haroldo, Bruno..Fabio].
 const CINCO = ['Bruno', 'Caio', 'Diego', 'Elias', 'Fabio'];
 const historicoBase = {};
 CINCO.forEach((nome, i) => { historicoBase[nome] = { designacoes: 1, ordem: i + 1 }; });
 
 const seisIrmaos = [
   // "so dirige na segunda" e modelado como indisponibilidade em todas as outras datas.
-  { nome: 'Harison', saidaCampoIds: [1], indisponiveis: NAO_SEGUNDAS },
+  { nome: 'Haroldo', saidaCampoIds: [1], indisponiveis: NAO_SEGUNDAS },
   ...CINCO.map(nome => ({ nome, saidaCampoIds: [1], indisponiveis: [] })),
 ];
 
@@ -74,14 +74,14 @@ chk(new Set(ciclo1).size === 6, `os 6 primeiros turnos tem 6 nomes distintos: ${
 chk(new Set(ciclo2).size === 6, `os 6 turnos seguintes tem 6 nomes distintos: ${ciclo2.join(', ')}`);
 
 sec('(b) quem nao serve num dia MANTEM A VEZ');
-// Harison e o primeiro da fila e e pulado nas cinco datas que nao sao segunda. Se ele
+// Haroldo e o primeiro da fila e e pulado nas cinco datas que nao sao segunda. Se ele
 // perdesse a vez, cairia para o fim e so serviria muito depois - ou nunca.
-chk(escala[5] === 'Harison',
-  `Harison, primeiro da fila, e pulado em ${NAO_SEGUNDAS.slice(0, 5).join(', ')} e serve na primeira segunda (${SEGUNDAS[0]} -> ${escala[5]})`);
-chk(escala.slice(0, 5).every(n => n !== 'Harison'), 'e nao foi forcado em nenhuma data em que nao dirige');
-chk(escala.filter(n => n === 'Harison').length === 2,
-  `serve exatamente nas 2 segundas do periodo (${escala.filter(n => n === 'Harison').length})`);
-chk(escala[11] === 'Harison', `e reaparece na segunda seguinte (${SEGUNDAS[1]} -> ${escala[11]})`);
+chk(escala[5] === 'Haroldo',
+  `Haroldo, primeiro da fila, e pulado em ${NAO_SEGUNDAS.slice(0, 5).join(', ')} e serve na primeira segunda (${SEGUNDAS[0]} -> ${escala[5]})`);
+chk(escala.slice(0, 5).every(n => n !== 'Haroldo'), 'e nao foi forcado em nenhuma data em que nao dirige');
+chk(escala.filter(n => n === 'Haroldo').length === 2,
+  `serve exatamente nas 2 segundas do periodo (${escala.filter(n => n === 'Haroldo').length})`);
+chk(escala[11] === 'Haroldo', `e reaparece na segunda seguinte (${SEGUNDAS[1]} -> ${escala[11]})`);
 
 sec('(c) o segundo ciclo sai na mesma ordem do primeiro');
 chk(ciclo1.join(' > ') === ciclo2.join(' > '),

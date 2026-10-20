@@ -1,210 +1,50 @@
+const crypto = require('crypto');
 const prisma = require('../prisma');
 const bcrypt = require('bcrypt');
 
-const MESES = ['', 'JANEIRO', 'FEVEREIRO', 'MARÇO', 'ABRIL', 'MAIO', 'JUNHO',
-    'JULHO', 'AGOSTO', 'SETEMBRO', 'OUTUBRO', 'NOVEMBRO', 'DEZEMBRO'];
-
+/**
+ * Carga inicial de uma instalacao nova: so o usuario `admin` e a configuracao em branco.
+ *
+ * Nada de dados da congregacao aqui — irmaos, saidas de campo, carrinho e grupos sao
+ * cadastrados pelo app. Cada bloco so roda com a tabela vazia, entao num banco que ja tem
+ * dados isto nao faz nada (alem do vinculo usuario-irmao, que e idempotente).
+ */
 class SeedService {
     async execute() {
         try {
             console.log('Checking seed...');
 
-            // 1. Usuario Admin Seed
-            const usuarioCount = await prisma.usuario.count();
-            let adminUser;
-            if (usuarioCount === 0) {
-                console.log('Seeding Usuario admin...');
-                // Senha inicial configuravel via env; padrao apenas para dev local.
-                const senhaInicial = process.env.ADMIN_SEED_PASSWORD || 'jw1010';
-                const senhaHash = await bcrypt.hash(senhaInicial, 10);
-                adminUser = await prisma.usuario.create({
+            if ((await prisma.usuario.count()) === 0) {
+                // Sem ADMIN_SEED_PASSWORD, uma senha aleatoria — nunca uma fixa, que todo mundo
+                // que lesse este repositorio publico conheceria. Ela sai no log UMA vez.
+                const senhaInicial = process.env.ADMIN_SEED_PASSWORD || crypto.randomBytes(9).toString('base64url');
+                await prisma.usuario.create({
                     data: {
                         nickname: 'admin',
-                        senha: senhaHash,
+                        senha: await bcrypt.hash(senhaInicial, 10),
                         nome: 'Administrador',
                         isAdmin: true
                     }
                 });
-                // Nunca logar a senha em texto claro.
-                console.log('Admin criado: nickname=admin (troque a senha no primeiro acesso).');
-            } else {
-                adminUser = await prisma.usuario.findFirst();
+                if (process.env.ADMIN_SEED_PASSWORD) {
+                    console.log('Admin criado: nickname=admin, senha=ADMIN_SEED_PASSWORD (troque no primeiro acesso).');
+                } else {
+                    console.log(`>>> Admin criado: nickname=admin  senha=${senhaInicial}  (troque no primeiro acesso) <<<`);
+                }
             }
 
-            // 2. Config Seed
-            const configCount = await prisma.config.count();
-            if (configCount === 0) {
-                console.log('Seeding Config...');
+            if ((await prisma.config.count()) === 0) {
+                // O nome da congregacao fica vazio: o admin preenche em Ajustes.
                 await prisma.config.create({
-                    data: {
-                        titulo: 'Quadro de Designações',
-                        subtitulo: 'Congregação Norte de Itapuã',
-                        mes: 'JAN'
-                    }
+                    data: { titulo: 'Quadro de Designações', subtitulo: '', mes: 'JAN' }
                 });
             }
 
-            // 3. Irmãos Seed
-            const irmaoCount = await prisma.irmao.count();
-            if (irmaoCount === 0) {
-                console.log('Seeding Irmãos...');
-                const irmaos = [
-                    { nome: "Benjamin", funcoes: ["microfone"] },
-                    { nome: "Claudio", funcoes: ["microfone"] },
-                    { nome: "Miguel", funcoes: ["microfone", "indicador"] },
-                    { nome: "Ivo", funcoes: ["microfone"] },
-                    { nome: "Kauã", funcoes: ["microfone"] },
-                    { nome: "Cristian", funcoes: ["microfone", "indicador"] },
-                    { nome: "Domingos Neto", funcoes: ["microfone", "indicador"] },
-                    { nome: "Leonardo", funcoes: ["microfone"] },
-                    { nome: "Jessé", funcoes: ["microfone"] },
-                    { nome: "Lázaro", funcoes: ["microfone"] },
-                    { nome: "Manoel", funcoes: ["microfone"] },
-                    { nome: "André Marques", funcoes: ["microfone", "indicador"] },
-                    { nome: "Reginaldo", funcoes: ["microfone", "indicador"] },
-                    { nome: "Cosmírio", funcoes: ["microfone", "indicador"] },
-                    { nome: "Pedro", funcoes: ["microfone"] },
-                    { nome: "Nicholas", funcoes: ["microfone"] },
-                    { nome: "Edgar", funcoes: ["indicador"] },
-                    { nome: "Jucimar", funcoes: ["indicador"] },
-                    { nome: "Rudá", funcoes: ["indicador"] },
-                    { nome: "Aloísio", funcoes: ["indicador"] },
-                    { nome: "Francisco", funcoes: ["indicador"] },
-                    { nome: "José Santos", funcoes: ["indicador"] },
-                    // Audio/Video - Experientes
-                    { nome: "Henzel", funcoes: ["indicador", "audioVideo"], nivelAudioVideo: "experiente" },
-                    { nome: "Ricardo", funcoes: ["audioVideo", "indicador"], nivelAudioVideo: "experiente" },
-                    { nome: "Harison", funcoes: ["audioVideo"], nivelAudioVideo: "experiente" },
-                    { nome: "Cristiandley", funcoes: ["audioVideo"], nivelAudioVideo: "experiente" },
-                    // Audio/Video - Treinando
-                    { nome: "Matheus Lino", funcoes: ["indicador", "audioVideo"], nivelAudioVideo: "treinando" },
-                    { nome: "Erick Matheus", funcoes: ["audioVideo"], nivelAudioVideo: "treinando" },
-                    { nome: "Everton", funcoes: ["audioVideo"], nivelAudioVideo: "treinando" },
-                    { nome: "João Felipe", funcoes: ["microfone", "audioVideo"], nivelAudioVideo: "treinando" }
-                ];
-
-                await prisma.irmao.createMany({ data: irmaos });
-
-                // 4. Indisponibilidades de Janeiro 2026
-                console.log('Seeding Indisponibilidades Janeiro 2026...');
-                const irmaosDB = await prisma.irmao.findMany();
-                const getIrmaoId = (nome) => irmaosDB.find(i => i.nome === nome)?.id;
-
-                const indisponibilidades = [
-                    // Dia 04/01
-                    { irmaoId: getIrmaoId("Matheus Lino"), data: "04/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Miguel"), data: "04/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Jucimar"), data: "04/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Ricardo"), data: "04/01", motivo: "Outra designação" },
-
-                    // Dia 08/01
-                    { irmaoId: getIrmaoId("Henzel"), data: "08/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Claudio"), data: "08/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Ivo"), data: "08/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("João Felipe"), data: "08/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Rudá"), data: "08/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Erick Matheus"), data: "08/01", motivo: "Outra designação" },
-
-                    // Dia 11/01
-                    { irmaoId: getIrmaoId("Harison"), data: "11/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Rudá"), data: "11/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Everton"), data: "11/01", motivo: "Outra designação" },
-
-                    // Dia 15/01
-                    { irmaoId: getIrmaoId("Henzel"), data: "15/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Jessé"), data: "15/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Manoel"), data: "15/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Reginaldo"), data: "15/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Ricardo"), data: "15/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Cristiandley"), data: "15/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Miguel"), data: "15/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Domingos Neto"), data: "15/01", motivo: "Outra designação" },
-
-                    // Dia 18/01
-                    { irmaoId: getIrmaoId("Jessé"), data: "18/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Harison"), data: "18/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("Henzel"), data: "18/01", motivo: "Outra designação" },
-
-                    // Dia 25/01
-                    { irmaoId: getIrmaoId("Ricardo"), data: "25/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("João Felipe"), data: "25/01", motivo: "Outra designação" },
-                    { irmaoId: getIrmaoId("José Santos"), data: "25/01", motivo: "Outra designação" }
-                ].filter(i => i.irmaoId);
-
-                if (indisponibilidades.length > 0) {
-                    await prisma.indisponibilidade.createMany({
-                        data: indisponibilidades
-                    });
-                    console.log(`Criadas ${indisponibilidades.length} indisponibilidades`);
-                }
-            }
-
-            // 5. Saídas de Campo e Dirigentes (Seed)
-            const saidaCount = await prisma.saidaCampo.count();
-            if (saidaCount === 0) {
-                console.log('Seeding Saídas de Campo...');
-                const saidasData = [
-                    { diaSemana: 'segunda', turno: 1, local: 'Ex-Combatentes - Casa dos irmãos Walney e Olga', horario: '08:45', dirigentes: ['Walney', 'Harison', 'Kaique', 'Ricardo', 'André', 'Miguel'] },
-                    { diaSemana: 'terca', turno: 1, local: 'Tokaia - Casa do Irmão Edilson', horario: '08:45', dirigentes: ['José', 'Ricardo', 'Aloísio', 'Edgar'] },
-                    { diaSemana: 'quarta', turno: 1, local: 'Ex-Combatentes - Casa da irmã Fátima Lopes', horario: '08:45', dirigentes: ['Manoel', 'José', 'Edgar', 'Neto', 'André'] },
-                    { diaSemana: 'quinta', turno: 1, local: 'KM 17 - Casa da irmã Jucélia', horario: '08:45', dirigentes: ['Edgar', 'Breno', 'José', 'Cosmírio', 'Kaique'] },
-                    { diaSemana: 'sexta', turno: 1, local: 'Tokaia - Casa do Irmão Edilson', horario: '08:45', dirigentes: ['José', 'Edgar', 'Aloísio', 'Breno'] },
-                    { diaSemana: 'sabado', turno: 1, local: 'Ex-Combatentes - Casa dos irmãos Walney e Olga', horario: '08:45', dirigentes: ['Matheus Lino', 'Kaique', 'Elesbão', 'André', 'Cristian', 'Cristiandley'] },
-                    { diaSemana: 'sabado', turno: 2, local: 'KM 17 - Casa da irmã Jucélia', horario: '16:00', dirigentes: ['João', 'Matheus Lino', 'Kaique', 'Elvandy', 'Cosmírio', 'Cristiandley'] },
-                    { diaSemana: 'sabado', turno: 3, local: 'Tokaia - Casa do Irmão Edilson', horario: '08:45', dirigentes: ['José', 'Edgar', 'Aloísio', 'Ricardo'] },
-                    { diaSemana: 'sabado', turno: 4, local: 'Tokaia - Casa do Irmão Edilson', horario: '16:00', dirigentes: ['Marcelo', 'Ricardo', 'Everton', 'Manoel', 'Miguel', 'Aloísio'] },
-                ];
-
-                for (const s of saidasData) {
-                    const novaSaida = await prisma.saidaCampo.create({
-                        data: {
-                            diaSemana: s.diaSemana,
-                            turno: s.turno,
-                            local: s.local,
-                            horario: s.horario,
-                            ativo: true
-                        }
-                    });
-
-                    // Garantir que os irmãos existam e associar
-                    for (const nomeIrmao of s.dirigentes) {
-                        let irmaoObj = await prisma.irmao.findUnique({ where: { nome: nomeIrmao } });
-                        if (!irmaoObj) {
-                            irmaoObj = await prisma.irmao.create({
-                                data: {
-                                    nome: nomeIrmao,
-                                    funcoes: ['dirigente']
-                                }
-                            });
-                        } else {
-                            if (!irmaoObj.funcoes.includes('dirigente')) {
-                                await prisma.irmao.update({
-                                    where: { id: irmaoObj.id },
-                                    data: { funcoes: [...irmaoObj.funcoes, 'dirigente'] }
-                                });
-                            }
-                        }
-
-                        // Criar associação
-                        await prisma.dirigenteSaidaCampo.create({
-                            data: {
-                                irmaoId: irmaoObj.id,
-                                saidaCampoId: novaSaida.id
-                            }
-                        });
-                    }
-                }
-                console.log('Saídas de Campo e Dirigentes configurados com sucesso.');
-            }
-
-            // 6. Vincular contas de acesso ao cadastro de irmaos.
+            // Vincular contas de acesso ao cadastro de irmaos.
             // Roda a cada boot de proposito: e idempotente, so mexe em quem esta sem vinculo,
             // e assim uma conta criada antes do irmao existir acaba sendo ligada sozinha.
             const VinculoIrmaoService = require('./VinculoIrmaoService');
             await VinculoIrmaoService.sincronizarUsuarios();
-
-            // 7. Carrinho de publicações (turnos fixos semanais).
-            await require('./SeedCarrinhoService').execute();
 
             console.log('Seed verified.');
         } catch (error) {

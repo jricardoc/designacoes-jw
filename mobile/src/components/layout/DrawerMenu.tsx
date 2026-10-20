@@ -20,6 +20,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { EscopoAdmin } from "@/api/types";
+import { Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral, podeGerenciar } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
@@ -211,11 +212,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
               accessibilityState={{ selected: atual === "conta" }}
               style={({ pressed }) => [styles.rodape, pressed && styles.rodapePressionado]}
             >
-              <View style={styles.avatar}>
-                <Text style={styles.avatarTexto}>
-                  {usuario.nome.trim().charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              <Avatar usuario={usuario} tamanho={38} fundo={colors.sand} corTexto={colors.primaryDark} />
               <View style={styles.rodapeTexto}>
                 <Text style={styles.rodapeNome} numberOfLines={1}>
                   {usuario.nome}
@@ -304,15 +301,6 @@ const criarEstilos = (colors: Cores) =>
       borderTopColor: colors.border,
     },
     rodapePressionado: { backgroundColor: colors.surfaceMuted },
-    avatar: {
-      width: 38,
-      height: 38,
-      borderRadius: radius.pill,
-      backgroundColor: colors.sand,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    avatarTexto: { color: colors.primaryDark, fontSize: 16, fontWeight: "700" },
     rodapeTexto: { flex: 1 },
     rodapeNome: { color: colors.text, fontSize: 14.5, fontWeight: "600" },
     rodapeNick: { color: colors.textMuted, fontSize: 12.5, marginTop: 1 },

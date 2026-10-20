@@ -24,7 +24,7 @@ interface AuthContextValue {
   login: (
     nickname: string,
     senha: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; status?: number }>;
   logout: () => Promise<void>;
   refreshUsuario: () => Promise<void>;
   setUsuario: (u: Usuario) => void;
@@ -80,6 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         success: false,
         error:
           err instanceof Error ? err.message : "Erro ao fazer login",
+        // 401 = a senha não confere. A tela de login usa para desligar a biometria, que
+        // guardou uma senha que já não vale.
+        status: err instanceof ApiError ? err.status : undefined,
       };
     }
   }, []);

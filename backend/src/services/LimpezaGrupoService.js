@@ -4,7 +4,7 @@
  * Liga a linha "Limpeza:" da programacao aos GRUPOS DE CAMPO — e, por eles, as pessoas.
  *
  * O problema que isto resolve: a programacao escala a limpeza por GRUPO
- * ("Limpeza: Grupo 4 Elvandy LIma & Grupo 5 Luiz Roberto"), mas o app so sabia casar NOME.
+ * ("Limpeza: Grupo 4 Evaldo LIma & Grupo 5 Luiz Renato"), mas o app so sabia casar NOME.
  * Resultado: da limpeza inteira, o unico que via alguma coisa era o irmao que da nome ao
  * grupo. Os outros publicadores do grupo — que sao quem de fato limpa — nao ficavam sabendo
  * de nada. Aqui o texto vira grupo, e o grupo vira a lista de gente.
@@ -27,8 +27,8 @@ const prisma = require('../prisma');
 /**
  * minusculas, sem acento, so letras — e com Z virando S.
  *
- * A troca de Z por S nao e capricho: o mesmo documento escreve "Luis Roberto" numa semana e
- * "Luiz Roberto" na outra, e as duas grafias sao a mesma pessoa. E a mesma regra que
+ * A troca de Z por S nao e capricho: o mesmo documento escreve "Luis Renato" numa semana e
+ * "Luiz Renato" na outra, e as duas grafias sao a mesma pessoa. E a mesma regra que
  * scripts/importarGrupos.js ja usa para casar o cadastro com o documento.
  */
 function normalizar(texto) {
@@ -67,7 +67,7 @@ function mesmaPalavra(a, b) {
  *
  * Exige que TODAS as palavras do nome mais curto encontrem par distinto no mais longo, com no
  * minimo duas palavras casadas. Bater so o primeiro nome nao basta — e o que impede o
- * "Grupo 2 do Átilas Santos" de cair no grupo de um "Átilas Pereira" que venha a existir.
+ * "Grupo 2 do Álvaro Santos" de cair no grupo de um "Álvaro Pereira" que venha a existir.
  *
  * Nome de uma palavra so exige igualdade exata, pelo mesmo motivo de MinhasDesignacoesService.
  */
@@ -101,16 +101,16 @@ function mesmoNomeDeGrupo(textoA, textoB) {
  *
  * O corte NAO e feito nos separadores, e sim ANTES de cada "Grupo"/"Grupos" — a fronteira
  * de verdade da linha. A primeira versao cortava so em "&", "/" e ",", e a producao mostrou
- * por que isso nao basta: metade das semanas usa " e " ("Grupo 2 do Átilas Santos e Grupo 5
- * do Elvandy Lima"). A linha inteira virava um fragmento so, batia com DOIS grupos, e o
+ * por que isso nao basta: metade das semanas usa " e " ("Grupo 2 do Álvaro Santos e Grupo 5
+ * do Evaldo Lima"). A linha inteira virava um fragmento so, batia com DOIS grupos, e o
  * criterio conservador recusava os dois — perdendo as duas metades em vez de nenhuma.
  *
  * E " e " nao pode simplesmente entrar na lista de separadores: ele faz parte de nomes reais
- * ("Olga Pereira e Souza"), e cortar ali partiria a pessoa ao meio. Cortar antes de "Grupo"
+ * ("Odete Pereira e Souza"), e cortar ali partiria a pessoa ao meio. Cortar antes de "Grupo"
  * resolve os dois casos de uma vez, e ainda aguenta separador nenhum.
  *
  * Os separadores continuam na expressao para a linha que, por algum motivo, listar os grupos
- * sem repetir a palavra ("Grupo 1 Edilson & Marcelo Santana").
+ * sem repetir a palavra ("Grupo 1 Ednaldo & Mauro Santana").
  */
 const SEPARADORES = /[/&,]|(?=\bgrupos?\b)/i;
 
@@ -121,9 +121,9 @@ const SOBRA = /(?:\s+e|[&/,])\s*$/i;
 const LIXO = new Set(['', '-', '--', 'a definir', 'a definir.', 'x']);
 
 /**
- * Quebra "Grupos 5 do Luis Roberto & Grupo 1 Edilson Santos" em fragmentos com numero e nome.
+ * Quebra "Grupos 5 do Luis Renato & Grupo 1 Ednaldo Santos" em fragmentos com numero e nome.
  *
- * O numero e o pedaco ESTAVEL da linha: o nome chega abreviado ("Elvandy" por "Elvandyr"),
+ * O numero e o pedaco ESTAVEL da linha: o nome chega abreviado ("Evaldo" por "Evaldor"),
  * com caixa trocada ("LIma") e com Z/S trocados, mas "Grupo 4" e sempre "Grupo 4". Por isso
  * ele e extraido em separado, e nao deixado dentro do nome.
  *
@@ -135,12 +135,12 @@ function separarFragmentos(limpeza) {
 
     return texto
         .split(SEPARADORES)
-        // O corte por lookahead deixa o separador no FIM do pedaco anterior ("Átilas Santos
+        // O corte por lookahead deixa o separador no FIM do pedaco anterior ("Álvaro Santos
         // e "), e nao no comeco do seguinte. Sem tirar isso, o "e" solto entraria no nome.
         .map(pedaco => pedaco.trim().replace(SOBRA, '').trim())
         .filter(pedaco => pedaco && !LIXO.has(pedaco.toLowerCase()))
         .map(bruto => {
-            // "Grupos 5 do Luis Roberto" -> numero 5, nome "Luis Roberto".
+            // "Grupos 5 do Luis Renato" -> numero 5, nome "Luis Renato".
             // O "do/da/de" e opcional porque o documento usa os dois jeitos na mesma pagina.
             const m = /^\s*grupos?\s*(\d+)?\s*(?:d[oae]\s+)?(.*)$/i.exec(bruto);
             if (!m) return { numero: null, nome: bruto, bruto };
@@ -212,7 +212,7 @@ const MINIMO_APOIO = 2;
  *
  * A logica base: quando um fragmento casa por NOME e traz um numero, aquele numero e o do
  * grupo. O que complica e que a numeracao MUDA — a congregacao ja teve seis grupos (havia um
- * "Grupo 3 do Helber Dias" em Marco/2026), e quando um grupo sai os outros sao renumerados.
+ * "Grupo 3 do Heitor Dias" em Marco/2026), e quando um grupo sai os outros sao renumerados.
  * O historico entao contradiz o presente de propria autoria, sem erro nenhum envolvido.
  *
  * Por isso a regra e por RECENCIA, e nao por unanimidade: vale o numero das semanas mais

@@ -261,7 +261,8 @@ class ReuniaoController {
                 return res.status(404).json({ error: 'Semana não encontrada' });
             }
 
-            return res.json({ opcoes: ConviteReuniaoService.montarOpcoes(semana) });
+            const config = await prisma.config.findFirst();
+            return res.json({ opcoes: ConviteReuniaoService.montarOpcoes(semana, config) });
         } catch (error) {
             console.error('Erro ao montar textos de compartilhamento:', error);
             return res.status(500).json({ error: 'Erro ao montar os textos' });

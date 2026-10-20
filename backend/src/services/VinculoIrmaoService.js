@@ -7,8 +7,8 @@ const { normalizarNome } = require('./PrivilegioService');
  * Liga a conta de acesso (`Usuario`) ao cadastro da congregacao (`Irmao`).
  *
  * Sem esse vinculo o sistema so conseguiria casar por nome, o que falha calado justamente
- * onde mais importa: "Henzel D. Almeida" no login e "Henzel Almeida" no cadastro sao a mesma
- * pessoa, e "Helber Dias" nao e irmao nenhum. Por isso o vinculo e um campo de verdade
+ * onde mais importa: "Hugo D. Almeida" no login e "Hugo Almeida" no cadastro sao a mesma
+ * pessoa, e "Heitor Dias" nao e irmao nenhum. Por isso o vinculo e um campo de verdade
  * (`Usuario.irmaoId`), e este servico so o preenche automaticamente quando tem certeza.
  *
  * Duas confiancas:

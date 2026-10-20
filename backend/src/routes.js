@@ -21,7 +21,7 @@ const PushTokenController = require('./controllers/PushTokenController');
 const TarefasController = require('./controllers/TarefasController');
 const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
 const requireAdmin = require('./middleware/requireAdmin');
-const { ESCOPOS, requireEscopo } = require('./middleware/escopos');
+const { ESCOPOS, requireEscopo, requireMarcarTerritorio } = require('./middleware/escopos');
 // Leitura e livre para qualquer irmao logado; escrita exige o escopo da area
 // (ou admin geral, que contempla todos). Ver src/middleware/escopos.js.
 const podeDesignacoes = requireEscopo(ESCOPOS.DESIGNACOES);
@@ -55,6 +55,11 @@ routes.post('/auth/login', loginLimiter, AuthController.login);
 routes.get('/auth/me', AuthController.me);
 routes.put('/auth/senha', AuthController.alterarSenha);
 routes.put('/auth/nome', AuthController.alterarNome);
+// Foto de perfil: cada um muda a propria; ver a dos outros e livre para quem esta logado.
+// O corpo do PUT tem limite proprio (maior que o padrao) em index.js.
+routes.put('/auth/foto', AuthController.salvarFoto);
+routes.delete('/auth/foto', AuthController.removerFoto);
+routes.get('/usuarios/:id/foto', AuthController.foto);
 
 // ==================== USUARIOS (Admin) ====================
 routes.get('/usuarios', requireAdmin, UsuarioController.index);
@@ -77,6 +82,8 @@ routes.put('/usuarios/:id/reset-senha', requireAdmin, UsuarioController.resetSen
 routes.delete('/usuarios/:id', requireAdmin, UsuarioController.delete);
 
 // ==================== CONFIG ====================
+// O nome da congregacao, para a tela de login (antes de haver sessao). Publica: so isso.
+routes.get('/config/publica', ConfigController.publica);
 routes.get('/config', ConfigController.getConfig);
 routes.put('/config', requireAdmin, ConfigController.updateConfig);
 routes.post('/config/reset', requireAdmin, ConfigController.resetDatabase);
@@ -231,9 +238,38 @@ routes.get('/reunioes/semanas/:id/compartilhamentos', ReuniaoController.comparti
 routes.get('/reunioes/confirmacao', ReuniaoController.textoConfirmacao);
 
 // ==================== TERRITORIOS ====================
-// Leitura livre para logado; as imagens em /territorios/arquivos tambem exigem
-// login (express.static montado depois do authMiddleware em index.js).
-routes.get('/territorios', TerritorioController.index);
+// Ver e livre para quem esta logado (as imagens em /territorios/arquivos tambem exigem login:
+// express.static montado depois do authMiddleware em index.js). Registrar saida e marcar e
+// de dirigente ou de quem cuida da area; gerir (My Maps, designar, revisar) e do escopo.
+// Rotas fixas ANTES de /territorios/:numero, senao "mapa" ou "painel" seriam lidos como numero.
+const podeTerritorios = requireEscopo(ESCOPOS.TERRITORIOS);
+routes.get('/territorios', TerritorioController.legado);
+routes.get('/territorios/lista', TerritorioController.index);
+routes.get('/territorios/mapa', TerritorioController.mapa);
+routes.post('/territorios/saidas', requireMarcarTerritorio, TerritorioController.criarSaida);
+routes.delete('/territorios/saidas/:id', requireMarcarTerritorio, TerritorioController.excluirSaida);
+routes.put('/territorios/saidas/:id/revisao', podeTerritorios, TerritorioController.revisar);
+routes.post('/territorios/marcacoes', requireMarcarTerritorio, TerritorioController.criarMarcacao);
+routes.post('/territorios/marcacoes/:id/reconfirmar', requireMarcarTerritorio, TerritorioController.reconfirmarMarcacao);
+routes.delete('/territorios/marcacoes/:id', requireMarcarTerritorio, TerritorioController.excluirMarcacao);
+routes.post('/territorios/mymaps/previa', podeTerritorios, TerritorioController.previaMyMaps);
+routes.post('/territorios/mymaps/importar', podeTerritorios, TerritorioController.importarMyMaps);
+routes.post('/territorios/mymaps/atualizar', podeTerritorios, TerritorioController.atualizarMyMaps);
+// Designacoes: a lista e de todos (o dirigente ve as suas na tela de Inicio); designar e da area.
+routes.get('/territorios/designacoes', TerritorioController.designacoes);
+routes.post('/territorios/designacoes', podeTerritorios, TerritorioController.criarDesignacao);
+routes.put('/territorios/designacoes/:id', podeTerritorios, TerritorioController.atualizarDesignacao);
+routes.delete('/territorios/designacoes/:id', podeTerritorios, TerritorioController.excluirDesignacao);
+routes.get('/territorios/conflitos', podeTerritorios, TerritorioController.conflitos);
+routes.get('/territorios/painel', podeTerritorios, TerritorioController.painel);
+routes.get('/territorios/s13', podeTerritorios, TerritorioController.s13);
+routes.delete('/territorios/avisos/:id', podeTerritorios, TerritorioController.desativarAviso);
+routes.put('/territorios/:id(\\d+)', podeTerritorios, TerritorioController.update);
+routes.delete('/territorios/:id(\\d+)', podeTerritorios, TerritorioController.desativar);
+routes.post('/territorios/:id(\\d+)/ciclo', podeTerritorios, TerritorioController.ciclo);
+routes.post('/territorios/:id(\\d+)/avisos', podeTerritorios, TerritorioController.criarAviso);
+routes.get('/territorios/:numero', TerritorioController.show);
+routes.get('/territorios/:numero/historico', TerritorioController.historico);
 
 // ==================== SAÍDAS DE CAMPO ====================
 routes.get('/saidas-campo', SaidaCampoController.index);

@@ -66,7 +66,7 @@ export function useCriarUsuario() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: { nome: string; nickname: string; irmaoId?: number | null }) =>
-      apiRequest<Usuario>("/usuarios", { method: "POST", body: payload }),
+      apiRequest<Usuario & { senhaInicial?: string }>("/usuarios", { method: "POST", body: payload }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.usuarios }),
   });
 }
@@ -110,7 +110,7 @@ export function useCatalogoEscopos(enabled = true) {
 export function useResetSenhaUsuario() {
   return useMutation({
     mutationFn: (id: number) =>
-      apiRequest(`/usuarios/${id}/reset-senha`, { method: "PUT" }),
+      apiRequest<{ senha?: string }>(`/usuarios/${id}/reset-senha`, { method: "PUT" }),
   });
 }
 
@@ -141,6 +141,18 @@ export function useAlterarNickname() {
   });
 }
 
+/** Foto de perfil do próprio usuário: JPEG em base64, ou null para remover. */
+export function useAlterarFoto() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (imagem: string | null) =>
+      imagem
+        ? apiRequest("/auth/foto", { method: "PUT", body: { imagem } })
+        : apiRequest("/auth/foto", { method: "DELETE" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.usuarios }),
+  });
+}
+
 export function useAlterarSenha() {
   return useMutation({
     mutationFn: (payload: { senhaAtual: string; novaSenha: string }) =>
@@ -157,6 +169,18 @@ export function useResetDatabase() {
 }
 
 // ===== Configuração da congregação =====
+/** O que a tela de login mostra antes de haver sessão: o nome da congregação. */
+export function useConfigPublica() {
+  return useQuery({
+    queryKey: qk.configPublica,
+    queryFn: () =>
+      apiRequest<{ congregacao: string }>("/config/publica", {
+        skipAuth: true,
+        timeoutMs: 8000,
+      }),
+  });
+}
+
 export function useConfig() {
   return useQuery({
     queryKey: qk.config,
@@ -171,11 +195,12 @@ export function useAtualizarConfig() {
       payload: Partial<
         Pick<
           Config,
-          "titulo" | "subtitulo" | "mes" | "horaMeioSemana" | "horaFimDeSemana"
+          "titulo" | "subtitulo" | "mes" | "horaMeioSemana" | "horaFimDeSemana" | "zoom"
         >
       >,
     ) => apiRequest("/config", { method: "PUT", body: payload }),
     onSuccess: () => {
+      // Prefixo: leva junto a config pública (o nome da congregação no login).
       qc.invalidateQueries({ queryKey: qk.config });
       // O horário da reunião é o que traduz "3 horas antes" em hora do relógio: mudou aqui,
       // a tela de notificações precisa reler para não mostrar a conta antiga.

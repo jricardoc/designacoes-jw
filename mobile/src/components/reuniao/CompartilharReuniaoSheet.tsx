@@ -77,11 +77,20 @@ export function CompartilharReuniaoSheet({
               <ActivityIndicator color={colors.primary} />
               <Text style={styles.estadoTexto}>Carregando os convites...</Text>
             </View>
-          ) : isError || !data?.opcoes?.length ? (
+          ) : isError ? (
             <View style={styles.estado}>
               <Ionicons name="cloud-offline-outline" size={20} color={colors.textMuted} />
               <Text style={styles.estadoTexto}>
                 Não consegui carregar os convites de Zoom. Confira a conexão e tente de novo.
+              </Text>
+            </View>
+          ) : !data?.opcoes?.length ? (
+            // Instalação nova: o convite só existe depois que o Zoom é preenchido.
+            <View style={styles.estado}>
+              <Ionicons name="videocam-off-outline" size={20} color={colors.textMuted} />
+              <Text style={styles.estadoTexto}>
+                Os convites de Zoom aparecem aqui quando o administrador preencher os dados do
+                Zoom em Ajustes.
               </Text>
             </View>
           ) : (

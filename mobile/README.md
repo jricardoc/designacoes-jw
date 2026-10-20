@@ -1,15 +1,17 @@
-# Designações JW — App Mobile (React Native + Expo)
+# Servir Mais — App Mobile (React Native + Expo)
 
-Aplicativo mobile do **Quadro de Designações** da Congregação Norte de Itapuã.
-Reimplementa todo o front-end web em React Native com Expo, consumindo a mesma
-API (backend Express + Prisma + PostgreSQL) que já existe neste repositório.
+Aplicativo mobile do **Servir Mais**, em React Native com Expo, consumindo a API
+(backend Express + Prisma + PostgreSQL) deste repositório.
+
+> **Para gerar o app da sua congregação, siga o [guia do app](../docs/APP.md).**
 
 ## ✨ Funcionalidades
 
 Tudo que o painel web oferece, adaptado para mobile:
 
 - **Login** por nickname/senha com token JWT persistido com segurança
-  (`expo-secure-store`).
+  (`expo-secure-store`), e entrada com **Face ID / digital** (`expo-local-authentication`).
+- **Foto de perfil** (galeria ou câmera), guardada no banco pela API.
 - **Designações** — lista de quadros mensais, dashboard de estatísticas
   globais, criação de quadro (com preenchimento automático e regras), e
   **editor do quadro** com edição célula a célula (escolha de irmãos por função,
@@ -19,8 +21,10 @@ Tudo que o painel web oferece, adaptado para mobile:
 - **Escala de Dirigentes** — lista de escalas, criação, editor com escolha do
   dirigente de cada saída de campo (respeitando disponibilidade e
   indisponibilidades), excluir dia ou semana e **exportar PDF** idêntico ao web.
-- **Reunião** — visualização da programação semanal importada (somente leitura).
-- **Carrinho** — painel de agendamentos (dados de exemplo, igual ao web).
+- **Reunião** — importação do PDF da programação, PDF/imagem da semana, convites de
+  Zoom e **assistência** (registro, estatísticas e imagem para o WhatsApp). Quem tem a
+  função Áudio e Vídeo opera esta tela sem precisar da área "Reuniões".
+- **Carrinho** — pontos, turnos fixos semanais e publicadores.
 - **Conta** — editar nome, nickname e senha; administração de usuários
   (criar, promover/rebaixar admin, resetar senha, excluir) para administradores.
 - **Configurações** — gerenciar irmãos (CRUD, funções, nível de áudio e vídeo,
@@ -61,124 +65,20 @@ mobile/
 
 ## 🚀 Como rodar
 
-### 1. Backend
-Suba a API (na raiz do repositório):
-
-```bash
-docker compose up        # ou, dentro de /backend:  npm install && npm run dev
-```
-
-A API sobe na porta **3001**. O usuário `admin` é criado no primeiro boot com a
-senha definida em `ADMIN_SEED_PASSWORD` (veja `backend/.env.example`).
-
-### 2. URL da API
-Por padrão o app já aponta para a **API de produção** (Easypanel), configurada
-em `expo.extra.apiUrl` no `app.json`:
-
-```
-https://api.servirmais.site
-```
-
-Não é preciso configurar nada para usar produção. Para apontar para outro
-ambiente (ex.: API local), defina `EXPO_PUBLIC_API_URL` num `.env`:
-
-```bash
-cp .env.example .env
-# ex.: EXPO_PUBLIC_API_URL=http://192.168.0.10:3001
-```
-
-> Celulares/emuladores **não** enxergam o `localhost` do PC. Para a API local
-> use o IP da sua rede (no Windows: `ipconfig` → campo *IPv4 Address*).
-
-> ⚠️ **Ao trocar a URL da API, mude nos DOIS lugares.** `EXPO_PUBLIC_API_URL`
-> tem prioridade sobre `expo.extra.apiUrl`, e nos builds do EAS ela vem das
-> **variáveis de ambiente do painel do Expo** — que não existem neste
-> repositório. Alterar só o `app.json` não surte efeito no build: o valor do
-> painel vence em silêncio. Confira em
-> <https://expo.dev> → o projeto → *Environment variables*, nos environments
-> `preview` e `production`.
-
-### 3. Instalar e iniciar
-
 ```bash
 cd mobile
 npm install
+cp .env.example .env   # aponte EXPO_PUBLIC_API_URL para a sua API
 npx expo start
 ```
 
-Abra no **Expo Go** (escaneie o QR Code) ou pressione `a` (Android) / `i` (iOS).
-
-## 🔌 Observações sobre a API
-
-- O backend já permite requisições sem `Origin` (apps nativos) no CORS, então
-  não é necessária configuração extra para o mobile.
-- O cliente HTTP injeta automaticamente o header `Authorization: Bearer <token>`
-  e trata erros do backend (`{ "error": "..." }`).
-- Importação de reuniões via Excel permanece no painel web; no app a
-  programação é exibida em modo leitura.
-
-## 📦 Build (EAS)
-
-O projeto já está vinculado ao EAS (`@ocaradocopytrade/servir-mais`) e o
-`eas.json` tem três perfis. Cada perfil usa o *environment* correspondente no
-EAS (onde está a variável `EXPO_PUBLIC_API_URL`).
-
-```bash
-# APK de teste (instala direto no celular)
-eas build --platform android --profile preview
-
-# Build de produção (AAB para a Play Store)
-eas build --platform android --profile production
-```
-
-## 🔔 Notificações Push (Firebase / FCM)
-
-O app já registra o dispositivo e obtém o **Expo Push Token** após o login
-(`src/notifications/`). Para as notificações funcionarem em produção no Android,
-configure o Firebase Cloud Messaging:
-
-1. **Firebase → Adicionar app Android**
-   - Console do Firebase → projeto *Servir Mais* → "Adicionar app" → Android.
-   - Nome do pacote: **`com.norteitapua.designacoesjw`** (igual a `android.package`).
-   - Baixe o **`google-services.json`** e salve em `mobile/google-services.json`.
-
-2. **Referencie o arquivo no `app.json`** (dentro de `expo.android`):
-   ```json
-   "android": {
-     "package": "com.norteitapua.designacoesjw",
-     "googleServicesFile": "./google-services.json"
-   }
-   ```
-
-3. **Chave de serviço FCM V1 para o EAS** (para o serviço de push do Expo enviar
-   ao FCM):
-   - Firebase → ⚙️ Configurações do projeto → **Contas de serviço** →
-     "Gerar nova chave privada" → baixe o JSON.
-   - Envie ao EAS:
-     ```bash
-     eas credentials        # Android → escolha "FCM V1" → faça upload do JSON
-     ```
-
-4. **Testar**: instale um build (`eas build -p android --profile preview`), abra o
-   app e logue. O **Expo Push Token** aparece no console (`Expo Push Token: ...`).
-   Cole esse token em https://expo.dev/notifications para enviar um teste.
-
-> iOS exige conta paga do Apple Developer (chave APNs) — o EAS configura via
-> `eas credentials`. O Firebase no plano Spark já cobre o FCM do Android.
-
-### Envio pelo backend (lembrete da véspera)
-Já está ligado. `usePushNotifications()` registra o token em `POST /push/token` e o
-logout o remove com `DELETE /push/token`. Todo dia às **19h (America/Bahia)** o backend
-(`AgendadorLembretes` → `LembreteDesignacoesService`) procura quem tem designação
-**publicada** no dia seguinte e envia um push por `https://exp.host/--/api/v2/push/send`.
-O toque na notificação abre a aba **Minhas** (via `data.screen`).
-
-Para não disparar push real durante o desenvolvimento, o backend respeita
-`LEMBRETES_ATIVOS=false` (já é o padrão no `docker-compose.yml`).
+Toda a configuração por congregação (nome do app, identificador, API, conta do Expo) vem do
+`mobile/.env`, lido pelo `app.config.js`. Detalhes, build do APK, iPhone e notificações push
+estão no [guia do app](../docs/APP.md).
 
 ## 🧪 Qualidade
 
 ```bash
 npm run typecheck   # tsc --noEmit
-npm run lint        # expo lint (opcional)
+npm run lint        # expo lint
 ```

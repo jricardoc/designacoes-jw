@@ -34,25 +34,25 @@ chk(saudacaoDaHora(new Date(Date.UTC(2026, 8, 4, 2, 0))) === 'Boa noite',
     'a hora e a da congregacao, nao a UTC do servidor');
 
 sec('como a pessoa e chamada');
-chk(nomeDeTratamento('Jucélia dos Santos Gomes') === 'Jucélia', 'so o primeiro nome');
-chk(nomeDeTratamento('Maria Eduarda dos S. Gomes de Araújo') === 'Maria Eduarda',
+chk(nomeDeTratamento('Rosélia dos Santos Gomes') === 'Rosélia', 'so o primeiro nome');
+chk(nomeDeTratamento('Maria Fernanda dos S. Gomes de Araújo') === 'Maria Fernanda',
     '"Maria" sozinha nao identifica ninguem: leva o segundo nome junto');
-chk(nomeDeTratamento('José Ricardo Carvalho') === 'José Ricardo', 'idem para "José"');
-chk(nomeDeTratamento('Átilas Santos') === 'Átilas', 'nome comum fica so com o primeiro');
-chk(nomeDeTratamento('Kauã') === 'Kauã', 'nome de uma palavra so');
+chk(nomeDeTratamento('José Rafael Carvalho') === 'José Rafael', 'idem para "José"');
+chk(nomeDeTratamento('Álvaro Santos') === 'Álvaro', 'nome comum fica so com o primeiro');
+chk(nomeDeTratamento('Cauê') === 'Cauê', 'nome de uma palavra so');
 chk(nomeDeTratamento('  Ana  Lúcia  Portela ') === 'Ana Lúcia', 'espaco sobrando nao atrapalha');
 chk(nomeDeTratamento('') === '' && nomeDeTratamento(null) === '', 'vazio nao vira nome');
 
 sec('a mensagem inteira');
-chk(Convite.textoConfirmacaoDesignacao('Jucélia dos Santos', emBahia(9))
-    === 'Bom dia Jucélia! Tudo certinho com a sua designação?', 'texto de manha');
-chk(Convite.textoConfirmacaoDesignacao('Átilas Santos', emBahia(19))
-    === 'Boa noite Átilas! Tudo certinho com a sua designação?', 'texto de noite');
+chk(Convite.textoConfirmacaoDesignacao('Rosélia dos Santos', emBahia(9))
+    === 'Bom dia Rosélia! Tudo certinho com a sua designação?', 'texto de manha');
+chk(Convite.textoConfirmacaoDesignacao('Álvaro Santos', emBahia(19))
+    === 'Boa noite Álvaro! Tudo certinho com a sua designação?', 'texto de noite');
 chk(Convite.textoConfirmacaoDesignacao('', emBahia(9)) === null, 'sem nome nao ha mensagem');
 
 sec('quem entra na lista de confirmacao');
 const { nomesDoCampo, tituloLimpo, chaveData } = Confirmacao._internos;
-chk(nomesDoCampo('Jucélia dos Santos / Lúcia Tânia Assad').length === 2,
+chk(nomesDoCampo('Rosélia dos Santos / Lúcia Tânia Assad').length === 2,
     'a dupla separada por "/" vira duas pessoas');
 chk(nomesDoCampo('Grupo 1 & Grupo 2').length === 2, '"&" tambem separa');
 chk(nomesDoCampo('__DELETADO__').length === 0, 'linha excluida pela web nao entra');

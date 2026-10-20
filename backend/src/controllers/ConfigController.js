@@ -1,4 +1,26 @@
+const { Prisma } = require('@prisma/client');
 const prisma = require('../prisma');
+
+const CAMPOS_ZOOM = ['link', 'id', 'senha', 'salaAberta'];
+
+/**
+ * { meio: {link, id, senha, salaAberta}, fds: {...} } so com os campos conhecidos, aparados
+ * e curtos. Reuniao sem nada preenchido some; tudo vazio vira null. undefined = invalido.
+ */
+function sanearZoom(valor) {
+    if (valor === null) return null;
+    if (typeof valor !== 'object' || Array.isArray(valor)) return undefined;
+    const zoom = {};
+    for (const tipo of ['meio', 'fds']) {
+        const reuniao = {};
+        for (const campo of CAMPOS_ZOOM) {
+            const texto = String((valor[tipo] && valor[tipo][campo]) || '').trim().slice(0, 300);
+            if (texto) reuniao[campo] = texto;
+        }
+        if (Object.keys(reuniao).length > 0) zoom[tipo] = reuniao;
+    }
+    return Object.keys(zoom).length > 0 ? zoom : null;
+}
 
 /** "19:30" -> "19:30"; "9:5" -> "09:05"; qualquer outra coisa -> null (recusa o salvamento). */
 function normalizarHora(valor) {
@@ -18,15 +40,22 @@ class ConfigController {
             if (!config) {
                 // Seed inicial se não existir
                 config = await prisma.config.create({
-                    data: {
-                        titulo: 'Quadro de Designações JANEIRO',
-                        subtitulo: 'Congregação',
-                        mes: 'JAN'
-                    }
+                    data: { titulo: 'Quadro de Designações', subtitulo: '', mes: 'JAN' }
                 });
             }
 
             return res.json(config);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    /** GET /config/publica — sem login: so o nome da congregacao, para a tela de entrada. */
+    async publica(req, res) {
+        try {
+            const config = await prisma.config.findFirst({ select: { subtitulo: true } });
+            return res.json({ congregacao: (config && config.subtitulo) || '' });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: 'Internal server error' });
@@ -41,21 +70,27 @@ class ConfigController {
             // Campo omitido mantem o valor; so entra no update o que veio no corpo. Sem isso,
             // a tela de configuracao antiga (que nao conhece os horarios) apagaria os dois
             // ao salvar o titulo, e os lembretes "3 horas antes" cairiam no horario errado.
-            const horarios = {};
-            if (horaMeioSemana !== undefined) horarios.horaMeioSemana = normalizarHora(horaMeioSemana);
-            if (horaFimDeSemana !== undefined) horarios.horaFimDeSemana = normalizarHora(horaFimDeSemana);
-            if (Object.values(horarios).some(v => v === null)) {
+            const campos = {};
+            if (horaMeioSemana !== undefined) campos.horaMeioSemana = normalizarHora(horaMeioSemana);
+            if (horaFimDeSemana !== undefined) campos.horaFimDeSemana = normalizarHora(horaFimDeSemana);
+            if (Object.values(campos).some(v => v === null)) {
                 return res.status(400).json({ error: 'Horário deve estar no formato HH:MM' });
+            }
+            if (req.body.zoom !== undefined) {
+                const zoom = sanearZoom(req.body.zoom);
+                if (zoom === undefined) return res.status(400).json({ error: 'Dados do Zoom inválidos' });
+                // Json nulo no Prisma e Prisma.DbNull; `null` cru e recusado.
+                campos.zoom = zoom === null ? Prisma.DbNull : zoom;
             }
 
             if (!config) {
                 await prisma.config.create({
-                    data: { titulo, subtitulo, mes, ...horarios }
+                    data: { titulo, subtitulo, mes, ...campos }
                 });
             } else {
                 await prisma.config.update({
                     where: { id: config.id },
-                    data: { titulo, subtitulo, mes, ...horarios }
+                    data: { titulo, subtitulo, mes, ...campos }
                 });
             }
 

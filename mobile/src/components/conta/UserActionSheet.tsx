@@ -124,7 +124,7 @@ export function UserActionSheet({ user, ehVoce, onClose, onToggleAdmin, onEscopo
                   icon="key-outline"
                   iconColor={colors.brown}
                   title="Redefinir senha"
-                  sub='Volta a senha para "jw1010"'
+                  sub="Volta para a senha padrão"
                   onPress={() => onResetSenha(user)}
                 />
                 <Action

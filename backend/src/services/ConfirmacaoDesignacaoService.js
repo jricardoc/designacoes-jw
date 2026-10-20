@@ -72,7 +72,7 @@ function chaveData(data) {
  * O nome vem da programacao como TEXTO e boa parte das irmas nao esta no cadastro, entao isto
  * e uma tentativa, nao uma garantia. Usa o mesmo criterio de semelhanca da importacao
  * (MatchIrmaosService) para nao existirem duas regras de "e a mesma pessoa?" divergindo com o
- * tempo. So aceita quando ha UM candidato: empate entre dois "Ricardo" mandaria a mensagem
+ * tempo. So aceita quando ha UM candidato: empate entre dois "Rafael" mandaria a mensagem
  * para o telefone errado, o que e pior do que nao ter telefone nenhum.
  */
 function acharIrmao(nome, irmaosTok) {

@@ -7,6 +7,7 @@ import { ProvedorRolagem } from "@/components/layout/contextoRolagem";
 import { BarraGlobalProvider } from "@/components/layout/contextoBarra";
 import { usePushNotifications } from "@/notifications/usePushNotifications";
 import { useSincronizarNotificacoes } from "@/notifications/useSincronizarNotificacoes";
+import { useSincronizarFila } from "@/territorios/fila";
 import { useTema } from "@/theme/TemaContext";
 
 export default function LayoutDoMenu() {
@@ -16,6 +17,9 @@ export default function LayoutDoMenu() {
   usePushNotifications();
   // E puxa do servidor a cópia dos avisos que o aparelho perdeu.
   useSincronizarNotificacoes();
+  // Envia o que foi marcado no território sem internet. Aqui, e não na tela do território:
+  // o envio tem de acontecer mesmo com o irmão em outra tela quando o sinal volta.
+  useSincronizarFila();
 
   // A pasta continua "(tabs)" de propósito: o nome entre parênteses não entra na
   // URL, então trocar a tab bar pelo menu lateral não mexeu em nenhuma rota.

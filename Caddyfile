@@ -1,0 +1,9 @@
+# Usado pelo docker-compose.prod.yml. O Caddy emite e renova o HTTPS (Let's Encrypt) sozinho
+# para os dois dominios do .env.
+{$API_DOMAIN} {
+	reverse_proxy backend:3001
+}
+
+{$WEB_DOMAIN} {
+	reverse_proxy frontend:80
+}

@@ -13,7 +13,7 @@ const RegrasLembrete = require('./RegrasLembrete');
  * avisaria coisa que a tela do irmao nem mostra.
  */
 
-const FUSO = 'America/Bahia';
+const { FUSO } = RegrasLembrete;
 
 // 'en-CA' ja formata como YYYY-MM-DD, que e exatamente o formato de `dataISO`.
 const FORMATADOR_DIA = new Intl.DateTimeFormat('en-CA', {

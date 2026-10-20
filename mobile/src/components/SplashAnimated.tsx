@@ -15,6 +15,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { motion } from "@/theme";
+import { useConfigPublica } from "@/api/hooks/useMisc";
 
 const CURVA = Easing.bezier(...motion.curvaSuave);
 
@@ -24,6 +25,7 @@ const CURVA = Easing.bezier(...motion.curvaSuave);
  * Toca uma vez na abertura e some chamando onDone.
  */
 export function SplashAnimated({ onDone }: { onDone: () => void }) {
+  const { data: publica } = useConfigPublica();
   const fade = useSharedValue(1); // opacidade do container (fade-out no fim)
   const logo = useSharedValue(0); // entrada do "S"
   const plus = useSharedValue(0); // pop do "+"
@@ -111,9 +113,12 @@ export function SplashAnimated({ onDone }: { onDone: () => void }) {
         <Animated.View style={[styles.dotEl, d2Style]} />
       </View>
 
-      <Animated.Text entering={FadeIn.delay(950).duration(620)} style={styles.footer}>
-        Congregação Norte de Itapuã
-      </Animated.Text>
+      {/* Só aparece se a resposta chegar a tempo: a splash não espera a rede. */}
+      {publica?.congregacao ? (
+        <Animated.Text entering={FadeIn.delay(950).duration(620)} style={styles.footer}>
+          {publica.congregacao}
+        </Animated.Text>
+      ) : null}
     </Animated.View>
   );
 }

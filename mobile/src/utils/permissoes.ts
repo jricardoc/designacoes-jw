@@ -7,7 +7,7 @@ import type { EscopoAdmin, Usuario } from "@/api/types";
  * é só para a tela não oferecer o que vai voltar 403. Divergir dos dois lados
  * não abre brecha de segurança, mas gera botão que não funciona.
  *
- * Admin geral (`isAdmin`) contempla todos os escopos.
+ * Admin geral (`isAdmin`) contempla todos os escopos; a função Áudio e Vídeo, o de reuniões.
  */
 export function podeGerenciar(
   usuario: Usuario | null | undefined,
@@ -15,7 +15,10 @@ export function podeGerenciar(
 ): boolean {
   if (!usuario) return false;
   if (usuario.isAdmin) return true;
-  return Array.isArray(usuario.escopos) && usuario.escopos.includes(escopo);
+  if (Array.isArray(usuario.escopos) && usuario.escopos.includes(escopo)) return true;
+  // A função Áudio e Vídeo do cadastro libera a área de reuniões (importar, assistência,
+  // compartilhar). Só com a conta vinculada ao irmão — igual ao backend.
+  return escopo === "reunioes" && !!usuario.irmao?.funcoes?.includes("audioVideo");
 }
 
 /** Tem admin geral? É o que libera cadastro de irmãos, config e usuários. */
@@ -29,4 +32,12 @@ export function ehAdminGeral(usuario: Usuario | null | undefined): boolean {
  */
 export function temAlgumEscopo(usuario: Usuario | null | undefined): boolean {
   return !!usuario?.isAdmin || (usuario?.escopos?.length ?? 0) > 0;
+}
+
+/**
+ * Pode registrar saída e marcar pontos no território? Dirigentes (função no cadastro, com a
+ * conta vinculada) e quem cuida da área. Espelha `podeMarcarTerritorio` do backend.
+ */
+export function podeMarcarTerritorio(usuario: Usuario | null | undefined): boolean {
+  return podeGerenciar(usuario, "territorios") || !!usuario?.irmao?.funcoes?.includes("dirigente");
 }

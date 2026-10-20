@@ -35,12 +35,12 @@ chk(R.rotuloDaSemana(null) === null && R.rotuloDaSemana('sem data') === null,
 
 sec('semana sem rotulo no arquivo (o caso de setembro/2026)');
 const setembro = R.reconciliarSemanas([
-    { faixaData: null, dataReuniao: '03/09/2026', presidente: 'Edilson Santos' },
+    { faixaData: null, dataReuniao: '03/09/2026', presidente: 'Ednaldo Santos' },
     { faixaData: '07 - 13 de Setembro', dataReuniao: '10/09/2026' },
 ]);
 chk(setembro.semanas[0].faixaData === '31 de Agosto - 06 de Setembro',
     'a semana sem faixa ganha o rotulo derivado da data');
-chk(setembro.semanas[0].presidente === 'Edilson Santos',
+chk(setembro.semanas[0].presidente === 'Ednaldo Santos',
     'o resto da semana passa intacto');
 chk(setembro.semanas[1].faixaData === '07 - 13 de Setembro',
     'semana que ja tinha rotulo nao e reescrita');

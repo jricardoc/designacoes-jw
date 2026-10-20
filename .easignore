@@ -15,6 +15,10 @@ mobile/dist-check/
 /backend/
 /frontend/
 /docker-compose.yml
+/docker-compose.prod.yml
+/Caddyfile
+/docs/
+/territorio/
 /seed.sql
 
 # Arquivos e scripts de apoio na raiz do monorepo
@@ -30,6 +34,9 @@ mobile/dist-check/
 /package-lock.json
 /.env
 /.env.example
+
+# O mobile/.env SOBE de proposito: e dele que o app.config.js tira o nome, o id e a API no
+# servidor de build. Nao tem segredo.
 
 # Segredo de SERVIDOR do Firebase (chave admin-sdk / service account) — NUNCA enviar.
 # Obs: o google-services.json (config de cliente) SOBE de proposito, para o build

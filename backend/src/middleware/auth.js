@@ -2,7 +2,7 @@ const JwtService = require('../services/JwtService');
 const prisma = require('../prisma');
 
 // Rotas publicas que nao exigem autenticacao (comparacao exata, sem includes)
-const PUBLIC_ROUTES = ['/auth/login', '/health'];
+const PUBLIC_ROUTES = ['/auth/login', '/health', '/config/publica'];
 
 async function authMiddleware(req, res, next) {
     if (PUBLIC_ROUTES.includes(req.path)) {
@@ -37,8 +37,9 @@ async function authMiddleware(req, res, next) {
             // irmaoId entra aqui porque /minhas-designacoes precisa saber de quem sao as
             // designacoes ja no proprio request, sem uma consulta extra.
             // `escopos` entra aqui porque requireEscopo decide por ele a cada
-            // requisicao: assim revogar um escopo tem efeito na hora.
-            select: { id: true, nickname: true, nome: true, isAdmin: true, escopos: true, irmaoId: true }
+            // requisicao: assim revogar um escopo tem efeito na hora. `irmao.funcoes` pelo
+            // mesmo motivo: a funcao Audio e Video tambem libera a area de reunioes.
+            select: { id: true, nickname: true, nome: true, isAdmin: true, escopos: true, irmaoId: true, irmao: { select: { funcoes: true } } }
         });
 
         if (!usuario) {

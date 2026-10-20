@@ -15,13 +15,14 @@ import { GradientHeader, useToast } from "@/components/ui";
 import { useAtualizarConfig, useConfig } from "@/api/hooks/useMisc";
 import { useAuth } from "@/context/AuthContext";
 import { GruposDeCampo } from "@/components/config/GruposDeCampo";
+import { ZoomConfig } from "@/components/config/ZoomConfig";
 import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema, type TemaPreferido } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 
 /**
- * Ajustes do APP — aparência, atalhos e o nome da congregação.
+ * Ajustes do APP — aparência, atalhos, o nome da congregação e o Zoom dos convites.
  *
  * Quase tudo aqui só muda NESTE aparelho. A exceção é a Congregação, que vale para todos e
  * por isso só aparece para o admin geral: ela veio da aba "Sistema" da tela de cadastro,
@@ -113,6 +114,14 @@ export default function AjustesScreen() {
                 style={styles.campo}
               />
             </View>
+          </>
+        ) : null}
+
+        {/* Zoom dos convites — do admin geral, como a congregação. */}
+        {ehAdminGeral(usuario) ? (
+          <>
+            <Text style={styles.secao}>Zoom das reuniões</Text>
+            <ZoomConfig />
           </>
         ) : null}
 
@@ -241,9 +250,9 @@ export default function AjustesScreen() {
         <View style={styles.card}>
           <View style={styles.linha}>
             <View style={styles.textos}>
-              <Text style={styles.titulo}>Servir Mais</Text>
+              <Text style={styles.titulo}>{Constants.expoConfig?.name ?? "Servir Mais"}</Text>
               <Text style={styles.descricao}>
-                Designações da Congregação Norte de Itapuã
+                {config?.subtitulo ? `Designações da ${config.subtitulo}` : "Designações da congregação"}
               </Text>
             </View>
           </View>

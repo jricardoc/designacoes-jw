@@ -9,11 +9,11 @@ datasource db {
 
 // Quadro de Designacoes Mensal (um por mes/ano)
 model Quadro {
-  id          Int          @id @default(autoincrement())
-  mes         Int // 1-12
-  ano         Int // 2026
-  titulo      String // "Quadro de Designacoes JANEIRO 2026"
-  status      String       @default("rascunho") // rascunho, publicado, arquivado
+  id             Int          @id @default(autoincrement())
+  mes            Int // 1-12
+  ano            Int // 2026
+  titulo         String // "Quadro de Designacoes JANEIRO 2026"
+  status         String       @default("rascunho") // rascunho, publicado, arquivado
   // QUANDO e por QUEM o quadro foi publicado.
   //
   // Existe para o painel de tarefas medir se o quadro saiu no prazo — `updatedAt` nao serve
@@ -22,11 +22,11 @@ model Quadro {
   // preenche a partir do Historico, que ja registrava a acao "publicou".
   publicadoEm    DateTime?
   publicadoPorId Int?
-  publicadoPor   Usuario?  @relation("QuadrosPublicados", fields: [publicadoPorId], references: [id], onDelete: SetNull)
-  designacoes Designacao[]
-  historicos  Historico[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  publicadoPor   Usuario?     @relation("QuadrosPublicados", fields: [publicadoPorId], references: [id], onDelete: SetNull)
+  designacoes    Designacao[]
+  historicos     Historico[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@unique([mes, ano])
 }
@@ -77,6 +77,10 @@ model Config {
   // instante nenhum de onde subtrair as horas.
   horaMeioSemana  String   @default("19:30")
   horaFimDeSemana String   @default("09:00")
+  // Dados do Zoom que entram nos convites: { meio: {link, id, senha, salaAberta}, fds: {...} }.
+  // No banco, e nao no codigo, para cada congregacao preencher os seus pela tela de Ajustes
+  // (e para link e senha nao irem parar num repositorio publico).
+  zoom            Json?
   updatedAt       DateTime @updatedAt
 }
 
@@ -96,7 +100,7 @@ model Usuario {
   escopos              String[]                @default([])
   // Vinculo com o cadastro da congregacao. E o que permite ao irmao ver as proprias
   // designacoes: sem ele so restaria casar por nome, que falha em silencio quando o nome do
-  // login difere do cadastro ("Henzel D. Almeida" vs "Henzel Almeida").
+  // login difere do cadastro ("Hugo D. Almeida" vs "Hugo Almeida").
   // @unique: uma conta por irmao. SetNull para que excluir um irmao nao apague a conta.
   irmaoId              Int?                    @unique
   irmao                Irmao?                  @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
@@ -112,45 +116,62 @@ model Usuario {
   tarefasConcluidas    TarefaConcluida[]
   quadrosPublicados    Quadro[]                @relation("QuadrosPublicados")
   escalasPublicadas    QuadroDirigente[]       @relation("EscalasPublicadas")
+  // Quando a foto de perfil mudou; null = sem foto. Fica aqui (e a imagem em FotoUsuario)
+  // para o app saber se ha foto, e montar a URL com versao, sem carregar os bytes.
+  fotoEm               DateTime?
+  foto                 FotoUsuario?
+  saidasTerritorio     RegistroSaida[]         @relation("SaidasTerritorio")
+  marcacoesTerritorio  Marcacao[]              @relation("MarcacoesTerritorio")
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
 }
 
+// A foto de perfil (JPEG pequeno, ~30 KB). Tabela propria para nenhuma consulta de usuario
+// arrastar os bytes sem querer; no banco, e nao em disco, para a instalacao nao precisar de
+// volume e o backup do Postgres ja levar as fotos junto.
+model FotoUsuario {
+  usuarioId Int      @id
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  imagem    Bytes
+  updatedAt DateTime @updatedAt
+}
+
 // Cadastro de irmaos com suas funcoes
 model Irmao {
-  id                 Int                   @id @default(autoincrement())
-  nome               String                @unique
-  funcoes            String[]
-  nivelAudioVideo    String                @default("experiente") // "experiente" ou "treinando"
+  id                    Int                    @id @default(autoincrement())
+  nome                  String                 @unique
+  funcoes               String[]
+  nivelAudioVideo       String                 @default("experiente") // "experiente" ou "treinando"
   // So digitos, com DDD ("71999998888"). Usado para abrir a conversa no WhatsApp ja com o
   // texto da confirmacao. Opcional: quem nao tem numero cadastrado ainda cai no
   // compartilhamento comum, que deixa o irmao escolher o app e o contato.
-  telefone           String?
+  telefone              String?
   // "irmao" | "irma". Como se fala com a pessoa, nao sexo biologico — e por isso que os
   // valores tem o nome que tem. Opcional so por causa da transicao: o script de migracao
   // preenche todo mundo, e quem entrar depois preenche na tela de Pessoas.
-  genero             String?
+  genero                String?
   // LEGADO, sem uso. Nasceu como texto livre e durou um commit: renomear um grupo teria de
   // ser feito publicador por publicador, e um erro de digitacao criaria um grupo fantasma.
   // A ligacao correta e `grupoId`, abaixo. A coluna continua aqui porque remove-la trava o
   // boot em producao (o `db push` recusa DROP COLUMN) — sai com um ALTER a mao, quando der.
-  grupo              String?
-  grupoId            Int?
-  grupoCampo         GrupoCampo?           @relation("GrupoPublicadores", fields: [grupoId], references: [id], onDelete: SetNull)
+  grupo                 String?
+  grupoId               Int?
+  grupoCampo            GrupoCampo?            @relation("GrupoPublicadores", fields: [grupoId], references: [id], onDelete: SetNull)
   // Os grupos que esta pessoa dirige ou ajuda. Lista, e nao campo unico, porque e o Prisma
   // que exige o lado inverso — na pratica e no maximo um de cada.
-  gruposQueDirige    GrupoCampo[]          @relation("GrupoDirigente")
-  gruposQueAjuda     GrupoCampo[]          @relation("GrupoAjudante")
+  gruposQueDirige       GrupoCampo[]           @relation("GrupoDirigente")
+  gruposQueAjuda        GrupoCampo[]           @relation("GrupoAjudante")
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
-  privilegio         String?
-  ativo              Boolean               @default(true)
-  usuario            Usuario?
-  indisponibilidades Indisponibilidade[]
-  dirigenteSaidas    DirigenteSaidaCampo[]
-  carrinhoEscalas    CarrinhoEscala[]
-  createdAt          DateTime              @default(now())
-  updatedAt          DateTime              @updatedAt
+  privilegio            String?
+  ativo                 Boolean                @default(true)
+  usuario               Usuario?
+  indisponibilidades    Indisponibilidade[]
+  dirigenteSaidas       DirigenteSaidaCampo[]
+  carrinhoEscalas       CarrinhoEscala[]
+  designacoesTerritorio DesignacaoTerritorio[]
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
 
 // Grupos de campo da congregacao.
@@ -167,7 +188,7 @@ model GrupoCampo {
   nome         String  @unique
   // Ordem de exibicao; empate cai no nome. Serve para a lista nao dancar a cada renomeacao.
   ordem        Int     @default(0)
-  // O numero com que a PROGRAMACAO chama este grupo ("Limpeza: Grupo 4 Elvandy LIma").
+  // O numero com que a PROGRAMACAO chama este grupo ("Limpeza: Grupo 4 Evaldo LIma").
   // Nao e a `ordem`: a ordem e de exibicao no app e nada obriga as duas a coincidirem —
   // hoje nao coincidem. Existe porque o nome do grupo no documento chega abreviado e com
   // caixa trocada, e o numero e o unico pedaco estavel; `scripts/vincularLimpeza.js`
@@ -423,7 +444,7 @@ model SaidaCampo {
   id                    Int                   @id @default(autoincrement())
   diaSemana             String // "segunda", "terca", "quarta", "quinta", "sexta", "sabado"
   turno                 Int                   @default(1) // 1 para dias normais, 1-4 para sábado
-  local                 String // "Ex-Combatentes - Casa dos irmãos Walney e Olga"
+  local                 String // "Ex-Combatentes - Casa dos irmãos Wagner e Odete"
   horario               String // "08:45"
   ativo                 Boolean               @default(true)
   dirigentesDisponiveis DirigenteSaidaCampo[]
@@ -446,20 +467,20 @@ model DirigenteSaidaCampo {
 
 // Quadro mensal da Escala de Dirigentes
 model QuadroDirigente {
-  id        Int               @id @default(autoincrement())
-  mes       Int // 1-12
-  ano       Int // 2026
-  titulo    String
-  status    String            @default("rascunho")
+  id             Int               @id @default(autoincrement())
+  mes            Int // 1-12
+  ano            Int // 2026
+  titulo         String
+  status         String            @default("rascunho")
   // Igual ao Quadro acima. Aqui NAO ha de onde preencher para tras: a escala de dirigentes
   // nunca escreveu no Historico (que so tem FK para Quadro), entao a medicao comeca do dia
   // em que esta coluna passou a ser gravada — e o painel diz isso em vez de mostrar zero.
   publicadoEm    DateTime?
   publicadoPorId Int?
-  publicadoPor   Usuario?     @relation("EscalasPublicadas", fields: [publicadoPorId], references: [id], onDelete: SetNull)
-  escalas   EscalaDirigente[]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  publicadoPor   Usuario?          @relation("EscalasPublicadas", fields: [publicadoPorId], references: [id], onDelete: SetNull)
+  escalas        EscalaDirigente[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@unique([mes, ano])
 }
@@ -600,4 +621,156 @@ model TarefaConcluida {
 
   @@unique([usuarioId, tipo, ocorrencia])
   @@index([usuarioId, tipo])
+}
+
+// ==========================================================================
+// TERRITORIOS
+// ==========================================================================
+// Os poligonos nascem no Google My Maps da congregacao: cada CAMADA de um mapa e um
+// territorio, cada POLIGONO da camada e uma quadra. O app importa o KML publico do mapa
+// (ver services/MyMapsService.js) e o "Atualizar do My Maps" casa de novo por (mymapsMid,
+// mymapsCamada) — o My Maps continua sendo onde se desenha.
+//
+// Os cartoes em imagem (backend/public/territorios) continuam valendo como "cartao original",
+// casados pelo `numero`.
+model Territorio {
+  id           Int                    @id @default(autoincrement())
+  // Texto, e nao Int, porque ha territorio "06A". Unico: e por ele que a tela abre.
+  numero       String                 @unique
+  nome         String
+  // Agrupamento livre ("Tokaia", "KM 17") para a lista.
+  area         String?
+  // Outros nomes pelos quais o territorio e conhecido, para a busca. Separados por virgula.
+  apelidos     String?
+  observacoes  String?
+  cor          String?
+  mymapsMid    String?
+  mymapsCamada String?
+  // Inicio do ciclo atual: so o que foi registrado depois disto conta para a situacao
+  // (concluido / em andamento). "Novo ciclo" move esta data; o historico fica.
+  cicloDesde   DateTime               @default(now())
+  // Confirmado pelo responsavel: este territorio nao sera iniciado neste ciclo.
+  naoIniciado  Boolean                @default(false)
+  ativo        Boolean                @default(true)
+  quadras      Quadra[]
+  saidas       RegistroSaida[]
+  marcacoes    Marcacao[]
+  designacoes  DesignacaoTerritorio[]
+  avisos       AvisoTerritorio[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([mymapsMid, mymapsCamada])
+}
+
+model Quadra {
+  id           Int             @id @default(autoincrement())
+  territorioId Int
+  territorio   Territorio      @relation(fields: [territorioId], references: [id], onDelete: Cascade)
+  nome         String
+  cor          String?
+  // [[lat, lng], ...] — o contorno, como veio do My Maps.
+  pontos       Json
+  ordem        Int             @default(0)
+  ativo        Boolean         @default(true)
+  saidas       RegistroSaida[]
+  marcacoes    Marcacao[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+// Uma saida de campo no territorio: concluiu, ou onde parou.
+//
+// `clientKey` e gerado no CELULAR: a saida pode ser registrada sem internet e reenviada
+// depois, e o mesmo envio chegando duas vezes nao pode virar dois registros.
+model RegistroSaida {
+  id             Int        @id @default(autoincrement())
+  clientKey      String     @unique
+  territorioId   Int
+  territorio     Territorio @relation(fields: [territorioId], references: [id], onDelete: Cascade)
+  // Parte do territorio de que se fala; null = o territorio inteiro.
+  quadraId       Int?
+  quadra         Quadra?    @relation(fields: [quadraId], references: [id], onDelete: SetNull)
+  autorId        Int?
+  autor          Usuario?   @relation("SaidasTerritorio", fields: [autorId], references: [id], onDelete: SetNull)
+  dia            String // YYYY-MM-DD, no fuso da congregacao
+  concluiu       Boolean    @default(false)
+  ondeParou      String?
+  // "sim" (continuar na proxima casa) | "nao" (comecar nesta) | "incerto" | "outro_lugar"
+  casaTrabalhada String?
+  proximoInicio  String?
+  pendente       String?
+  lat            Float?
+  lng            Float?
+  // "ativa" | "conflito" (outro dirigente registrou a mesma parte no mesmo dia) | "descartada"
+  status         String     @default("ativa")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([territorioId, dia])
+}
+
+// Um ponto no mapa, marcado pelo GPS (ou tocando no mapa).
+//
+// "Nao bater" mora aqui tambem: e um ponto com texto ("Rua X, 120") que precisa ser
+// reconfirmado a cada 3 meses. lat/lng sao opcionais so por ele — da para registrar a casa
+// pelo endereco quando o GPS nao ajuda.
+model Marcacao {
+  id                Int        @id @default(autoincrement())
+  clientKey         String     @unique
+  territorioId      Int
+  territorio        Territorio @relation(fields: [territorioId], references: [id], onDelete: Cascade)
+  quadraId          Int?
+  quadra            Quadra?    @relation(fields: [quadraId], references: [id], onDelete: SetNull)
+  autorId           Int?
+  autor             Usuario?   @relation("MarcacoesTerritorio", fields: [autorId], references: [id], onDelete: SetNull)
+  // "parada" | "proximo" | "concluido" | "nao_bater" | "observacao"
+  tipo              String
+  lat               Float?
+  lng               Float?
+  // Raio de incerteza do GPS em metros, como o aparelho informou.
+  precisao          Float?
+  texto             String?
+  // Hora do aparelho: a marcacao feita sem internet chega ao servidor depois.
+  marcadaEm         DateTime
+  ativo             Boolean    @default(true)
+  reconfirmadaEm    DateTime?
+  reconfirmadaPorId Int?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@index([territorioId, ativo])
+}
+
+// Quem leva o territorio em qual dia. `irmaoId` e o dirigente no cadastro — e por ele que a
+// designacao aparece em "Minhas designacoes" e entra nos lembretes de saida de campo.
+model DesignacaoTerritorio {
+  id           Int        @id @default(autoincrement())
+  territorioId Int
+  territorio   Territorio @relation(fields: [territorioId], references: [id], onDelete: Cascade)
+  irmaoId      Int
+  irmao        Irmao      @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  dia          String // YYYY-MM-DD
+  // Dia em que o territorio inteiro foi concluido nesta designacao (vai para o S-13).
+  concluidoEm  String?
+  criadoPorId  Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([dia])
+  @@index([territorioId])
+}
+
+// Aviso fixo do territorio: "acesso impedido", "entrar pela outra rua"...
+model AvisoTerritorio {
+  id           Int        @id @default(autoincrement())
+  territorioId Int
+  territorio   Territorio @relation(fields: [territorioId], references: [id], onDelete: Cascade)
+  // "acesso_impedido" | "entrada_outra_rua" | "trecho_pendente" | "outro"
+  tipo         String
+  texto        String
+  ativo        Boolean    @default(true)
+  criadoPorId  Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
