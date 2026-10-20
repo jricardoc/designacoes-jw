@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import { router, useSegments } from "expo-router";
-import { useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -18,6 +18,8 @@ import {
   LARGURA_DA_ABA,
   recuoDaBarra,
 } from "./geometriaBarra";
+import { Avatar } from "@/components/ui";
+import { useAuth } from "@/context/AuthContext";
 import type { Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
@@ -45,17 +47,19 @@ const INDICADOR_X = (LARGURA_ABA - INDICADOR) / 2;
 const MOLA_INDICADOR = { mass: 0.8, damping: 15, stiffness: 140 };
 const MOLA_ICONE = { mass: 0.4, damping: 9, stiffness: 220 };
 
-/** O ícone que cresce um tico ao ficar ativo. */
+/** O ícone que cresce um tico ao ficar ativo. `children` troca o ícone (a foto da Conta). */
 function IconeComPop({
   nome,
   tamanho,
   cor,
   ativo,
+  children,
 }: {
   nome: keyof typeof Ionicons.glyphMap;
   tamanho: number;
   cor: string;
   ativo: boolean;
+  children?: ReactNode;
 }) {
   const escala = useSharedValue(ativo ? 1.14 : 1);
 
@@ -67,13 +71,14 @@ function IconeComPop({
 
   return (
     <Animated.View style={estilo}>
-      <Ionicons name={nome} size={tamanho} color={cor} />
+      {children ?? <Ionicons name={nome} size={tamanho} color={cor} />}
     </Animated.View>
   );
 }
 
 export function BarraFlutuante() {
   const { colors, esquema, styles } = useTema(criarEstilos);
+  const { usuario } = useAuth();
   const segments = useSegments();
   const compacta = useBarraCompacta();
   const insets = useSafeAreaInsets();
@@ -187,7 +192,14 @@ export function BarraFlutuante() {
                   tamanho={aba.tamanho ?? 24}
                   cor={ativo ? colors.primary : colors.textMuted}
                   ativo={ativo}
-                />
+                >
+                  {/* Com foto de perfil, a Conta mostra a foto; o anel faz o papel da cor de "ativo". */}
+                  {aba.chave === "conta" && usuario?.fotoEm ? (
+                    <View style={[styles.foto, { borderColor: ativo ? colors.primary : "transparent" }]}>
+                      <Avatar usuario={usuario} tamanho={26} fundo={colors.sand} corTexto={colors.primaryDark} />
+                    </View>
+                  ) : undefined}
+                </IconeComPop>
               </Pressable>
             );
           })}
@@ -218,6 +230,7 @@ const criarEstilos = (_colors: Cores) =>
       shadowRadius: 16,
       elevation: 10,
     },
+    foto: { borderWidth: 2, borderRadius: 16, padding: 1 },
     pilula: {
       flexDirection: "row",
       alignItems: "center",
