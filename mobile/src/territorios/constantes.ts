@@ -1,4 +1,5 @@
 import type { Ionicons } from "@expo/vector-icons";
+import { Linking } from "react-native";
 import type { CasaTrabalhada, SituacaoTerritorio, TipoMarcacao } from "@/api/types";
 import type { Cores } from "@/theme";
 
@@ -87,6 +88,10 @@ export function separarEnderecoEDescricao(texto: string | null | undefined) {
   const [endereco, ...resto] = (texto ?? "").split("\n");
   return { endereco, descricao: resto.join("\n").trim() || null };
 }
+
+/** Abre a rota até o ponto no Google Maps (app, se instalado; senão o navegador). */
+export const abrirComoChegar = (lat: number, lng: number) =>
+  Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
 
 /** Dias sem trabalho a partir dos quais o território aparece como parado. */
 export const DIAS_PARADO = 30;

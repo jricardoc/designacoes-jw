@@ -6,7 +6,7 @@ import { Button, Sheet, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { MARCACOES, quandoFoi } from "@/territorios/constantes";
+import { abrirComoChegar, MARCACOES, quandoFoi } from "@/territorios/constantes";
 import { descartar, useFilaTerritorios } from "@/territorios/fila";
 
 /**
@@ -44,6 +44,8 @@ export function PinoSheet({
   const autor = marcacao?.autor ?? saida?.autor ?? null;
   const podeRemover = !!naFila || t.permissoes.gerenciar || (!!autor && autor.id === usuario?.id);
   const texto = marcacao?.texto ?? saida?.ondeParou ?? (naFila?.corpo.texto as string | null | undefined) ?? null;
+  const lat = marcacao?.lat ?? saida?.lat ?? (naFila?.corpo.lat as number | undefined) ?? null;
+  const lng = marcacao?.lng ?? saida?.lng ?? (naFila?.corpo.lng as number | undefined) ?? null;
   const quando = marcacao
     ? new Date(marcacao.marcadaEm).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
     : saida
@@ -102,6 +104,15 @@ export function PinoSheet({
             <Ionicons name="cloud-upload-outline" size={16} color={colors.amber} />
             <Text style={styles.avisoTexto}>Ainda não chegou ao servidor: só você está vendo.</Text>
           </View>
+        ) : null}
+        {lat !== null && lng !== null ? (
+          <Button
+            label="Como chegar aqui"
+            icon="navigate"
+            variant="secondary"
+            onPress={() => abrirComoChegar(lat, lng)}
+            fullWidth
+          />
         ) : null}
         {podeRemover ? (
           <Button

@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Linking,
+  Alert,
   Modal,
   Pressable,
   RefreshControl,
@@ -25,7 +25,7 @@ import { SaidaSheet } from "@/components/territorio/SaidaSheet";
 import { Button, EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { AVISOS, CASA_TRABALHADA, MARCACOES, quandoFoi, SITUACOES } from "@/territorios/constantes";
+import { abrirComoChegar, AVISOS, CASA_TRABALHADA, MARCACOES, quandoFoi, SITUACOES } from "@/territorios/constantes";
 import { useFilaTerritorios } from "@/territorios/fila";
 import { minhaLocalizacao } from "@/territorios/gps";
 
@@ -129,11 +129,27 @@ export default function TerritorioScreen() {
     }
   };
 
+  // Onde continuar, se houver ponto marcado: o "próximo começa aqui" mais recente, senão o
+  // "onde paramos" com GPS, senão o "paramos aqui". As marcações já vêm da mais nova à mais velha.
+  const comGps = (m: { lat: number | null; lng: number | null }) => m.lat !== null && m.lng !== null;
+  const continuar =
+    t.marcacoes.find((m) => m.tipo === "proximo" && comGps(m)) ??
+    t.ondeParamos.find(comGps) ??
+    t.marcacoes.find((m) => m.tipo === "parada" && comGps(m));
+
   const comoChegar = () => {
     const pontos = t.quadras.flatMap((q) => q.pontos);
-    if (pontos.length === 0) return;
-    const [lat, lng] = pontos.reduce(([a, b], [x, y]) => [a + x / pontos.length, b + y / pontos.length], [0, 0]);
-    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+    const irAoTerritorio = () => {
+      if (pontos.length === 0) return;
+      const [lat, lng] = pontos.reduce(([a, b], [x, y]) => [a + x / pontos.length, b + y / pontos.length], [0, 0]);
+      abrirComoChegar(lat, lng);
+    };
+    if (!continuar) return irAoTerritorio();
+    Alert.alert("Como chegar", "Para onde você quer ir?", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Território", onPress: irAoTerritorio },
+      { text: "Onde paramos", onPress: () => abrirComoChegar(continuar.lat!, continuar.lng!) },
+    ]);
   };
 
   const verNoMapa = (s: SaidaTerritorio) => {
@@ -292,10 +308,17 @@ export default function TerritorioScreen() {
                 <Text style={styles.paradaAutor}>
                   {s.autor?.nome ?? "—"} · {quandoFoi(s.dia)}
                 </Text>
-                {s.lat !== null && mapaDisponivel ? (
-                  <Pressable onPress={() => verNoMapa(s)} hitSlop={8}>
-                    <Text style={styles.link}>Ver no mapa</Text>
-                  </Pressable>
+                {s.lat !== null && s.lng !== null ? (
+                  <View style={styles.links}>
+                    {mapaDisponivel ? (
+                      <Pressable onPress={() => verNoMapa(s)} hitSlop={8}>
+                        <Text style={styles.link}>Ver no mapa</Text>
+                      </Pressable>
+                    ) : null}
+                    <Pressable onPress={() => abrirComoChegar(s.lat!, s.lng!)} hitSlop={8}>
+                      <Text style={styles.link}>Como chegar</Text>
+                    </Pressable>
+                  </View>
                 ) : null}
               </View>
             </View>
@@ -331,7 +354,7 @@ export default function TerritorioScreen() {
           <Pressable style={styles.atalho} onPress={comoChegar}>
             <Ionicons name="navigate" size={22} color={colors.teal} />
             <Text style={styles.atalhoTexto}>Como chegar</Text>
-            <Text style={styles.atalhoSub}>no Google Maps</Text>
+            <Text style={styles.atalhoSub}>{continuar ? "ou onde paramos" : "no Google Maps"}</Text>
           </Pressable>
           {t.imagens?.mapa ? (
             <Pressable
@@ -452,6 +475,7 @@ const criarEstilos = (colors: Cores) =>
     paradaRodape: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
     paradaAutor: { fontSize: 12.5, color: colors.textMuted },
     link: { fontSize: 13.5, fontWeight: "800", color: colors.primaryDark },
+    links: { flexDirection: "row", gap: 16 },
     acoes: { gap: 10, marginTop: 6 },
     marcar: {
       flexDirection: "row",
