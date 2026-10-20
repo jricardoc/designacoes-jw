@@ -21,7 +21,7 @@ const caminho = (numero: string) => `/territorios/${encodeURIComponent(numero)}`
 export function useTerritorios() {
   return useQuery({
     queryKey: qk.territorios,
-    queryFn: () => comCopiaLocal("territorios", () => apiRequest<ListaTerritorios>("/territorios")),
+    queryFn: () => comCopiaLocal("territorios", () => apiRequest<ListaTerritorios>("/territorios/lista")),
   });
 }
 

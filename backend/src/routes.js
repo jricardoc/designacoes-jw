@@ -243,7 +243,8 @@ routes.get('/reunioes/confirmacao', ReuniaoController.textoConfirmacao);
 // de dirigente ou de quem cuida da area; gerir (My Maps, designar, revisar) e do escopo.
 // Rotas fixas ANTES de /territorios/:numero, senao "mapa" ou "painel" seriam lidos como numero.
 const podeTerritorios = requireEscopo(ESCOPOS.TERRITORIOS);
-routes.get('/territorios', TerritorioController.index);
+routes.get('/territorios', TerritorioController.legado);
+routes.get('/territorios/lista', TerritorioController.index);
 routes.get('/territorios/mapa', TerritorioController.mapa);
 routes.post('/territorios/saidas', requireMarcarTerritorio, TerritorioController.criarSaida);
 routes.delete('/territorios/saidas/:id', requireMarcarTerritorio, TerritorioController.excluirSaida);

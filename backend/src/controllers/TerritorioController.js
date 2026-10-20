@@ -41,6 +41,22 @@ const duplicado = (erro) => erro && erro.code === 'P2002';
 class TerritorioController {
     // ==================== LEITURA ====================
 
+    /**
+     * GET /territorios — o formato do app ate a versao 2.11: so os cartoes em imagem, numero
+     * inteiro. O app novo le /territorios/lista; este fica para quem ainda nao instalou o build
+     * novo continuar abrindo os cartoes (o APK novo chega a cada irmao no tempo dele).
+     * ponytail: remover quando ninguem mais usar o app antigo.
+     */
+    async legado(req, res) {
+        return res.json({
+            territorios: [...T.cartoes()].map(([numero, c]) => ({
+                numero: parseInt(numero, 10),
+                localidade: c.localidade,
+                imagens: c.imagens,
+            })),
+        });
+    }
+
     async index(req, res) {
         try {
             const doBanco = await T.listar();
