@@ -3,7 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useApagarSaida, useHistoricoTerritorio, useTerritorio } from "@/api/hooks/useTerritorios";
+import { useApagarSaida, useHistoricoTerritorio, useRetirarMarcacao, useTerritorio } from "@/api/hooks/useTerritorios";
 import type { HistoricoTerritorio, SaidaTerritorio } from "@/api/types";
 import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
@@ -33,6 +33,7 @@ export default function HistoricoTerritorioScreen() {
   const { data: t } = useTerritorio(numero);
   const { data, isLoading, refetch, isRefetching } = useHistoricoTerritorio(numero);
   const apagar = useApagarSaida();
+  const retirar = useRetirarMarcacao();
 
   const dias = useMemo(() => {
     if (!data) return [];
@@ -53,6 +54,7 @@ export default function HistoricoTerritorioScreen() {
   if (isLoading) return <Loading label="Carregando histórico..." />;
 
   const podeApagar = (s: SaidaTerritorio) => !!t?.permissoes.gerenciar || s.autor?.id === usuario?.id;
+  const podeRetirar = (autorId?: number) => !!t?.permissoes.gerenciar || (!!autorId && autorId === usuario?.id);
 
   return (
     <View style={styles.flex}>
@@ -128,6 +130,27 @@ export default function HistoricoTerritorioScreen() {
                       {e.marcacao.ativo ? "" : " · retirado"}
                     </Text>
                   </View>
+                  {e.marcacao.ativo && podeRetirar(e.marcacao.autor?.id) ? (
+                    <Pressable
+                      hitSlop={8}
+                      onPress={() =>
+                        Alert.alert("Remover esta marcação?", "Ela sai do mapa para todos.", [
+                          { text: "Cancelar", style: "cancel" },
+                          {
+                            text: "Remover",
+                            style: "destructive",
+                            onPress: () =>
+                              retirar.mutate(e.marcacao.id, {
+                                onSuccess: () => toast.show("Marcação removida"),
+                                onError: (err) => toast.show(err.message, "error"),
+                              }),
+                          },
+                        ])
+                      }
+                    >
+                      <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
+                    </Pressable>
+                  ) : null}
                 </View>
               ),
             )}

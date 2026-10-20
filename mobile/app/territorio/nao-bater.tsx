@@ -11,6 +11,7 @@ import { Button, EmptyState, GradientHeader, Loading, TextField, useToast } from
 import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { juntarEnderecoEDescricao, separarEnderecoEDescricao } from "@/territorios/constantes";
 import { enfileirar, novaChave, useFilaTerritorios } from "@/territorios/fila";
 import { minhaLocalizacao } from "@/territorios/gps";
 
@@ -33,6 +34,7 @@ export default function NaoBaterScreen() {
   const retirar = useRetirarMarcacao();
   const [rua, setRua] = useState("");
   const [casa, setCasa] = useState("");
+  const [descricao, setDescricao] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [buscandoGps, setBuscandoGps] = useState(false);
   const [ponto, setPonto] = useState<PontoEscolhido | null>(null);
@@ -51,7 +53,8 @@ export default function NaoBaterScreen() {
     .filter((m) => m.tipo === "nao_bater")
     .sort((a, b) => Number(b.precisaReconfirmar) - Number(a.precisaReconfirmar));
   const naFila = pendentes.filter((i) => i.numero === t.numero && i.corpo.tipo === "nao_bater");
-  const texto = `${rua.trim()}${casa.trim() ? `, ${casa.trim()}` : ""}`;
+  const endereco = `${rua.trim()}${casa.trim() ? `, ${casa.trim()}` : ""}`;
+  const texto = juntarEnderecoEDescricao(endereco, descricao);
 
   const registrarPeloEndereco = async () => {
     setSalvando(true);
@@ -60,13 +63,14 @@ export default function NaoBaterScreen() {
       clientKey,
       tipo: "marcacao",
       numero: t.numero,
-      titulo: `Não bater · ${texto}`,
+      titulo: `Não bater · ${endereco}`,
       corpo: { clientKey, territorioId: t.id, tipo: "nao_bater", texto, marcadaEm: new Date().toISOString() },
     });
     setSalvando(false);
     if (r.erro) return toast.show(r.erro, "error");
     setRua("");
     setCasa("");
+    setDescricao("");
     toast.show(r.enviado ? "Casa registrada" : "Sem internet: guardado no celular, envia sozinho");
   };
 
@@ -105,9 +109,12 @@ export default function NaoBaterScreen() {
           <View key={m.id} style={[styles.cartao, m.precisaReconfirmar && styles.cartaoVencido]}>
             <View style={styles.linha}>
               <Ionicons name="hand-left" size={20} color={colors.redDark} />
-              <Text style={styles.endereco}>{m.texto}</Text>
+              <Text style={styles.endereco}>{separarEnderecoEDescricao(m.texto).endereco}</Text>
               {m.lat !== null ? <Ionicons name="location" size={16} color={colors.textSecondary} /> : null}
             </View>
+            {separarEnderecoEDescricao(m.texto).descricao ? (
+              <Text style={styles.descricao}>{separarEnderecoEDescricao(m.texto).descricao}</Text>
+            ) : null}
             <Text style={styles.meta}>
               Registrada em {new Date(m.marcadaEm).toLocaleDateString("pt-BR")}
               {m.autor ? ` por ${m.autor.nome}` : ""}
@@ -133,7 +140,7 @@ export default function NaoBaterScreen() {
                   <Pressable
                     style={styles.acao}
                     onPress={() =>
-                      Alert.alert("Retirar da lista?", m.texto ?? "", [
+                      Alert.alert("Retirar da lista?", separarEnderecoEDescricao(m.texto).endereco, [
                         { text: "Cancelar", style: "cancel" },
                         {
                           text: "Retirar",
@@ -170,7 +177,14 @@ export default function NaoBaterScreen() {
             <Text style={styles.ou}>ou só pelo endereço</Text>
             <TextField label="Rua" placeholder="Ex.: Rua das Flores" value={rua} onChangeText={setRua} maxLength={120} />
             <TextField label="Casa" placeholder="Número" value={casa} onChangeText={setCasa} keyboardType="numbers-and-punctuation" maxLength={20} />
-            {rua.trim().length >= 3 ? <Text style={styles.previa}>Vai ficar registrado: {texto}</Text> : null}
+            <TextField
+              label="Descrição (opcional)"
+              placeholder="Ex.: casa de muro azul, portão de ferro"
+              value={descricao}
+              onChangeText={setDescricao}
+              maxLength={150}
+            />
+            {rua.trim().length >= 3 ? <Text style={styles.previa}>Vai ficar registrado: {endereco}</Text> : null}
             <Text style={styles.dica}>Não escreva nomes nem dados dos moradores.</Text>
             <Button
               label="Registrar casa"
@@ -214,6 +228,7 @@ const criarEstilos = (colors: Cores) =>
     cartaoVencido: { borderColor: colors.amber, backgroundColor: colors.warningBg },
     linha: { flexDirection: "row", alignItems: "center", gap: 10 },
     endereco: { flex: 1, fontSize: 17, fontWeight: "800", color: colors.text },
+    descricao: { fontSize: 14.5, color: colors.text, lineHeight: 20 },
     meta: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
     vencido: { fontSize: 13.5, fontWeight: "800", color: colors.amber },
     acoes: { flexDirection: "row", gap: 18, marginTop: 4 },

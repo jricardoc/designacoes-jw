@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
   useApagarDesignacao,
   useAtualizarDesignacao,
@@ -27,16 +27,29 @@ const ABAS: { id: Aba; rotulo: string }[] = [
 ];
 
 const SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const SEMANA_LONGA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const MESES_LONGOS = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
-/** Hoje e os próximos 13 dias, para designar sem calendário: um toque no dia. */
+/** Hoje e os próximos 20 dias, para a faixa de calendário: um toque no dia. */
 function proximosDias() {
-  return Array.from({ length: 14 }, (_, i) => {
+  return Array.from({ length: 21 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() + i);
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return { iso, rotulo: i === 0 ? "Hoje" : i === 1 ? "Amanhã" : `${SEMANA[d.getDay()]} ${d.getDate()}` };
+    return {
+      iso,
+      semana: i === 0 ? "hoje" : SEMANA[d.getDay()],
+      dia: d.getDate(),
+      mes: MESES[d.getMonth()],
+      porExtenso: `${i === 0 ? "Hoje, " : i === 1 ? "Amanhã, " : ""}${SEMANA_LONGA[d.getDay()]}, ${d.getDate()} de ${MESES_LONGOS[d.getMonth()]}`,
+      fimDeSemana: d.getDay() === 0 || d.getDay() === 6,
+    };
   });
 }
+
+/** Acentos e caixa fora da busca: "joao" acha "João". */
+const normalizar = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 /**
  * Gestão de um território, para quem cuida da área: designar a um dirigente, avisos fixos
@@ -65,6 +78,7 @@ export function GerenciarTerritorioSheet({
   const ciclo = useCicloTerritorio();
 
   const [irmaoId, setIrmaoId] = useState<number | null>(null);
+  const [buscaDirigente, setBuscaDirigente] = useState("");
   const [dia, setDia] = useState(proximosDias()[0].iso);
   const [tipoAviso, setTipoAviso] = useState("acesso_impedido");
   const [textoAviso, setTextoAviso] = useState("");
@@ -80,6 +94,7 @@ export function GerenciarTerritorioSheet({
       observacoes: t.observacoes ?? "",
     });
     setIrmaoId(null);
+    setBuscaDirigente("");
     setTextoAviso("");
   }, [visible, t]);
 
@@ -91,6 +106,11 @@ export function GerenciarTerritorioSheet({
       toast.show(err instanceof Error ? err.message : "Erro", "error");
     }
   };
+
+  const dias = proximosDias();
+  const escolhido = dirigentes?.find((d) => d.id === irmaoId);
+  const termo = normalizar(buscaDirigente.trim());
+  const encontrados = termo ? (dirigentes ?? []).filter((d) => normalizar(d.nome).includes(termo)).slice(0, 6) : [];
 
   const chip = (ativo: boolean, rotulo: string, onPress: () => void, key?: string) => (
     <Pressable key={key ?? rotulo} onPress={onPress} style={[styles.chip, ativo && styles.chipAtivo]}>
@@ -113,14 +133,72 @@ export function GerenciarTerritorioSheet({
         {aba === "designar" ? (
           <>
             <Text style={styles.rotulo}>Dirigente</Text>
-            <View style={styles.chips}>
-              {(dirigentes ?? []).map((d) => chip(irmaoId === d.id, d.nome, () => setIrmaoId(d.id), String(d.id)))}
-              {dirigentes && dirigentes.length === 0 ? (
-                <Text style={styles.ajuda}>Nenhum irmão com a função Dirigente no cadastro de Publicadores.</Text>
-              ) : null}
-            </View>
+            {/* Escolhido: fica um destaque só, com "trocar". Sem escolha: busca, e só aparece
+                o que bate com o que foi digitado — a lista inteira não cabia na tela. */}
+            {irmaoId && escolhido ? (
+              <View style={styles.escolhido}>
+                <Ionicons name="person-circle" size={24} color={colors.primary} />
+                <Text style={styles.escolhidoNome}>{escolhido.nome}</Text>
+                <Pressable
+                  hitSlop={8}
+                  onPress={() => {
+                    setIrmaoId(null);
+                    setBuscaDirigente("");
+                  }}
+                >
+                  <Text style={styles.link}>Trocar</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <>
+                <TextField
+                  icon="search"
+                  placeholder="Digite o nome do dirigente"
+                  value={buscaDirigente}
+                  onChangeText={setBuscaDirigente}
+                  autoCorrect={false}
+                />
+                {encontrados.map((d) => (
+                  <Pressable
+                    key={d.id}
+                    style={styles.resultado}
+                    onPress={() => {
+                      setIrmaoId(d.id);
+                      setBuscaDirigente("");
+                    }}
+                  >
+                    <Ionicons name="person-outline" size={18} color={colors.textSecondary} />
+                    <Text style={styles.resultadoNome}>{d.nome}</Text>
+                  </Pressable>
+                ))}
+                {buscaDirigente.trim() && encontrados.length === 0 ? (
+                  <Text style={styles.ajuda}>Nenhum dirigente com esse nome.</Text>
+                ) : null}
+                {dirigentes && dirigentes.length === 0 ? (
+                  <Text style={styles.ajuda}>Nenhum irmão com a função Dirigente no cadastro de Publicadores.</Text>
+                ) : null}
+              </>
+            )}
+
             <Text style={styles.rotulo}>Dia da saída</Text>
-            <View style={styles.chips}>{proximosDias().map((d) => chip(dia === d.iso, d.rotulo, () => setDia(d.iso), d.iso))}</View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dias}>
+              {dias.map((d) => {
+                const ativo = dia === d.iso;
+                return (
+                  <Pressable
+                    key={d.iso}
+                    onPress={() => setDia(d.iso)}
+                    style={[styles.diaCaixa, d.fimDeSemana && styles.diaFimDeSemana, ativo && styles.diaAtivo]}
+                    accessibilityLabel={d.porExtenso}
+                  >
+                    <Text style={[styles.diaSemana, ativo && styles.diaTextoAtivo]}>{d.semana}</Text>
+                    <Text style={[styles.diaNumero, ativo && styles.diaTextoAtivo]}>{d.dia}</Text>
+                    <Text style={[styles.diaMes, ativo && styles.diaTextoAtivo]}>{d.mes}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+            <Text style={styles.diaEscolhido}>{dias.find((d) => d.iso === dia)?.porExtenso}</Text>
             <Button
               label="Designar"
               icon="person-add"
@@ -315,4 +393,42 @@ const criarEstilos = (colors: Cores) =>
     itemSub: { fontSize: 13, color: colors.textSecondary },
     link: { fontSize: 13.5, fontWeight: "800", color: colors.primaryDark },
     ajuda: { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+    escolhido: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      padding: 12,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      backgroundColor: colors.infoBg,
+    },
+    escolhidoNome: { flex: 1, fontSize: 16, fontWeight: "800", color: colors.text },
+    resultado: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      borderRadius: radius.md,
+      backgroundColor: colors.surfaceMuted,
+    },
+    resultadoNome: { fontSize: 15.5, fontWeight: "600", color: colors.text },
+    dias: { gap: 8, paddingRight: 8 },
+    diaCaixa: {
+      width: 58,
+      paddingVertical: 8,
+      alignItems: "center",
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.borderStrong,
+      backgroundColor: colors.surface,
+    },
+    diaFimDeSemana: { backgroundColor: colors.surfaceMuted },
+    diaAtivo: { backgroundColor: colors.primary, borderColor: colors.primary },
+    diaSemana: { fontSize: 11.5, fontWeight: "700", color: colors.textSecondary, textTransform: "uppercase" },
+    diaNumero: { fontSize: 21, fontWeight: "900", color: colors.text },
+    diaMes: { fontSize: 11.5, color: colors.textSecondary },
+    diaTextoAtivo: { color: colors.textOnPrimary },
+    diaEscolhido: { fontSize: 14, fontWeight: "700", color: colors.primaryDark, marginTop: -4 },
   });

@@ -40,6 +40,7 @@ export const MapaTerritorio = forwardRef<
     satelite?: boolean;
     onLongPress?: (ponto: { lat: number; lng: number }) => void;
     onAreaPress?: (chave: string) => void;
+    onPinoPress?: (chave: string) => void;
     style?: StyleProp<ViewStyle>;
   }
 >(function MapaTerritorio({ style }, ref) {

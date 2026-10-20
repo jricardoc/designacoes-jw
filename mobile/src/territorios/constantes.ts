@@ -1,4 +1,5 @@
 import type { Ionicons } from "@expo/vector-icons";
+import { Linking } from "react-native";
 import type { CasaTrabalhada, SituacaoTerritorio, TipoMarcacao } from "@/api/types";
 import type { Cores } from "@/theme";
 
@@ -74,6 +75,23 @@ export const AVISOS: Record<string, string> = {
   trecho_pendente: "Trecho pendente",
   outro: "Aviso",
 };
+
+/**
+ * O texto do "Não bater" é o endereço na 1ª linha e, se houver, a descrição nas seguintes —
+ * no mesmo campo, para a descrição não precisar de coluna nova no servidor (o limite é o do
+ * campo: 300 caracteres no total).
+ */
+export const juntarEnderecoEDescricao = (endereco: string, descricao: string) =>
+  [endereco.trim(), descricao.trim()].filter(Boolean).join("\n");
+
+export function separarEnderecoEDescricao(texto: string | null | undefined) {
+  const [endereco, ...resto] = (texto ?? "").split("\n");
+  return { endereco, descricao: resto.join("\n").trim() || null };
+}
+
+/** Abre a rota até o ponto no Google Maps (app, se instalado; senão o navegador). */
+export const abrirComoChegar = (lat: number, lng: number) =>
+  Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
 
 /** Dias sem trabalho a partir dos quais o território aparece como parado. */
 export const DIAS_PARADO = 30;

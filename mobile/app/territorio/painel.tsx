@@ -12,6 +12,7 @@ import {
   usePainelTerritorios,
   useRevisarSaida,
 } from "@/api/hooks/useTerritorios";
+import { AreasTerritorios } from "@/components/territorio/AreasTerritorios";
 import { Button, GradientHeader, Loading, useToast } from "@/components/ui";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -111,6 +112,9 @@ export default function PainelTerritoriosScreen() {
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
         </Pressable>
+
+        <Text style={styles.secao}>Áreas da lista</Text>
+        <AreasTerritorios />
 
         <View style={styles.periodos}>
           {PERIODOS.map((p) => (

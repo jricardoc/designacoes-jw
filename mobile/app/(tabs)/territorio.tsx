@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { BackHandler, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useImagemProtegida } from "@/api/hooks/useImagemProtegida";
 import { preCarregarTerritorios, useMapaTerritorios, useTerritorios } from "@/api/hooks/useTerritorios";
 import type { SituacaoTerritorio, TerritorioResumo } from "@/api/types";
@@ -30,21 +30,35 @@ const FILTROS: { id: Filtro; rotulo: string; passa: (t: TerritorioResumo) => boo
   { id: "designados", rotulo: "Designados", passa: (t) => !!t.designacao },
 ];
 
+/** Chave da "área" que junta todos, para não colidir com nome de área de verdade. */
+const TODAS = "\u0000todas";
+
+type Item =
+  | { tipo: "area"; nome: string; lista: TerritorioResumo[] }
+  | { tipo: "territorio"; t: TerritorioResumo };
+
 /**
  * Miniatura do cartão com fallback: sem fonte (token ainda carregando) ou com erro de download,
  * mostra o ícone de mapa em vez de um retângulo cinza mudo.
  */
-function Thumb({ fonte }: { fonte: { uri: string; headers: Record<string, string> } | null }) {
+function Thumb({
+  fonte,
+  grande = false,
+}: {
+  fonte: { uri: string; headers: Record<string, string> } | null;
+  grande?: boolean;
+}) {
   const { colors, styles } = useTema(criarEstilos);
   const [erro, setErro] = useState(false);
+  const estilo = [styles.thumb, grande && styles.thumbGrande];
   if (!fonte || erro) {
     return (
-      <View style={[styles.thumb, styles.thumbVazio]}>
+      <View style={[estilo, styles.thumbVazio]}>
         <Ionicons name={erro ? "cloud-offline-outline" : "map-outline"} size={20} color={colors.textMuted} />
       </View>
     );
   }
-  return <Image source={fonte} style={styles.thumb} resizeMode="cover" onError={() => setErro(true)} />;
+  return <Image source={fonte} style={estilo} resizeMode="cover" onError={() => setErro(true)} />;
 }
 
 export default function TerritorioScreen() {
@@ -58,6 +72,8 @@ export default function TerritorioScreen() {
   const [modo, setModo] = useState<"lista" | "mapa">("lista");
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
+  // A área aberta: null = a tela das áreas; TODAS = todos os territórios; "" = os sem área.
+  const [area, setArea] = useState<string | null>(null);
 
   const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading, isError, refetch, isRefetching } = useTerritorios();
@@ -72,17 +88,54 @@ export default function TerritorioScreen() {
   }, [doBanco, data]);
 
   const todos = useMemo(() => data?.territorios ?? [], [data]);
+
+  // As áreas, na ordem do primeiro número de cada uma; "sem área" por último.
+  const grupos = useMemo(() => {
+    const mapa = new Map<string, TerritorioResumo[]>();
+    for (const t of todos) {
+      const nome = t.area?.trim() ?? "";
+      mapa.set(nome, [...(mapa.get(nome) ?? []), t]);
+    }
+    return [...mapa]
+      .map(([nome, lista]) => ({ nome, lista }))
+      .sort((a, b) =>
+        a.nome === "" ? 1 : b.nome === "" ? -1 : a.lista[0].numero.localeCompare(b.lista[0].numero, "pt-BR", { numeric: true }),
+      );
+  }, [todos]);
+  // Sem nenhuma área cadastrada (instalação nova), a lista é plana, como antes.
+  const temAreas = doBanco && grupos.some((g) => g.nome !== "");
+  const naTelaDasAreas = temAreas && area === null && !busca.trim();
+
+  // O voltar do Android, dentro de uma área, volta para as áreas — e não sai da aba.
+  useEffect(() => {
+    if (area === null) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      setArea(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [area]);
+
+  const base = useMemo(
+    () => (area === null || area === TODAS ? todos : todos.filter((t) => (t.area?.trim() ?? "") === area)),
+    [todos, area],
+  );
   const territorios = useMemo(() => {
     const termo = normalizar(busca.trim()).replace(/^0+(?=\d)/, "");
     const regra = FILTROS.find((f) => f.id === filtro)!;
-    return todos.filter(
+    return base.filter(
       (t) =>
         regra.passa(t) &&
         (!termo ||
           t.numero.replace(/^0+(?=\d)/, "").toLowerCase().includes(termo) ||
           normalizar(`${t.nome} ${t.apelidos ?? ""} ${t.area ?? ""}`).includes(termo)),
     );
-  }, [todos, busca, filtro]);
+  }, [base, busca, filtro]);
+
+  const itens: Item[] = naTelaDasAreas
+    ? [...grupos.map((g) => ({ tipo: "area" as const, ...g })), { tipo: "area" as const, nome: TODAS, lista: todos }]
+    : territorios.map((t) => ({ tipo: "territorio" as const, t }));
+  const nomeDaArea = (nome: string) => (nome === TODAS ? "Todos os territórios" : nome || "Sem área");
 
   const areas = useMemo<AreaMapa[]>(
     () =>
@@ -100,7 +153,50 @@ export default function TerritorioScreen() {
 
   const abrir = (numero: string) => router.push({ pathname: "/territorio/[numero]", params: { numero } });
 
-  const renderItem = ({ item }: { item: TerritorioResumo }) => {
+  const renderArea = (nome: string, lista: TerritorioResumo[]) => {
+    const trabalhados = lista.filter((t) => t.ultimaSaida && (t.diasSemTrabalho ?? 99) < 30).length;
+    const concluidos = lista.filter((t) => t.situacao === "concluido").length;
+    const thumb = lista.find((t) => t.imagens?.thumb)?.imagens?.thumb;
+    return (
+      <Pressable
+        style={({ pressed }) => [styles.areaCard, nome === TODAS && styles.areaTodas, pressed && { opacity: 0.85 }]}
+        onPress={() => {
+          setArea(nome);
+          setFiltro("todos");
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${nomeDaArea(nome)}, ${lista.length} territórios`}
+      >
+        {thumb ? (
+          <Thumb fonte={imagem(thumb)} grande />
+        ) : (
+          <View style={[styles.thumb, styles.thumbGrande, styles.thumbVazio]}>
+            <Ionicons name={nome === TODAS ? "albums-outline" : "map-outline"} size={26} color={colors.textMuted} />
+          </View>
+        )}
+        <View style={styles.textos}>
+          <Text style={styles.areaNome}>{nomeDaArea(nome)}</Text>
+          <Text style={styles.areaSub}>
+            {lista.length} território{lista.length > 1 ? "s" : ""} · {lista[0].numero} a {lista[lista.length - 1].numero}
+          </Text>
+          <Text style={styles.areaSub}>
+            {trabalhados} trabalhado{trabalhados === 1 ? "" : "s"} nos últimos 30 dias
+          </Text>
+          <View style={styles.progresso}>
+            <View style={[styles.progressoCheio, { width: `${(concluidos / lista.length) * 100}%` }]} />
+          </View>
+          <Text style={styles.progressoTexto}>
+            {concluidos} de {lista.length} concluídos no ciclo
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </Pressable>
+    );
+  };
+
+  const renderItem = ({ item: linha }: { item: Item }) => {
+    if (linha.tipo === "area") return renderArea(linha.nome, linha.lista);
+    const item = linha.t;
     const s = SITUACOES[item.situacao];
     const parado = (item.diasSemTrabalho ?? 0) >= DIAS_PARADO;
     return (
@@ -162,7 +258,7 @@ export default function TerritorioScreen() {
     );
   };
 
-  const contagem = (f: (typeof FILTROS)[number]) => todos.filter(f.passa).length;
+  const contagem = (f: (typeof FILTROS)[number]) => base.filter(f.passa).length;
 
   return (
     <View style={styles.flex}>
@@ -239,8 +335,8 @@ export default function TerritorioScreen() {
       ) : (
         <FlatList
           {...rolagem}
-          data={territorios}
-          keyExtractor={(t) => t.numero}
+          data={itens}
+          keyExtractor={(i) => (i.tipo === "area" ? `area:${i.nome}` : i.t.numero)}
           renderItem={renderItem}
           contentContainerStyle={[styles.lista, recuo]}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
@@ -264,6 +360,15 @@ export default function TerritorioScreen() {
                   </View>
                 </Pressable>
               ) : null}
+              {temAreas && area !== null ? (
+                <View style={styles.areaTopo}>
+                  <Pressable style={styles.voltarArea} onPress={() => setArea(null)} hitSlop={8}>
+                    <Ionicons name="chevron-back" size={18} color={colors.primaryDark} />
+                    <Text style={styles.voltarAreaTexto}>Áreas</Text>
+                  </Pressable>
+                  <Text style={styles.areaTitulo}>{nomeDaArea(area)}</Text>
+                </View>
+              ) : null}
               <View style={styles.buscaLinha}>
                 <View style={styles.flex}>
                   <TextField
@@ -281,7 +386,7 @@ export default function TerritorioScreen() {
                   </Pressable>
                 ) : null}
               </View>
-              {doBanco ? (
+              {doBanco && !naTelaDasAreas ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtros}>
                   {FILTROS.map((f) => {
                     const ativo = filtro === f.id;
@@ -405,6 +510,29 @@ const criarEstilos = (colors: Cores) =>
     faixa: { width: 5, alignSelf: "stretch" },
     thumb: { width: 72, height: 48, borderRadius: radius.sm, backgroundColor: colors.surfaceMuted },
     thumbVazio: { alignItems: "center", justifyContent: "center" },
+    thumbGrande: { width: 96, height: 76, marginLeft: 12 },
+    areaCard: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 14,
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      paddingVertical: 12,
+      paddingRight: 14,
+      borderWidth: 1,
+      borderColor: colors.border,
+      ...shadow.card,
+    },
+    areaTodas: { borderColor: colors.primary, borderWidth: 1.5 },
+    areaNome: { fontSize: 19, fontWeight: "800", color: colors.text },
+    areaSub: { fontSize: 13.5, color: colors.textSecondary },
+    progresso: { height: 6, borderRadius: 3, backgroundColor: colors.surfaceMuted, overflow: "hidden", marginTop: 6 },
+    progressoCheio: { height: 6, borderRadius: 3, backgroundColor: colors.greenDark },
+    progressoTexto: { fontSize: 11.5, color: colors.textMuted, marginTop: 2 },
+    areaTopo: { gap: 2 },
+    voltarArea: { flexDirection: "row", alignItems: "center", gap: 2, alignSelf: "flex-start" },
+    voltarAreaTexto: { fontSize: 14, fontWeight: "700", color: colors.primaryDark },
+    areaTitulo: { fontSize: 22, fontWeight: "800", color: colors.text },
     textos: { flex: 1, gap: 3 },
     linhaTopo: { flexDirection: "row", alignItems: "baseline", gap: 8 },
     numero: { fontSize: 20, fontWeight: "900", color: colors.text },
