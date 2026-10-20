@@ -5,7 +5,7 @@ import type { Quadra, TipoMarcacao } from "@/api/types";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { dentro, MARCACOES, TIPOS_MARCACAO } from "@/territorios/constantes";
+import { dentro, juntarEnderecoEDescricao, MARCACOES, TIPOS_MARCACAO } from "@/territorios/constantes";
 import { enfileirar, novaChave } from "@/territorios/fila";
 
 export interface PontoEscolhido {
@@ -39,12 +39,14 @@ export function MarcarSheet({ territorio, ponto, tipoInicial = "parada", onClose
   const toast = useToast();
   const [tipo, setTipo] = useState<TipoMarcacao>(tipoInicial);
   const [texto, setTexto] = useState("");
+  const [descricao, setDescricao] = useState("");
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     if (ponto) {
       setTipo(tipoInicial);
       setTexto("");
+      setDescricao("");
     }
   }, [ponto, tipoInicial]);
 
@@ -72,7 +74,7 @@ export function MarcarSheet({ territorio, ponto, tipoInicial = "parada", onClose
         lat: ponto.lat,
         lng: ponto.lng,
         precisao: ponto.precisao,
-        texto: texto.trim() || null,
+        texto: (exigeTexto ? juntarEnderecoEDescricao(texto, descricao) : texto.trim()) || null,
         marcadaEm: new Date().toISOString(),
       },
     });
@@ -142,8 +144,18 @@ export function MarcarSheet({ territorio, ponto, tipoInicial = "parada", onClose
             placeholder={exigeTexto ? "Ex.: Rua das Flores, 120" : "Ex.: portão azul, cachorro bravo"}
             value={texto}
             onChangeText={setTexto}
-            maxLength={300}
+            maxLength={exigeTexto ? 140 : 300}
           />
+          {exigeTexto ? (
+            <TextField
+              label="Descrição (opcional)"
+              icon="create-outline"
+              placeholder="Ex.: casa de muro azul, portão de ferro"
+              value={descricao}
+              onChangeText={setDescricao}
+              maxLength={150}
+            />
+          ) : null}
           <Text style={styles.dica}>Não escreva nomes nem dados dos moradores.</Text>
 
           <Button
