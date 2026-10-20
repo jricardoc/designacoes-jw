@@ -20,6 +20,7 @@ import { FilaBanner } from "@/components/territorio/FilaBanner";
 import { GerenciarTerritorioSheet } from "@/components/territorio/GerenciarTerritorioSheet";
 import { MapaTerritorio, mapaDisponivel, type MapaTerritorioRef, type PinoMapa } from "@/components/territorio/MapaTerritorio";
 import { MarcarSheet, type PontoEscolhido } from "@/components/territorio/MarcarSheet";
+import { PinoSheet } from "@/components/territorio/PinoSheet";
 import { SaidaSheet } from "@/components/territorio/SaidaSheet";
 import { Button, EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { radius, shadow, type Cores } from "@/theme";
@@ -50,6 +51,8 @@ export default function TerritorioScreen() {
   const [ponto, setPonto] = useState<PontoEscolhido | null>(null);
   const [saida, setSaida] = useState(false);
   const [gerenciar, setGerenciar] = useState(false);
+  // O pino tocado no mapa: abre os detalhes e o "remover".
+  const [pino, setPino] = useState<string | null>(null);
 
   const areas = useMemo(
     () => (t?.quadras ?? []).map((q) => ({ chave: String(q.id), nome: q.nome, pontos: q.pontos, cor: q.cor })),
@@ -210,7 +213,7 @@ export default function TerritorioScreen() {
 
         {t.quadras.length > 0 ? (
           <View style={styles.mapaCaixa}>
-            <MapaTerritorio ref={mapa} areas={areas} pinos={pinos} satelite={satelite} />
+            <MapaTerritorio ref={mapa} areas={areas} pinos={pinos} satelite={satelite} onPinoPress={setPino} />
             {mapaDisponivel ? controlesDoMapa(false) : null}
           </View>
         ) : null}
@@ -354,6 +357,7 @@ export default function TerritorioScreen() {
             pinos={pinos}
             satelite={satelite}
             onLongPress={t.permissoes.marcar ? (p) => setPonto({ ...p, precisao: null, origem: "mapa" }) : undefined}
+            onPinoPress={setPino}
           />
           <View style={[styles.cheioTopo, { top: insets.top + 10 }]}>
             <Text style={styles.cheioTitulo} numberOfLines={1}>
@@ -371,10 +375,12 @@ export default function TerritorioScreen() {
           </View>
           {/* Dentro do Modal: a folha precisa abrir por cima do mapa em tela cheia. */}
           <MarcarSheet territorio={territorio} ponto={telaCheia ? ponto : null} onClose={() => setPonto(null)} />
+          <PinoSheet chave={telaCheia ? pino : null} territorio={t} onClose={() => setPino(null)} />
         </View>
       </Modal>
 
       <MarcarSheet territorio={territorio} ponto={telaCheia ? null : ponto} onClose={() => setPonto(null)} />
+      <PinoSheet chave={telaCheia ? null : pino} territorio={t} onClose={() => setPino(null)} />
       <SaidaSheet territorio={territorio} visible={saida} onClose={() => setSaida(false)} />
       {t.permissoes.gerenciar ? (
         <GerenciarTerritorioSheet territorio={t} visible={gerenciar} onClose={() => setGerenciar(false)} />

@@ -40,6 +40,8 @@ interface MapaTerritorioProps {
   /** Segurar o dedo no mapa marca um ponto escolhido ali (em vez do GPS). */
   onLongPress?: (ponto: { lat: number; lng: number }) => void;
   onAreaPress?: (chave: string) => void;
+  /** Tocar no pino: a tela abre os detalhes (e o "remover"). Sem isto, vale o balão padrão. */
+  onPinoPress?: (chave: string) => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -72,7 +74,7 @@ const transparente = (cor: string, alfa = "55") => (/^#[0-9a-f]{6}$/i.test(cor) 
  * no sol, na rua, a letra é o que se lê de relance — a cor sozinha não basta para daltônico.
  */
 export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>(function MapaTerritorio(
-  { areas, pinos = [], satelite = false, onLongPress, onAreaPress, style },
+  { areas, pinos = [], satelite = false, onLongPress, onAreaPress, onPinoPress, style },
   ref,
 ) {
   const { colors, styles } = useTema(criarEstilos);
@@ -179,8 +181,9 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
             coordinate={{ latitude: p.lat, longitude: p.lng }}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={rastrear}
-            title={tipo.rotulo}
-            description={p.pendente ? "Aguardando internet para enviar" : undefined}
+            title={onPinoPress ? undefined : tipo.rotulo}
+            description={onPinoPress ? undefined : p.pendente ? "Aguardando internet para enviar" : undefined}
+            onPress={onPinoPress ? () => onPinoPress(p.chave) : undefined}
           >
             <View
               style={[
