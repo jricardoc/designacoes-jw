@@ -1,8 +1,11 @@
 :80 {
     # Links curtos para instalar o app (servirmais.site/download/android e /ios).
-    # A cada build novo, trocar pelo endereço da página do build no expo.dev.
+    # A cada build novo, trocar os dois endereços do expo.dev abaixo.
     redir /download/android* https://expo.dev/accounts/ocaradocopytrade/projects/servir-mais/builds/18468c12-8dd0-4237-99e3-f6a234a4ae56 302
-    redir /download/ios* https://expo.dev/accounts/ocaradocopytrade/projects/servir-mais/builds/5387dc20-ed3f-418f-ab8f-ee135ce63490 302
+    redir /download/ios/instalar https://expo.dev/accounts/ocaradocopytrade/projects/servir-mais/builds/5387dc20-ed3f-418f-ab8f-ee135ce63490 302
+    # /download/ios é a página com o passo a passo (public/download/ios.html).
+    @ios path /download/ios /download/ios/
+    rewrite @ios /download/ios.html
 
     root * /app/dist
     try_files {path} /index.html

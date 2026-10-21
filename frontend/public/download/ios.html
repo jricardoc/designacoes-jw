@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Servir Mais no iPhone</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<!-- Servida em servirmais.site/download/ios (rewrite no frontend/Caddyfile).
+     O botão "Instalar" passa por /download/ios/instalar, que o Caddyfile redireciona para o build atual. -->
+<style>
+  :root {
+    color-scheme: light;
+    --fundo: #F3EDE2;
+    --cartao: #FFFCF6;
+    --texto: #1E1D14;
+    --suave: #5C584A;
+    --oliva: #5E6B48;
+    --oliva-escuro: #566239;
+    --areia: #EDE6D5;
+    --terracota: #A8503B;
+    --aviso-fundo: #F7E9DF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font: 17px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+  header img { width: 56px; height: 56px; }
+  h1 { font-size: 26px; line-height: 1.2; margin: 0; }
+  .sub { color: var(--suave); margin: 4px 0 0; font-size: 15px; }
+  .intro { margin: 20px 0; }
+  .safari {
+    background: var(--areia); border-radius: 12px; padding: 12px 14px;
+    font-size: 15px; color: var(--suave);
+  }
+  section {
+    background: var(--cartao); border-radius: 18px; padding: 20px 18px;
+    margin-top: 20px; box-shadow: 0 1px 3px rgba(30, 29, 20, .08);
+  }
+  .etapa { color: var(--oliva); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; margin: 0; }
+  h2 { font-size: 21px; margin: 2px 0 6px; }
+  .nota { color: var(--suave); font-size: 15px; margin: 0 0 16px; }
+  .botao {
+    display: block; text-align: center; text-decoration: none;
+    background: var(--oliva); color: #FBF7EF; font-weight: 700; font-size: 18px;
+    padding: 15px 18px; border-radius: 14px; margin: 4px 0 18px;
+  }
+  .botao:active { background: var(--oliva-escuro); }
+  .botao.secundario { background: transparent; color: var(--oliva-escuro); border: 2px solid var(--oliva); margin-bottom: 8px; }
+  .botao.secundario:active { background: var(--areia); }
+  .atalho { text-align: center; font-size: 15px; color: var(--suave); margin: 0 0 20px; }
+  .atalho a { color: var(--oliva-escuro); font-weight: 600; }
+  ol { padding-left: 1.4em; margin: 0; }
+  li { margin: 0 0 12px; }
+  li::marker { font-weight: 700; color: var(--oliva); }
+  .caminho { color: var(--suave); font-size: 15px; display: block; margin-top: 4px; }
+  .aviso {
+    background: var(--aviso-fundo); border-radius: 12px; padding: 12px 14px;
+    font-size: 15px; margin: 4px 0 14px;
+  }
+  .aviso strong:first-child { color: var(--terracota); }
+  .destaque {
+    background: var(--areia); border-radius: 12px; padding: 12px 14px; margin-top: 4px;
+  }
+  details { margin-top: 10px; border-top: 1px solid var(--areia); padding-top: 10px; }
+  summary { font-weight: 600; cursor: pointer; }
+  details p { margin: 8px 0 0; font-size: 15px; color: var(--suave); }
+  footer { text-align: center; color: var(--suave); font-size: 13px; margin-top: 28px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="/favicon.svg" alt="">
+    <div>
+      <h1>Servir Mais no iPhone</h1>
+      <p class="sub">Passo a passo para instalar o app</p>
+    </div>
+  </header>
+
+  <p class="intro">São duas etapas: <strong>liberar o seu iPhone</strong> (uma vez só) e depois <strong>instalar o app</strong>.</p>
+  <a class="botao secundario" href="/download/ios/instalar">Já configurei: ir direto pro download</a>
+  <p class="atalho">Ainda não ativou o Modo de Desenvolvedor? <a href="#instalar">Veja a etapa 2</a>.</p>
+  <p class="safari">Faça tudo pelo <strong>Safari</strong>. Se esta página abriu dentro do WhatsApp, toque no ícone do Safari (ou em <em>Abrir no Safari</em>) antes de começar.</p>
+
+  <section>
+    <p class="etapa">Etapa 1</p>
+    <h2>Liberar o seu iPhone</h2>
+    <p class="nota">Leva 2 minutos. É só para o app poder ser instalado no seu iPhone; nada é apagado nem alterado no celular.</p>
+
+    <a class="botao" href="https://expo.dev/register-device/de19fba7-48f9-41c1-9049-6ecd344300a3">Liberar meu iPhone</a>
+
+    <ol>
+      <li>Toque no botão acima.</li>
+      <li>Na página que abrir, toque no botão para baixar o perfil. Quando o iPhone perguntar se quer permitir o download, toque em <strong>Permitir</strong> e depois em <strong>Fechar</strong>.</li>
+      <li>Abra os <strong>Ajustes</strong> do iPhone. Logo no topo vai aparecer <strong>Perfil Baixado</strong>: toque nele.
+        <span class="caminho">Se não aparecer, vá em Ajustes → Geral → VPN e Gerenciamento de Dispositivos e toque no perfil.</span></li>
+      <li>Toque em <strong>Instalar</strong> (no canto superior direito), digite o código do seu iPhone e toque em <strong>Instalar</strong> de novo.</li>
+    </ol>
+
+    <p class="aviso"><strong>⚠️ Apareceu “Adiamento de Segurança em Andamento” com 1 hora de espera?</strong> É uma proteção do próprio iPhone quando ele está fora de casa. É só tocar em <strong>OK</strong> e esperar o aviso do iPhone (ou fazer em casa, que não tem espera). Depois volte ao passo 3.</p>
+
+    <ol start="5">
+      <li><strong>Pronto!</strong>
+        <p class="destaque">Se você está fazendo isso pela primeira vez, <strong>peça pro Ricardo gerar um novo link de download para você</strong>. O app só instala depois que o seu iPhone entra num build novo.</p></li>
+    </ol>
+  </section>
+
+  <section id="instalar">
+    <p class="etapa">Etapa 2</p>
+    <h2>Instalar o app</h2>
+    <p class="nota">Faça esta etapa depois que o Ricardo avisar que o novo link de download está pronto.</p>
+
+    <a class="botao" href="/download/ios/instalar">Instalar o Servir Mais</a>
+
+    <ol>
+      <li>Toque no botão acima. Na página que abrir, toque em <strong>Install</strong> e, na janela que aparecer, em <strong>Instalar</strong>.</li>
+      <li>Volte para a tela de início: o ícone do Servir Mais aparece carregando. Espere terminar.</li>
+      <li>Toque no ícone. Na primeira vez, o iPhone avisa que é preciso o <strong>Modo de Desenvolvedor</strong>. Toque em <strong>OK</strong>.</li>
+      <li>Abra os <strong>Ajustes</strong> e vá em <strong>Privacidade e Segurança</strong>. Role até o fim, toque em <strong>Modo de Desenvolvedor</strong>, ligue a chave e toque em <strong>Reiniciar</strong>.
+        <span class="caminho">É uma opção do próprio iPhone para abrir apps instalados fora da App Store. Não apaga nada.</span></li>
+      <li>Quando o iPhone ligar de novo, desbloqueie: vai aparecer <strong>Ativar o Modo de Desenvolvedor?</strong>. Toque em <strong>Ativar</strong> e digite o código do iPhone.</li>
+      <li><strong>Pronto!</strong> Abra o Servir Mais e entre com o seu usuário. 🙂</li>
+    </ol>
+
+    <details>
+      <summary>Apareceu “Não foi possível instalar”</summary>
+      <p>O seu iPhone ainda não está no build atual. Faça a etapa 1 (se ainda não fez) e peça pro Ricardo gerar um novo link de download para você.</p>
+    </details>
+    <details>
+      <summary>“Modo de Desenvolvedor” não aparece nos Ajustes</summary>
+      <p>Ele só aparece depois que o app foi instalado (passo 1 desta etapa). Feche os Ajustes por completo e abra de novo.</p>
+    </details>
+    <details>
+      <summary>O botão Install não aparece</summary>
+      <p>Abra esta página no Safari, não dentro do WhatsApp ou de outro app.</p>
+    </details>
+  </section>
+
+  <footer>Servir Mais</footer>
+</main>
+</body>
+</html>
