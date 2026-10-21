@@ -87,6 +87,9 @@ model Config {
   // Limite do territorio da congregacao, importado de um KML: { nome, cor, pontos: [[lat, lng]] }.
   // No banco, e nao no repositorio, porque e dado de cada congregacao.
   limiteTerritorio Json?
+  // Onde instalar o app: { android: {url, versao, em}, ios: {...} }. Preenchido sozinho pelo
+  // webhook do EAS quando um build de preview termina; /download/:plataforma redireciona para ca.
+  linksDownload    Json?
   updatedAt        DateTime @updatedAt
 }
 

@@ -133,6 +133,24 @@ Os lembretes de designação chegam por push. No iPhone funcionam com a conta pa
 
 Sem o Firebase, o app funciona normalmente, só não recebe notificações no Android.
 
+## Links de download sempre no build mais novo
+
+`seusite/download/android` e o botão de instalar de `seusite/download/ios` passam pela API
+(`/download/android` e `/download/ios`), que redireciona para o último build de **preview**
+guardado no banco. Quem guarda é o próprio EAS, avisando a API a cada build:
+
+1. Gere um segredo (`openssl rand -hex 32`) e coloque em `EAS_WEBHOOK_SECRET` nas variáveis da API.
+2. Cadastre o webhook no Expo com o mesmo segredo:
+
+   ```bash
+   cd mobile
+   npx eas-cli webhook:create --event BUILD --url https://SUA_API/webhooks/eas --secret SEU_SEGREDO
+   ```
+
+Pronto: cada build de preview que termina vira o link daquela plataforma. Build de
+desenvolvimento, com erro ou cancelado não mexe no link. No `frontend/Caddyfile`, troque
+`api.servirmais.site` pelo endereço da sua API.
+
 ## Rodar em modo de desenvolvimento
 
 ```bash
