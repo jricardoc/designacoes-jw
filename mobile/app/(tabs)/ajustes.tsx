@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
 import {
   Pressable,
@@ -86,7 +87,13 @@ export default function AjustesScreen() {
 
   const { colors, styles, tema, daltonico, setTema, setDaltonico } =
     useTema(criarEstilos);
-  const versao = Constants.expoConfig?.version ?? "—";
+  // Qual código está rodando: o que veio no build, ou uma atualização pelo ar (e de quando).
+  // É o jeito de saber, no próprio aparelho, se a atualização entrou.
+  const versao = `${Constants.expoConfig?.version ?? "—"} · ${
+    !Updates.isEnabled || Updates.isEmbeddedLaunch || !Updates.createdAt
+      ? "do build"
+      : `atualização de ${Updates.createdAt.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
+  }`;
 
   return (
     <View style={styles.screen}>
