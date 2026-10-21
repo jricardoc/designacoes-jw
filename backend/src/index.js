@@ -69,6 +69,8 @@ app.use(limiter);
 app.use('/auth/foto', express.json({ limit: '1mb' }));
 // O KML do limite da congregacao tambem: um contorno detalhado passa de 100 KB.
 app.use('/territorios/limite', express.json({ limit: '2mb' }));
+// O webhook do EAS precisa do corpo CRU: a assinatura e calculada sobre os bytes exatos.
+app.use('/webhooks/eas', express.raw({ type: '*/*', limit: '1mb' }));
 app.use(express.json());
 
 // Middleware de autenticacao

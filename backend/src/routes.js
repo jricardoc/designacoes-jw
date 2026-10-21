@@ -87,6 +87,9 @@ routes.get('/config/publica', ConfigController.publica);
 routes.get('/config', ConfigController.getConfig);
 routes.put('/config', requireAdmin, ConfigController.updateConfig);
 routes.post('/config/reset', requireAdmin, ConfigController.resetDatabase);
+// Baixar o app: sem login. O link e guardado pelo webhook do EAS a cada build (ver LinksDownloadService).
+routes.get('/download/:plataforma', ConfigController.download);
+routes.post('/webhooks/eas', ConfigController.webhookEas);
 
 // ==================== QUADROS ====================
 // Leitura livre; toda escrita e admin — usuario comum ve os quadros, nao mexe.

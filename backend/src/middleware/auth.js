@@ -2,7 +2,9 @@ const JwtService = require('../services/JwtService');
 const prisma = require('../prisma');
 
 // Rotas publicas que nao exigem autenticacao (comparacao exata, sem includes)
-const PUBLIC_ROUTES = ['/auth/login', '/health', '/config/publica'];
+// /download/* e /webhooks/eas: quem baixa o app ainda nao tem login, e o EAS se identifica pela
+// assinatura do corpo, conferida no proprio controller.
+const PUBLIC_ROUTES = ['/auth/login', '/health', '/config/publica', '/download/android', '/download/ios', '/webhooks/eas'];
 
 async function authMiddleware(req, res, next) {
     if (PUBLIC_ROUTES.includes(req.path)) {

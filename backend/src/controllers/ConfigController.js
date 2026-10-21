@@ -1,5 +1,6 @@
 const { Prisma } = require('@prisma/client');
 const prisma = require('../prisma');
+const LinksDownload = require('../services/LinksDownloadService');
 
 const CAMPOS_ZOOM = ['link', 'id', 'senha', 'salaAberta'];
 
@@ -45,6 +46,55 @@ class ConfigController {
             }
 
             return res.json(config);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    /**
+     * GET /download/:plataforma — sem login: leva ao build mais recente do app. O link vem do
+     * banco, posto ali pelo webhook do EAS; o site (servirmais.site/download/...) so aponta para ca.
+     */
+    async download(req, res) {
+        try {
+            const config = await prisma.config.findFirst({ select: { linksDownload: true } });
+            const url = LinksDownload.destino(config && config.linksDownload, req.params.plataforma);
+            if (!url) {
+                return res.status(404).type('text/plain; charset=utf-8').send('Ainda não há uma versão do app para instalar por aqui.');
+            }
+            // Sem cache: o build seguinte troca o destino, e o navegador nao pode ficar no antigo.
+            res.set('Cache-Control', 'no-store');
+            return res.redirect(302, url);
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+    }
+
+    /**
+     * POST /webhooks/eas — o EAS avisa aqui a cada mudanca de build (`eas webhook:create`).
+     * Quando um build de preview termina, o link dele vira o de download daquela plataforma.
+     */
+    async webhookEas(req, res) {
+        try {
+            if (!LinksDownload.assinaturaValida(req.body, req.get('expo-signature'), process.env.EAS_WEBHOOK_SECRET)) {
+                return res.status(401).json({ error: 'Assinatura inválida' });
+            }
+            let build;
+            try {
+                build = JSON.parse(req.body.toString('utf8'));
+            } catch {
+                return res.status(400).json({ error: 'JSON inválido' });
+            }
+            const link = LinksDownload.linkDoBuild(build);
+            const config = link ? await prisma.config.findFirst({ select: { id: true, linksDownload: true } }) : null;
+            const links = config ? LinksDownload.juntar(config.linksDownload, link) : null;
+            if (!links) return res.json({ ok: true, guardado: false });
+
+            await prisma.config.update({ where: { id: config.id }, data: { linksDownload: links } });
+            console.log(`[download] ${link.plataforma} agora leva a ${link.url}`);
+            return res.json({ ok: true, guardado: true });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ error: 'Internal server error' });

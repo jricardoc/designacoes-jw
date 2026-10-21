@@ -21,6 +21,7 @@
     "verificar:limpeza-grupos": "node scripts/verificarLimpezaGrupos.js",
     "verificar:tarefas": "node scripts/verificarTarefas.js",
     "verificar:territorios": "node scripts/verificarTerritorios.js",
+    "verificar:links-download": "node scripts/verificarLinksDownload.js",
     "vincular:limpeza": "node scripts/vincularLimpeza.js",
     "backfill:publicacoes": "node scripts/backfillPublicacoes.js"
   },
