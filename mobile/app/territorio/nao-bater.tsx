@@ -15,6 +15,7 @@ import { useTema } from "@/theme/TemaContext";
 import { juntarEnderecoEDescricao, separarEnderecoEDescricao, umaLinha } from "@/territorios/constantes";
 import { enfileirar, novaChave, useFilaTerritorios } from "@/territorios/fila";
 import { minhaLocalizacao } from "@/territorios/gps";
+import { usePuxar } from "@/utils/usePuxar";
 
 /**
  * Casas que pediram para não receber visitas. Cada uma precisa ser reconfirmada a cada 3 meses:
@@ -30,7 +31,8 @@ export default function NaoBaterScreen() {
   const toast = useToast();
   const { feito } = useCelebracao();
   const { usuario } = useAuth();
-  const { data: t, isLoading, refetch, isRefetching } = useTerritorio(numero);
+  const { data: t, isLoading, refetch } = useTerritorio(numero);
+  const puxar = usePuxar(refetch);
   const { pendentes } = useFilaTerritorios();
   const reconfirmar = useReconfirmarMarcacao();
   const retirar = useRetirarMarcacao();
@@ -94,7 +96,7 @@ export default function NaoBaterScreen() {
       <GradientHeader title="Não bater" description={`Território ${t.numero} · ${t.nome}`} showBack />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        refreshControl={<RefreshControl {...puxar} />}
         automaticallyAdjustKeyboardInsets
       >
         <Text style={styles.explica}>Cada casa precisa ser reconfirmada a cada 3 meses.</Text>

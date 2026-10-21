@@ -5,6 +5,7 @@ import { EmptyState, GradientHeader, Loading } from "@/components/ui";
 import { useSemanaAcoes } from "@/components/reuniao/useSemanaAcoes";
 import { MESES, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { usePuxar } from "@/utils/usePuxar";
 
 /**
  * A listagem completa da programação, mês a mês, do mais recente para o mais
@@ -17,10 +18,11 @@ import { useTema } from "@/theme/TemaContext";
  */
 export default function TodosOsMesesScreen() {
   const { styles } = useTema(criarEstilos);
-  const { data: reunioes, isLoading, refetch, isRefetching } = useReunioes();
+  const { data: reunioes, isLoading, refetch } = useReunioes();
   // Renovada junto no puxar-para-atualizar: é ela que pré-preenche a folha de
   // assistência dos cartões desta tela.
   const assistencias = useAssistencias();
+  const puxar = usePuxar(() => Promise.all([refetch(), assistencias.refetch()]));
   const { renderSemana, overlays } = useSemanaAcoes();
 
   return (
@@ -38,11 +40,7 @@ export default function TodosOsMesesScreen() {
           contentContainerStyle={styles.scroll}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching || assistencias.isRefetching}
-              onRefresh={() => {
-                refetch();
-                assistencias.refetch();
-              }}
+              {...puxar}
             />
           }
         >

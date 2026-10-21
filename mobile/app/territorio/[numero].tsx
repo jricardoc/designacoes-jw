@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -28,6 +28,7 @@ import { useTema } from "@/theme/TemaContext";
 import { abrirComoChegar, AVISOS, CASA_TRABALHADA, MARCACOES, quandoFoi, SITUACOES } from "@/territorios/constantes";
 import { useFilaTerritorios } from "@/territorios/fila";
 import { minhaLocalizacao } from "@/territorios/gps";
+import { usePuxar } from "@/utils/usePuxar";
 
 /**
  * O território, de cima para baixo na ordem em que o dirigente precisa no campo: o mapa, a
@@ -35,11 +36,13 @@ import { minhaLocalizacao } from "@/territorios/gps";
  * grandes — marcar onde estou e registrar a saída.
  */
 export default function TerritorioScreen() {
-  const { numero } = useLocalSearchParams<{ numero: string }>();
+  // `marcacao` vem do toque no aviso de marcação: abre o território já no ponto.
+  const { numero, marcacao } = useLocalSearchParams<{ numero: string; marcacao?: string }>();
   const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const toast = useToast();
-  const { data: t, isLoading, isError, error, refetch, isRefetching } = useTerritorio(numero);
+  const { data: t, isLoading, isError, error, refetch } = useTerritorio(numero);
+  const puxar = usePuxar(refetch);
   const { itens: fila } = useFilaTerritorios();
   const mapa = useRef<MapaTerritorioRef>(null);
   const mapaCheio = useRef<MapaTerritorioRef>(null);
@@ -53,6 +56,20 @@ export default function TerritorioScreen() {
   const [gerenciar, setGerenciar] = useState(false);
   // O pino tocado no mapa: abre os detalhes e o "remover".
   const [pino, setPino] = useState<string | null>(null);
+
+  // Veio do aviso de marcação: centraliza o mapa no ponto e abre os detalhes dele, uma vez.
+  const pontoDoAviso = useRef(marcacao);
+  useEffect(() => {
+    const id = Number(pontoDoAviso.current);
+    const m = id ? t?.marcacoes.find((x) => x.id === id) : undefined;
+    if (!m) return;
+    pontoDoAviso.current = undefined;
+    // Espera o mapa montar: antes disso o pedido de mover a câmera se perde.
+    setTimeout(() => {
+      if (m.lat !== null && m.lng !== null) mapa.current?.focar(m.lat, m.lng);
+      setPino(`m-${m.id}`);
+    }, 700);
+  }, [t]);
 
   const areas = useMemo(
     () => (t?.quadras ?? []).map((q) => ({ chave: String(q.id), nome: q.nome, pontos: q.pontos, cor: q.cor })),
@@ -214,7 +231,7 @@ export default function TerritorioScreen() {
       <ScrollView
         ref={rolagem}
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        refreshControl={<RefreshControl {...puxar} />}
       >
         {t.copiaLocalDe ? (
           <View style={styles.offline}>

@@ -34,6 +34,7 @@ import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { DIAS_PARADO, diaCurto, quandoFoi, SITUACOES } from "@/territorios/constantes";
 import { podeGerenciar } from "@/utils/permissoes";
+import { usePuxar } from "@/utils/usePuxar";
 
 /** Acentos fora da busca: "joao" tem que achar "João". */
 const normalizar = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
@@ -133,7 +134,8 @@ export default function TerritorioScreen() {
   const mapaRef = useRef<MapaTerritorioRef>(null);
 
   const { colors, styles } = useTema(criarEstilos);
-  const { data, isLoading, isError, refetch, isRefetching } = useTerritorios();
+  const { data, isLoading, isError, refetch } = useTerritorios();
+  const puxar = usePuxar(refetch);
   const doBanco = data?.fonte === "banco";
   const { data: mapaGeral } = useMapaTerritorios(doBanco && modo === "mapa");
   const imagem = useImagemProtegida();
@@ -560,7 +562,7 @@ export default function TerritorioScreen() {
           keyExtractor={(i) => (i.tipo === "area" ? `area:${i.nome}` : i.t.numero)}
           renderItem={renderItem}
           contentContainerStyle={[styles.lista, recuo]}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+          refreshControl={<RefreshControl {...puxar} />}
           keyboardShouldPersistTaps="handled"
           automaticallyAdjustKeyboardInsets
           ListHeaderComponent={
@@ -768,7 +770,8 @@ const criarEstilos = (colors: Cores) =>
     selos: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 2 },
     selo: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill },
     seloTexto: { fontSize: 11.5, fontWeight: "800" },
-    mapaGeral: { flex: 1 },
+    // Respiro entre as abas (Territórios / Saídas de campo) e o mapa.
+    mapaGeral: { flex: 1, marginTop: 12 },
     rodapeMapa: { position: "absolute", left: 12, right: 12, bottom: 110, gap: 8 },
     legenda: { gap: 8, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, ...shadow.card },
     legendaLinha: { flexDirection: "row", flexWrap: "wrap", gap: 10 },

@@ -25,6 +25,7 @@ import { podeGerenciar } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { usePuxar } from "@/utils/usePuxar";
 
 /**
  * "71999998888" -> "(71) 99999-8888".
@@ -91,10 +92,11 @@ export default function ConfirmacoesScreen() {
   const podeVer = podeGerenciar(usuario, "confirmacoes");
 
   const [passadas, setPassadas] = useState(false);
-  const { data, isLoading, isError, refetch, isRefetching } = useConfirmacoes(
+  const { data, isLoading, isError, refetch } = useConfirmacoes(
     podeVer,
     passadas,
   );
+  const puxar = usePuxar(refetch);
   const registrar = useRegistrarConfirmacao();
   const [compartilhando, setCompartilhando] = useState<ParteParaConfirmar | null>(null);
   /** O formulário do número está aberto? E com o que dentro. */
@@ -226,7 +228,7 @@ export default function ConfirmacoesScreen() {
           {...rolagem}
           contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />
+            <RefreshControl {...puxar} tintColor={colors.primary} />
           }
         >
           <View style={styles.filtros}>

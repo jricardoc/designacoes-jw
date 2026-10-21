@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { CASA_TRABALHADA, MARCACOES } from "@/territorios/constantes";
+import { usePuxar } from "@/utils/usePuxar";
 
 type Evento =
   | { tipo: "saida"; dia: string; quando: string; saida: SaidaTerritorio }
@@ -24,7 +25,7 @@ function tituloDoDia(iso: string) {
   return `${DIAS[data.getDay()]}, ${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${a}`;
 }
 
-/** Tudo que aconteceu no território, dia a dia: saídas e pontos marcados, inclusive retirados. */
+/** Tudo que aconteceu no território, dia a dia: saídas e pontos marcados. O que foi removido não aparece. */
 export default function HistoricoTerritorioScreen() {
   const { numero } = useLocalSearchParams<{ numero: string }>();
   const { colors, styles } = useTema(criarEstilos);
@@ -33,7 +34,8 @@ export default function HistoricoTerritorioScreen() {
   const { feito } = useCelebracao();
   const { usuario } = useAuth();
   const { data: t } = useTerritorio(numero);
-  const { data, isLoading, refetch, isRefetching } = useHistoricoTerritorio(numero);
+  const { data, isLoading, refetch } = useHistoricoTerritorio(numero);
+  const puxar = usePuxar(refetch);
   const apagar = useApagarSaida();
   const retirar = useRetirarMarcacao();
 
@@ -41,7 +43,8 @@ export default function HistoricoTerritorioScreen() {
     if (!data) return [];
     const eventos: Evento[] = [
       ...data.saidas.map((s) => ({ tipo: "saida" as const, dia: s.dia, quando: s.createdAt, saida: s })),
-      ...data.marcacoes.map((m) => ({
+      // A API nova já não manda as removidas; o filtro cobre a resposta da antiga.
+      ...data.marcacoes.filter((m) => m.ativo).map((m) => ({
         tipo: "marcacao" as const,
         dia: m.marcadaEm.slice(0, 10),
         quando: m.marcadaEm,
@@ -63,7 +66,7 @@ export default function HistoricoTerritorioScreen() {
       <GradientHeader title="Histórico" description={t ? `Território ${t.numero} · ${t.nome}` : undefined} showBack />
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        refreshControl={<RefreshControl {...puxar} />}
       >
         {dias.length === 0 ? (
           <EmptyState icon="time-outline" title="Nada registrado ainda" message="As saídas e os pontos marcados aparecem aqui." />
@@ -119,7 +122,7 @@ export default function HistoricoTerritorioScreen() {
                   ) : null}
                 </View>
               ) : (
-                <View key={`m-${e.marcacao.id}`} style={[styles.item, !e.marcacao.ativo && styles.retirado]}>
+                <View key={`m-${e.marcacao.id}`} style={styles.item}>
                   <View style={[styles.bolinha, { backgroundColor: MARCACOES[e.marcacao.tipo].cor(colors) }]}>
                     <Text style={styles.bolinhaLetra}>{MARCACOES[e.marcacao.tipo].letra}</Text>
                   </View>
@@ -129,10 +132,9 @@ export default function HistoricoTerritorioScreen() {
                     <Text style={styles.itemAutor}>
                       {e.marcacao.autor?.nome ?? "—"} ·{" "}
                       {new Date(e.marcacao.marcadaEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                      {e.marcacao.ativo ? "" : " · retirado"}
                     </Text>
                   </View>
-                  {e.marcacao.ativo && podeRetirar(e.marcacao.autor?.id) ? (
+                  {podeRetirar(e.marcacao.autor?.id) ? (
                     <Pressable
                       hitSlop={8}
                       onPress={() =>
@@ -178,7 +180,6 @@ const criarEstilos = (colors: Cores) =>
       borderWidth: 1,
       borderColor: colors.border,
     },
-    retirado: { opacity: 0.55 },
     itemTextos: { flex: 1, gap: 2 },
     itemTitulo: { fontSize: 15, fontWeight: "700", color: colors.text },
     itemSub: { fontSize: 13.5, color: colors.textSecondary },

@@ -25,6 +25,7 @@ import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { datasDaSemana } from "@/utils/semanaReuniao";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { usePuxar } from "@/utils/usePuxar";
 
 /**
  * A semana da programação que contém o dia de hoje (segunda a domingo,
@@ -77,10 +78,11 @@ export default function ReuniaoScreen() {
   // compartilhar continuam para todos — são exportações de leitura.
   const { usuario } = useAuth();
   const podeEditar = podeGerenciar(usuario, "reunioes");
-  const { data: reunioes, isLoading, refetch, isRefetching } = useReunioes();
+  const { data: reunioes, isLoading, refetch } = useReunioes();
   // A mesma query que o AssistenciaStats lê — aqui só para o puxar-para-
   // atualizar renovar as estatísticas junto com a programação.
   const assistencias = useAssistencias();
+  const puxar = usePuxar(() => Promise.all([refetch(), assistencias.refetch()]));
   const importar = useImportarReuniao();
   const toast = useToast();
   const { renderSemana, overlays } = useSemanaAcoes();
@@ -169,11 +171,7 @@ export default function ReuniaoScreen() {
           contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching || assistencias.isRefetching}
-              onRefresh={() => {
-                refetch();
-                assistencias.refetch();
-              }}
+              {...puxar}
             />
           }
         >

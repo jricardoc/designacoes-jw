@@ -15,6 +15,7 @@ import { MESES, radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { funcaoColor, funcaoLabel } from "@/utils/funcoes";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { usePuxar } from "@/utils/usePuxar";
 
 interface VisualTipo {
   label: string;
@@ -243,7 +244,7 @@ export default function InicioScreen() {
   const [detalhe, setDetalhe] = useState<Compromisso | null>(null);
   // Uma chamada só: "todas" traz o histórico inteiro e as próximas saem daqui por
   // filtro, então alternar a lista não custa outra ida à rede.
-  const { data, isLoading, refetch, isRefetching } = useMinhasDesignacoes("todas");
+  const { data, isLoading, refetch } = useMinhasDesignacoes("todas");
   // Horário das reuniões da congregação: é dele que sai o início de tudo que não
   // é saída de campo. Enquanto não chega, o corte por hora fica desligado — ver
   // `aindaPorVir`.
@@ -251,6 +252,10 @@ export default function InicioScreen() {
   // A lista de tarefas vem em consulta própria: ela depende dos quadros e da programação,
   // não das designações do irmão, e uma falha ali não pode levar a tela junto.
   const { data: tarefas, refetch: recarregarTarefas } = useTarefas();
+  // Puxar para atualizar recarrega as DUAS listas. Só as designações deixaria a
+  // seção de Tarefas parada — e é justamente ela que muda quando alguém publica
+  // um quadro ou importa a programação.
+  const puxar = usePuxar(() => Promise.all([refetch(), recarregarTarefas()]));
 
   /**
    * O relógio da tela. Sem ele o corte por hora só mudaria quando a tela
@@ -337,14 +342,7 @@ export default function InicioScreen() {
           contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
-              // Puxar para atualizar recarrega as DUAS listas. Só as designações deixaria a
-              // seção de Tarefas parada — e é justamente ela que muda quando alguém publica
-              // um quadro ou importa a programação.
-              onRefresh={() => {
-                refetch();
-                recarregarTarefas();
-              }}
+              {...puxar}
               tintColor={colors.primary}
             />
           }
