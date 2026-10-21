@@ -490,6 +490,8 @@ export interface TerritorioResumo {
 export interface ListaTerritorios {
   fonte: "banco" | "cartoes";
   territorios: TerritorioResumo[];
+  /** Cor de cada área: a escolhida, ou uma da paleta. Ausente na API antiga. */
+  cores?: Record<string, string>;
   permissoes: PermissoesTerritorio;
   /** Preenchido quando a resposta veio da cópia guardada no celular (sem internet). */
   copiaLocalDe?: string;
@@ -582,10 +584,21 @@ export interface MapaGeralTerritorios {
   territorios: {
     numero: string;
     nome: string;
+    area?: string | null;
     situacao: SituacaoTerritorio;
     cor: string | null;
     quadras: { nome: string; pontos: Ponto[] }[];
   }[];
+  /** A região de cada área (em volta das quadras dela), na cor da área. */
+  areas?: { nome: string; cor: string; aneis: Ponto[][] }[];
+  /** O limite do território da congregação, quando importado. */
+  limite?: LimiteTerritorio | null;
+}
+
+export interface LimiteTerritorio {
+  nome: string;
+  cor: string | null;
+  pontos: Ponto[];
 }
 
 export interface CamadaMyMaps {

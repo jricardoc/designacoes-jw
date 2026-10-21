@@ -414,7 +414,7 @@ export default function ContaScreen() {
                 />
                 <View style={styles.flex}>
                   <Text style={styles.cardTitle}>Entrar com {bioNome}</Text>
-                  <Text style={styles.cardSub}>Sem digitar a senha neste aparelho</Text>
+                  <Text style={styles.cardSub}>Pede o {bioNome} ao abrir o app e no lugar da senha</Text>
                 </View>
               </View>
               <Switch

@@ -11,7 +11,7 @@ import { Button, EmptyState, GradientHeader, Loading, TextField, useToast } from
 import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { juntarEnderecoEDescricao, separarEnderecoEDescricao } from "@/territorios/constantes";
+import { juntarEnderecoEDescricao, separarEnderecoEDescricao, umaLinha } from "@/territorios/constantes";
 import { enfileirar, novaChave, useFilaTerritorios } from "@/territorios/fila";
 import { minhaLocalizacao } from "@/territorios/gps";
 
@@ -53,7 +53,7 @@ export default function NaoBaterScreen() {
     .filter((m) => m.tipo === "nao_bater")
     .sort((a, b) => Number(b.precisaReconfirmar) - Number(a.precisaReconfirmar));
   const naFila = pendentes.filter((i) => i.numero === t.numero && i.corpo.tipo === "nao_bater");
-  const endereco = `${rua.trim()}${casa.trim() ? `, ${casa.trim()}` : ""}`;
+  const endereco = `${umaLinha(rua)}${umaLinha(casa) ? `, ${umaLinha(casa)}` : ""}`;
   const texto = juntarEnderecoEDescricao(endereco, descricao);
 
   const registrarPeloEndereco = async () => {

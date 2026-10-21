@@ -75,6 +75,26 @@ export async function lerComBiometria(): Promise<Credenciais | null> {
   return bruto ? (JSON.parse(bruto) as Credenciais) : null;
 }
 
+/** Só confirma que é o dono (o bloqueio ao abrir o app); não lê a senha guardada. */
+export async function confirmarDono(): Promise<boolean> {
+  const nomeApp = Constants.expoConfig?.name ?? "o app";
+  const resultado = await LocalAuthentication.authenticateAsync({
+    promptMessage: `Desbloquear o ${nomeApp}`,
+    cancelLabel: "Cancelar",
+  });
+  return resultado.success;
+}
+
+/**
+ * Quando o dono provou quem é pela última vez (login por senha ou por biometria). O bloqueio ao
+ * abrir o app não pede de novo logo depois de um login — seria pedir duas vezes seguidas.
+ */
+let ultimoDesbloqueio = 0;
+export const registrarDesbloqueio = () => {
+  ultimoDesbloqueio = Date.now();
+};
+export const desbloqueadoHa = () => Date.now() - ultimoDesbloqueio;
+
 export async function biometriaJaOferecida(): Promise<boolean> {
   return !!(await SecureStore.getItemAsync(CHAVE_OFERECIDA));
 }

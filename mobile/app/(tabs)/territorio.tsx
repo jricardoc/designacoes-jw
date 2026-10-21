@@ -1,14 +1,47 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
-import { BackHandler, FlatList, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  BackHandler,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  FadeInLeft,
+  LinearTransition,
+  SlideInDown,
+  SlideOutDown,
+  ZoomIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { useImagemProtegida } from "@/api/hooks/useImagemProtegida";
 import { preCarregarTerritorios, useMapaTerritorios, useTerritorios } from "@/api/hooks/useTerritorios";
 import type { SituacaoTerritorio, TerritorioResumo } from "@/api/types";
 import { SaidasDeCampo } from "@/components/config/SaidasDeCampo";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 import { FilaBanner } from "@/components/territorio/FilaBanner";
-import { MapaTerritorio, mapaDisponivel, type AreaMapa } from "@/components/territorio/MapaTerritorio";
+import {
+  MapaTerritorio,
+  mapaDisponivel,
+  type AreaMapa,
+  type FundoMapa,
+  type MapaTerritorioRef,
+} from "@/components/territorio/MapaTerritorio";
 import { Button, EmptyState, GradientHeader, Loading, TextField } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
@@ -61,6 +94,48 @@ function Thumb({
   return <Image source={fonte} style={estilo} resizeMode="cover" onError={() => setErro(true)} />;
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const MOLA = { damping: 15, stiffness: 260 };
+
+/** Entrada em cascata dos cards; só os da primeira tela esperam a vez (os de baixo entram ao rolar). */
+const entrada = (indice: number) =>
+  FadeInDown.delay(indice < 10 ? indice * 55 : 0)
+    .springify()
+    .damping(18);
+
+/** Card que afunda um pouco sob o dedo: o retorno de que o toque pegou, antes de a tela mudar. */
+function Pressionavel({ style, ...props }: Omit<PressableProps, "style"> & { style?: StyleProp<ViewStyle> }) {
+  const escala = useSharedValue(1);
+  const animado = useAnimatedStyle(() => ({ transform: [{ scale: escala.value }] }));
+  return (
+    <AnimatedPressable
+      {...props}
+      onPressIn={() => {
+        escala.value = withSpring(0.96, MOLA);
+      }}
+      onPressOut={() => {
+        escala.value = withSpring(1, MOLA);
+      }}
+      style={[style, animado]}
+    />
+  );
+}
+
+/** Barra de concluídos que enche ao aparecer. */
+function Progresso({ fracao, atraso = 0, cor }: { fracao: number; atraso?: number; cor?: string }) {
+  const { styles } = useTema(criarEstilos);
+  const largura = useSharedValue(0);
+  useEffect(() => {
+    largura.value = withDelay(atraso, withTiming(fracao * 100, { duration: 800, easing: Easing.out(Easing.cubic) }));
+  }, [fracao, atraso, largura]);
+  const animado = useAnimatedStyle(() => ({ width: `${largura.value}%` }));
+  return (
+    <View style={styles.progresso}>
+      <Animated.View style={[styles.progressoCheio, cor ? { backgroundColor: cor } : null, animado]} />
+    </View>
+  );
+}
+
 export default function TerritorioScreen() {
   // Chamado UMA vez, no topo: o conteúdo mora dentro de condicionais (carregando / vazio /
   // lista), e espalhar o hook lá dentro o tornaria uma chamada condicional.
@@ -74,6 +149,10 @@ export default function TerritorioScreen() {
   const [busca, setBusca] = useState("");
   // A área aberta: null = a tela das áreas; TODAS = todos os territórios; "" = os sem área.
   const [area, setArea] = useState<string | null>(null);
+  // No mapa: o território tocado (cartão de prévia) ou a área escolhida na legenda.
+  const [selecionado, setSelecionado] = useState<string | null>(null);
+  const [foco, setFoco] = useState<string | null>(null);
+  const mapaRef = useRef<MapaTerritorioRef>(null);
 
   const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading, isError, refetch, isRefetching } = useTerritorios();
@@ -88,6 +167,7 @@ export default function TerritorioScreen() {
   }, [doBanco, data]);
 
   const todos = useMemo(() => data?.territorios ?? [], [data]);
+  const cores = data?.cores ?? {};
 
   // As áreas, na ordem do primeiro número de cada uma; "sem área" por último.
   const grupos = useMemo(() => {
@@ -106,15 +186,20 @@ export default function TerritorioScreen() {
   const temAreas = doBanco && grupos.some((g) => g.nome !== "");
   const naTelaDasAreas = temAreas && area === null && !busca.trim();
 
-  // O voltar do Android, dentro de uma área, volta para as áreas — e não sai da aba.
+  // O voltar do Android desfaz um passo de cada vez (cartão do mapa, mapa, área) e só então
+  // sai da aba.
   useEffect(() => {
-    if (area === null) return;
+    if (area === null && modo === "lista") return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      setArea(null);
+      if (selecionado || foco) {
+        setSelecionado(null);
+        setFoco(null);
+      } else if (modo === "mapa") setModo("lista");
+      else setArea(null);
       return true;
     });
     return () => sub.remove();
-  }, [area]);
+  }, [area, modo, selecionado, foco]);
 
   const base = useMemo(
     () => (area === null || area === TODAS ? todos : todos.filter((t) => (t.area?.trim() ?? "") === area)),
@@ -150,111 +235,129 @@ export default function TerritorioScreen() {
       ),
     [mapaGeral, colors],
   );
+  // A região de cada área, por baixo dos territórios, na cor da área.
+  const fundos = useMemo<FundoMapa[]>(
+    () =>
+      (mapaGeral?.areas ?? []).flatMap((a) =>
+        a.aneis.map((pontos, i) => ({ chave: `${a.nome}|${i}`, cor: a.cor, pontos })),
+      ),
+    [mapaGeral],
+  );
+  const pontosDaArea = (nome: string | null) => mapaGeral?.areas?.find((a) => a.nome === nome)?.aneis.flat();
+
+  const abrirMapa = () => {
+    setSelecionado(null);
+    setFoco(area && area !== TODAS ? area : null);
+    setModo("mapa");
+  };
 
   const abrir = (numero: string) => router.push({ pathname: "/territorio/[numero]", params: { numero } });
 
-  const renderArea = (nome: string, lista: TerritorioResumo[]) => {
+  const renderArea = (nome: string, lista: TerritorioResumo[], indice: number) => {
     const trabalhados = lista.filter((t) => t.ultimaSaida && (t.diasSemTrabalho ?? 99) < 30).length;
     const concluidos = lista.filter((t) => t.situacao === "concluido").length;
     const thumb = lista.find((t) => t.imagens?.thumb)?.imagens?.thumb;
     return (
-      <Pressable
-        style={({ pressed }) => [styles.areaCard, nome === TODAS && styles.areaTodas, pressed && { opacity: 0.85 }]}
-        onPress={() => {
-          setArea(nome);
-          setFiltro("todos");
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={`${nomeDaArea(nome)}, ${lista.length} territórios`}
-      >
-        {thumb ? (
-          <Thumb fonte={imagem(thumb)} grande />
-        ) : (
-          <View style={[styles.thumb, styles.thumbGrande, styles.thumbVazio]}>
-            <Ionicons name={nome === TODAS ? "albums-outline" : "map-outline"} size={26} color={colors.textMuted} />
+      <Animated.View entering={entrada(indice)}>
+        <Pressionavel
+          style={[styles.areaCard, nome === TODAS && styles.areaTodas]}
+          onPress={() => {
+            setArea(nome);
+            setFiltro("todos");
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`${nomeDaArea(nome)}, ${lista.length} territórios`}
+        >
+          <View style={[styles.faixa, { backgroundColor: cores[nome] ?? (nome === TODAS ? colors.primary : colors.borderStrong) }]} />
+          {thumb ? (
+            <Thumb fonte={imagem(thumb)} grande />
+          ) : (
+            <View style={[styles.thumb, styles.thumbGrande, styles.thumbVazio]}>
+              <Ionicons name={nome === TODAS ? "albums-outline" : "map-outline"} size={26} color={colors.textMuted} />
+            </View>
+          )}
+          <View style={styles.textos}>
+            <Text style={styles.areaNome}>{nomeDaArea(nome)}</Text>
+            <Text style={styles.areaSub}>
+              {lista.length} território{lista.length > 1 ? "s" : ""} · {lista[0].numero} a {lista[lista.length - 1].numero}
+            </Text>
+            <Text style={styles.areaSub}>
+              {trabalhados} trabalhado{trabalhados === 1 ? "" : "s"} nos últimos 30 dias
+            </Text>
+            <Progresso fracao={concluidos / lista.length} atraso={250 + Math.min(indice, 8) * 55} />
+            <Text style={styles.progressoTexto}>
+              {concluidos} de {lista.length} concluídos no ciclo
+            </Text>
           </View>
-        )}
-        <View style={styles.textos}>
-          <Text style={styles.areaNome}>{nomeDaArea(nome)}</Text>
-          <Text style={styles.areaSub}>
-            {lista.length} território{lista.length > 1 ? "s" : ""} · {lista[0].numero} a {lista[lista.length - 1].numero}
-          </Text>
-          <Text style={styles.areaSub}>
-            {trabalhados} trabalhado{trabalhados === 1 ? "" : "s"} nos últimos 30 dias
-          </Text>
-          <View style={styles.progresso}>
-            <View style={[styles.progressoCheio, { width: `${(concluidos / lista.length) * 100}%` }]} />
-          </View>
-          <Text style={styles.progressoTexto}>
-            {concluidos} de {lista.length} concluídos no ciclo
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      </Pressable>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Pressionavel>
+      </Animated.View>
     );
   };
 
-  const renderItem = ({ item: linha }: { item: Item }) => {
-    if (linha.tipo === "area") return renderArea(linha.nome, linha.lista);
+  const renderItem = ({ item: linha, index }: { item: Item; index: number }) => {
+    if (linha.tipo === "area") return renderArea(linha.nome, linha.lista, index);
     const item = linha.t;
     const s = SITUACOES[item.situacao];
     const parado = (item.diasSemTrabalho ?? 0) >= DIAS_PARADO;
     return (
-      <Pressable
-        style={({ pressed }) => [styles.card, pressed && { opacity: 0.85 }]}
-        onPress={() => abrir(item.numero)}
-        accessibilityRole="button"
-        accessibilityLabel={`Território ${item.numero}, ${item.nome}, ${s.rotulo}`}
-      >
-        <View style={[styles.faixa, { backgroundColor: s.cor(colors) }]} />
-        {item.imagens?.thumb ? <Thumb fonte={imagem(item.imagens.thumb)} /> : null}
-        <View style={styles.textos}>
-          <View style={styles.linhaTopo}>
-            <Text style={styles.numero}>{item.numero}</Text>
-            <Text style={styles.nome} numberOfLines={1}>
-              {item.nome}
-            </Text>
-          </View>
-          <Text style={styles.ultima} numberOfLines={1}>
-            {item.ultimaSaida
-              ? `Última saída ${quandoFoi(item.ultimaSaida.dia)}${item.ultimaSaida.autor ? ` · ${item.ultimaSaida.autor}` : ""}`
-              : doBanco
-                ? "Nunca trabalhado"
-                : "Cartão de mapa"}
-          </Text>
-          {doBanco ? (
-            <View style={styles.selos}>
-              <View style={[styles.selo, { backgroundColor: s.fundo(colors) }]}>
-                <Text style={[styles.seloTexto, { color: s.cor(colors) }]}>{s.rotulo}</Text>
-              </View>
-              {item.designacao ? (
-                <View style={[styles.selo, { backgroundColor: colors.tealBg }]}>
-                  <Ionicons name="person" size={11} color={colors.teal} />
-                  <Text style={[styles.seloTexto, { color: colors.teal }]}>
-                    {item.designacao.dirigente.split(" ")[0]} · {diaCurto(item.designacao.dia)}
-                  </Text>
-                </View>
-              ) : null}
-              {parado ? (
-                <View style={[styles.selo, { backgroundColor: colors.warningBg }]}>
-                  <Ionicons name="hourglass-outline" size={11} color={colors.amber} />
-                  <Text style={[styles.seloTexto, { color: colors.amber }]}>{item.diasSemTrabalho} dias</Text>
-                </View>
-              ) : null}
-              {item.naoBater.total > 0 ? (
-                <View style={[styles.selo, { backgroundColor: colors.dangerBg }]}>
-                  <Ionicons name="hand-left" size={11} color={colors.redDark} />
-                  <Text style={[styles.seloTexto, { color: colors.redDark }]}>
-                    {item.naoBater.total}
-                    {item.naoBater.vencidas ? ` · ${item.naoBater.vencidas} reconfirmar` : ""}
-                  </Text>
-                </View>
-              ) : null}
+      <Animated.View entering={entrada(index)}>
+        <Pressionavel
+          style={styles.card}
+          onPress={() => abrir(item.numero)}
+          accessibilityRole="button"
+          accessibilityLabel={`Território ${item.numero}, ${item.nome}, ${s.rotulo}`}
+        >
+          <View style={[styles.faixa, { backgroundColor: s.cor(colors) }]} />
+          {item.imagens?.thumb ? <Thumb fonte={imagem(item.imagens.thumb)} /> : null}
+          <View style={styles.textos}>
+            <View style={styles.linhaTopo}>
+              <Text style={styles.numero}>{item.numero}</Text>
+              <Text style={styles.nome} numberOfLines={1}>
+                {item.nome}
+              </Text>
             </View>
-          ) : null}
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-      </Pressable>
+            <Text style={styles.ultima} numberOfLines={1}>
+              {item.ultimaSaida
+                ? `Última saída ${quandoFoi(item.ultimaSaida.dia)}${item.ultimaSaida.autor ? ` · ${item.ultimaSaida.autor}` : ""}`
+                : doBanco
+                  ? "Nunca trabalhado"
+                  : "Cartão de mapa"}
+            </Text>
+            {doBanco ? (
+              <View style={styles.selos}>
+                <View style={[styles.selo, { backgroundColor: s.fundo(colors) }]}>
+                  <Text style={[styles.seloTexto, { color: s.cor(colors) }]}>{s.rotulo}</Text>
+                </View>
+                {item.designacao ? (
+                  <View style={[styles.selo, { backgroundColor: colors.tealBg }]}>
+                    <Ionicons name="person" size={11} color={colors.teal} />
+                    <Text style={[styles.seloTexto, { color: colors.teal }]}>
+                      {item.designacao.dirigente.split(" ")[0]} · {diaCurto(item.designacao.dia)}
+                    </Text>
+                  </View>
+                ) : null}
+                {parado ? (
+                  <View style={[styles.selo, { backgroundColor: colors.warningBg }]}>
+                    <Ionicons name="hourglass-outline" size={11} color={colors.amber} />
+                    <Text style={[styles.seloTexto, { color: colors.amber }]}>{item.diasSemTrabalho} dias</Text>
+                  </View>
+                ) : null}
+                {item.naoBater.total > 0 ? (
+                  <View style={[styles.selo, { backgroundColor: colors.dangerBg }]}>
+                    <Ionicons name="hand-left" size={11} color={colors.redDark} />
+                    <Text style={[styles.seloTexto, { color: colors.redDark }]}>
+                      {item.naoBater.total}
+                      {item.naoBater.vencidas ? ` · ${item.naoBater.vencidas} reconfirmar` : ""}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Pressionavel>
+      </Animated.View>
     );
   };
 
@@ -317,27 +420,169 @@ export default function TerritorioScreen() {
           <Button label="Tentar de novo" onPress={() => refetch()} />
         </EmptyState>
       ) : modo === "mapa" && doBanco ? (
-        <View style={styles.flex}>
-          <MapaTerritorio areas={areas} onAreaPress={(chave) => abrir(chave.split("|")[0])} style={styles.mapaGeral} />
-          <View style={styles.legenda}>
-            {(Object.keys(SITUACOES) as SituacaoTerritorio[]).map((id) => (
-              <View key={id} style={styles.legendaItem}>
-                <View style={[styles.legendaCor, { backgroundColor: SITUACOES[id].cor(colors) }]} />
-                <Text style={styles.legendaTexto}>{SITUACOES[id].rotulo}</Text>
-              </View>
-            ))}
-          </View>
-          <Pressable style={[styles.alternar, styles.alternarFlutuante]} onPress={() => setModo("lista")}>
-            <Ionicons name="list" size={18} color={colors.textOnPrimary} />
-            <Text style={styles.alternarTexto}>Lista</Text>
-          </Pressable>
-        </View>
+        !mapaGeral ? (
+          <Loading label="Carregando o mapa..." />
+        ) : (
+          <Animated.View entering={FadeIn.duration(320)} style={styles.flex}>
+            <MapaTerritorio
+              ref={mapaRef}
+              areas={areas}
+              fundos={fundos}
+              limite={mapaGeral.limite}
+              enquadrarEm={pontosDaArea(foco)}
+              onAreaPress={(chave) => {
+                setFoco(null);
+                setSelecionado(chave.split("|")[0]);
+              }}
+              style={styles.mapaGeral}
+            />
+            <AnimatedPressable
+              entering={ZoomIn.delay(180).springify().damping(14)}
+              style={[styles.alternar, styles.alternarFlutuante]}
+              onPress={() => setModo("lista")}
+            >
+              <Ionicons name="list" size={18} color={colors.textOnPrimary} />
+              <Text style={styles.alternarTexto}>Lista</Text>
+            </AnimatedPressable>
+
+            <View style={styles.rodapeMapa} pointerEvents="box-none">
+              {(() => {
+                const t = selecionado ? todos.find((x) => x.numero === selecionado) : undefined;
+                if (t) {
+                  const s = SITUACOES[t.situacao];
+                  return (
+                    <Animated.View
+                      key={`t-${t.numero}`}
+                      entering={SlideInDown.springify().damping(17)}
+                      exiting={SlideOutDown.duration(180)}
+                      style={styles.previa}
+                    >
+                      <View style={[styles.previaSelo, { backgroundColor: s.cor(colors) }]}>
+                        <Text style={styles.previaSeloTexto}>{t.numero}</Text>
+                      </View>
+                      <View style={styles.textos}>
+                        <Text style={styles.nome} numberOfLines={1}>
+                          {t.nome}
+                        </Text>
+                        <Text style={styles.ultima} numberOfLines={1}>
+                          {s.rotulo}
+                          {t.area ? ` · ${t.area}` : ""}
+                        </Text>
+                        <Text style={styles.ultima} numberOfLines={1}>
+                          {t.ultimaSaida ? `Última saída ${quandoFoi(t.ultimaSaida.dia)}` : "Nunca trabalhado"}
+                        </Text>
+                      </View>
+                      <Pressionavel style={styles.previaAbrir} onPress={() => abrir(t.numero)} accessibilityRole="button">
+                        <Text style={styles.previaAbrirTexto}>Abrir</Text>
+                        <Ionicons name="chevron-forward" size={16} color={colors.textOnPrimary} />
+                      </Pressionavel>
+                      <Pressable style={styles.previaFechar} onPress={() => setSelecionado(null)} hitSlop={10} accessibilityLabel="Fechar">
+                        <Ionicons name="close" size={16} color={colors.textSecondary} />
+                      </Pressable>
+                    </Animated.View>
+                  );
+                }
+                const g = foco ? grupos.find((x) => x.nome === foco) : undefined;
+                if (g) {
+                  const concluidos = g.lista.filter((x) => x.situacao === "concluido").length;
+                  const cor = cores[g.nome] ?? colors.primary;
+                  return (
+                    <Animated.View
+                      key={`a-${g.nome}`}
+                      entering={SlideInDown.springify().damping(17)}
+                      exiting={SlideOutDown.duration(180)}
+                      style={styles.previa}
+                    >
+                      <View style={[styles.previaSelo, { backgroundColor: cor }]}>
+                        <Ionicons name="albums" size={20} color="#fff" />
+                      </View>
+                      <View style={styles.textos}>
+                        <Text style={styles.nome} numberOfLines={1}>
+                          {g.nome}
+                        </Text>
+                        <Text style={styles.ultima}>
+                          {g.lista.length} territórios · {concluidos} concluídos no ciclo
+                        </Text>
+                        <Progresso fracao={concluidos / g.lista.length} atraso={200} cor={cor} />
+                      </View>
+                      <Pressionavel
+                        style={styles.previaAbrir}
+                        onPress={() => {
+                          setArea(g.nome);
+                          setFiltro("todos");
+                          setModo("lista");
+                        }}
+                        accessibilityRole="button"
+                      >
+                        <Text style={styles.previaAbrirTexto}>Lista</Text>
+                        <Ionicons name="chevron-forward" size={16} color={colors.textOnPrimary} />
+                      </Pressionavel>
+                      <Pressable style={styles.previaFechar} onPress={() => setFoco(null)} hitSlop={10} accessibilityLabel="Fechar">
+                        <Ionicons name="close" size={16} color={colors.textSecondary} />
+                      </Pressable>
+                    </Animated.View>
+                  );
+                }
+                return null;
+              })()}
+
+              <Animated.View entering={SlideInDown.delay(120).springify().damping(18)} style={styles.legenda}>
+                <View style={styles.legendaLinha}>
+                  {(Object.keys(SITUACOES) as SituacaoTerritorio[]).map((id) => (
+                    <View key={id} style={styles.legendaItem}>
+                      <View style={[styles.legendaCor, { backgroundColor: SITUACOES[id].cor(colors) }]} />
+                      <Text style={styles.legendaTexto}>{SITUACOES[id].rotulo}</Text>
+                    </View>
+                  ))}
+                </View>
+                {mapaGeral.areas?.length || mapaGeral.limite ? (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsAreas}>
+                    {(mapaGeral.areas ?? []).map((a) => {
+                      const ativa = foco === a.nome;
+                      return (
+                        <Pressable
+                          key={a.nome}
+                          style={[styles.chipArea, ativa && { borderColor: a.cor, backgroundColor: `${a.cor}22` }]}
+                          onPress={() => {
+                            setSelecionado(null);
+                            setFoco(a.nome);
+                            mapaRef.current?.enquadrar(a.aneis.flat());
+                          }}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: ativa }}
+                        >
+                          <View style={[styles.chipAreaCor, { backgroundColor: `${a.cor}55`, borderColor: a.cor }]} />
+                          <Text style={styles.legendaTexto}>{a.nome}</Text>
+                        </Pressable>
+                      );
+                    })}
+                    {mapaGeral.limite ? (
+                      <Pressable
+                        style={styles.chipArea}
+                        onPress={() => {
+                          setSelecionado(null);
+                          setFoco(null);
+                          mapaRef.current?.enquadrar();
+                        }}
+                        accessibilityRole="button"
+                      >
+                        <View style={[styles.chipAreaCor, { borderColor: mapaGeral.limite.cor ?? colors.primaryDark, borderWidth: 2.5 }]} />
+                        <Text style={styles.legendaTexto}>{mapaGeral.limite.nome}</Text>
+                      </Pressable>
+                    ) : null}
+                  </ScrollView>
+                ) : null}
+              </Animated.View>
+            </View>
+          </Animated.View>
+        )
       ) : (
-        <FlatList
+        <Animated.FlatList
           {...rolagem}
           data={itens}
           keyExtractor={(i) => (i.tipo === "area" ? `area:${i.nome}` : i.t.numero)}
           renderItem={renderItem}
+          itemLayoutAnimation={LinearTransition.springify().damping(18)}
           contentContainerStyle={[styles.lista, recuo]}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           keyboardShouldPersistTaps="handled"
@@ -361,13 +606,16 @@ export default function TerritorioScreen() {
                 </Pressable>
               ) : null}
               {temAreas && area !== null ? (
-                <View style={styles.areaTopo}>
+                <Animated.View key={area} entering={FadeInLeft.duration(280)} style={styles.areaTopo}>
                   <Pressable style={styles.voltarArea} onPress={() => setArea(null)} hitSlop={8}>
                     <Ionicons name="chevron-back" size={18} color={colors.primaryDark} />
                     <Text style={styles.voltarAreaTexto}>Áreas</Text>
                   </Pressable>
-                  <Text style={styles.areaTitulo}>{nomeDaArea(area)}</Text>
-                </View>
+                  <View style={styles.areaTituloLinha}>
+                    {cores[area] ? <View style={[styles.areaTituloCor, { backgroundColor: cores[area] }]} /> : null}
+                    <Text style={styles.areaTitulo}>{nomeDaArea(area)}</Text>
+                  </View>
+                </Animated.View>
               ) : null}
               <View style={styles.buscaLinha}>
                 <View style={styles.flex}>
@@ -380,7 +628,7 @@ export default function TerritorioScreen() {
                   />
                 </View>
                 {doBanco && mapaDisponivel ? (
-                  <Pressable style={styles.alternar} onPress={() => setModo("mapa")} accessibilityLabel="Ver no mapa">
+                  <Pressable style={styles.alternar} onPress={abrirMapa} accessibilityLabel="Ver no mapa">
                     <Ionicons name="map" size={18} color={colors.textOnPrimary} />
                     <Text style={styles.alternarTexto}>Mapa</Text>
                   </Pressable>
@@ -510,7 +758,7 @@ const criarEstilos = (colors: Cores) =>
     faixa: { width: 5, alignSelf: "stretch" },
     thumb: { width: 72, height: 48, borderRadius: radius.sm, backgroundColor: colors.surfaceMuted },
     thumbVazio: { alignItems: "center", justifyContent: "center" },
-    thumbGrande: { width: 96, height: 76, marginLeft: 12 },
+    thumbGrande: { width: 96, height: 76 },
     areaCard: {
       flexDirection: "row",
       alignItems: "center",
@@ -521,6 +769,7 @@ const criarEstilos = (colors: Cores) =>
       paddingRight: 14,
       borderWidth: 1,
       borderColor: colors.border,
+      overflow: "hidden",
       ...shadow.card,
     },
     areaTodas: { borderColor: colors.primary, borderWidth: 1.5 },
@@ -532,6 +781,8 @@ const criarEstilos = (colors: Cores) =>
     areaTopo: { gap: 2 },
     voltarArea: { flexDirection: "row", alignItems: "center", gap: 2, alignSelf: "flex-start" },
     voltarAreaTexto: { fontSize: 14, fontWeight: "700", color: colors.primaryDark },
+    areaTituloLinha: { flexDirection: "row", alignItems: "center", gap: 8 },
+    areaTituloCor: { width: 14, height: 14, borderRadius: 7 },
     areaTitulo: { fontSize: 22, fontWeight: "800", color: colors.text },
     textos: { flex: 1, gap: 3 },
     linhaTopo: { flexDirection: "row", alignItems: "baseline", gap: 8 },
@@ -542,19 +793,44 @@ const criarEstilos = (colors: Cores) =>
     selo: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill },
     seloTexto: { fontSize: 11.5, fontWeight: "800" },
     mapaGeral: { flex: 1 },
-    legenda: {
-      position: "absolute",
-      left: 12,
-      right: 12,
-      bottom: 110,
+    rodapeMapa: { position: "absolute", left: 12, right: 12, bottom: 110, gap: 8 },
+    legenda: { gap: 8, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, ...shadow.card },
+    legendaLinha: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+    chipsAreas: { gap: 8 },
+    chipArea: {
       flexDirection: "row",
-      flexWrap: "wrap",
-      gap: 10,
-      padding: 10,
-      borderRadius: radius.md,
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: radius.pill,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+    },
+    chipAreaCor: { width: 14, height: 14, borderRadius: 4, borderWidth: 1.5, borderColor: "transparent" },
+    previa: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      padding: 12,
+      borderRadius: radius.lg,
       backgroundColor: colors.surface,
       ...shadow.card,
     },
+    previaSelo: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+    previaSeloTexto: { color: "#fff", fontSize: 19, fontWeight: "900" },
+    previaAbrir: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 2,
+      paddingLeft: 14,
+      paddingRight: 10,
+      height: 42,
+      borderRadius: radius.md,
+      backgroundColor: colors.primary,
+    },
+    previaAbrirTexto: { color: colors.textOnPrimary, fontWeight: "800", fontSize: 14 },
+    previaFechar: { position: "absolute", top: 6, right: 6, padding: 2 },
     legendaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
     legendaCor: { width: 12, height: 12, borderRadius: 3 },
     legendaTexto: { fontSize: 12, fontWeight: "700", color: colors.text },

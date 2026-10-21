@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import {
@@ -9,13 +10,16 @@ import {
   useDesignarTerritorio,
   useDirigentesTerritorio,
   useEditarTerritorio,
+  useExcluirTerritorio,
   useRemoverAviso,
 } from "@/api/hooks/useTerritorios";
 import type { TerritorioDetalhe } from "@/api/types";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
+import { useAuth } from "@/context/AuthContext";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { AVISOS, diaCurto } from "@/territorios/constantes";
+import { ehAdminGeral } from "@/utils/permissoes";
 
 type Aba = "designar" | "avisos" | "dados" | "ciclo";
 
@@ -75,6 +79,8 @@ export function GerenciarTerritorioSheet({
   const criarAviso = useCriarAviso();
   const removerAviso = useRemoverAviso();
   const editar = useEditarTerritorio();
+  const excluir = useExcluirTerritorio();
+  const { usuario } = useAuth();
   const ciclo = useCicloTerritorio();
 
   const [irmaoId, setIrmaoId] = useState<number | null>(null);
@@ -286,7 +292,9 @@ export function GerenciarTerritorioSheet({
           <>
             <TextField label="Número" value={dados.numero} onChangeText={(v) => setDados({ ...dados, numero: v })} autoCapitalize="characters" />
             <TextField label="Nome" value={dados.nome} onChangeText={(v) => setDados({ ...dados, nome: v })} />
-            <TextField label="Área (agrupa na lista)" placeholder="Ex.: Tokaia" value={dados.area} onChangeText={(v) => setDados({ ...dados, area: v })} />
+            <Text style={styles.ajuda}>
+              Área: {dados.area || "nenhuma"}. Muda em Territórios › Gerenciar › Áreas, onde um território fica numa área só.
+            </Text>
             <TextField
               label="Outros nomes (para a busca)"
               placeholder="Ex.: Condomínio, Cond. Recanto"
@@ -311,6 +319,37 @@ export function GerenciarTerritorioSheet({
                 As quadras vêm da camada “{t.mymaps.camada}” do My Maps. Para mudar o desenho, edite lá e use
                 “Atualizar do My Maps” em Territórios › Gerenciar.
               </Text>
+            ) : null}
+            {ehAdminGeral(usuario) ? (
+              <Button
+                label="Excluir território"
+                icon="trash-outline"
+                variant="danger"
+                loading={excluir.isPending}
+                onPress={() =>
+                  Alert.alert(
+                    `Excluir o território ${t.numero}?`,
+                    "Ele sai da lista e do mapa para todos. O histórico fica guardado, e importar a camada do My Maps de novo traz ele de volta.",
+                    [
+                      { text: "Cancelar", style: "cancel" },
+                      {
+                        text: "Excluir",
+                        style: "destructive",
+                        onPress: () =>
+                          excluir.mutate(t.id, {
+                            onSuccess: () => {
+                              toast.show(`Território ${t.numero} excluído`);
+                              onClose();
+                              router.back();
+                            },
+                            onError: (e) => toast.show(e.message, "error"),
+                          }),
+                      },
+                    ],
+                  )
+                }
+                fullWidth
+              />
             ) : null}
           </>
         ) : null}

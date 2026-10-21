@@ -12,6 +12,7 @@ import { removerPushToken } from "@/api/hooks/usePush";
 import { tokenStore } from "@/api/tokenStore";
 import type { LoginResponse, Usuario } from "@/api/types";
 import { queryClient } from "@/lib/queryClient";
+import { registrarDesbloqueio } from "@/utils/biometria";
 import {
   lerPushTokenAtual,
   setPushTokenAtual,
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         skipAuth: true,
       });
       await tokenStore.set(data.token);
+      registrarDesbloqueio();
       setUsuarioState(data.usuario);
       return { success: true };
     } catch (err) {

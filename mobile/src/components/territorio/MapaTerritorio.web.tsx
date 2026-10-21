@@ -25,8 +25,14 @@ export interface PinoMapa {
   pendente?: boolean;
 }
 
+export interface FundoMapa {
+  chave: string;
+  cor: string;
+  pontos: Ponto[];
+}
+
 export interface MapaTerritorioRef {
-  enquadrar: () => void;
+  enquadrar: (pontos?: Ponto[]) => void;
   focar: (lat: number, lng: number) => void;
 }
 
@@ -36,6 +42,9 @@ export const MapaTerritorio = forwardRef<
   MapaTerritorioRef,
   {
     areas: AreaMapa[];
+    fundos?: FundoMapa[];
+    limite?: { pontos: Ponto[]; cor?: string | null } | null;
+    enquadrarEm?: Ponto[];
     pinos?: PinoMapa[];
     satelite?: boolean;
     onLongPress?: (ponto: { lat: number; lng: number }) => void;

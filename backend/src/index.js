@@ -67,6 +67,8 @@ app.use(limiter);
 // A foto de perfil vai em base64 no JSON e passa do limite padrao de 100 KB. Limite maior SO
 // nesta rota; o parser global abaixo pula o corpo que ja foi lido aqui.
 app.use('/auth/foto', express.json({ limit: '1mb' }));
+// O KML do limite da congregacao tambem: um contorno detalhado passa de 100 KB.
+app.use('/territorios/limite', express.json({ limit: '2mb' }));
 app.use(express.json());
 
 // Middleware de autenticacao

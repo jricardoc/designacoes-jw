@@ -7,6 +7,7 @@ import type {
   DesignacaoTerritorioLista,
   HistoricoTerritorio,
   Irmao,
+  LimiteTerritorio,
   ListaTerritorios,
   MapaGeralTerritorios,
   PainelTerritorios,
@@ -95,6 +96,21 @@ export const useApagarSaida = () =>
   useAcao((id: number) => apiRequest(`/territorios/saidas/${id}`, { method: "DELETE" }));
 
 // ===== Gestão (área Territórios) =====
+
+/** Cria ou edita uma área: `de` é o nome atual (vazio = nova); `numeros` vazio apaga a área. */
+export const useSalvarArea = () =>
+  useAcao((area: { de: string | null; nome: string; cor: string | null; numeros: string[] }) =>
+    apiRequest("/territorios/areas", { method: "PUT", body: area }),
+  );
+
+export const useSalvarLimite = () =>
+  useAcao((kml: string) => apiRequest<LimiteTerritorio>("/territorios/limite", { method: "PUT", body: { kml } }));
+
+export const useRemoverLimite = () => useAcao(() => apiRequest("/territorios/limite", { method: "DELETE" }));
+
+/** Só admin: sai da lista e do mapa; o histórico fica, e importar a camada de novo traz de volta. */
+export const useExcluirTerritorio = () =>
+  useAcao((id: number) => apiRequest(`/territorios/${id}`, { method: "DELETE" }));
 
 export const usePreviaMyMaps = () =>
   useMutation({

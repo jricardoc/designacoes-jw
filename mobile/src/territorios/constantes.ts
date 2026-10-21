@@ -52,6 +52,9 @@ export const MARCACOES: Record<
 
 export const TIPOS_MARCACAO = Object.keys(MARCACOES) as TipoMarcacao[];
 
+/** Cores para escolher na área. As mesmas que o servidor dá a quem ainda não escolheu. */
+export const PALETA_AREAS = ["#E53935", "#1E88E5", "#43A047", "#8E24AA", "#FB8C00", "#00ACC1", "#D81B60", "#6D4C41"];
+
 export const SITUACOES: Record<
   SituacaoTerritorio,
   { rotulo: string; icone: Icone; cor: (c: Cores) => string; fundo: (c: Cores) => string }
@@ -82,7 +85,14 @@ export const AVISOS: Record<string, string> = {
  * campo: 300 caracteres no total).
  */
 export const juntarEnderecoEDescricao = (endereco: string, descricao: string) =>
-  [endereco.trim(), descricao.trim()].filter(Boolean).join("\n");
+  [umaLinha(endereco), umaLinha(descricao)].filter(Boolean).join("\n");
+
+/**
+ * Quebra de linha vira espaço. Texto colado de outro app (o cartão do app antigo, por exemplo)
+ * chega com várias linhas, e a quebra é o que separa o endereço da descrição: sem isto, a 2ª
+ * linha colada na Rua virava "descrição" e o número da casa ia parar no fim dela.
+ */
+export const umaLinha = (texto: string) => texto.replace(/\s*[\r\n]+\s*/g, " ").trim();
 
 export function separarEnderecoEDescricao(texto: string | null | undefined) {
   const [endereco, ...resto] = (texto ?? "").split("\n");
