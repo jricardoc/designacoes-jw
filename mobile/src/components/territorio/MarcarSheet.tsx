@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Quadra, TipoMarcacao } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -37,6 +38,7 @@ const PRECISAO_BOA = 30;
 export function MarcarSheet({ territorio, ponto, tipoInicial = "parada", onClose }: MarcarSheetProps) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
+  const { feito } = useCelebracao();
   const [tipo, setTipo] = useState<TipoMarcacao>(tipoInicial);
   const [texto, setTexto] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -83,7 +85,16 @@ export function MarcarSheet({ territorio, ponto, tipoInicial = "parada", onClose
       toast.show(resultado.erro, "error");
       return;
     }
-    toast.show(resultado.enviado ? "Marcado no mapa!" : "Sem internet: guardado no celular, envia sozinho");
+    feito(
+      resultado.enviado
+        ? {
+            titulo: "Marcado no mapa",
+            detalhe: `${MARCACOES[tipo].rotulo} · Território ${territorio.numero}`,
+            icone: MARCACOES[tipo].icone,
+            cor: MARCACOES[tipo].cor(colors),
+          }
+        : { titulo: "Guardado no celular", detalhe: "Envia sozinho quando tiver internet", icone: "cloud-upload-outline" },
+    );
     onClose();
   };
 

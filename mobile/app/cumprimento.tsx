@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 import { podeGerenciar } from "@/utils/permissoes";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { usePuxar } from "@/utils/usePuxar";
 
 /** "dd/MM/yyyy" → Date (registro ilegível vai para o fim). */
 function dataDe(r: RegistroCumprimento): Date {
@@ -54,8 +55,9 @@ export default function CumprimentoScreen() {
   // Só quem cuida das DUAS áreas escolhe entre elas — para os demais o backend manda uma só,
   // e um filtro "Dirigentes" que devolve lista vazia parece dado faltando, não permissão.
   const escolheOrigem = veDesignacoes && veDirigentes;
-  const { data, isLoading, isError, refetch, isRefetching } =
+  const { data, isLoading, isError, refetch } =
     useCumprimento(podeVer);
+  const puxar = usePuxar(refetch);
 
   const [periodo, setPeriodo] = useState<Periodo>("3m");
   const [origem, setOrigem] = useState<FiltroOrigem>("todas");
@@ -144,7 +146,7 @@ export default function CumprimentoScreen() {
         <ScrollView
           contentContainerStyle={styles.scroll}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+            <RefreshControl {...puxar} />
           }
         >
           <View style={styles.filtros}>

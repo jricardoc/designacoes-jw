@@ -18,6 +18,7 @@ import { podeGerenciar } from "@/utils/permissoes";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { usePuxar } from "@/utils/usePuxar";
 
 export default function DesignacoesScreen() {
   // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
@@ -27,7 +28,8 @@ export default function DesignacoesScreen() {
   const { styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
   const podeEditar = podeGerenciar(usuario, "designacoes");
-  const { data: quadros, isLoading, refetch, isRefetching } = useQuadros();
+  const { data: quadros, isLoading, refetch } = useQuadros();
+  const puxar = usePuxar(refetch);
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -45,7 +47,7 @@ export default function DesignacoesScreen() {
           {...rolagem}
           contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+            <RefreshControl {...puxar} />
           }
         >
           <View style={styles.titleRow}>

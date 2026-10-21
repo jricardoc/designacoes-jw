@@ -3,7 +3,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import Animated, { FadeInDown, LinearTransition, ZoomIn } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import {
   useMapaTerritorios,
   useRemoverLimite,
@@ -12,6 +12,7 @@ import {
   useTerritorios,
 } from "@/api/hooks/useTerritorios";
 import type { TerritorioResumo } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -53,8 +54,8 @@ export function AreasTerritorios() {
 
   return (
     <View style={styles.cartao}>
-      {areas.map((a, i) => (
-        <Animated.View key={a.nome} entering={FadeInDown.delay(i * 50).duration(260)} layout={LinearTransition}>
+      {areas.map((a) => (
+        <Animated.View key={a.nome} entering={FadeIn.duration(220)}>
           <Pressable
             style={({ pressed }) => [styles.linha, pressed && { opacity: 0.7 }]}
             onPress={() => setEditando({ de: a.nome, nome: a.nome, cor: cores[a.nome] ?? proximaCor, numeros: a.numeros })}
@@ -108,6 +109,7 @@ function EditarAreaSheet({
 }) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
+  const { feito } = useCelebracao();
   const salvar = useSalvarArea();
   const [nome, setNome] = useState("");
   const [cor, setCor] = useState(PALETA_AREAS[0]);
@@ -136,7 +138,8 @@ function EditarAreaSheet({
       { de: area?.de ?? null, cor, ...dados },
       {
         onSuccess: () => {
-          toast.show(aviso);
+          const apagou = dados.numeros.length === 0;
+          feito({ titulo: aviso, icone: apagou ? "trash-outline" : "albums", cor: apagou ? colors.textSecondary : cor });
           onClose();
         },
         onError: (e) => toast.show(e.message, "error"),
@@ -168,7 +171,7 @@ function EditarAreaSheet({
                 accessibilityLabel={`Cor ${c}`}
               >
                 {cor === c ? (
-                  <Animated.View entering={ZoomIn.springify().damping(14)}>
+                  <Animated.View entering={FadeIn.duration(150)}>
                     <Ionicons name="checkmark" size={20} color="#fff" />
                   </Animated.View>
                 ) : null}
@@ -250,6 +253,7 @@ function EditarAreaSheet({
 export function LimiteCongregacao() {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
+  const { feito } = useCelebracao();
   const { data } = useMapaTerritorios();
   const salvar = useSalvarLimite();
   const remover = useRemoverLimite();
@@ -267,7 +271,7 @@ export function LimiteCongregacao() {
       return;
     }
     salvar.mutate(kml, {
-      onSuccess: (l) => toast.show(`"${l.nome}" agora aparece no mapa`),
+      onSuccess: (l) => feito({ titulo: "Limite no mapa", detalhe: `"${l.nome}" agora aparece no mapa`, icone: "map" }),
       onError: (e) => toast.show(e.message, "error"),
     });
   };

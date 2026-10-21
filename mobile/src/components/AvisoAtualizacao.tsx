@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Updates from "expo-updates";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, AppState, Pressable, StyleSheet, Text } from "react-native";
-import Animated, { SlideInUp } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -44,7 +44,7 @@ export function AvisoAtualizacao() {
   if (!isUpdatePending) return null;
 
   return (
-    <Animated.View entering={SlideInUp.springify().damping(16)} style={[styles.faixa, { top: insets.top + 8 }]}>
+    <Animated.View entering={FadeIn.duration(250)} style={[styles.faixa, { top: insets.top + 8 }]}>
       <Ionicons name="sparkles" size={20} color={colors.textOnPrimary} />
       <Text style={styles.texto}>Versão nova do app pronta</Text>
       <Pressable

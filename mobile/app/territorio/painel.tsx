@@ -19,6 +19,7 @@ import { useTema } from "@/theme/TemaContext";
 import { CASA_TRABALHADA, DIAS_PARADO, diaCurto } from "@/territorios/constantes";
 import { gerarHtmlS13 } from "@/territorios/s13Html";
 import { exportarPdf } from "@/utils/exportPdf";
+import { usePuxar } from "@/utils/usePuxar";
 
 const PERIODOS = [
   { dias: 30, rotulo: "30 dias" },
@@ -48,9 +49,10 @@ export default function PainelTerritoriosScreen() {
   const [anoS13, setAnoS13] = useState(anoDeServicoAtual());
   const [gerandoS13, setGerandoS13] = useState(false);
   const { data: config } = useConfig();
-  const { data, isLoading, refetch, isRefetching } = usePainelTerritorios(dias);
+  const { data, isLoading, refetch } = usePainelTerritorios(dias);
   const { data: conflitos, refetch: refetchConflitos } = useConflitosTerritorio();
   const { data: designacoes, refetch: refetchDesignacoes } = useDesignacoesTerritorio();
+  const puxar = usePuxar(() => Promise.all([refetch(), refetchConflitos(), refetchDesignacoes()]));
   const revisar = useRevisarSaida();
   const apagarDesignacao = useApagarDesignacao();
 
@@ -95,12 +97,7 @@ export default function PainelTerritoriosScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         refreshControl={
           <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={() => {
-              refetch();
-              refetchConflitos();
-              refetchDesignacoes();
-            }}
+            {...puxar}
           />
         }
       >

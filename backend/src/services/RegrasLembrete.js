@@ -83,6 +83,9 @@ const TIPOS = [
     { id: 'designacao', label: 'Designações do quadro', descricao: 'Microfone, indicador, áudio e vídeo, estacionamento' },
     { id: 'dirigente', label: 'Saída de campo', descricao: 'Quando você é o dirigente do turno' },
     { id: 'reuniao', label: 'Partes da reunião', descricao: 'Leitura, ministério, discurso, oração...' },
+    // Nao e lembrete: chega na hora em que alguem marca. So aparece para quem pode marcar
+    // (ver PreferenciaNotificacaoController); as antecedencias nao valem para ele.
+    { id: 'territorio', label: 'Marcações no território', descricao: 'Na hora em que alguém marca um ponto: território, endereço e quem marcou' },
 ];
 
 /** Sem preferencia gravada vale isto — que e exatamente o comportamento anterior a esta tela. */

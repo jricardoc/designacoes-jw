@@ -17,6 +17,7 @@ import { podeGerenciar } from "@/utils/permissoes";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { usePuxar } from "@/utils/usePuxar";
 
 export default function DirigentesScreen() {
   // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
@@ -26,7 +27,8 @@ export default function DirigentesScreen() {
   const { styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
   const podeEditar = podeGerenciar(usuario, "dirigentes");
-  const { data: quadros, isLoading, refetch, isRefetching } = useDirigentesQuadros();
+  const { data: quadros, isLoading, refetch } = useDirigentesQuadros();
+  const puxar = usePuxar(refetch);
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -44,7 +46,7 @@ export default function DirigentesScreen() {
           {...rolagem}
           contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+            <RefreshControl {...puxar} />
           }
         >
           <View style={styles.titleRow}>

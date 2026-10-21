@@ -27,6 +27,7 @@ import {
 import { DIAS_CURTOS, radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { usePuxar } from "@/utils/usePuxar";
 
 /** O turno não carrega o ponto dono, mas a leitura por dia mistura todos os pontos. */
 type TurnoDoDia = { turno: CarrinhoTurno; ponto: CarrinhoPonto };
@@ -40,7 +41,8 @@ export default function CarrinhoScreen() {
   // O carrinho passou a ter dono: sem o escopo, a tela é só consulta da escala.
   const { usuario } = useAuth();
   const podeEditar = podeGerenciar(usuario, "carrinho");
-  const { data, isLoading, isError, refetch, isRefetching } = useCarrinho();
+  const { data, isLoading, isError, refetch } = useCarrinho();
+  const puxar = usePuxar(refetch);
 
   const [dia, setDia] = useState(() => new Date().getDay());
   const [pontoSheet, setPontoSheet] = useState<{
@@ -153,8 +155,7 @@ export default function CarrinhoScreen() {
           contentContainerStyle={[styles.scroll, recuo]}
           refreshControl={
             <RefreshControl
-              refreshing={isRefetching}
-              onRefresh={refetch}
+              {...puxar}
               tintColor={colors.primary}
             />
           }

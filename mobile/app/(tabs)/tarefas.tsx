@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { ehAdminGeral } from "@/utils/permissoes";
+import { usePuxar } from "@/utils/usePuxar";
 
 /**
  * O painel de tarefas do admin geral.
@@ -40,7 +41,8 @@ export default function PainelTarefasScreen() {
   const [janela, setJanela] = useState(90);
   const [designando, setDesignando] = useState<MembroDaEquipe | null>(null);
 
-  const { data, isLoading, refetch, isRefetching } = usePainelTarefas(janela, admin);
+  const { data, isLoading, refetch } = usePainelTarefas(janela, admin);
+  const puxar = usePuxar(refetch);
   const lembrar = useLembrarTarefa();
   const salvarTarefas = useDefinirTarefas();
   /** Qual pendência está com o lembrete em voo. Por id, para dois toques não girarem juntos. */
@@ -103,7 +105,7 @@ export default function PainelTarefasScreen() {
         <ScrollView
           {...rolagem}
           contentContainerStyle={[styles.scroll, recuo]}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.primary} />}
+          refreshControl={<RefreshControl {...puxar} tintColor={colors.primary} />}
         >
           {/* ---------- o retrato de agora ---------- */}
           <Animated.View entering={FadeInDown.duration(240)} style={styles.tiles}>

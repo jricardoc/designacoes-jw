@@ -107,11 +107,17 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
   const vistos = useRef<Set<string>>(new Set());
   const [geracao, setGeracao] = useState(0);
   const regiao = useRef<Region | null>(null);
+  // O mapa recém-montado anuncia a região padrão dele (o mundo, a Europa) antes de ficar
+  // pronto. Guardar essa região fazia a remontagem seguinte abrir longe do território.
+  const pronto = useRef(false);
   useEffect(() => {
     const atuais = new Set(pinos.map((p) => p.chave));
     const sumiu = [...vistos.current].some((c) => !atuais.has(c));
     vistos.current = atuais;
-    if (sumiu) setGeracao((g) => g + 1);
+    if (sumiu) {
+      pronto.current = false;
+      setGeracao((g) => g + 1);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assinatura]);
 
@@ -164,10 +170,14 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
       initialRegion={
         regiao.current ?? (inicial ? { ...inicial, latitudeDelta: 0.01, longitudeDelta: 0.01 } : undefined)
       }
-      // Remontado por causa de um pino que saiu: fica onde estava, sem reenquadrar.
-      onMapReady={geracao === 0 ? () => enquadrar(enquadrarEm) : undefined}
+      onMapReady={() => {
+        pronto.current = true;
+        // Remontado por causa de um pino que saiu: volta para onde estava, sem reenquadrar.
+        if (geracao > 0 && regiao.current) mapa.current?.animateToRegion(regiao.current, 0);
+        else enquadrar(enquadrarEm);
+      }}
       onRegionChangeComplete={(r) => {
-        regiao.current = r;
+        if (pronto.current) regiao.current = r;
       }}
       onLongPress={
         onLongPress

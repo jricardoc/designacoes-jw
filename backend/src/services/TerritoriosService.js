@@ -295,8 +295,9 @@ async function historico(territorioId) {
             orderBy: [{ dia: 'desc' }, { createdAt: 'desc' }],
             take: 200,
         }),
+        // So as que continuam valendo: removida por engano ou cancelada nao e historia do territorio.
         prisma.marcacao.findMany({
-            where: { territorioId },
+            where: { territorioId, ativo: true },
             include: { autor: AUTOR },
             orderBy: { marcadaEm: 'desc' },
             take: 300,
@@ -539,6 +540,123 @@ async function avisarResponsaveis(agora = new Date()) {
     if (mensagens.length) await ExpoPushService.enviar(mensagens);
 }
 
+// --- Aviso de marcacao -------------------------------------------------------------------
+
+/** Id do tipo nas preferencias de notificacao (RegrasLembrete.TIPOS). */
+const TIPO_AVISO_MARCACAO = 'territorio';
+
+/** Os mesmos rotulos do app (mobile/src/territorios/constantes.ts). */
+const ROTULOS_MARCACAO = {
+    parada: 'Paramos aqui',
+    proximo: 'Próximo começa aqui',
+    concluido: 'Trecho concluído',
+    nao_bater: 'Não bater',
+    observacao: 'Observação',
+};
+
+/** "Rua Vila Romana, 120 - Itapuã, Salvador - CEP 41635-152", a partir do `address` do Nominatim. */
+function formatarEndereco(a) {
+    if (!a) return null;
+    const rua = a.road || a.pedestrian || a.footway || a.residential || null;
+    const ruaENumero = rua && a.house_number ? `${rua}, ${a.house_number}` : rua;
+    const regiao = [a.suburb || a.neighbourhood || a.quarter || a.city_district, a.city || a.town || a.village]
+        .filter(Boolean)
+        .join(', ');
+    const endereco = ruaENumero && regiao ? `${ruaENumero} - ${regiao}` : ruaENumero || regiao || null;
+    return endereco && a.postcode ? `${endereco} - CEP ${a.postcode}` : endereco;
+}
+
+/**
+ * Endereco de um ponto pelo Nominatim (OpenStreetMap): sem chave, mas a regra de uso e no
+ * maximo um pedido por segundo e identificar o app. Os pedidos entram numa fila; uma fila de
+ * marcacoes offline que sobe de uma vez nao estoura o limite. Falhou ou demorou: null, e o
+ * aviso sai sem a rua.
+ */
+let filaEnderecos = Promise.resolve();
+function enderecoDoPonto(lat, lng) {
+    const pedido = filaEnderecos
+        .then(async () => {
+            const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&addressdetails=1&accept-language=pt-BR&lat=${lat}&lon=${lng}`;
+            const r = await fetch(url, {
+                headers: { 'User-Agent': 'ServirMais/1.0 (github.com/jricardoc/designacoes-jw)' },
+                signal: AbortSignal.timeout(5000),
+            });
+            return r.ok ? formatarEndereco((await r.json()).address) : null;
+        })
+        .catch(() => null);
+    filaEnderecos = pedido.then(() => new Promise(fim => setTimeout(fim, 1100)));
+    return pedido;
+}
+
+/**
+ * Titulo e corpo do push. No "Nao bater" o endereco e o que o irmao digitou (1a linha do
+ * texto; a 2a e a descricao); nos outros, o da rua do ponto.
+ */
+function montarAvisoMarcacao({ tipo, numero, nomeTerritorio, endereco, quadra, autor, texto }) {
+    const [primeira, ...resto] = String(texto || '').split('\n');
+    const naoBater = tipo === 'nao_bater';
+    const onde = (naoBater && primeira.trim()) || endereco || quadra || 'ponto no mapa';
+    const detalhe = (naoBater ? resto.join(' ') : String(texto || '')).trim();
+    const linha1 = `${ROTULOS_MARCACAO[tipo] || 'Marcação'}: ${onde}${quadra && quadra !== onde ? ` (${quadra})` : ''}`;
+    const linha2 = [autor && `Por ${autor}`, detalhe && `“${detalhe}”`].filter(Boolean).join(' · ');
+    return {
+        titulo: `Território ${numero}${nomeTerritorio ? ` · ${nomeTerritorio}` : ''}`,
+        corpo: linha2 ? `${linha1}\n${linha2}` : linha1,
+    };
+}
+
+/**
+ * Push para quem pode marcar no territorio (admin, area de territorios, dirigentes), menos
+ * quem marcou e quem desligou "Marcacoes no territorio" nas preferencias. O toque abre o
+ * territorio no ponto marcado.
+ */
+async function avisarMarcacao(marcacaoId) {
+    const m = await prisma.marcacao.findUnique({
+        where: { id: marcacaoId },
+        include: {
+            territorio: { select: { numero: true, nome: true } },
+            quadra: { select: { nome: true } },
+            autor: { select: { nome: true } },
+        },
+    });
+    if (!m) return;
+
+    const destinatarios = (await prisma.usuario.findMany({
+        where: {
+            ...(m.autorId ? { id: { not: m.autorId } } : {}),
+            OR: [
+                { isAdmin: true },
+                { escopos: { has: 'territorios' } },
+                { irmao: { is: { funcoes: { has: 'dirigente' } } } },
+            ],
+        },
+        select: { id: true, pushTokens: { select: { token: true } }, prefNotificacao: { select: { tipos: true } } },
+    })).filter(u => !u.prefNotificacao || u.prefNotificacao.tipos.includes(TIPO_AVISO_MARCACAO));
+    if (destinatarios.length === 0) return;
+
+    const endereco = m.tipo !== 'nao_bater' && m.lat !== null ? await enderecoDoPonto(m.lat, m.lng) : null;
+    const { titulo, corpo } = montarAvisoMarcacao({
+        tipo: m.tipo,
+        numero: m.territorio.numero,
+        nomeTerritorio: m.territorio.nome,
+        endereco,
+        quadra: m.quadra ? m.quadra.nome : null,
+        autor: m.autor ? m.autor.nome : null,
+        texto: m.texto,
+    });
+    const data = { screen: 'territorio', numero: m.territorio.numero, marcacao: m.id, lat: m.lat, lng: m.lng };
+
+    const ExpoPushService = require('./ExpoPushService');
+    const mensagens = [];
+    for (const u of destinatarios) {
+        const registro = await prisma.notificacaoEnviada.create({ data: { usuarioId: u.id, titulo, corpo, data } });
+        for (const { token } of u.pushTokens) {
+            mensagens.push({ to: token, title: titulo, body: corpo, data: { ...data, notifId: registro.id } });
+        }
+    }
+    if (mensagens.length) await ExpoPushService.enviar(mensagens);
+}
+
 module.exports = {
     DIAS_ALERTA,
     TIPOS_MARCACAO,
@@ -557,7 +675,9 @@ module.exports = {
     painel,
     s13,
     avisarResponsaveis,
+    avisarMarcacao,
+    TIPO_AVISO_MARCACAO,
     coresDasAreas,
     configAtual,
-    _internos: { situacao, ondeParamos, precisaReconfirmar, diasEntre, somarDias, anoDeServico },
+    _internos: { situacao, ondeParamos, precisaReconfirmar, diasEntre, somarDias, anoDeServico, formatarEndereco, montarAvisoMarcacao },
 };

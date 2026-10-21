@@ -44,6 +44,7 @@ import { compareDataBR, dataDoQuadro } from "@/utils/date";
 import { useHoje } from "@/utils/useHoje";
 import { exportarPdf } from "@/utils/exportPdf";
 import { gerarHtmlDirigentes, type GrupoEscalaPdf } from "@/utils/pdfHtml";
+import { usePuxar } from "@/utils/usePuxar";
 
 interface GrupoEscala {
   data: string;
@@ -61,7 +62,8 @@ export default function EscalaScreen() {
   const qc = useQueryClient();
   const confirm = useConfirm();
 
-  const { data: quadro, isLoading, refetch, isRefetching } = useDirigentesQuadro(id);
+  const { data: quadro, isLoading, refetch } = useDirigentesQuadro(id);
+  const puxar = usePuxar(refetch);
   const { data: irmaos = [] } = useIrmaos();
 
   const atualizar = useAtualizarEscala(id);
@@ -264,7 +266,7 @@ export default function EscalaScreen() {
 
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        refreshControl={<RefreshControl {...puxar} />}
       >
         <View style={styles.actionsCard}>
           <Badge label={sc.label} color={sc.color} bg={sc.bg} />

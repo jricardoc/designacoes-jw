@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { useApagarSaida, useRetirarMarcacao } from "@/api/hooks/useTerritorios";
 import type { TerritorioDetalhe } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { Button, Sheet, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, spacing, type Cores } from "@/theme";
@@ -27,6 +28,7 @@ export function PinoSheet({
 }) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
+  const { feito } = useCelebracao();
   const { usuario } = useAuth();
   const { itens } = useFilaTerritorios();
   const retirar = useRetirarMarcacao();
@@ -55,7 +57,7 @@ export function PinoSheet({
   const remover = () => {
     if (naFila) {
       descartar(naFila.clientKey);
-      toast.show("Marcação cancelada");
+      feito({ titulo: "Marcação cancelada", icone: "close", cor: colors.textSecondary });
       onClose();
       return;
     }
@@ -70,7 +72,7 @@ export function PinoSheet({
           onPress: () => {
             const opcoes = {
               onSuccess: () => {
-                toast.show(saida ? "Registro apagado" : "Marcação removida");
+                feito({ titulo: saida ? "Registro apagado" : "Marcação removida", icone: "trash-outline", cor: colors.textSecondary });
                 onClose();
               },
               onError: (e: Error) => toast.show(e.message, "error"),

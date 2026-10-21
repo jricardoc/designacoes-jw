@@ -173,5 +173,20 @@ eq(MyMaps.corDaLinha('<Style/>'), null, 'KML sem linha: sem cor');
 eq(coresDasAreas([{ numero: '14', area: 'Ex' }, { numero: '01', area: 'Tokaia' }, { numero: '02', area: null }], { Ex: '#E53935' }),
     { Tokaia: '#1E88E5', Ex: '#E53935' }, 'cor escolhida fica; sem escolha, a proxima livre da paleta');
 
+console.log('\n== aviso de marcacao ==');
+eq(T.formatarEndereco({ road: 'Rua Vila Romana', house_number: '120', suburb: 'Itapuã', city: 'Salvador', postcode: '41635-152' }),
+    'Rua Vila Romana, 120 - Itapuã, Salvador - CEP 41635-152', 'endereco completo: rua, numero, bairro, cidade e CEP');
+eq(T.formatarEndereco({ road: 'Rua das Pedrinhas', suburb: 'Itapuã' }), 'Rua das Pedrinhas - Itapuã', 'sem numero');
+eq(T.formatarEndereco({ city: 'Salvador' }), 'Salvador', 'sem rua: so a regiao');
+eq(T.formatarEndereco(null), null, 'sem endereco: null');
+eq(T.montarAvisoMarcacao({ tipo: 'parada', numero: '01', nomeTerritorio: 'Rua Vila Romana', endereco: 'Rua Vila Romana, 120 - Itapuã', quadra: 'Quadra 2', autor: 'Ricardo Carvalho', texto: 'portão azul' }),
+    { titulo: 'Território 01 · Rua Vila Romana', corpo: 'Paramos aqui: Rua Vila Romana, 120 - Itapuã (Quadra 2)\nPor Ricardo Carvalho · “portão azul”' },
+    'ponto do GPS: endereco da rua, quadra, autor e detalhe');
+eq(T.montarAvisoMarcacao({ tipo: 'nao_bater', numero: '05', nomeTerritorio: null, endereco: null, quadra: null, autor: 'Ana', texto: 'Rua A, 10\ncasa de muro azul' }),
+    { titulo: 'Território 05', corpo: 'Não bater: Rua A, 10\nPor Ana · “casa de muro azul”' },
+    'nao bater: o endereco digitado e a descricao separados');
+eq(T.montarAvisoMarcacao({ tipo: 'observacao', numero: '07', nomeTerritorio: 'X', endereco: null, quadra: null, autor: null, texto: null }),
+    { titulo: 'Território 07 · X', corpo: 'Observação: ponto no mapa' }, 'sem endereco nem autor: ainda diz o que foi');
+
 console.log(falhas === 0 ? '\n*** TODAS AS VERIFICACOES PASSARAM ***' : `\n${falhas} FALHA(S)`);
 process.exit(falhas === 0 ? 0 : 1);

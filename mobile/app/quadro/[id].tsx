@@ -54,6 +54,7 @@ import { ordenarFuncoes } from "@/utils/funcoes";
 import { exportarImagem } from "@/utils/exportImagem";
 import { exportarPdf } from "@/utils/exportPdf";
 import { gerarHtmlQuadro } from "@/utils/pdfHtml";
+import { usePuxar } from "@/utils/usePuxar";
 
 interface EditingCell {
   data: string;
@@ -73,7 +74,8 @@ export default function QuadroScreen() {
   const qc = useQueryClient();
   const confirm = useConfirm();
 
-  const { data: quadro, isLoading, refetch, isRefetching } = useQuadro(id);
+  const { data: quadro, isLoading, refetch } = useQuadro(id);
+  const puxar = usePuxar(refetch);
   const { data: irmaos = [] } = useIrmaos();
 
   const atualizar = useAtualizarDesignacao(id);
@@ -323,7 +325,7 @@ export default function QuadroScreen() {
 
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        refreshControl={<RefreshControl {...puxar} />}
       >
         {/* Status + ações */}
         <View style={styles.actionsCard}>
