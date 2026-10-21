@@ -64,7 +64,7 @@
   }
   .aviso strong:first-child { color: var(--terracota); }
   .destaque {
-    background: var(--areia); border-radius: 12px; padding: 12px 14px; margin-top: 4px;
+    background: var(--areia); border-radius: 12px; padding: 12px 14px; margin: 4px 0 14px;
   }
   details { margin-top: 10px; border-top: 1px solid var(--areia); padding-top: 10px; }
   summary { font-weight: 600; cursor: pointer; }
@@ -82,9 +82,9 @@
     </div>
   </header>
 
-  <p class="intro">São duas etapas: <strong>liberar o seu iPhone</strong> (uma vez só) e depois <strong>instalar o app</strong>.</p>
+  <p class="intro">São três etapas: <strong>liberar o seu iPhone</strong>, <strong>pedir o link de download</strong> e <strong>instalar o app</strong>. As duas primeiras são feitas uma vez só.</p>
   <a class="botao secundario" href="/download/ios/instalar">Já configurei: ir direto pro download</a>
-  <p class="atalho">Ainda não ativou o Modo de Desenvolvedor? <a href="#instalar">Veja a etapa 2</a>.</p>
+  <p class="atalho">Ainda não ativou o Modo de Desenvolvedor? <a href="#instalar">Veja a etapa 3</a>.</p>
   <p class="safari">Faça tudo pelo <strong>Safari</strong>. Se esta página abriu dentro do WhatsApp, toque no ícone do Safari (ou em <em>Abrir no Safari</em>) antes de começar.</p>
 
   <section>
@@ -105,13 +105,24 @@
     <p class="aviso"><strong>⚠️ Apareceu “Adiamento de Segurança em Andamento” com 1 hora de espera?</strong> É uma proteção do próprio iPhone quando ele está fora de casa. É só tocar em <strong>OK</strong> e esperar o aviso do iPhone (ou fazer em casa, que não tem espera). Depois volte ao passo 3.</p>
 
     <ol start="5">
-      <li><strong>Pronto!</strong>
-        <p class="destaque">Se você está fazendo isso pela primeira vez, <strong>peça pro Ricardo gerar um novo link de download para você</strong>. O app só instala depois que o seu iPhone entra num build novo.</p></li>
+      <li><strong>Pronto!</strong> Agora vá para a etapa 2.</li>
     </ol>
   </section>
 
-  <section id="instalar">
+  <section>
     <p class="etapa">Etapa 2</p>
+    <h2>Pedir o link de download</h2>
+    <p class="destaque">Se você está fazendo isso pela primeira vez, <strong>peça pro Ricardo gerar um novo link de download para você</strong>.</p>
+    <ol>
+      <li>Avise o Ricardo que você terminou a etapa 1.</li>
+      <li>Ele gera uma versão nova do app que já inclui o seu iPhone.</li>
+      <li>Quando ficar pronta, o botão de instalar desta página passa a levar para ela sozinho. Espere o aviso do Ricardo e siga para a etapa 3.</li>
+    </ol>
+    <p class="aviso"><strong>⚠️ Não pule esta etapa.</strong> Antes da versão nova, o iPhone recusa a instalação com “Não foi possível instalar”.</p>
+  </section>
+
+  <section id="instalar">
+    <p class="etapa">Etapa 3</p>
     <h2>Instalar o app</h2>
     <p class="nota">Faça esta etapa depois que o Ricardo avisar que o novo link de download está pronto.</p>
 
@@ -129,7 +140,7 @@
 
     <details>
       <summary>Apareceu “Não foi possível instalar”</summary>
-      <p>O seu iPhone ainda não está no build atual. Faça a etapa 1 (se ainda não fez) e peça pro Ricardo gerar um novo link de download para você.</p>
+      <p>O seu iPhone ainda não está na versão disponível. Confira se fez a etapa 1 e se o Ricardo já avisou que o novo link está pronto (etapa 2).</p>
     </details>
     <details>
       <summary>“Modo de Desenvolvedor” não aparece nos Ajustes</summary>
