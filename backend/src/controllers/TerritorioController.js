@@ -301,6 +301,8 @@ class TerritorioController {
                     marcadaEm: quando,
                 },
             });
+            // Depois da resposta: o endereco vem de fora e pode demorar; o irmao nao espera por ele.
+            T.avisarMarcacao(marcacao.id).catch(erro => console.error('Erro ao avisar marcação:', erro));
             return res.status(201).json(marcacao);
         } catch (error) {
             if (duplicado(error)) {

@@ -1,5 +1,6 @@
 const prisma = require('../prisma');
 const RegrasLembrete = require('../services/RegrasLembrete');
+const { podeMarcarTerritorio } = require('../middleware/escopos');
 
 /**
  * Preferencias de notificacao do irmao logado.
@@ -23,7 +24,8 @@ class PreferenciaNotificacaoController {
             return res.json({
                 ...atual,
                 opcoes: {
-                    tipos: RegrasLembrete.TIPOS,
+                    // Marcacoes no territorio so para quem tem a tela de marcar.
+                    tipos: RegrasLembrete.TIPOS.filter(t => t.id !== 'territorio' || podeMarcarTerritorio(req.user)),
                     regras: RegrasLembrete.REGRAS.map(({ id, label, descricao }) => ({
                         id, label, descricao,
                     })),
