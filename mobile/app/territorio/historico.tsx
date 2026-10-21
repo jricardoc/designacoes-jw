@@ -5,6 +5,7 @@ import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApagarSaida, useHistoricoTerritorio, useRetirarMarcacao, useTerritorio } from "@/api/hooks/useTerritorios";
 import type { HistoricoTerritorio, SaidaTerritorio } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, type Cores } from "@/theme";
@@ -29,6 +30,7 @@ export default function HistoricoTerritorioScreen() {
   const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const { feito } = useCelebracao();
   const { usuario } = useAuth();
   const { data: t } = useTerritorio(numero);
   const { data, isLoading, refetch, isRefetching } = useHistoricoTerritorio(numero);
@@ -105,7 +107,7 @@ export default function HistoricoTerritorioScreen() {
                             style: "destructive",
                             onPress: () =>
                               apagar.mutate(e.saida.id, {
-                                onSuccess: () => toast.show("Registro apagado"),
+                                onSuccess: () => feito({ titulo: "Registro apagado", icone: "trash-outline", cor: colors.textSecondary }),
                                 onError: (err) => toast.show(err.message, "error"),
                               }),
                           },
@@ -141,7 +143,7 @@ export default function HistoricoTerritorioScreen() {
                             style: "destructive",
                             onPress: () =>
                               retirar.mutate(e.marcacao.id, {
-                                onSuccess: () => toast.show("Marcação removida"),
+                                onSuccess: () => feito({ titulo: "Marcação removida", icone: "trash-outline", cor: colors.textSecondary }),
                                 onError: (err) => toast.show(err.message, "error"),
                               }),
                           },

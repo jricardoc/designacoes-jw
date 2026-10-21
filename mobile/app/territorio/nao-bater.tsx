@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleS
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useReconfirmarMarcacao, useRetirarMarcacao, useTerritorio } from "@/api/hooks/useTerritorios";
 import type { MarcacaoTerritorio } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { FilaBanner } from "@/components/territorio/FilaBanner";
 import { MarcarSheet, type PontoEscolhido } from "@/components/territorio/MarcarSheet";
 import { Button, EmptyState, GradientHeader, Loading, TextField, useToast } from "@/components/ui";
@@ -27,6 +28,7 @@ export default function NaoBaterScreen() {
   const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const toast = useToast();
+  const { feito } = useCelebracao();
   const { usuario } = useAuth();
   const { data: t, isLoading, refetch, isRefetching } = useTerritorio(numero);
   const { pendentes } = useFilaTerritorios();
@@ -71,7 +73,7 @@ export default function NaoBaterScreen() {
     setRua("");
     setCasa("");
     setDescricao("");
-    toast.show(r.enviado ? "Casa registrada" : "Sem internet: guardado no celular, envia sozinho");
+    feito(r.enviado ? { titulo: "Casa registrada", detalhe: endereco, icone: "hand-left", cor: colors.redDark } : { titulo: "Guardado no celular", detalhe: "Envia sozinho quando tiver internet", icone: "cloud-upload-outline" });
   };
 
   const registrarComGps = async () => {
@@ -128,7 +130,7 @@ export default function NaoBaterScreen() {
                   disabled={reconfirmar.isPending}
                   onPress={() =>
                     reconfirmar.mutate(m.id, {
-                      onSuccess: () => toast.show("Reconfirmada"),
+                      onSuccess: () => feito({ titulo: "Reconfirmada", detalhe: "Continua não bater", icone: "hand-left", cor: colors.redDark }),
                       onError: (e) => toast.show(e.message, "error"),
                     })
                   }
@@ -147,7 +149,7 @@ export default function NaoBaterScreen() {
                           style: "destructive",
                           onPress: () =>
                             retirar.mutate(m.id, {
-                              onSuccess: () => toast.show("Retirada da lista"),
+                              onSuccess: () => feito({ titulo: "Retirada da lista", icone: "trash-outline", cor: colors.textSecondary }),
                               onError: (e) => toast.show(e.message, "error"),
                             }),
                         },

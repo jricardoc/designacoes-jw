@@ -34,7 +34,7 @@ const DIAS = [
 export function SaidaSheet({ territorio, visible, onClose }: SaidaSheetProps) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
-  const { celebrar } = useCelebracao();
+  const { celebrar, feito } = useCelebracao();
   const [etapa, setEtapa] = useState<Etapa>("pergunta");
   const [diasAtras, setDiasAtras] = useState(0);
   const [quadraId, setQuadraId] = useState<number | null>(null);
@@ -109,9 +109,8 @@ export function SaidaSheet({ territorio, visible, onClose }: SaidaSheetProps) {
     // Concluir o território merece a mesma comemoração de cumprir uma tarefa. Espera a folha
     // sair: no iPhone um Modal não abre enquanto outro ainda está fechando.
     if (concluiu) setTimeout(() => celebrar(`Território ${territorio.numero} concluído`), motion.fundo + 150);
-    if (!concluiu || !resultado.enviado) {
-      toast.show(resultado.enviado ? "Saída registrada!" : "Sem internet: guardado no celular, envia sozinho");
-    }
+    if (!resultado.enviado) feito({ titulo: "Guardado no celular", detalhe: "Envia sozinho quando tiver internet", icone: "cloud-upload-outline" });
+    else if (!concluiu) feito({ titulo: "Saída registrada", detalhe: `Território ${territorio.numero}`, icone: "flag" });
     onClose();
   };
 

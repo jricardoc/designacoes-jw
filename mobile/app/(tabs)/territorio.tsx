@@ -14,21 +14,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
-import Animated, {
-  Easing,
-  FadeIn,
-  FadeInDown,
-  FadeInLeft,
-  LinearTransition,
-  SlideInDown,
-  SlideOutDown,
-  ZoomIn,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useImagemProtegida } from "@/api/hooks/useImagemProtegida";
 import { preCarregarTerritorios, useMapaTerritorios, useTerritorios } from "@/api/hooks/useTerritorios";
 import type { SituacaoTerritorio, TerritorioResumo } from "@/api/types";
@@ -95,13 +81,10 @@ function Thumb({
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-const MOLA = { damping: 15, stiffness: 260 };
 
-/** Entrada em cascata dos cards; só os da primeira tela esperam a vez (os de baixo entram ao rolar). */
-const entrada = (indice: number) =>
-  FadeInDown.delay(indice < 10 ? indice * 55 : 0)
-    .springify()
-    .damping(18);
+/** Trocas de vista (lista, mapa, prévia) só aparecem e somem: nada desliza nem quica. */
+const APARECE = FadeIn.duration(220);
+const SOME = FadeOut.duration(160);
 
 /** Card que afunda um pouco sob o dedo: o retorno de que o toque pegou, antes de a tela mudar. */
 function Pressionavel({ style, ...props }: Omit<PressableProps, "style"> & { style?: StyleProp<ViewStyle> }) {
@@ -111,27 +94,22 @@ function Pressionavel({ style, ...props }: Omit<PressableProps, "style"> & { sty
     <AnimatedPressable
       {...props}
       onPressIn={() => {
-        escala.value = withSpring(0.96, MOLA);
+        escala.value = withTiming(0.98, { duration: 90 });
       }}
       onPressOut={() => {
-        escala.value = withSpring(1, MOLA);
+        escala.value = withTiming(1, { duration: 140 });
       }}
       style={[style, animado]}
     />
   );
 }
 
-/** Barra de concluídos que enche ao aparecer. */
-function Progresso({ fracao, atraso = 0, cor }: { fracao: number; atraso?: number; cor?: string }) {
+/** Barra de concluídos. Parada: numa lista que rola, encher a cada card que entra virava movimento sem fim. */
+function Progresso({ fracao, cor }: { fracao: number; cor?: string }) {
   const { styles } = useTema(criarEstilos);
-  const largura = useSharedValue(0);
-  useEffect(() => {
-    largura.value = withDelay(atraso, withTiming(fracao * 100, { duration: 800, easing: Easing.out(Easing.cubic) }));
-  }, [fracao, atraso, largura]);
-  const animado = useAnimatedStyle(() => ({ width: `${largura.value}%` }));
   return (
     <View style={styles.progresso}>
-      <Animated.View style={[styles.progressoCheio, cor ? { backgroundColor: cor } : null, animado]} />
+      <View style={[styles.progressoCheio, { width: `${fracao * 100}%` }, cor ? { backgroundColor: cor } : null]} />
     </View>
   );
 }
@@ -253,111 +231,107 @@ export default function TerritorioScreen() {
 
   const abrir = (numero: string) => router.push({ pathname: "/territorio/[numero]", params: { numero } });
 
-  const renderArea = (nome: string, lista: TerritorioResumo[], indice: number) => {
+  const renderArea = (nome: string, lista: TerritorioResumo[]) => {
     const trabalhados = lista.filter((t) => t.ultimaSaida && (t.diasSemTrabalho ?? 99) < 30).length;
     const concluidos = lista.filter((t) => t.situacao === "concluido").length;
     const thumb = lista.find((t) => t.imagens?.thumb)?.imagens?.thumb;
     return (
-      <Animated.View entering={entrada(indice)}>
-        <Pressionavel
-          style={[styles.areaCard, nome === TODAS && styles.areaTodas]}
-          onPress={() => {
-            setArea(nome);
-            setFiltro("todos");
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`${nomeDaArea(nome)}, ${lista.length} territórios`}
-        >
-          <View style={[styles.faixa, { backgroundColor: cores[nome] ?? (nome === TODAS ? colors.primary : colors.borderStrong) }]} />
-          {thumb ? (
-            <Thumb fonte={imagem(thumb)} grande />
-          ) : (
-            <View style={[styles.thumb, styles.thumbGrande, styles.thumbVazio]}>
-              <Ionicons name={nome === TODAS ? "albums-outline" : "map-outline"} size={26} color={colors.textMuted} />
-            </View>
-          )}
-          <View style={styles.textos}>
-            <Text style={styles.areaNome}>{nomeDaArea(nome)}</Text>
-            <Text style={styles.areaSub}>
-              {lista.length} território{lista.length > 1 ? "s" : ""} · {lista[0].numero} a {lista[lista.length - 1].numero}
-            </Text>
-            <Text style={styles.areaSub}>
-              {trabalhados} trabalhado{trabalhados === 1 ? "" : "s"} nos últimos 30 dias
-            </Text>
-            <Progresso fracao={concluidos / lista.length} atraso={250 + Math.min(indice, 8) * 55} />
-            <Text style={styles.progressoTexto}>
-              {concluidos} de {lista.length} concluídos no ciclo
-            </Text>
+      <Pressionavel
+        style={[styles.areaCard, nome === TODAS && styles.areaTodas]}
+        onPress={() => {
+          setArea(nome);
+          setFiltro("todos");
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${nomeDaArea(nome)}, ${lista.length} territórios`}
+      >
+        <View style={[styles.faixa, { backgroundColor: cores[nome] ?? (nome === TODAS ? colors.primary : colors.borderStrong) }]} />
+        {thumb ? (
+          <Thumb fonte={imagem(thumb)} grande />
+        ) : (
+          <View style={[styles.thumb, styles.thumbGrande, styles.thumbVazio]}>
+            <Ionicons name={nome === TODAS ? "albums-outline" : "map-outline"} size={26} color={colors.textMuted} />
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Pressionavel>
-      </Animated.View>
+        )}
+        <View style={styles.textos}>
+          <Text style={styles.areaNome}>{nomeDaArea(nome)}</Text>
+          <Text style={styles.areaSub}>
+            {lista.length} território{lista.length > 1 ? "s" : ""} · {lista[0].numero} a {lista[lista.length - 1].numero}
+          </Text>
+          <Text style={styles.areaSub}>
+            {trabalhados} trabalhado{trabalhados === 1 ? "" : "s"} nos últimos 30 dias
+          </Text>
+          <Progresso fracao={concluidos / lista.length} />
+          <Text style={styles.progressoTexto}>
+            {concluidos} de {lista.length} concluídos no ciclo
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </Pressionavel>
     );
   };
 
-  const renderItem = ({ item: linha, index }: { item: Item; index: number }) => {
-    if (linha.tipo === "area") return renderArea(linha.nome, linha.lista, index);
+  const renderItem = ({ item: linha }: { item: Item }) => {
+    if (linha.tipo === "area") return renderArea(linha.nome, linha.lista);
     const item = linha.t;
     const s = SITUACOES[item.situacao];
     const parado = (item.diasSemTrabalho ?? 0) >= DIAS_PARADO;
     return (
-      <Animated.View entering={entrada(index)}>
-        <Pressionavel
-          style={styles.card}
-          onPress={() => abrir(item.numero)}
-          accessibilityRole="button"
-          accessibilityLabel={`Território ${item.numero}, ${item.nome}, ${s.rotulo}`}
-        >
-          <View style={[styles.faixa, { backgroundColor: s.cor(colors) }]} />
-          {item.imagens?.thumb ? <Thumb fonte={imagem(item.imagens.thumb)} /> : null}
-          <View style={styles.textos}>
-            <View style={styles.linhaTopo}>
-              <Text style={styles.numero}>{item.numero}</Text>
-              <Text style={styles.nome} numberOfLines={1}>
-                {item.nome}
-              </Text>
-            </View>
-            <Text style={styles.ultima} numberOfLines={1}>
-              {item.ultimaSaida
-                ? `Última saída ${quandoFoi(item.ultimaSaida.dia)}${item.ultimaSaida.autor ? ` · ${item.ultimaSaida.autor}` : ""}`
-                : doBanco
-                  ? "Nunca trabalhado"
-                  : "Cartão de mapa"}
+      <Pressionavel
+        style={styles.card}
+        onPress={() => abrir(item.numero)}
+        accessibilityRole="button"
+        accessibilityLabel={`Território ${item.numero}, ${item.nome}, ${s.rotulo}`}
+      >
+        <View style={[styles.faixa, { backgroundColor: s.cor(colors) }]} />
+        {item.imagens?.thumb ? <Thumb fonte={imagem(item.imagens.thumb)} /> : null}
+        <View style={styles.textos}>
+          <View style={styles.linhaTopo}>
+            <Text style={styles.numero}>{item.numero}</Text>
+            <Text style={styles.nome} numberOfLines={1}>
+              {item.nome}
             </Text>
-            {doBanco ? (
-              <View style={styles.selos}>
-                <View style={[styles.selo, { backgroundColor: s.fundo(colors) }]}>
-                  <Text style={[styles.seloTexto, { color: s.cor(colors) }]}>{s.rotulo}</Text>
-                </View>
-                {item.designacao ? (
-                  <View style={[styles.selo, { backgroundColor: colors.tealBg }]}>
-                    <Ionicons name="person" size={11} color={colors.teal} />
-                    <Text style={[styles.seloTexto, { color: colors.teal }]}>
-                      {item.designacao.dirigente.split(" ")[0]} · {diaCurto(item.designacao.dia)}
-                    </Text>
-                  </View>
-                ) : null}
-                {parado ? (
-                  <View style={[styles.selo, { backgroundColor: colors.warningBg }]}>
-                    <Ionicons name="hourglass-outline" size={11} color={colors.amber} />
-                    <Text style={[styles.seloTexto, { color: colors.amber }]}>{item.diasSemTrabalho} dias</Text>
-                  </View>
-                ) : null}
-                {item.naoBater.total > 0 ? (
-                  <View style={[styles.selo, { backgroundColor: colors.dangerBg }]}>
-                    <Ionicons name="hand-left" size={11} color={colors.redDark} />
-                    <Text style={[styles.seloTexto, { color: colors.redDark }]}>
-                      {item.naoBater.total}
-                      {item.naoBater.vencidas ? ` · ${item.naoBater.vencidas} reconfirmar` : ""}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        </Pressionavel>
-      </Animated.View>
+          <Text style={styles.ultima} numberOfLines={1}>
+            {item.ultimaSaida
+              ? `Última saída ${quandoFoi(item.ultimaSaida.dia)}${item.ultimaSaida.autor ? ` · ${item.ultimaSaida.autor}` : ""}`
+              : doBanco
+                ? "Nunca trabalhado"
+                : "Cartão de mapa"}
+          </Text>
+          {doBanco ? (
+            <View style={styles.selos}>
+              <View style={[styles.selo, { backgroundColor: s.fundo(colors) }]}>
+                <Text style={[styles.seloTexto, { color: s.cor(colors) }]}>{s.rotulo}</Text>
+              </View>
+              {item.designacao ? (
+                <View style={[styles.selo, { backgroundColor: colors.tealBg }]}>
+                  <Ionicons name="person" size={11} color={colors.teal} />
+                  <Text style={[styles.seloTexto, { color: colors.teal }]}>
+                    {item.designacao.dirigente.split(" ")[0]} · {diaCurto(item.designacao.dia)}
+                  </Text>
+                </View>
+              ) : null}
+              {parado ? (
+                <View style={[styles.selo, { backgroundColor: colors.warningBg }]}>
+                  <Ionicons name="hourglass-outline" size={11} color={colors.amber} />
+                  <Text style={[styles.seloTexto, { color: colors.amber }]}>{item.diasSemTrabalho} dias</Text>
+                </View>
+              ) : null}
+              {item.naoBater.total > 0 ? (
+                <View style={[styles.selo, { backgroundColor: colors.dangerBg }]}>
+                  <Ionicons name="hand-left" size={11} color={colors.redDark} />
+                  <Text style={[styles.seloTexto, { color: colors.redDark }]}>
+                    {item.naoBater.total}
+                    {item.naoBater.vencidas ? ` · ${item.naoBater.vencidas} reconfirmar` : ""}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </Pressionavel>
     );
   };
 
@@ -437,7 +411,7 @@ export default function TerritorioScreen() {
               style={styles.mapaGeral}
             />
             <AnimatedPressable
-              entering={ZoomIn.delay(180).springify().damping(14)}
+              entering={APARECE}
               style={[styles.alternar, styles.alternarFlutuante]}
               onPress={() => setModo("lista")}
             >
@@ -453,8 +427,8 @@ export default function TerritorioScreen() {
                   return (
                     <Animated.View
                       key={`t-${t.numero}`}
-                      entering={SlideInDown.springify().damping(17)}
-                      exiting={SlideOutDown.duration(180)}
+                      entering={APARECE}
+                      exiting={SOME}
                       style={styles.previa}
                     >
                       <View style={[styles.previaSelo, { backgroundColor: s.cor(colors) }]}>
@@ -489,8 +463,8 @@ export default function TerritorioScreen() {
                   return (
                     <Animated.View
                       key={`a-${g.nome}`}
-                      entering={SlideInDown.springify().damping(17)}
-                      exiting={SlideOutDown.duration(180)}
+                      entering={APARECE}
+                      exiting={SOME}
                       style={styles.previa}
                     >
                       <View style={[styles.previaSelo, { backgroundColor: cor }]}>
@@ -503,7 +477,7 @@ export default function TerritorioScreen() {
                         <Text style={styles.ultima}>
                           {g.lista.length} territórios · {concluidos} concluídos no ciclo
                         </Text>
-                        <Progresso fracao={concluidos / g.lista.length} atraso={200} cor={cor} />
+                        <Progresso fracao={concluidos / g.lista.length} cor={cor} />
                       </View>
                       <Pressionavel
                         style={styles.previaAbrir}
@@ -526,7 +500,7 @@ export default function TerritorioScreen() {
                 return null;
               })()}
 
-              <Animated.View entering={SlideInDown.delay(120).springify().damping(18)} style={styles.legenda}>
+              <Animated.View entering={APARECE} style={styles.legenda}>
                 <View style={styles.legendaLinha}>
                   {(Object.keys(SITUACOES) as SituacaoTerritorio[]).map((id) => (
                     <View key={id} style={styles.legendaItem}>
@@ -579,10 +553,12 @@ export default function TerritorioScreen() {
       ) : (
         <Animated.FlatList
           {...rolagem}
+          // Entrar numa área (ou voltar para a lista de áreas) é outra lista: troca com um fade só.
+          key={`lista:${area ?? ""}`}
+          entering={APARECE}
           data={itens}
           keyExtractor={(i) => (i.tipo === "area" ? `area:${i.nome}` : i.t.numero)}
           renderItem={renderItem}
-          itemLayoutAnimation={LinearTransition.springify().damping(18)}
           contentContainerStyle={[styles.lista, recuo]}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
           keyboardShouldPersistTaps="handled"
@@ -606,7 +582,7 @@ export default function TerritorioScreen() {
                 </Pressable>
               ) : null}
               {temAreas && area !== null ? (
-                <Animated.View key={area} entering={FadeInLeft.duration(280)} style={styles.areaTopo}>
+                <View style={styles.areaTopo}>
                   <Pressable style={styles.voltarArea} onPress={() => setArea(null)} hitSlop={8}>
                     <Ionicons name="chevron-back" size={18} color={colors.primaryDark} />
                     <Text style={styles.voltarAreaTexto}>Áreas</Text>
@@ -615,7 +591,7 @@ export default function TerritorioScreen() {
                     {cores[area] ? <View style={[styles.areaTituloCor, { backgroundColor: cores[area] }]} /> : null}
                     <Text style={styles.areaTitulo}>{nomeDaArea(area)}</Text>
                   </View>
-                </Animated.View>
+                </View>
               ) : null}
               <View style={styles.buscaLinha}>
                 <View style={styles.flex}>
