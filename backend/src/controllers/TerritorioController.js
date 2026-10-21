@@ -1,3 +1,4 @@
+const { Prisma } = require('@prisma/client');
 const prisma = require('../prisma');
 const MyMaps = require('../services/MyMapsService');
 const T = require('../services/TerritoriosService');
@@ -35,6 +36,15 @@ async function territorioAtivo(id) {
     return prisma.territorio.findFirst({ where: { id: n, ativo: true }, include: { quadras: { where: { ativo: true } } } });
 }
 
+// ponytail: guarda so o ultimo contorno calculado (~300 ms com 3 areas); refaz quando muda
+// area ou quadra. Varias instancias da API = um calculo por instancia, o que tambem serve.
+let contornoGuardado = { chave: '', aneis: [] };
+function contornos(areas) {
+    const chave = JSON.stringify(areas);
+    if (chave !== contornoGuardado.chave) contornoGuardado = { chave, aneis: MyMaps.contornarAreas(areas) };
+    return contornoGuardado.aneis;
+}
+
 /** Erro de chave unica do Prisma (o mesmo clientKey chegando duas vezes ao mesmo tempo). */
 const duplicado = (erro) => erro && erro.code === 'P2002';
 
@@ -59,10 +69,14 @@ class TerritorioController {
 
     async index(req, res) {
         try {
-            const doBanco = await T.listar();
+            const [doBanco, config] = await Promise.all([
+                T.listar(),
+                prisma.config.findFirst({ select: { coresAreas: true } }),
+            ]);
             return res.json({
                 fonte: doBanco.length > 0 ? 'banco' : 'cartoes',
                 territorios: doBanco.length > 0 ? doBanco : T.listarSoCartoes(),
+                cores: T.coresDasAreas(doBanco, config && config.coresAreas),
                 permissoes: permissoes(req.user),
             });
         } catch (error) {
@@ -71,24 +85,37 @@ class TerritorioController {
         }
     }
 
-    /** Todos os poligonos, para o mapa geral colorido pela situacao. */
+    /**
+     * Todos os poligonos, para o mapa geral colorido pela situacao, mais o contorno de cada area
+     * (na cor dela) e o limite do territorio da congregacao, quando importado.
+     */
     async mapa(req, res) {
         try {
-            const [lista, quadras] = await Promise.all([
+            const [lista, quadras, config] = await Promise.all([
                 T.listar(),
                 prisma.quadra.findMany({
                     where: { ativo: true, territorio: { ativo: true } },
                     select: { territorioId: true, nome: true, pontos: true },
                 }),
+                prisma.config.findFirst({ select: { coresAreas: true, limiteTerritorio: true } }),
             ]);
+            const territorios = lista.map(t => ({
+                numero: t.numero,
+                nome: t.nome,
+                area: t.area || null,
+                situacao: t.situacao,
+                cor: t.cor,
+                quadras: quadras.filter(q => q.territorioId === t.id).map(q => ({ nome: q.nome, pontos: q.pontos })),
+            }));
+            const cores = T.coresDasAreas(lista, config && config.coresAreas);
+            const areas = contornos(Object.keys(cores).map(nome => ({
+                nome,
+                poligonos: territorios.filter(t => t.area === nome).flatMap(t => t.quadras.map(q => q.pontos)),
+            })));
             return res.json({
-                territorios: lista.map(t => ({
-                    numero: t.numero,
-                    nome: t.nome,
-                    situacao: t.situacao,
-                    cor: t.cor,
-                    quadras: quadras.filter(q => q.territorioId === t.id).map(q => ({ nome: q.nome, pontos: q.pontos })),
-                })),
+                territorios,
+                areas: areas.map(a => ({ ...a, cor: cores[a.nome] })),
+                limite: (config && config.limiteTerritorio) || null,
             });
         } catch (error) {
             console.error('Erro ao montar o mapa dos territórios:', error);
@@ -466,6 +493,88 @@ class TerritorioController {
             if (error.code === 'P2025') return res.status(404).json({ error: 'Território não encontrado' });
             console.error('Erro ao editar território:', error);
             return res.status(500).json({ error: 'Erro ao salvar' });
+        }
+    }
+
+    /**
+     * PUT /territorios/areas { de, nome, cor, numeros } — cria (`de` vazio) ou edita uma area:
+     * nome, cor e QUAIS territorios. Quem sai da lista fica sem area; `numeros` vazio apaga a
+     * area. Territorio de outra area e recusado: tira de la primeiro (um territorio, uma area).
+     */
+    async salvarArea(req, res) {
+        try {
+            const b = req.body || {};
+            const de = texto(b.de, 60);
+            const nome = texto(b.nome, 60);
+            const cor = texto(b.cor, 7);
+            if (!nome) return res.status(400).json({ error: 'Dê um nome para a área' });
+            if (cor && !/^#[0-9a-f]{6}$/i.test(cor)) return res.status(400).json({ error: 'Cor inválida' });
+            if (!Array.isArray(b.numeros)) return res.status(400).json({ error: 'Informe os territórios da área' });
+            const numeros = [...new Set(b.numeros.map(T.normalizarNumero).filter(Boolean))];
+
+            const ativos = await prisma.territorio.findMany({ where: { ativo: true }, select: { numero: true, area: true } });
+            if (nome !== de && ativos.some(t => t.area === nome)) {
+                return res.status(409).json({ error: `Já existe a área "${nome}"` });
+            }
+            const faltando = numeros.find(n => !ativos.some(t => t.numero === n));
+            if (faltando) return res.status(404).json({ error: `Território ${faltando} não encontrado` });
+            const deOutra = ativos.find(t => numeros.includes(t.numero) && t.area && t.area !== de);
+            if (deOutra) {
+                return res.status(409).json({
+                    error: `O território ${deOutra.numero} já está na área "${deOutra.area}". Tire de lá primeiro.`,
+                });
+            }
+
+            const config = await T.configAtual();
+            const cores = { ...(config.coresAreas || {}) };
+            if (de) delete cores[de];
+            if (cor && numeros.length > 0) cores[nome] = cor;
+            await prisma.$transaction([
+                ...(de ? [prisma.territorio.updateMany({ where: { area: de, numero: { notIn: numeros } }, data: { area: null } })] : []),
+                prisma.territorio.updateMany({ where: { numero: { in: numeros } }, data: { area: nome } }),
+                prisma.config.update({ where: { id: config.id }, data: { coresAreas: cores } }),
+            ]);
+            return res.status(204).end();
+        } catch (error) {
+            console.error('Erro ao salvar área:', error);
+            return res.status(500).json({ error: 'Erro ao salvar a área' });
+        }
+    }
+
+    /**
+     * PUT /territorios/limite { kml } — o contorno do territorio da congregacao, desenhado por
+     * cima do mapa geral. Do arquivo, vale o maior poligono; a cor e a da linha do KML.
+     */
+    async salvarLimite(req, res) {
+        try {
+            const xml = String((req.body && req.body.kml) || '');
+            if (!/<coordinates/i.test(xml)) {
+                return res.status(400).json({ error: 'O arquivo não é um KML com polígono (KMZ não serve: exporte como KML)' });
+            }
+            const poligonos = MyMaps.lerKml(xml).camadas.flatMap(c => c.quadras);
+            if (poligonos.length === 0) return res.status(400).json({ error: 'Nenhum polígono no arquivo' });
+            const maior = poligonos.reduce((a, b) => (b.pontos.length > a.pontos.length ? b : a));
+            const limite = {
+                nome: texto(maior.nome, 120) || 'Território da congregação',
+                cor: MyMaps.corDaLinha(xml) || maior.cor || null,
+                pontos: maior.pontos,
+            };
+            const config = await T.configAtual();
+            await prisma.config.update({ where: { id: config.id }, data: { limiteTerritorio: limite } });
+            return res.json(limite);
+        } catch (error) {
+            console.error('Erro ao salvar o limite do território:', error);
+            return res.status(500).json({ error: 'Erro ao salvar o limite' });
+        }
+    }
+
+    async removerLimite(req, res) {
+        try {
+            await prisma.config.updateMany({ data: { limiteTerritorio: Prisma.DbNull } });
+            return res.status(204).end();
+        } catch (error) {
+            console.error('Erro ao tirar o limite do território:', error);
+            return res.status(500).json({ error: 'Erro ao tirar o limite' });
         }
     }
 

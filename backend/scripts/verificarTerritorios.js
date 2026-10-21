@@ -11,7 +11,7 @@
  * de outro territorio.
  */
 const MyMaps = require('../src/services/MyMapsService');
-const { normalizarNumero, _internos: T } = require('../src/services/TerritoriosService');
+const { normalizarNumero, coresDasAreas, _internos: T } = require('../src/services/TerritoriosService');
 
 let falhas = 0;
 const eq = (achado, esperado, descricao) => {
@@ -139,6 +139,39 @@ ok(!T.precisaReconfirmar({ tipo: 'nao_bater', marcadaEm: '2026-05-01T12:00:00Z',
 ok(!T.precisaReconfirmar({ tipo: 'parada', marcadaEm: '2025-01-01T12:00:00Z' }, agora), 'so Nao bater vence');
 eq(T.anoDeServico(2027), { de: '2026-09-01', ate: '2027-08-31' }, 'ano de servico 2027 = set/2026 a ago/2027');
 eq(T.diasEntre('2026-09-30', '2026-10-30'), 30, 'dias entre datas');
+
+console.log('\n=== 8. Contorno e cor das areas ===\n');
+// Quadrado de `lado` metros com o canto sudoeste deslocado (dy, dx) metros de um ponto em Salvador.
+const M_LAT = 1 / 110540;
+const M_LNG = 1 / (111320 * Math.cos((-12.93 * Math.PI) / 180));
+const quadradoEmMetros = (dy, dx, lado = 60) => [[0, 0], [0, lado], [lado, lado], [lado, 0]]
+    .map(([y, x]) => [-12.93 + (dy + y) * M_LAT, -38.36 + (dx + x) * M_LNG]);
+const centroDe = (q) => [(q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2];
+const a1 = quadradoEmMetros(0, 0);
+const a2 = quadradoEmMetros(0, 80); // 20 m de rua: a mesma area fecha por cima
+const b1 = quadradoEmMetros(0, 150); // 10 m de rua para a area vizinha
+const longe = quadradoEmMetros(1000, 0); // outro pedaco da area A, longe
+const [ca, cb] = MyMaps.contornarAreas([
+    { nome: 'A', poligonos: [a1, a2, longe] },
+    { nome: 'B', poligonos: [b1] },
+]);
+const dentroDeAlgum = (p, aneis) => aneis.some(anel => MyMaps.dentro(p, anel));
+eq(ca.aneis.length, 2, 'area com um pedaco longe: dois aneis');
+// 3 m para dentro de cada canto: onde a rua e estreita demais para a folga, o contorno encosta na quadra.
+const recuado = (q) => q.map(([lat, lng]) => {
+    const [clat, clng] = centroDe(q);
+    return [lat + Math.sign(clat - lat) * 3 * M_LAT, lng + Math.sign(clng - lng) * 3 * M_LNG];
+});
+ok([a1, a2, longe].flatMap(recuado).every(p => dentroDeAlgum(p, ca.aneis)), 'o contorno envolve todas as quadras da area');
+ok(dentroDeAlgum([-12.93 + 30 * M_LAT, -38.36 + 70 * M_LNG], ca.aneis), 'a rua entre quadras da mesma area fica dentro');
+ok(!dentroDeAlgum(centroDe(b1), ca.aneis), 'nao engole a quadra da area vizinha');
+ok(!recuado(b1).some(p => dentroDeAlgum(p, ca.aneis)) && ![a1, a2].flatMap(recuado).some(p => dentroDeAlgum(p, cb.aneis)),
+    'separadas por uma rua: um contorno nao cobre quadra do outro');
+eq(MyMaps.contornarAreas([{ nome: 'vazia', poligonos: [] }]), [], 'area sem quadra: sem contorno');
+eq(MyMaps.corDaLinha('<LineStyle><color>efb27550</color><width>5</width></LineStyle>'), '#5075B2', 'cor da linha do KML (aabbggrr)');
+eq(MyMaps.corDaLinha('<Style/>'), null, 'KML sem linha: sem cor');
+eq(coresDasAreas([{ numero: '14', area: 'Ex' }, { numero: '01', area: 'Tokaia' }, { numero: '02', area: null }], { Ex: '#E53935' }),
+    { Tokaia: '#1E88E5', Ex: '#E53935' }, 'cor escolhida fica; sem escolha, a proxima livre da paleta');
 
 console.log(falhas === 0 ? '\n*** TODAS AS VERIFICACOES PASSARAM ***' : `\n${falhas} FALHA(S)`);
 process.exit(falhas === 0 ? 0 : 1);

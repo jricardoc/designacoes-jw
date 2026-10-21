@@ -22,6 +22,33 @@ const TIPOS_MARCACAO = ['parada', 'proximo', 'concluido', 'nao_bater', 'observac
 const CASA_TRABALHADA = ['sim', 'nao', 'incerto', 'outro_lugar'];
 const TIPOS_AVISO = ['acesso_impedido', 'entrada_outra_rua', 'trecho_pendente', 'outro'];
 
+/** Cores das areas que ninguem escolheu ainda, na ordem. As mesmas do seletor do app. */
+const PALETA_AREAS = ['#E53935', '#1E88E5', '#43A047', '#8E24AA', '#FB8C00', '#00ACC1', '#D81B60', '#6D4C41'];
+
+/**
+ * { nome: cor } de cada area em uso: a escolhida, ou a proxima cor da paleta que nenhuma outra
+ * area usa — assim a area ja aparece colorida no mapa antes de alguem escolher. As areas vao na
+ * ordem do primeiro numero, a mesma da lista do app.
+ */
+function coresDasAreas(territorios, salvas) {
+    const escolhidas = salvas || {};
+    const nomes = [...new Set(
+        [...territorios]
+            .sort((a, b) => a.numero.localeCompare(b.numero, 'pt-BR', { numeric: true }))
+            .map(t => t.area)
+            .filter(Boolean),
+    )];
+    const usadas = new Set(nomes.map(n => escolhidas[n]).filter(Boolean));
+    const livres = PALETA_AREAS.filter(c => !usadas.has(c));
+    return Object.fromEntries(nomes.map((nome, i) => [nome, escolhidas[nome] || livres.shift() || PALETA_AREAS[i % PALETA_AREAS.length]]));
+}
+
+/** A linha de Config. Instalacao nova pode nao ter: cria com o mesmo padrao do GET /config. */
+async function configAtual() {
+    return (await prisma.config.findFirst())
+        || prisma.config.create({ data: { titulo: 'Quadro de Designações', subtitulo: '', mes: 'JAN' } });
+}
+
 /** YYYY-MM-DD de hoje no fuso da congregacao. */
 const hojeISO = (agora = new Date()) => relogioDaCongregacao(agora).toISOString().slice(0, 10);
 
@@ -530,5 +557,7 @@ module.exports = {
     painel,
     s13,
     avisarResponsaveis,
+    coresDasAreas,
+    configAtual,
     _internos: { situacao, ondeParamos, precisaReconfirmar, diasEntre, somarDias, anoDeServico },
 };

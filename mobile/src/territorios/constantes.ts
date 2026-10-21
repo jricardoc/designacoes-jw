@@ -52,6 +52,9 @@ export const MARCACOES: Record<
 
 export const TIPOS_MARCACAO = Object.keys(MARCACOES) as TipoMarcacao[];
 
+/** Cores para escolher na área. As mesmas que o servidor dá a quem ainda não escolheu. */
+export const PALETA_AREAS = ["#E53935", "#1E88E5", "#43A047", "#8E24AA", "#FB8C00", "#00ACC1", "#D81B60", "#6D4C41"];
+
 export const SITUACOES: Record<
   SituacaoTerritorio,
   { rotulo: string; icone: Icone; cor: (c: Cores) => string; fundo: (c: Cores) => string }

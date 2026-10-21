@@ -199,6 +199,15 @@ Depois da importação, os dirigentes têm no território:
 - a lista **Não bater**, com reconfirmação a cada 3 meses;
 - histórico, designações (aparecem em "Minhas designações"), painel e o **S-13 em PDF**.
 
+Em **Território → Gerenciar** ficam ainda:
+- **Áreas**: grupos de territórios ("Tokaia", "KM 17"...) com nome e cor. Agrupam a lista e, no
+  mapa geral, pintam a região em volta dos seus territórios. Um território fica numa área só.
+- **Limite da congregação**: importe o arquivo `.kml` do território inteiro (KMZ não serve;
+  exporte como KML) e a linha dele aparece por cima de tudo no mapa geral. Fica no banco, não
+  no repositório.
+- **Excluir território** (só admin, na ⚙️ › Dados do território): sai da lista e do mapa; o
+  histórico fica, e importar a camada do My Maps de novo traz ele de volta.
+
 Para o mapa aparecer dentro do app no Android, configure a chave do Google Maps
 ([guia do app](APP.md#mapa-do-território-google-maps)).
 

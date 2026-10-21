@@ -143,6 +143,210 @@ function dentro([lat, lng], pontos) {
     return dentroDele;
 }
 
+// --- contorno das areas ------------------------------------------------------
+
+/**
+ * A linha que envolve cada area por FORA das suas quadras, a `folga` metros, fechando as ruas
+ * entre elas ate `ponte` metros. Entra [{ nome, poligonos: [[[lat, lng]]] }], sai
+ * [{ nome, aneis: [[[lat, lng]]] }] — um anel por pedaco separado da area.
+ *
+ * O envoltorio convexo, mais simples, nao serve: area em "L" engole o canto da vizinha e as
+ * linhas se cruzam. Aqui tudo vira um grid de `passo` metros: cada area e engordada e afinada
+ * de novo (fechamento morfologico), cada celula fica com a area mais proxima (assim duas areas
+ * separadas por uma rua dividem a rua ao meio, sem uma cobrir a outra), e a borda do que sobrou
+ * vira o anel. Sem biblioteca de geometria.
+ */
+function contornarAreas(areas, { passo = 8, ponte = 50, folga = 14 } = {}) {
+    const entrada = areas
+        .map(a => ({ nome: a.nome, poligonos: a.poligonos.filter(p => p.length >= 3) }))
+        .filter(a => a.poligonos.length > 0);
+    if (entrada.length === 0) return [];
+    const [lat0, lng0] = entrada[0].poligonos[0][0];
+    const kx = 111320 * Math.cos((lat0 * Math.PI) / 180);
+    const ky = 110540;
+    // [y, x] em metros: a mesma ordem de [lat, lng], para o `dentro` servir aqui tambem.
+    const emMetros = entrada.map(a => a.poligonos.map(p => p.map(([lat, lng]) => [(lat - lat0) * ky, (lng - lng0) * kx])));
+    const fechar = Math.ceil(ponte / 2 / passo);
+    const engordar = fechar + Math.ceil(folga / passo);
+    const margem = (engordar + 2) * passo;
+    const todos = emMetros.flat(2);
+    const y0 = Math.min(...todos.map(p => p[0])) - margem;
+    const x0 = Math.min(...todos.map(p => p[1])) - margem;
+    const L = Math.ceil((Math.max(...todos.map(p => p[1])) + margem - x0) / passo);
+    const A = Math.ceil((Math.max(...todos.map(p => p[0])) + margem - y0) / passo);
+    const celula = (y, x) => Math.floor((y - y0) / passo) * L + Math.floor((x - x0) / passo);
+
+    const rasterizar = (poligonos) => {
+        const g = new Uint8Array(L * A);
+        for (const p of poligonos) {
+            const de = celula(Math.min(...p.map(q => q[0])), Math.min(...p.map(q => q[1])));
+            const ate = celula(Math.max(...p.map(q => q[0])), Math.max(...p.map(q => q[1])));
+            for (let j = Math.floor(de / L); j <= Math.floor(ate / L); j++) {
+                for (let i = de % L; i <= ate % L; i++) {
+                    if (dentro([y0 + (j + 0.5) * passo, x0 + (i + 0.5) * passo], p)) g[j * L + i] = 1;
+                }
+            }
+            // E as celulas por onde a borda passa: sem elas, a quadra mais fina que o passo nao
+            // cobre centro nenhum, e a beirada de qualquer quadra ficaria para fora do contorno.
+            p.forEach((a, n) => {
+                const b = p[(n + 1) % p.length];
+                const trechos = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / (passo / 2)) || 1;
+                for (let t = 0; t <= trechos; t++) {
+                    g[celula(a[0] + ((b[0] - a[0]) * t) / trechos, a[1] + ((b[1] - a[1]) * t) / trechos)] = 1;
+                }
+            });
+        }
+        return g;
+    };
+    const disco = (r) => {
+        const d = [];
+        for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) if (di * di + dj * dj <= r * r) d.push([dj, di]);
+        return d;
+    };
+    const dilatar = (g, r, valor) => {
+        const saida = Uint8Array.from(g);
+        const d = disco(r);
+        for (let c = 0; c < g.length; c++) {
+            if (g[c] !== valor) continue;
+            const j = Math.floor(c / L);
+            const i = c % L;
+            for (const [dj, di] of d) {
+                const jj = j + dj;
+                const ii = i + di;
+                if (jj >= 0 && jj < A && ii >= 0 && ii < L) saida[jj * L + ii] = valor;
+            }
+        }
+        return saida;
+    };
+    const vizinhos = (c) => {
+        const j = Math.floor(c / L);
+        const i = c % L;
+        return [[j - 1, i], [j + 1, i], [j, i - 1], [j, i + 1], [j - 1, i - 1], [j - 1, i + 1], [j + 1, i - 1], [j + 1, i + 1]]
+            .filter(([jj, ii]) => jj >= 0 && jj < A && ii >= 0 && ii < L)
+            .map(([jj, ii]) => jj * L + ii);
+    };
+
+    const quadras = emMetros.map(rasterizar);
+    // Dono de cada celula: a area cuja quadra esta mais perto (busca em largura a partir de todas).
+    const dono = new Int16Array(L * A).fill(-1);
+    let fila = [];
+    quadras.forEach((g, k) => g.forEach((v, c) => {
+        if (v && dono[c] < 0) {
+            dono[c] = k;
+            fila.push(c);
+        }
+    }));
+    while (fila.length > 0) {
+        const proxima = [];
+        for (const c of fila) {
+            for (const n of vizinhos(c)) {
+                if (dono[n] < 0) {
+                    dono[n] = dono[c];
+                    proxima.push(n);
+                }
+            }
+        }
+        fila = proxima;
+    }
+
+    return entrada.map((area, k) => {
+        // Engorda (fecha as ruas e da a folga) e afina de volta so o que fechou as ruas.
+        const g = dilatar(dilatar(quadras[k], engordar, 1), fechar, 0);
+        // Fica so com o que e desta area: duas areas vizinhas se encontram no meio da rua. A
+        // propria quadra nunca sai (rua estreita demais para a folga: o contorno encosta nela).
+        for (let c = 0; c < g.length; c++) {
+            if (g[c] && !quadras[k][c] && dono[c] !== k) g[c] = 0;
+        }
+        return { nome: area.nome, aneis: tracarBorda(g, L, A).map(anel => {
+            const liso = suavizar(simplificar([...anel, anel[0]].map(([j, i]) => [y0 + j * passo, x0 + i * passo]), passo));
+            return liso.map(([y, x]) => [+(lat0 + y / ky).toFixed(6), +(lng0 + x / kx).toFixed(6)]);
+        }) };
+    });
+}
+
+/**
+ * Aneis [[j, i]] da borda das celulas cheias de um grid L x A. Cada borda entre cheia e vazia
+ * e orientada com a cheia a esquerda: as de fora fecham aneis anti-horarios (area positiva);
+ * buracos, horarios — e esses ficam de fora.
+ */
+function tracarBorda(g, L, A) {
+    const cheia = (j, i) => j >= 0 && j < A && i >= 0 && i < L && g[j * L + i] === 1;
+    const saindo = new Map();
+    const borda = (a, b) => {
+        const k = `${a[0]},${a[1]}`;
+        saindo.set(k, [...(saindo.get(k) || []), b]);
+    };
+    for (let j = 0; j < A; j++) {
+        for (let i = 0; i < L; i++) {
+            if (!cheia(j, i)) continue;
+            if (!cheia(j - 1, i)) borda([j, i], [j, i + 1]);
+            if (!cheia(j, i + 1)) borda([j, i + 1], [j + 1, i + 1]);
+            if (!cheia(j + 1, i)) borda([j + 1, i + 1], [j + 1, i]);
+            if (!cheia(j, i - 1)) borda([j + 1, i], [j, i]);
+        }
+    }
+    const aneis = [];
+    for (const [inicio, destinos] of saindo) {
+        while (destinos.length > 0) {
+            const anel = [inicio.split(',').map(Number)];
+            let atual = destinos.shift();
+            while (`${atual[0]},${atual[1]}` !== inicio) {
+                anel.push(atual);
+                // ponytail: celulas que se tocam so na quina tem duas saidas no mesmo vertice;
+                // pega a primeira e o anel fecha do mesmo jeito (talvez juntando os dois pedacos).
+                atual = saindo.get(`${atual[0]},${atual[1]}`).shift();
+            }
+            let dobro = 0;
+            for (let n = 0; n < anel.length; n++) {
+                const [ya, xa] = anel[n];
+                const [yb, xb] = anel[(n + 1) % anel.length];
+                dobro += xa * yb - xb * ya;
+            }
+            if (dobro > 0) aneis.push(anel);
+        }
+    }
+    return aneis;
+}
+
+/** Douglas-Peucker: tira os degraus do grid, mantendo os pontos que mudam a forma. */
+function simplificar(pontos, tolerancia) {
+    if (pontos.length < 3) return pontos;
+    const [a, b] = [pontos[0], pontos[pontos.length - 1]];
+    const comprimento = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    let maior = 0;
+    let onde = 0;
+    for (let n = 1; n < pontos.length - 1; n++) {
+        const [y, x] = pontos[n];
+        const d = comprimento === 1 && a[0] === b[0] && a[1] === b[1]
+            ? Math.hypot(y - a[0], x - a[1])
+            : Math.abs((b[1] - a[1]) * (a[0] - y) - (a[1] - x) * (b[0] - a[0])) / comprimento;
+        if (d > maior) [maior, onde] = [d, n];
+    }
+    if (maior <= tolerancia) return [a, b];
+    return [...simplificar(pontos.slice(0, onde + 1), tolerancia).slice(0, -1), ...simplificar(pontos.slice(onde), tolerancia)];
+}
+
+/** Chaikin, duas voltas: arredonda as quinas do anel fechado. */
+function suavizar(anel) {
+    let pontos = anel.slice(0, -1);
+    for (let volta = 0; volta < 2; volta++) {
+        pontos = pontos.flatMap((p, n) => {
+            const q = pontos[(n + 1) % pontos.length];
+            return [
+                [0.75 * p[0] + 0.25 * q[0], 0.75 * p[1] + 0.25 * q[1]],
+                [0.25 * p[0] + 0.75 * q[0], 0.25 * p[1] + 0.75 * q[1]],
+            ];
+        });
+    }
+    return [...pontos, pontos[0]];
+}
+
+/** Cor da linha de um KML (`<LineStyle><color>aabbggrr`) em "#RRGGBB", ou null. */
+function corDaLinha(xml) {
+    const m = /<LineStyle\b[\s\S]*?<color[^>]*>\s*[0-9a-f]{2}([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})\s*</i.exec(xml || '');
+    return m ? `#${m[3]}${m[2]}${m[1]}`.toUpperCase() : null;
+}
+
 // --- sugestao de numero ------------------------------------------------------
 
 const PALAVRAS_VAZIAS = new Set(['r', 'rua', 'av', 'avenida', 'tv', 'travessa', 'qd', 'quadra', 'de', 'da', 'do', 'das', 'dos', 'e', 'a', 'o']);
@@ -197,4 +401,4 @@ function sugerirNumeros(camadas, existentes) {
     return sugestao;
 }
 
-module.exports = { extrairMid, baixarKml, lerKml, dentro, sugerirNumeros, _internos: { texto, lerCoordenadas, corDoEstilo } };
+module.exports = { extrairMid, baixarKml, lerKml, dentro, contornarAreas, corDaLinha, sugerirNumeros, _internos: { texto, lerCoordenadas, corDoEstilo } };

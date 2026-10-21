@@ -2,8 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import type { CasaTrabalhada, Quadra } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
-import { radius, spacing, type Cores } from "@/theme";
+import { motion, radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { CASA_TRABALHADA, diaISO } from "@/territorios/constantes";
 import { enfileirar, novaChave } from "@/territorios/fila";
@@ -33,6 +34,7 @@ const DIAS = [
 export function SaidaSheet({ territorio, visible, onClose }: SaidaSheetProps) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
+  const { celebrar } = useCelebracao();
   const [etapa, setEtapa] = useState<Etapa>("pergunta");
   const [diasAtras, setDiasAtras] = useState(0);
   const [quadraId, setQuadraId] = useState<number | null>(null);
@@ -104,7 +106,12 @@ export function SaidaSheet({ territorio, visible, onClose }: SaidaSheetProps) {
       toast.show(resultado.erro, "error");
       return;
     }
-    toast.show(resultado.enviado ? "Saída registrada!" : "Sem internet: guardado no celular, envia sozinho");
+    // Concluir o território merece a mesma comemoração de cumprir uma tarefa. Espera a folha
+    // sair: no iPhone um Modal não abre enquanto outro ainda está fechando.
+    if (concluiu) setTimeout(() => celebrar(`Território ${territorio.numero} concluído`), motion.fundo + 150);
+    if (!concluiu || !resultado.enviado) {
+      toast.show(resultado.enviado ? "Saída registrada!" : "Sem internet: guardado no celular, envia sozinho");
+    }
     onClose();
   };
 

@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Constants from "expo-constants";
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Platform, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
-import MapView, { Marker, Polygon, PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from "react-native-maps";
+import MapView, { Marker, Polygon, Polyline, PROVIDER_DEFAULT, PROVIDER_GOOGLE, type Region } from "react-native-maps";
 import type { Ponto, TipoMarcacao } from "@/api/types";
 import { type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -27,14 +27,26 @@ export interface PinoMapa {
   pendente?: boolean;
 }
 
+/** Região pintada por baixo dos territórios (a área inteira, em volta das quadras dela). */
+export interface FundoMapa {
+  chave: string;
+  cor: string;
+  pontos: Ponto[];
+}
+
 export interface MapaTerritorioRef {
-  /** Enquadra todos os polígonos de novo. */
-  enquadrar: () => void;
+  /** Enquadra todos os polígonos de novo, ou só estes pontos. */
+  enquadrar: (pontos?: Ponto[]) => void;
   focar: (lat: number, lng: number) => void;
 }
 
 interface MapaTerritorioProps {
   areas: AreaMapa[];
+  fundos?: FundoMapa[];
+  /** Linha do limite da congregação, por cima de tudo. Com ela, o enquadramento é o limite. */
+  limite?: { pontos: Ponto[]; cor?: string | null } | null;
+  /** Ao abrir, enquadra estes pontos em vez de tudo (a área que estava aberta na lista). */
+  enquadrarEm?: Ponto[];
   pinos?: PinoMapa[];
   satelite?: boolean;
   /** Segurar o dedo no mapa marca um ponto escolhido ali (em vez do GPS). */
@@ -74,7 +86,7 @@ const transparente = (cor: string, alfa = "55") => (/^#[0-9a-f]{6}$/i.test(cor) 
  * no sol, na rua, a letra é o que se lê de relance — a cor sozinha não basta para daltônico.
  */
 export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>(function MapaTerritorio(
-  { areas, pinos = [], satelite = false, onLongPress, onAreaPress, onPinoPress, style },
+  { areas, fundos = [], limite, enquadrarEm, pinos = [], satelite = false, onLongPress, onAreaPress, onPinoPress, style },
   ref,
 ) {
   const { colors, styles } = useTema(criarEstilos);
@@ -103,14 +115,16 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assinatura]);
 
+  const emCoordenadas = (pontos: Ponto[]) => pontos.map(([latitude, longitude]) => ({ latitude, longitude }));
   const todos = useMemo(
-    () => areas.flatMap((a) => a.pontos.map(([latitude, longitude]) => ({ latitude, longitude }))),
-    [areas],
+    () => emCoordenadas(limite?.pontos.length ? limite.pontos : areas.flatMap((a) => a.pontos)),
+    [areas, limite],
   );
 
-  const enquadrar = () => {
-    if (todos.length === 0) return;
-    mapa.current?.fitToCoordinates(todos, {
+  const enquadrar = (pontos?: Ponto[]) => {
+    const alvo = pontos?.length ? emCoordenadas(pontos) : todos;
+    if (alvo.length === 0) return;
+    mapa.current?.fitToCoordinates(alvo, {
       edgePadding: { top: 48, right: 36, bottom: 48, left: 36 },
       animated: true,
     });
@@ -151,7 +165,7 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
         regiao.current ?? (inicial ? { ...inicial, latitudeDelta: 0.01, longitudeDelta: 0.01 } : undefined)
       }
       // Remontado por causa de um pino que saiu: fica onde estava, sem reenquadrar.
-      onMapReady={geracao === 0 ? enquadrar : undefined}
+      onMapReady={geracao === 0 ? () => enquadrar(enquadrarEm) : undefined}
       onRegionChangeComplete={(r) => {
         regiao.current = r;
       }}
@@ -161,11 +175,24 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
           : undefined
       }
     >
+      {/* A ordem é a do desenho: fundo das áreas, territórios, e o limite por cima de tudo. */}
+      {fundos.map((f) => (
+        <Polygon
+          key={`fundo-${f.chave}`}
+          coordinates={emCoordenadas(f.pontos)}
+          fillColor={transparente(f.cor, "30")}
+          strokeColor={transparente(f.cor, "AA")}
+          strokeWidth={1.5}
+          zIndex={0}
+        />
+      ))}
+
       {areas.map((a) => {
         const cor = a.cor || colors.primary;
         return (
           <Polygon
             key={a.chave}
+            zIndex={1}
             coordinates={a.pontos.map(([latitude, longitude]) => ({ latitude, longitude }))}
             fillColor={transparente(cor)}
             strokeColor={cor}
@@ -175,6 +202,15 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
           />
         );
       })}
+
+      {limite?.pontos.length ? (
+        <Polyline
+          coordinates={emCoordenadas([...limite.pontos, limite.pontos[0]])}
+          strokeColor={limite.cor || colors.primaryDark}
+          strokeWidth={3.5}
+          zIndex={3}
+        />
+      ) : null}
 
       {areas
         .filter((a) => a.rotulo)

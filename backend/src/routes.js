@@ -255,6 +255,9 @@ routes.delete('/territorios/marcacoes/:id', requireMarcarTerritorio, TerritorioC
 routes.post('/territorios/mymaps/previa', podeTerritorios, TerritorioController.previaMyMaps);
 routes.post('/territorios/mymaps/importar', podeTerritorios, TerritorioController.importarMyMaps);
 routes.post('/territorios/mymaps/atualizar', podeTerritorios, TerritorioController.atualizarMyMaps);
+routes.put('/territorios/areas', podeTerritorios, TerritorioController.salvarArea);
+routes.put('/territorios/limite', podeTerritorios, TerritorioController.salvarLimite);
+routes.delete('/territorios/limite', podeTerritorios, TerritorioController.removerLimite);
 // Designacoes: a lista e de todos (o dirigente ve as suas na tela de Inicio); designar e da area.
 routes.get('/territorios/designacoes', TerritorioController.designacoes);
 routes.post('/territorios/designacoes', podeTerritorios, TerritorioController.criarDesignacao);
@@ -265,7 +268,8 @@ routes.get('/territorios/painel', podeTerritorios, TerritorioController.painel);
 routes.get('/territorios/s13', podeTerritorios, TerritorioController.s13);
 routes.delete('/territorios/avisos/:id', podeTerritorios, TerritorioController.desativarAviso);
 routes.put('/territorios/:id(\\d+)', podeTerritorios, TerritorioController.update);
-routes.delete('/territorios/:id(\\d+)', podeTerritorios, TerritorioController.desativar);
+// Excluir o territorio (sai da lista e do mapa; o historico fica) e so do admin geral.
+routes.delete('/territorios/:id(\\d+)', requireAdmin, TerritorioController.desativar);
 routes.post('/territorios/:id(\\d+)/ciclo', podeTerritorios, TerritorioController.ciclo);
 routes.post('/territorios/:id(\\d+)/avisos', podeTerritorios, TerritorioController.criarAviso);
 routes.get('/territorios/:numero', TerritorioController.show);

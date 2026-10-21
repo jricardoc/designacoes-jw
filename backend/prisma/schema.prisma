@@ -68,20 +68,26 @@ model Historico {
 
 // Configuracoes gerais do sistema
 model Config {
-  id              Int      @id @default(autoincrement())
-  titulo          String
-  subtitulo       String
-  mes             String
+  id               Int      @id @default(autoincrement())
+  titulo           String
+  subtitulo        String
+  mes              String
   // Horario em que a reuniao comeca, "HH:MM" no fuso da congregacao. E o que torna possivel
   // um lembrete "3 horas antes": a designacao guarda so a data, entao sem isto nao existe
   // instante nenhum de onde subtrair as horas.
-  horaMeioSemana  String   @default("19:30")
-  horaFimDeSemana String   @default("09:00")
+  horaMeioSemana   String   @default("19:30")
+  horaFimDeSemana  String   @default("09:00")
   // Dados do Zoom que entram nos convites: { meio: {link, id, senha, salaAberta}, fds: {...} }.
   // No banco, e nao no codigo, para cada congregacao preencher os seus pela tela de Ajustes
   // (e para link e senha nao irem parar num repositorio publico).
-  zoom            Json?
-  updatedAt       DateTime @updatedAt
+  zoom             Json?
+  // Cor de cada area de territorios no mapa geral: { "Tokaia": "#E53935" }. A area em si e o
+  // campo `area` do Territorio; aqui so o que nao cabe nele.
+  coresAreas       Json?
+  // Limite do territorio da congregacao, importado de um KML: { nome, cor, pontos: [[lat, lng]] }.
+  // No banco, e nao no repositorio, porque e dado de cada congregacao.
+  limiteTerritorio Json?
+  updatedAt        DateTime @updatedAt
 }
 
 // Usuario para autenticacao (login por nickname)
