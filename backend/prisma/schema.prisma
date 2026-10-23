@@ -188,6 +188,9 @@ model Irmao {
   presencasZoom         PresencaZoom[]
   relatoriosCampo       RelatorioCampo[]
   participacoesZoom     ZoomParticipante[]
+  pioneiroPerfil        PioneiroPerfil?
+  pioneiroHoras         PioneiroHoras[]
+  revisitas             Revisita[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -961,3 +964,74 @@ model ZoomEvento {
   @@index([status])
   @@index([meetingUuid])
 }
+
+// ==========================================================================
+// AREA DE PIONEIROS: o ministerio que o proprio pioneiro registra
+// ==========================================================================
+// No servidor, e nao so no celular: trocar ou perder o aparelho nao perde nada. Cada um ve
+// so o que e seu (o pioneiro regular e o admin geral usam a area).
+
+// A meta do mes e o cronometro. O cronometro e do servidor: comecar no celular e parar no
+// outro aparelho funciona, e fechar o app nao zera.
+model PioneiroPerfil {
+  irmaoId          Int       @id
+  irmao            Irmao     @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  // Horas por mes (o ano de servico e 12x isso).
+  metaMensal       Int       @default(50)
+  // Rodando desde (null = parado ou pausado) e o que ja somou antes das pausas.
+  cronometroInicio DateTime?
+  cronometroSeg    Int       @default(0)
+  updatedAt        DateTime  @updatedAt
+}
+
+// Horas de ministerio: cada parada do cronometro ou cada lancamento a mao.
+model PioneiroHoras {
+  id         Int      @id @default(autoincrement())
+  irmaoId    Int
+  irmao      Irmao    @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  // "2026-10-23": o dia, no relogio da congregacao.
+  data       String
+  minutos    Int
+  // manual | cronometro
+  origem     String   @default("manual")
+  observacao String?
+  createdAt  DateTime @default(now())
+
+  @@index([irmaoId, data])
+}
+
+// Quem o pioneiro visita de novo (e os estudos biblicos: `estudo` ligado).
+model Revisita {
+  id            Int              @id @default(autoincrement())
+  irmaoId       Int
+  irmao         Irmao            @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  nome          String
+  endereco      String?
+  lat           Float?
+  lng           Float?
+  telefone      String?
+  observacao    String?
+  estudo        Boolean          @default(false)
+  ativa         Boolean          @default(true)
+  // A proxima visita marcada e quando o aviso dela foi mandado (null = ainda nao).
+  proximaVisita DateTime?
+  lembreteEm    DateTime?
+  visitas       RevisitaVisita[]
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([irmaoId])
+  @@index([proximaVisita])
+}
+
+model RevisitaVisita {
+  id         Int      @id @default(autoincrement())
+  revisitaId Int
+  revisita   Revisita @relation(fields: [revisitaId], references: [id], onDelete: Cascade)
+  data       DateTime
+  observacao String?
+  createdAt  DateTime @default(now())
+
+  @@index([revisitaId])
+}
+

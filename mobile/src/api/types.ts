@@ -1378,3 +1378,82 @@ export interface EstadoZoom {
   ultimoEvento: { evento: string; recebidoEm: string } | null;
 }
 
+// --- Área de pioneiros --------------------------------------------------------
+
+export interface RegistroHoras {
+  id: number;
+  /** "2026-10-23" */
+  data: string;
+  minutos: number;
+  origem: "manual" | "cronometro";
+  observacao: string | null;
+}
+
+export interface CronometroPioneiro {
+  rodando: boolean;
+  /** Rodando desde (ISO); null quando parado ou pausado. */
+  inicio: string | null;
+  /** O que já somou antes das pausas. */
+  acumuladoSeg: number;
+}
+
+export interface RevisitaResumo {
+  id: number;
+  nome: string;
+  endereco: string | null;
+  estudo: boolean;
+  proximaVisita: string | null;
+}
+
+export interface PainelPioneiro {
+  mes: string;
+  nomeMes: string;
+  hoje: string;
+  /** Pioneiro regular pelo cadastro (o admin que não é pode usar como auxiliar). */
+  regular: boolean;
+  meta: number;
+  metaAno: number;
+  cronometro: CronometroPioneiro;
+  minutosMes: number;
+  /** O ano de serviço até o mês escolhido. */
+  minutosAno: number;
+  porMes: { mes: string; minutos: number }[];
+  registros: RegistroHoras[];
+  estudos: number;
+  revisitas: number;
+  proximas: RevisitaResumo[];
+  relatorio: RelatorioCampo | null;
+}
+
+export interface Revisita {
+  id: number;
+  nome: string;
+  endereco: string | null;
+  lat: number | null;
+  lng: number | null;
+  telefone: string | null;
+  observacao: string | null;
+  estudo: boolean;
+  ativa: boolean;
+  proximaVisita: string | null;
+  updatedAt: string;
+  ultimaVisita: string | null;
+  visitas: number;
+}
+
+export interface RevisitaDetalhe extends Omit<Revisita, "ultimaVisita" | "visitas"> {
+  visitas: { id: number; data: string; observacao: string | null }[];
+}
+
+export interface NovaRevisita {
+  nome?: string;
+  endereco?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  telefone?: string | null;
+  observacao?: string | null;
+  estudo?: boolean;
+  ativa?: boolean;
+  proximaVisita?: string | null;
+}
+

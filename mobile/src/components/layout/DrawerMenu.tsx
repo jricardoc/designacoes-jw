@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { EscopoAdmin, Usuario } from "@/api/types";
 import { Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
-import { ehAdminGeral, podeGerenciar, podeVerGrupos } from "@/utils/permissoes";
+import { ehAdminGeral, podeGerenciar, podeUsarPioneiro, podeVerGrupos } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { MarcaServirMais } from "./MarcaServirMais";
@@ -67,6 +67,8 @@ const ITENS: ItemMenu[] = [
   },
   // O dirigente e o ajudante veem o próprio grupo; o secretário e o admin geral, todos.
   { chave: "grupos", rotulo: "Grupos", icone: "people-outline", href: "/(tabs)/grupos", visivel: podeVerGrupos },
+  // Horas, revisitas e estudos do próprio pioneiro.
+  { chave: "ministerio", rotulo: "Ministério", icone: "timer-outline", href: "/(tabs)/ministerio", visivel: podeUsarPioneiro },
   // Acompanhar as tarefas da congregação inteira (e designá-las) é do admin geral, pela
   // mesma razão que o cadastro: quem cobra a tarefa é quem a distribui.
   { chave: "tarefas", rotulo: "Tarefas", icone: "clipboard-outline", href: "/(tabs)/tarefas", somenteAdmin: true },

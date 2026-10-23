@@ -3,6 +3,7 @@ const rateLimit = require('express-rate-limit');
 const ConfigController = require('./controllers/ConfigController');
 const GruposController = require('./controllers/GruposController');
 const ZoomController = require('./controllers/ZoomController');
+const PioneiroController = require('./controllers/PioneiroController');
 const AuthController = require('./controllers/AuthController');
 const IrmaoController = require('./controllers/IrmaoController');
 const IndisponibilidadeController = require('./controllers/IndisponibilidadeController');
@@ -259,6 +260,22 @@ routes.get('/reunioes/semanas/:id/compartilhamentos', ReuniaoController.comparti
 // Mensagem pronta para confirmar a designacao com quem tem parte na semana. Montada no
 // backend como os convites, e pedida no toque porque a saudacao depende da hora.
 routes.get('/reunioes/confirmacao', ReuniaoController.textoConfirmacao);
+
+// ==================== PIONEIROS ====================
+// O ministerio do proprio pioneiro (horas, revisitas, relatorio). Quem nao e pioneiro regular
+// nem admin geral recebe 403 do servico; cada um so ve o que e seu.
+routes.get('/pioneiro/painel', PioneiroController.painel);
+routes.post('/pioneiro/cronometro', PioneiroController.cronometro);
+routes.post('/pioneiro/horas', PioneiroController.lancarHoras);
+routes.delete('/pioneiro/horas/:id(\\d+)', PioneiroController.apagarHoras);
+routes.put('/pioneiro/meta', PioneiroController.definirMeta);
+routes.get('/pioneiro/revisitas', PioneiroController.listarRevisitas);
+routes.post('/pioneiro/revisitas', PioneiroController.criarRevisita);
+routes.get('/pioneiro/revisitas/:id(\\d+)', PioneiroController.revisita);
+routes.put('/pioneiro/revisitas/:id(\\d+)', PioneiroController.atualizarRevisita);
+routes.delete('/pioneiro/revisitas/:id(\\d+)', PioneiroController.apagarRevisita);
+routes.post('/pioneiro/revisitas/:id(\\d+)/visitas', PioneiroController.registrarVisita);
+routes.post('/pioneiro/relatorio', PioneiroController.enviarRelatorio);
 
 // ==================== ZOOM ====================
 // Os relatorios das reunioes do Zoom (resumo, participantes, transcricao): quem cuida das

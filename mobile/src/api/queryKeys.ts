@@ -20,6 +20,10 @@ export const qk = {
   detalheGrupo: (id: number, mes: string, periodo: string) => ["grupo-detalhe", id, mes, periodo] as const,
   resumoRelatorio: (mes: string) => ["relatorio-resumo", mes] as const,
   fichaMembro: (grupoId: number, irmaoId: number) => ["grupo-detalhe", "ficha", grupoId, irmaoId] as const,
+  // Área de pioneiros (do próprio usuário).
+  pioneiroPainel: (mes: string) => ["pioneiro", "painel", mes] as const,
+  pioneiroRevisitas: (arquivadas: boolean) => ["pioneiro", "revisitas", arquivadas] as const,
+  pioneiroRevisita: (id: number) => ["pioneiro", "revisita", id] as const,
   // Relatórios do Zoom.
   zoomEstado: ["zoom-estado"] as const,
   zoomReunioes: (de: string, ate: string, busca: string) => ["zoom-reunioes", de, ate, busca] as const,
