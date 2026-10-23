@@ -57,6 +57,30 @@ class GruposController {
         }
     }
 
+    /** GET /relatorios-campo/meu?mes=: o relatorio do proprio irmao no mes. */
+    async meuRelatorio(req, res) {
+        try {
+            const r = await Relatorio.meuRelatorio(req.user, req.query.mes);
+            if (r.erro) return erro(res, r.erro, r.mensagem);
+            return res.json(r);
+        } catch (e) {
+            console.error('Erro ao carregar o relatório do irmão:', e);
+            return erro(res, 500, 'Erro ao carregar o relatório');
+        }
+    }
+
+    /** PUT /relatorios-campo/meu: o proprio irmao manda o relatorio ("Registrar o campo"). */
+    async enviarMeuRelatorio(req, res) {
+        try {
+            const r = await Relatorio.enviarMeuRelatorio(req.user, req.body);
+            if (r.erro) return erro(res, r.erro, r.mensagem);
+            return res.json(r.relatorio);
+        } catch (e) {
+            console.error('Erro ao enviar o relatório do irmão:', e);
+            return erro(res, 500, 'Erro ao enviar o relatório');
+        }
+    }
+
     /** DELETE /relatorios-campo/:id */
     async apagarRelatorio(req, res) {
         try {

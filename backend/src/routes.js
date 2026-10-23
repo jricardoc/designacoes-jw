@@ -208,6 +208,9 @@ routes.get('/grupos/painel', GruposController.painel);
 routes.get('/grupos/:id(\\d+)/detalhe', GruposController.detalhe);
 routes.get('/grupos/:id(\\d+)/membros/:irmaoId(\\d+)', GruposController.membro);
 routes.put('/relatorios-campo', GruposController.salvarRelatorio);
+// O proprio irmao manda o relatorio dele ("Registrar o campo", no "+" do app).
+routes.get('/relatorios-campo/meu', GruposController.meuRelatorio);
+routes.put('/relatorios-campo/meu', GruposController.enviarMeuRelatorio);
 routes.delete('/relatorios-campo/:id(\\d+)', GruposController.apagarRelatorio);
 routes.get('/relatorios-campo/resumo', GruposController.resumo);
 // Nova divisao dos grupos a partir do PDF da lista: previa (nao grava) e aplicar. So admin geral.
