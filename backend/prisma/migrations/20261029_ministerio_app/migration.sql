@@ -55,4 +55,4 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- CreateIndex
-CREATE UNIQUE INDEX IF NOT EXISTS "PioneiroPerfil_calendarioToken_key" ON "PioneiroPerfil"("calendarioToken");
+CREATE INDEX IF NOT EXISTS "PioneiroPerfil_calendarioToken_idx" ON "PioneiroPerfil"("calendarioToken");

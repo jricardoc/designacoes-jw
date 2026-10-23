@@ -986,9 +986,13 @@ model PioneiroPerfil {
   // Os companheiros pioneiros veem os planos de saida dele na Agenda.
   compartilharPlanos Boolean @default(true)
   // O segredo do link do calendario (webcal) que o celular assina: visitas marcadas e planos.
-  // Trocar o token derruba o link antigo.
-  calendarioToken  String?   @unique
+  // Trocar o token derruba o link antigo. Indice comum, nao @unique: a API de producao sobe com
+  // `prisma db push`, que recusa criar UNIQUE em tabela que ja existe e deixa o servidor fora do
+  // ar (23/10/2026). Sao 192 bits aleatorios, nao colidem.
+  calendarioToken  String?
   updatedAt        DateTime  @updatedAt
+
+  @@index([calendarioToken])
 }
 
 // Horas de ministerio: cada parada do cronometro ou cada lancamento a mao.

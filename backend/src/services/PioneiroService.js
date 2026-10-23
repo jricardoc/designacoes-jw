@@ -673,7 +673,7 @@ async function linkCalendario(usuario, { trocar = false } = {}) {
  */
 async function calendarioIcs(token, agora = new Date()) {
     if (!/^[a-f0-9]{48}$/.test(String(token || ''))) return null;
-    const perfil = await prisma.pioneiroPerfil.findUnique({ where: { calendarioToken: token }, select: { irmaoId: true } });
+    const perfil = await prisma.pioneiroPerfil.findFirst({ where: { calendarioToken: token }, select: { irmaoId: true } });
     if (!perfil) return null;
     const de = new Date(agora.getTime() - 7 * 86400000);
     const ate = new Date(agora.getTime() + 90 * 86400000);
