@@ -1,6 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const ConfigController = require('./controllers/ConfigController');
+const GruposController = require('./controllers/GruposController');
 const AuthController = require('./controllers/AuthController');
 const IrmaoController = require('./controllers/IrmaoController');
 const IndisponibilidadeController = require('./controllers/IndisponibilidadeController');
@@ -194,6 +195,17 @@ routes.get('/grupos', GrupoCampoController.index);
 routes.post('/grupos', requireAdmin, GrupoCampoController.create);
 routes.put('/grupos/:id', requireAdmin, GrupoCampoController.update);
 routes.delete('/grupos/:id', requireAdmin, GrupoCampoController.delete);
+// Grupos para quem lidera (o proprio) e para admin/secretario (todos), e o relatorio de campo.
+// O controle de quem ve o que mora no RelatorioCampoService.
+routes.get('/grupos/painel', GruposController.painel);
+routes.get('/grupos/:id(\\d+)/detalhe', GruposController.detalhe);
+routes.put('/relatorios-campo', GruposController.salvarRelatorio);
+routes.delete('/relatorios-campo/:id(\\d+)', GruposController.apagarRelatorio);
+routes.get('/relatorios-campo/resumo', GruposController.resumo);
+// Nova divisao dos grupos a partir do PDF da lista: previa (nao grava) e aplicar. So admin geral.
+routes.post('/grupos/divisao/previa', requireAdmin, upload.single('file'), GruposController.previaDivisao);
+routes.post('/grupos/divisao/aplicar', requireAdmin, GruposController.aplicarDivisao);
+routes.put('/grupos/secretario', requireAdmin, GruposController.definirSecretario);
 
 // ==================== IRMAOS ====================
 // Leitura livre (o seletor de designacao precisa da lista); cadastro e admin.

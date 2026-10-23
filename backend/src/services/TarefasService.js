@@ -466,6 +466,16 @@ async function listarPorUsuario(usuario, { agora = new Date(), contexto = null }
         concluidas: new Set(concluidas.map(c => `${c.tipo}|${c.ocorrencia}`)),
         grupoId: grupo?.id ?? null,
     });
+    // Quem dirige ou ajuda um grupo: "pedir o relatorio" do dia 1 ate o grupo entregar tudo.
+    // Falha aqui nao pode esconder as outras tarefas.
+    const doGrupo = await require('./RelatorioCampoService')
+        .tarefasDoUsuario(usuario, ctx.hojeISO)
+        .catch((erro) => {
+            console.error('[tarefas] relatorio do grupo:', erro);
+            return [];
+        });
+    tarefas.push(...doGrupo);
+    tarefas.sort((a, b) => (a.diasAteVencer ?? Infinity) - (b.diasAteVencer ?? Infinity) || a.titulo.localeCompare(b.titulo));
 
     return {
         hoje: ctx.hojeISO,

@@ -19,10 +19,10 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { EscopoAdmin } from "@/api/types";
+import type { EscopoAdmin, Usuario } from "@/api/types";
 import { Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
-import { ehAdminGeral, podeGerenciar } from "@/utils/permissoes";
+import { ehAdminGeral, podeGerenciar, podeVerGrupos } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { MarcaServirMais } from "./MarcaServirMais";
@@ -39,6 +39,8 @@ interface ItemMenu {
   somenteAdmin?: boolean;
   /** Some para quem não tem este escopo (o admin geral passa em todos). */
   escopo?: EscopoAdmin;
+  /** Regra própria, quando a tela não é de um escopo só. */
+  visivel?: (usuario: Usuario | null) => boolean;
 }
 
 /**
@@ -63,6 +65,8 @@ const ITENS: ItemMenu[] = [
     href: "/(tabs)/confirmacoes",
     escopo: "confirmacoes",
   },
+  // O dirigente e o ajudante veem o próprio grupo; o secretário e o admin geral, todos.
+  { chave: "grupos", rotulo: "Grupos", icone: "people-outline", href: "/(tabs)/grupos", visivel: podeVerGrupos },
   // Acompanhar as tarefas da congregação inteira (e designá-las) é do admin geral, pela
   // mesma razão que o cadastro: quem cobra a tarefa é quem a distribui.
   { chave: "tarefas", rotulo: "Tarefas", icone: "clipboard-outline", href: "/(tabs)/tarefas", somenteAdmin: true },
@@ -173,6 +177,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
               //
               // Publicadores é só do admin geral (`somenteAdmin`). As saídas de campo, que
               // davam acesso a quem cuida de dirigentes, saíram de lá para o Território.
+              if (item.visivel) return item.visivel(usuario);
               if (item.somenteAdmin) return ehAdminGeral(usuario);
               // `podeGerenciar` já contempla o admin geral em qualquer escopo.
               if (item.escopo) return podeGerenciar(usuario, item.escopo);

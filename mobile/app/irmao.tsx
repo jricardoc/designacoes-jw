@@ -77,6 +77,7 @@ export default function IrmaoScreen() {
   const [funcoes, setFuncoes] = useState<FuncaoId[]>([]);
   const [nivel, setNivel] = useState<NivelAudioVideo>("experiente");
   const [privilegio, setPrivilegio] = useState<PrivilegioId | null>(null);
+  const [pioneiro, setPioneiro] = useState(false);
   const [genero, setGenero] = useState<GeneroPessoa | null>(null);
   const [telefone, setTelefone] = useState("");
   const [grupoId, setGrupoId] = useState<number | null>(null);
@@ -91,6 +92,7 @@ export default function IrmaoScreen() {
       setFuncoes(existente.funcoes);
       setNivel(existente.nivelAudioVideo);
       setPrivilegio(existente.privilegio ?? null);
+      setPioneiro(existente.pioneiro === "regular");
       setGenero(existente.genero ?? null);
       setTelefone(existente.telefone ?? "");
       setGrupoId(existente.grupoId ?? null);
@@ -144,6 +146,7 @@ export default function IrmaoScreen() {
   const summary = [
     grupoAtual?.nome,
     privilegioLabel(privilegio),
+    pioneiro ? "Pioneiro regular" : null,
     funcoes.length
       ? `${funcoes.length} ${funcoes.length === 1 ? "função" : "funções"}`
       : "Sem funções",
@@ -181,6 +184,7 @@ export default function IrmaoScreen() {
           funcoes,
           nivelAudioVideo: nivel,
           privilegio,
+          pioneiro: pioneiro ? "regular" : null,
           genero,
           telefone,
           grupoId,
@@ -192,6 +196,7 @@ export default function IrmaoScreen() {
           funcoes,
           nivelAudioVideo: nivel,
           privilegio,
+          pioneiro: pioneiro ? "regular" : null,
           genero,
           telefone,
           grupoId,
@@ -488,6 +493,20 @@ export default function IrmaoScreen() {
             </View>
           </Animated.View>
         ) : null}
+
+        {/* Vem da lista de grupos (o verde), mas a nomeação pode sair no meio do ano. */}
+        <View style={styles.ativoCard}>
+          <View style={styles.flex}>
+            <Text style={styles.ativoTitle}>Pioneiro regular</Text>
+            <Text style={styles.ativoSub}>Relata horas no relatório de campo</Text>
+          </View>
+          <Switch
+            value={pioneiro}
+            onValueChange={setPioneiro}
+            trackColor={{ true: colors.oliveSoft, false: "#D8CDBA" }}
+            thumbColor="#fff"
+          />
+        </View>
 
         {irmaoId ? (
           <View style={styles.ativoCard}>

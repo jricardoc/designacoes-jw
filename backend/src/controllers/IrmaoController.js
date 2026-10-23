@@ -14,6 +14,12 @@ function normalizarPrivilegio(valor) {
     return PRIVILEGIOS.includes(valor) ? valor : null;
 }
 
+/** "regular" ou nada. Mesma regra do privilegio: `undefined` mantem, vazio limpa. */
+function normalizarPioneiro(valor) {
+    if (valor === undefined) return undefined;
+    return valor === 'regular' ? 'regular' : null;
+}
+
 /**
  * Id de grupo vindo da rede. Vazio/null desvincula; `undefined` mantem. Valor que nao e
  * numero vira `undefined` — melhor ignorar do que gravar lixo numa chave estrangeira.
@@ -118,7 +124,7 @@ class IrmaoController {
     // Criar novo irmao
     async create(req, res) {
         try {
-            const { nome, funcoes, nivelAudioVideo, privilegio, telefone, genero, grupoId } = req.body;
+            const { nome, funcoes, nivelAudioVideo, privilegio, pioneiro, telefone, genero, grupoId } = req.body;
 
             if (!nome) {
                 return res.status(400).json({ error: 'Nome e obrigatorio' });
@@ -130,6 +136,7 @@ class IrmaoController {
                     funcoes: funcoes || [],
                     nivelAudioVideo: nivelAudioVideo || 'experiente',
                     privilegio: normalizarPrivilegio(privilegio) ?? null,
+                    pioneiro: normalizarPioneiro(pioneiro) ?? null,
                     telefone: normalizarTelefone(telefone) ?? null,
                     genero: normalizarGenero(genero) ?? null,
                     grupoId: normalizarGrupoId(grupoId) ?? null
@@ -150,7 +157,7 @@ class IrmaoController {
     async update(req, res) {
         try {
             const { id } = req.params;
-            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, telefone, genero, grupoId } = req.body;
+            const { nome, funcoes, ativo, nivelAudioVideo, privilegio, pioneiro, telefone, genero, grupoId } = req.body;
 
             const updateData = {};
             if (nome !== undefined) updateData.nome = String(nome).trim();
@@ -177,6 +184,8 @@ class IrmaoController {
             // outra tela nao apaga o privilegio sem querer.
             const privilegioNormalizado = normalizarPrivilegio(privilegio);
             if (privilegioNormalizado !== undefined) updateData.privilegio = privilegioNormalizado;
+            const pioneiroNormalizado = normalizarPioneiro(pioneiro);
+            if (pioneiroNormalizado !== undefined) updateData.pioneiro = pioneiroNormalizado;
 
             const telefoneNormalizado = normalizarTelefone(telefone);
             if (telefoneNormalizado !== undefined) updateData.telefone = telefoneNormalizado;

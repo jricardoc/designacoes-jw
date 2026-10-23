@@ -56,6 +56,12 @@ async function tique() {
     } catch (erro) {
         console.error('[territorios] falha no tique:', erro);
     }
+
+    try {
+        await require('./RelatorioCampoService').avisarDirigentes();
+    } catch (erro) {
+        console.error('[relatorio] falha no tique:', erro);
+    }
 }
 
 function agendar() {

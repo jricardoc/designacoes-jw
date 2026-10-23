@@ -76,13 +76,21 @@ async function anotarUsuarios(usuarios) {
     if (!Array.isArray(usuarios) || usuarios.length === 0) return usuarios || [];
 
     let porId = new Map();
+    let secretarioId = null;
     const idsVinculados = usuarios.map(u => u.irmaoId).filter(Boolean);
 
     if (idsVinculados.length > 0) {
         try {
+            const config = await prisma.config.findFirst({ select: { secretarioIrmaoId: true } });
+            secretarioId = (config && config.secretarioIrmaoId) || null;
             const irmaos = await prisma.irmao.findMany({
                 where: { id: { in: idsVinculados } },
-                select: { id: true, nome: true, privilegio: true, funcoes: true, ativo: true }
+                select: {
+                    id: true, nome: true, privilegio: true, funcoes: true, ativo: true, pioneiro: true,
+                    // Para o menu mostrar "Grupos" a quem dirige ou ajuda um grupo.
+                    gruposQueDirige: { where: { ativo: true }, select: { id: true } },
+                    gruposQueAjuda: { where: { ativo: true }, select: { id: true } },
+                }
             });
             porId = new Map(irmaos.map(i => [i.id, i]));
         } catch (error) {
@@ -97,7 +105,17 @@ async function anotarUsuarios(usuarios) {
         const irmao = u.irmaoId ? porId.get(u.irmaoId) : null;
         return {
             ...u,
-            irmao: irmao ? { id: irmao.id, nome: irmao.nome, funcoes: irmao.funcoes } : null,
+            irmao: irmao
+                ? {
+                    id: irmao.id,
+                    nome: irmao.nome,
+                    funcoes: irmao.funcoes,
+                    pioneiro: irmao.pioneiro || null,
+                    // O secretario ve todos os grupos (a tela de Grupos aparece no menu dele).
+                    secretario: !!secretarioId && irmao.id === secretarioId,
+                    gruposQueLidera: [...(irmao.gruposQueDirige || []), ...(irmao.gruposQueAjuda || [])].map(g => g.id),
+                }
+                : null,
             privilegio: irmao
                 ? irmao.privilegio || null
                 : porNomeNormalizado.get(normalizarNome(u.nome)) || null

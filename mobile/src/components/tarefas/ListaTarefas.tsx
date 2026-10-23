@@ -32,6 +32,7 @@ const DESTINOS: Record<string, string> = {
   dirigentes: "/(tabs)/dirigentes",
   designacoes: "/(tabs)",
   confirmacoes: "/(tabs)/confirmacoes",
+  grupos: "/(tabs)/grupos",
 };
 
 interface Props {
@@ -82,6 +83,10 @@ export function ListaTarefas({ tarefas, grupo }: Props) {
     // quadro. É o que separa "abre a lista de quadros e procura agosto" de "abre agosto".
     if (t.acao.destino === "quadro" && t.acao.id) {
       router.push(`/quadro/${t.acao.id}` as never);
+      return;
+    }
+    if (t.acao.destino === "grupos" && t.acao.id) {
+      router.push({ pathname: "/grupos/[id]", params: { id: String(t.acao.id) } });
       return;
     }
     const destino = DESTINOS[t.acao.destino];
@@ -191,6 +196,11 @@ export function ListaTarefas({ tarefas, grupo }: Props) {
                 {t.conclusao === "quadro" ? (
                   <Text style={styles.origem}>
                     Sai daqui sozinha quando o quadro for publicado
+                  </Text>
+                ) : null}
+                {t.conclusao === "relatorio" ? (
+                  <Text style={styles.origem}>
+                    Sai daqui sozinha quando o grupo inteiro entregar
                   </Text>
                 ) : null}
               </Pressable>

@@ -68,7 +68,7 @@ async function varrerBandeja() {
 export function usePushNotifications() {
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [telaPendente, setTelaPendente] = useState<
-    { tela: "minhas" | "territorio"; numero?: string; marcacao?: number } | null
+    { tela: "minhas" | "territorio" | "grupos"; numero?: string; marcacao?: number; grupoId?: number } | null
   >(null);
   const router = useRouter();
   // Fica falso enquanto o router não montou: na abertura fria o toque na
@@ -96,12 +96,14 @@ export function usePushNotifications() {
       // registrar aqui não duplica o que já entrou pelo recebimento.
       guardarNoHistorico(resposta.notification);
       const data = resposta.notification.request.content.data as
-        | { screen?: string; numero?: string; marcacao?: number }
+        | { screen?: string; numero?: string; marcacao?: number; grupoId?: number }
         | undefined;
       // Aviso de marcação traz o território e o ponto: o toque abre o território nele.
       if (data?.screen === "minhas" || data?.screen === "territorio") {
         setTelaPendente({ tela: data.screen, numero: data.numero, marcacao: data.marcacao });
       }
+      // Relatório de campo: o pedido do dia 1 abre o grupo; o aviso ao secretário, a lista.
+      if (data?.screen === "grupos") setTelaPendente({ tela: "grupos", grupoId: data.grupoId });
     };
 
     // Abertura fria: o toque chega ao nativo antes de haver listener em JS.
@@ -145,7 +147,16 @@ export function usePushNotifications() {
     // rodada de listeners de push. `dismissTo` volta para a instância que já
     // existe e o `navigate` seguinte resolve a tela de dentro.
     router.dismissTo("/(tabs)/minhas");
-    router.navigate(telaPendente.tela === "territorio" ? "/(tabs)/territorio" : "/(tabs)/minhas");
+    router.navigate(
+      telaPendente.tela === "territorio"
+        ? "/(tabs)/territorio"
+        : telaPendente.tela === "grupos"
+          ? "/(tabs)/grupos"
+          : "/(tabs)/minhas",
+    );
+    if (telaPendente.tela === "grupos" && telaPendente.grupoId) {
+      router.push({ pathname: "/grupos/[id]", params: { id: String(telaPendente.grupoId) } });
+    }
     if (telaPendente.tela === "territorio" && telaPendente.numero) {
       router.push({
         pathname: "/territorio/[numero]",

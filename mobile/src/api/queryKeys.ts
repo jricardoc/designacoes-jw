@@ -14,6 +14,11 @@ export const qk = {
   dirigentesQuadro: (id: number | string) =>
     ["dirigentes-quadros", String(id)] as const,
   grupos: ["grupos"] as const,
+  // Os grupos de campo com o relatório do mês. As chaves começam iguais ao prefixo de cada
+  // familia: invalidar ["grupos-painel"] pega todos os meses.
+  painelGrupos: (mes: string) => ["grupos-painel", mes] as const,
+  detalheGrupo: (id: number, mes: string, periodo: string) => ["grupo-detalhe", id, mes, periodo] as const,
+  resumoRelatorio: (mes: string) => ["relatorio-resumo", mes] as const,
   reunioes: ["reunioes"] as const,
   // Com o recorte no nome: a lista "so as proximas" e a "com as passadas" sao consultas
   // diferentes, e uma nao pode servir cache para a outra.
