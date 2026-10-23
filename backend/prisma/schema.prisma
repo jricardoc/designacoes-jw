@@ -90,6 +90,9 @@ model Config {
   // Onde instalar o app: { android: {url, versao, em}, ios: {...} }. Preenchido sozinho pelo
   // webhook do EAS quando um build de preview termina; /download/:plataforma redireciona para ca.
   linksDownload    Json?
+  // O secretario da congregacao (id do Irmao): ve todos os grupos e o relatorio de campo, e e
+  // avisado quando cada grupo conclui. Escolhido pelo admin geral na tela de Grupos.
+  secretarioIrmaoId Int?
   updatedAt        DateTime @updatedAt
 }
 
@@ -173,6 +176,9 @@ model Irmao {
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio            String?
+  // "regular" (pioneiro regular) ou null. Separado do privilegio: um servo ministerial pode
+  // ser pioneiro regular. O auxiliar e de cada mes e fica no proprio relatorio.
+  pioneiro              String?
   ativo                 Boolean                @default(true)
   usuario               Usuario?
   indisponibilidades    Indisponibilidade[]
@@ -180,6 +186,7 @@ model Irmao {
   carrinhoEscalas       CarrinhoEscala[]
   designacoesTerritorio DesignacaoTerritorio[]
   presencasZoom         PresencaZoom[]
+  relatoriosCampo       RelatorioCampo[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -204,8 +211,11 @@ model GrupoCampo {
   // caixa trocada, e o numero e o unico pedaco estavel; `scripts/vincularLimpeza.js`
   // aprende esse numero a partir do proprio documento. Nulo = casa so por nome.
   numero       Int?
+  // Onde o grupo se reune para sair ("Tokaia", "Casa de uma irmã"), como vem na lista de grupos.
+  local        String?
   ativo        Boolean @default(true)
   publicadores Irmao[] @relation("GrupoPublicadores")
+  relatoriosConcluidos RelatorioGrupoMes[]
 
   // Dirigente e ajudante moram NO GRUPO, e nao como campo do publicador: o papel e do grupo,
   // e a mesma pessoa pode dirigir um e nao ser nada em outro. Como campo da pessoa, trocar o
@@ -803,3 +813,47 @@ model AvisoTerritorio {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
+
+// ==========================================================================
+// RELATORIO DE SERVICO DE CAMPO
+// ==========================================================================
+
+// O relatorio de um irmao num mes de servico, anotado pelo dirigente (ou ajudante) do grupo
+// dele no comeco do mes seguinte. Publicador: participou ou nao, e quantos estudos. Pioneiro
+// (regular pelo cadastro, ou auxiliar naquele mes): horas e estudos.
+model RelatorioCampo {
+  id               Int      @id @default(autoincrement())
+  irmaoId          Int
+  irmao            Irmao    @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  // "2026-10": o mes em que o servico foi feito (entregue no inicio de novembro).
+  mes              String
+  participou       Boolean  @default(false)
+  estudos          Int      @default(0)
+  // So de quem foi pioneiro no mes. Inteiro, como no relatorio.
+  horas            Int?
+  pioneiroAuxiliar Boolean  @default(false)
+  // Regular quando relatou: o cadastro pode mudar depois, o relatorio nao.
+  pioneiroRegular  Boolean  @default(false)
+  observacao       String?
+  // O grupo em que o irmao estava ao relatar: se ele mudar de grupo, o relatorio fica onde foi feito.
+  grupoId          Int?
+  registradoPorId  Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([irmaoId, mes])
+  @@index([mes])
+}
+
+// O grupo entregou o relatorio do mes inteiro (todos os membros). Existe para avisar o
+// secretario uma vez so e para a tela mostrar quando o grupo concluiu.
+model RelatorioGrupoMes {
+  id          Int        @id @default(autoincrement())
+  grupoId     Int
+  grupo       GrupoCampo @relation(fields: [grupoId], references: [id], onDelete: Cascade)
+  mes         String
+  concluidoEm DateTime   @default(now())
+
+  @@unique([grupoId, mes])
+}
+

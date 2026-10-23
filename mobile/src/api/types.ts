@@ -51,7 +51,9 @@ export type TipoTarefa =
   | "quadroDesignacoes"
   | "confirmacoes"
   | "compartilharQuadro"
-  | "limpeza";
+  | "limpeza"
+  /** Pedir o relatório de campo ao grupo. Vem do grupo que o irmão dirige ou ajuda. */
+  | "relatorioGrupo";
 
 /** O que o admin pode marcar na folha de tarefas — tudo menos a limpeza. */
 export type TarefaAtribuivel = Exclude<TipoTarefa, "limpeza">;
@@ -80,7 +82,8 @@ export interface Tarefa {
   icone: string;
   cadencia: "reuniao" | "semana" | "mes";
   cadenciaLabel: string;
-  conclusao: "manual" | "quadro" | "nenhuma";
+  /** `relatorio`: sai sozinha quando o grupo inteiro entrega o relatório do mês. */
+  conclusao: "manual" | "quadro" | "nenhuma" | "relatorio";
   concluivel: boolean;
   /**
    * Para onde o card leva. `id` só vem quando o destino é uma tela de item — hoje só
@@ -210,7 +213,17 @@ export interface Usuario {
   privilegio?: PrivilegioId | null;
   /** Vínculo com o cadastro da congregação. Sem ele não há "Minhas Designações". */
   irmaoId?: number | null;
-  irmao?: { id: number; nome: string; funcoes: FuncaoId[] } | null;
+  irmao?: {
+    id: number;
+    nome: string;
+    funcoes: FuncaoId[];
+    /** "regular" quando é pioneiro regular. */
+    pioneiro?: "regular" | null;
+    /** Os grupos de campo que ele dirige ou ajuda: liberam a tela de Grupos. */
+    gruposQueLidera?: number[];
+    /** É o secretário: vê todos os grupos e o relatório da congregação. */
+    secretario?: boolean;
+  } | null;
   /** Quando a foto de perfil mudou (ISO); null/ausente = sem foto, mostra as iniciais. */
   fotoEm?: string | null;
 }
@@ -303,6 +316,8 @@ export interface Irmao {
   funcoes: FuncaoId[];
   nivelAudioVideo: NivelAudioVideo;
   privilegio?: PrivilegioId | null;
+  /** "regular" quando é pioneiro regular. */
+  pioneiro?: "regular" | null;
   /** Só dígitos, com DDD ("71999998888"). Abre o WhatsApp já com o texto na tela de Confirmações. */
   telefone?: string | null;
   genero?: GeneroPessoa | null;
@@ -1025,4 +1040,166 @@ export interface ReuniaoParaConfirmar {
 
 export interface ConfirmacoesResposta {
   reunioes: ReuniaoParaConfirmar[];
+}
+
+// --- Grupos de campo e relatório de serviço ---------------------------------
+
+export interface PessoaGrupo {
+  id: number;
+  nome: string;
+}
+
+export interface CabecalhoGrupo {
+  id: number;
+  /** "Grupo de Paulo": o grupo se chama pelo primeiro nome de quem dirige. */
+  rotulo: string;
+  nome: string;
+  numero: number | null;
+  /** Onde o grupo se reúne para sair. */
+  local: string | null;
+  dirigente: PessoaGrupo | null;
+  ajudante: PessoaGrupo | null;
+}
+
+export interface GrupoNoPainel extends CabecalhoGrupo {
+  membros: number;
+  entregues: number;
+  /** Quando o grupo inteiro entregou o relatório do mês (ISO), ou null. */
+  concluidoEm: string | null;
+}
+
+export interface PainelGrupos {
+  /** "2026-10": o mês do relatório. */
+  mes: string;
+  nomeMes: string;
+  /** Admin ou secretário: vê todos os grupos e o total da congregação. */
+  veTodos: boolean;
+  /** Quem é o secretário (só vem para quem vê todos). */
+  secretario: PessoaGrupo | null;
+  /** O pedido deste mês está valendo: é o mês que acabou de passar. */
+  pedir: boolean;
+  grupos: GrupoNoPainel[];
+}
+
+export interface RelatorioCampo {
+  id: number;
+  irmaoId: number;
+  mes: string;
+  participou: boolean;
+  estudos: number;
+  /** Só de quem foi pioneiro no mês. */
+  horas: number | null;
+  pioneiroAuxiliar: boolean;
+  pioneiroRegular: boolean;
+  observacao: string | null;
+}
+
+export interface NovoRelatorio {
+  irmaoId: number;
+  mes: string;
+  participou?: boolean;
+  estudos: number;
+  horas?: number | null;
+  pioneiroAuxiliar?: boolean;
+  observacao?: string | null;
+}
+
+/** O filtro das estatísticas: este mês, 3 meses ou o ano de serviço (desde setembro). */
+export type PeriodoGrupo = "mes" | "3m" | "ano";
+
+export interface EstatisticasMembro {
+  /** Designações do quadro (indicador, som, microfone...). */
+  mecanicas: number;
+  /** Partes na reunião. */
+  reuniao: number;
+  /** Saídas de campo como dirigente. */
+  dirigente: number;
+  /** Reuniões assistidas pelo Zoom. */
+  zoom: number;
+  designacoes: number;
+}
+
+export interface MembroGrupo {
+  id: number;
+  nome: string;
+  pioneiro: "regular" | null;
+  privilegio: PrivilegioId | null;
+  lider: "dirigente" | "ajudante" | null;
+  relatorio: RelatorioCampo | null;
+  /** Link do WhatsApp com o pedido do relatório escrito. Null sem telefone cadastrado. */
+  whatsapp: string | null;
+  estatisticas: EstatisticasMembro;
+}
+
+export interface DetalheGrupo {
+  grupo: CabecalhoGrupo;
+  mes: string;
+  nomeMes: string;
+  periodo: { nome: PeriodoGrupo; inicioISO: string; fimISO: string };
+  membros: MembroGrupo[];
+  entregues: number;
+  concluidoEm: string | null;
+  /** A mensagem pronta para pedir o relatório no grupo do WhatsApp. */
+  textoPedido: string;
+}
+
+export interface TotaisRelatorio {
+  publicadores: { quantidade: number; estudos: number };
+  auxiliares: { quantidade: number; horas: number; estudos: number };
+  regulares: { quantidade: number; horas: number; estudos: number };
+  naoParticiparam: number;
+  entregues: number;
+}
+
+export interface ResumoRelatorioMes {
+  mes: string;
+  nomeMes: string;
+  totais: TotaisRelatorio;
+  grupos: (GrupoNoPainel & { pendentes: string[] })[];
+  /** Todos os grupos concluíram o mês. */
+  completo: boolean;
+}
+
+/** Como um nome do PDF casou com o cadastro: o irmão, ou sugestões para o admin escolher. */
+export interface CasamentoNome {
+  irmao: PessoaGrupo | null;
+  criterio: string | null;
+  sugestoes: PessoaGrupo[];
+}
+
+export interface MembroPrevia extends CasamentoNome {
+  /** O nome como está no PDF. */
+  nome: string;
+  /** Escrito em verde no PDF: pioneiro regular. */
+  pioneiro: boolean;
+}
+
+/** O dirigente/ajudante: achado entre os membros (`membro`), ou casado com o cadastro. */
+export type LiderPrevia =
+  | { nome: string; membro: string }
+  | ({ nome: string; membro: null } & CasamentoNome);
+
+export interface GrupoPrevia {
+  numero: number | null;
+  local: string | null;
+  dirigente: LiderPrevia | null;
+  ajudante: LiderPrevia | null;
+  membros: MembroPrevia[];
+}
+
+export interface PreviaDivisao {
+  grupos: GrupoPrevia[];
+  avisos: string[];
+  /** Quem está num grupo hoje e não aparece na lista nova. */
+  saem: PessoaGrupo[];
+}
+
+export interface ResultadoDivisao {
+  success: boolean;
+  grupos: number;
+  pessoas: number;
+  pioneiros: number;
+  /** Nomes cadastrados agora (não estavam no cadastro). */
+  criados: string[];
+  sairam: number;
 }

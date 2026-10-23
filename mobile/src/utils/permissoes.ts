@@ -35,6 +35,16 @@ export function temAlgumEscopo(usuario: Usuario | null | undefined): boolean {
 }
 
 /**
+ * Vê a tela de Grupos? Quem dirige ou ajuda um grupo (só o próprio) e o secretário e o admin
+ * geral (todos). Espelha `veTodos`/`gruposQueLidera` do RelatorioCampoService.
+ */
+export function podeVerGrupos(usuario: Usuario | null | undefined): boolean {
+  return (
+    !!usuario?.isAdmin || !!usuario?.irmao?.secretario || (usuario?.irmao?.gruposQueLidera?.length ?? 0) > 0
+  );
+}
+
+/**
  * Pode registrar saída e marcar pontos no território? Dirigentes (função no cadastro, com a
  * conta vinculada) e quem cuida da área. Espelha `podeMarcarTerritorio` do backend.
  */

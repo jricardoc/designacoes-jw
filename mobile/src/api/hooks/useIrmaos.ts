@@ -7,10 +7,11 @@ import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
 import type { FuncaoId, Irmao, NivelAudioVideo, PrivilegioId, GeneroPessoa} from "@/api/types";
 
-export function useIrmaos() {
+export function useIrmaos(enabled = true) {
   return useQuery({
     queryKey: qk.irmaos,
     queryFn: () => apiRequest<Irmao[]>("/irmaos"),
+    enabled,
   });
 }
 
@@ -20,6 +21,8 @@ export interface IrmaoInput {
   nivelAudioVideo: NivelAudioVideo;
   /** `null` limpa o privilégio; omitir mantém o valor atual (ver IrmaoController.update). */
   privilegio?: PrivilegioId | null;
+  /** "regular" ou `null`; omitir mantém. */
+  pioneiro?: "regular" | null;
   /** `null` ou "" limpam; omitir mantém. Mesma regra do privilégio. */
   genero?: GeneroPessoa | null;
   /** Formato livre: o backend guarda só os dígitos. `null`/"" limpam; omitir mantém. */
