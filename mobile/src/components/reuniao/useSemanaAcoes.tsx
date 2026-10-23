@@ -98,7 +98,13 @@ export function useSemanaAcoes() {
   ) => {
     // Sem data importada não há como chavear o registro por dia — o botão de
     // assistência fica de fora junto com o de quem não gerencia reuniões.
-    const temData = !!datasDaSemana(semana).meio;
+    const { meio, fds } = datasDaSemana(semana);
+    const temData = !!meio;
+    // "16-10-2026": a data vai na rota, e a barra separaria o caminho.
+    const naRota = (d: typeof meio) =>
+      d
+        ? `${String(d.data.getDate()).padStart(2, "0")}-${String(d.data.getMonth() + 1).padStart(2, "0")}-${d.data.getFullYear()}`
+        : undefined;
     return (
       <SemanaCard
         key={semana.id}
@@ -116,6 +122,11 @@ export function useSemanaAcoes() {
         onAssistencia={
           podeRegistrarAssistencia && temData
             ? () => setAlvoAssistencia(semana)
+            : undefined
+        }
+        onZoom={
+          podeRegistrarAssistencia && temData
+            ? () => router.push({ pathname: "/reuniao/zoom", params: { meio: naRota(meio), fds: naRota(fds) } })
             : undefined
         }
         gerandoPdf={pdfDe === semana.id}
