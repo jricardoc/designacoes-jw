@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRevisita } from "@/api/hooks/usePioneiro";
 import type { TipoVisita } from "@/api/types";
@@ -13,6 +13,7 @@ import {
   BotaoIcone,
   dataLonga,
   digitosDe,
+  entrada,
   horaDe,
   linkComoChegar,
   MenuAcoes,
@@ -73,7 +74,7 @@ export default function ContatoMinisterio() {
     <View style={styles.tela}>
       <Topo direita={<BotaoIcone icone="ellipsis-horizontal" rotulo="Mais ações" onPress={() => setMenu(true)} />} />
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]} refreshControl={<RefreshControl {...puxar} tintColor={colors.primary} />}>
-        <Animated.View entering={FadeInDown.duration(380)} style={styles.cabeca}>
+        <Animated.View entering={entrada(0)} style={styles.cabeca}>
           <LinearGradient colors={[cor, colors.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.avatar}>
             <Text style={styles.avatarTexto}>{iniciais(r.nome)}</Text>
           </LinearGradient>
@@ -93,7 +94,7 @@ export default function ContatoMinisterio() {
           {r.endereco ? <Text style={styles.endereco}>{r.endereco}</Text> : null}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(70).duration(380)}>
+        <Animated.View entering={entrada(1)}>
           <Vidro style={styles.seguir}>
             <Text style={[styles.seguirRotulo, { color: cor }]}>
               {r.proximaVisita ? `A seguir · ${quandoRelativo(r.proximaVisita)}` : "Nenhuma visita marcada"}
@@ -117,7 +118,7 @@ export default function ContatoMinisterio() {
         </Animated.View>
 
         {r.observacao ? (
-          <Animated.View entering={FadeInDown.delay(120).duration(380)}>
+          <Animated.View entering={entrada(2)}>
             <Vidro style={styles.cartao}>
               <Text style={styles.rotulo}>Notas</Text>
               <Text style={styles.texto}>{r.observacao}</Text>
@@ -125,7 +126,7 @@ export default function ContatoMinisterio() {
           </Animated.View>
         ) : null}
 
-        <Animated.View entering={FadeInDown.delay(170).duration(380)}>
+        <Animated.View entering={entrada(3)}>
           <Text style={styles.secao}>Linha do tempo</Text>
           {r.visitas.length ? (
             <View style={styles.linhaTempo}>

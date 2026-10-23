@@ -11,6 +11,7 @@ import { quando } from "@/components/ministerio/escolhas";
 import {
   BotaoIcone,
   CabecalhoMinisterio,
+  entrada,
   linkComoChegar,
   MenuAcoes,
   Pilula,
@@ -131,7 +132,7 @@ export default function ContatosMinisterio() {
               {lista.map((r, i) => {
                 const s = situacaoDe(r.proximaVisita);
                 return (
-                  <Animated.View key={r.id} entering={FadeInDown.delay(Math.min(i, 10) * 35).duration(300)}>
+                  <Animated.View key={r.id} entering={entrada(i)}>
                     <Pressable
                       onPress={() => abrirContato(r.id)}
                       onLongPress={() => setMenu(r)}

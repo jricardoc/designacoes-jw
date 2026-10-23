@@ -7,7 +7,6 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import Animated, {
   cancelAnimation,
   Easing,
-  FadeInDown,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -15,7 +14,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import type { Icone } from "@/components/ministerio/kit";
+import { entrada, type Icone } from "@/components/ministerio/kit";
 import { Button } from "@/components/ui";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -119,7 +118,7 @@ export default function NovidadesMinisterio() {
           <View key={p.titulo} style={[s.pagina, { width }]}>
             <Ilustracao icone={p.icone} cores={p.cores} />
             {i === pagina ? (
-              <Animated.View entering={FadeInDown.duration(420)} style={s.textos}>
+              <Animated.View entering={entrada()} style={s.textos}>
                 <Text style={s.titulo}>{p.titulo}</Text>
                 <Text style={s.texto}>{p.texto}</Text>
               </Animated.View>

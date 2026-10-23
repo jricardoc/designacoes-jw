@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApagarViagem, useViagens } from "@/api/hooks/usePioneiro";
 import type { Viagem } from "@/api/types";
 import { diaCurto } from "@/components/ministerio/escolhas";
-import { BotaoIcone, MenuAcoes, mesAtual, Topo, Vidro } from "@/components/ministerio/kit";
+import { BotaoIcone, entrada, maiuscula, MenuAcoes, mesAtual, Topo, Vidro } from "@/components/ministerio/kit";
 import { ViagemSheet } from "@/components/ministerio/ViagemSheet";
 import { Button, useToast } from "@/components/ui";
 import { type Cores } from "@/theme";
@@ -39,7 +39,7 @@ export default function QuilometragemMinisterio() {
           <Pressable style={styles.seta} onPress={() => setMes(somarMeses(mes, -1))} hitSlop={6} accessibilityLabel="Mês anterior">
             <Ionicons name="chevron-back" size={18} color={colors.text} />
           </Pressable>
-          <Text style={styles.mesNome}>{nome.charAt(0).toUpperCase() + nome.slice(1)}</Text>
+          <Text style={styles.mesNome}>{maiuscula(nome)}</Text>
           <Pressable
             style={[styles.seta, mes >= atual && { opacity: 0.3 }]}
             onPress={() => setMes(somarMeses(mes, 1))}
@@ -51,7 +51,7 @@ export default function QuilometragemMinisterio() {
           </Pressable>
         </View>
 
-        <Animated.View entering={FadeInDown.duration(380)} style={styles.numeros}>
+        <Animated.View entering={entrada(0)} style={styles.numeros}>
           <Vidro style={styles.numero}>
             <Ionicons name="speedometer" size={20} color={colors.teal} />
             <Text style={styles.numeroValor}>{km(v?.km ?? 0)}</Text>
@@ -72,7 +72,7 @@ export default function QuilometragemMinisterio() {
         <Vidro style={styles.lista}>
           {v?.viagens.length ? (
             v.viagens.map((viagem, i) => (
-              <Animated.View key={viagem.id} entering={FadeInDown.delay(Math.min(i, 8) * 40).duration(300)}>
+              <Animated.View key={viagem.id} entering={entrada(i)}>
                 <Pressable
                   onLongPress={() => setMenu(viagem)}
                   delayLongPress={350}

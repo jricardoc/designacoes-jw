@@ -48,7 +48,7 @@ export function CartaoCalendario() {
         </View>
         <View style={styles.flex}>
           <Text style={styles.titulo}>Acompanhamentos no Calendário</Text>
-          <Text style={styles.texto}>Suas visitas marcadas e seus planos de saída no app Calendário do celular, sempre atualizados.</Text>
+          <Text style={styles.texto}>Suas visitas marcadas e seus planos de saída aparecem no calendário do celular, num calendário chamado “Ministério”. Ele se atualiza sozinho, mas pode levar algumas horas.</Text>
         </View>
       </View>
       <Button

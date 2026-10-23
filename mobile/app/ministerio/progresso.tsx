@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useApagarHoras, usePainelPioneiro, useProgresso } from "@/api/hooks/usePioneiro";
 import type { EmblemaPioneiro, ProgressoPioneiro, RegistroHoras } from "@/api/types";
 import { EmblemaCartao, EmblemaSheet } from "@/components/ministerio/Emblema";
 import { diaCurto, duracao } from "@/components/ministerio/escolhas";
 import { HorasSheet } from "@/components/ministerio/HorasSheet";
-import { Anel, CabecalhoMinisterio, MenuAcoes, mesAtual, Secao, TituloTela, useRecuo, Vidro, type Icone } from "@/components/ministerio/kit";
+import { Anel, CabecalhoMinisterio, entrada, maiuscula, MenuAcoes, mesAtual, Secao, TituloTela, useRecuo, Vidro, type Icone } from "@/components/ministerio/kit";
 import { RelatorioPioneiroSheet } from "@/components/ministerio/RelatorioPioneiroSheet";
 import { Button, Loading, useToast } from "@/components/ui";
 import { radius, type Cores } from "@/theme";
@@ -16,7 +16,6 @@ import { useTema } from "@/theme/TemaContext";
 import { nomeMes, somarMeses } from "@/utils/assistenciaMensal";
 import { usePuxar } from "@/utils/usePuxar";
 
-const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const horasDecimais = (min: number) => String(Math.floor(min / 6) / 10).replace(".", ",");
 
 type Status = ProgressoPioneiro["porMes"][number]["status"];
@@ -87,7 +86,7 @@ export default function ProgressoMinisterio() {
           }
         />
 
-        <Animated.View entering={FadeInDown.duration(400)}>
+        <Animated.View entering={entrada(0)}>
           <Vidro style={styles.hero}>
             <Anel tamanho={150} fracao={metaMin ? pg.minutosMes / metaMin : 0}>
               <Text style={styles.anelValor}>{horasDecimais(pg.minutosMes)}</Text>
@@ -117,7 +116,7 @@ export default function ProgressoMinisterio() {
           </Vidro>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(70).duration(400)} style={styles.bloco}>
+        <Animated.View entering={entrada(1)} style={styles.bloco}>
           <Secao titulo="Status por mês" />
           <Vidro style={styles.cartao}>
             <View style={styles.meses}>
@@ -156,7 +155,7 @@ export default function ProgressoMinisterio() {
           </Vidro>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(140).duration(400)} style={styles.bloco}>
+        <Animated.View entering={entrada(2)} style={styles.bloco}>
           <Secao titulo="Emblemas" />
           <View style={styles.grade}>
             {[0, 2].map((i) => (
@@ -169,7 +168,7 @@ export default function ProgressoMinisterio() {
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(210).duration(400)}>
+        <Animated.View entering={entrada(3)}>
           <Pressable onPress={() => router.push("/ministerio/quilometragem")} accessibilityRole="button" style={({ pressed }) => pressed && { opacity: 0.8 }}>
             <Vidro style={styles.km}>
               <View style={styles.kmIcone}>
@@ -187,7 +186,7 @@ export default function ProgressoMinisterio() {
           </Pressable>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(280).duration(400)} style={styles.bloco}>
+        <Animated.View entering={entrada(4)} style={styles.bloco}>
           <Secao titulo={`Horas de ${mesCurto}`} acao="Lançar" onAcao={() => setHorasAberto(true)} />
           <Vidro style={styles.cartao}>
             {p.registros.length ? (

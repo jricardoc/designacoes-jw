@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { ApiError } from "@/api/client";
 import { useCronometro, usePainelPioneiro } from "@/api/hooks/usePioneiro";
 import type { TipoVisita } from "@/api/types";
@@ -13,6 +13,7 @@ import {
   BotaoPilula,
   CabecalhoMinisterio,
   dataLonga,
+  entrada,
   horaDe,
   mesAtual,
   Pilula,
@@ -35,8 +36,6 @@ import { usePuxar } from "@/utils/usePuxar";
 const relogio = (s: number) => `${Math.floor(s / 3600)}:${doisDig(Math.floor((s % 3600) / 60))}:${doisDig(s % 60)}`;
 /** 1950 min -> "32,5" (o centro do anel) */
 const horasDecimais = (min: number) => String(Math.floor(min / 6) / 10).replace(".", ",");
-
-const entrada = (i: number) => FadeInDown.delay(i * 70).duration(420);
 
 /** O Início do Ministério: o dia do pioneiro — cronômetro, a meta, as conversas de hoje e o que vem a seguir. */
 export default function InicioMinisterio() {

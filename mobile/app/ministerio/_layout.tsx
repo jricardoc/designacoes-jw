@@ -3,7 +3,7 @@ import { Redirect, router, Stack } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { BarraMinisterio } from "@/components/ministerio/BarraMinisterio";
-import { Fundo } from "@/components/ministerio/kit";
+import { Fundo, LEVE } from "@/components/ministerio/kit";
 import { paletaMinisterio } from "@/components/ministerio/tema";
 import { useAuth } from "@/context/AuthContext";
 import { PaletaPropria, useTema } from "@/theme/TemaContext";
@@ -41,7 +41,7 @@ function Ambiente() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Fundo />
       {/* Telas transparentes e troca em fade: o fundo animado fica, só o conteúdo muda. */}
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" }, animation: "fade" }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "transparent" }, animation: "fade", animationDuration: LEVE }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="agenda" />
         <Stack.Screen name="contatos" />

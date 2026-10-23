@@ -1,18 +1,23 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, { FadeIn } from "react-native-reanimated";
 import { useAgendaPioneiro, useApagarPlano } from "@/api/hooks/usePioneiro";
 import type { AgendaPioneiro, PlanoSaida, SaidaAgenda } from "@/api/types";
 import { CartaoCalendario } from "@/components/ministerio/Calendario";
-import { duracao, isoDoDia } from "@/components/ministerio/escolhas";
+import { doisDig, duracao, isoDoDia } from "@/components/ministerio/escolhas";
 import {
   BotaoPilula,
   CabecalhoMinisterio,
   dataLonga,
+  EASE,
+  entrada,
   horaDe,
+  LEVE,
+  maiuscula,
   MenuAcoes,
+  Secao,
   SITUACAO,
   somarDias,
   TituloTela,
@@ -24,9 +29,8 @@ import { PlanoSheet } from "@/components/ministerio/PlanoSheet";
 import { Button, useToast } from "@/components/ui";
 import { DIAS_CURTOS, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { nomeMes, somarMeses } from "@/utils/assistenciaMensal";
 import { usePuxar } from "@/utils/usePuxar";
-
-const DIAS = 21;
 
 type Evento =
   | { tipo: "saida"; chave: string; hora: string; saida: SaidaAgenda }
@@ -55,25 +59,37 @@ function eventosDo(ag: AgendaPioneiro | undefined, dia: string): Evento[] {
 }
 
 /**
- * A agenda das próximas três semanas: as visitas marcadas, os planos de saída (os meus e os dos
- * outros pioneiros que compartilham) e as saídas de campo publicadas da congregação.
+ * A agenda do mês, num calendário com todos os dias: as visitas marcadas, os planos de saída
+ * (os meus e os dos outros pioneiros que compartilham) e as saídas de campo publicadas da congregação.
  */
 export default function AgendaMinisterio() {
   const { colors, styles } = useTema(criarEstilos);
   const recuo = useRecuo();
   const toast = useToast();
   const hoje = isoDoDia(new Date());
-  const ate = somarDias(hoje, DIAS - 1);
+  const [mes, setMes] = useState(() => hoje.slice(0, 7));
   const [dia, setDia] = useState(hoje);
-  const { data: ag, refetch } = useAgendaPioneiro(hoje, ate);
+  const [ano, numeroMes] = mes.split("-").map(Number);
+  const diasNoMes = new Date(ano, numeroMes, 0).getDate();
+  const { data: ag, refetch } = useAgendaPioneiro(`${mes}-01`, `${mes}-${doisDig(diasNoMes)}`);
   const apagarPlano = useApagarPlano();
   const puxar = usePuxar(refetch);
   const [planoAberto, setPlanoAberto] = useState(false);
   const [menuPlano, setMenuPlano] = useState<PlanoSaida | null>(null);
 
-  const dias = useMemo(() => Array.from({ length: DIAS }, (_, i) => somarDias(hoje, i)), [hoje]);
   const eventos = eventosDo(ag, dia);
-  const [ano, mes, numero] = dia.split("-").map(Number);
+  const [a, m, n] = dia.split("-").map(Number);
+
+  // No mês de hoje, abre em hoje; nos outros, no dia 1.
+  const mudarMes = (delta: number) => {
+    const novo = somarMeses(mes, delta);
+    setMes(novo);
+    setDia(novo === hoje.slice(0, 7) ? hoje : `${novo}-01`);
+  };
+  const irParaHoje = () => {
+    setMes(hoje.slice(0, 7));
+    setDia(hoje);
+  };
 
   const marcas = (d: string) => ({
     visita: !!ag?.visitas.some((v) => diaDaVisita(v.proximaVisita) === d),
@@ -114,37 +130,69 @@ export default function AgendaMinisterio() {
     <View style={styles.tela}>
       <CabecalhoMinisterio />
       <ScrollView contentContainerStyle={[styles.scroll, recuo]} refreshControl={<RefreshControl {...puxar} tintColor={colors.primary} />}>
-        <TituloTela
-          titulo="Agenda"
-          subtitulo={dataLonga(new Date(ano, mes - 1, numero))}
-          direita={<BotaoPilula rotulo="Planejar" icone="add" onPress={() => setPlanoAberto(true)} />}
-        />
+        <TituloTela titulo="Agenda" direita={<BotaoPilula rotulo="Planejar" icone="add" onPress={() => setPlanoAberto(true)} />} />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.semana}>
-          {dias.map((d) => {
-            const ativo = d === dia;
-            const [a, m, n] = d.split("-").map(Number);
-            const k = marcas(d);
-            return (
-              <Pressable
-                key={d}
-                onPress={() => setDia(d)}
-                style={[styles.dia, ativo && styles.diaAtivo]}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: ativo }}
-                accessibilityLabel={dataLonga(new Date(a, m - 1, n))}
-              >
-                <Text style={[styles.diaSemana, ativo && styles.diaTextoAtivo]}>{d === hoje ? "Hoje" : DIAS_CURTOS[new Date(a, m - 1, n).getDay()]}</Text>
-                <Text style={[styles.diaNumero, ativo && styles.diaTextoAtivo]}>{n}</Text>
-                <View style={styles.pontos}>
-                  {k.visita ? <View style={[styles.ponto, { backgroundColor: ativo ? colors.textOnPrimary : colors.primary }]} /> : null}
-                  {k.plano ? <View style={[styles.ponto, { backgroundColor: ativo ? colors.textOnPrimary : colors.purple }]} /> : null}
-                  {k.saida ? <View style={[styles.ponto, { backgroundColor: ativo ? colors.textOnPrimary : colors.teal }]} /> : null}
-                </View>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+        <Vidro style={styles.mes}>
+          <View style={styles.mesTopo}>
+            <Pressable style={styles.seta} onPress={() => mudarMes(-1)} hitSlop={6} accessibilityLabel="Mês anterior">
+              <Ionicons name="chevron-back" size={18} color={colors.text} />
+            </Pressable>
+            <Text style={styles.mesNome}>{maiuscula(nomeMes(mes))}</Text>
+            <Pressable style={styles.seta} onPress={() => mudarMes(1)} hitSlop={6} accessibilityLabel="Próximo mês">
+              <Ionicons name="chevron-forward" size={18} color={colors.text} />
+            </Pressable>
+          </View>
+          <Animated.View key={mes} entering={FadeIn.duration(LEVE).easing(EASE)} style={styles.grade}>
+            {DIAS_CURTOS.map((d) => (
+              <Text key={d} style={styles.semanaRotulo}>
+                {d[0]}
+              </Text>
+            ))}
+            {Array.from({ length: new Date(ano, numeroMes - 1, 1).getDay() }, (_, i) => (
+              <View key={`vazio${i}`} style={styles.celula} />
+            ))}
+            {Array.from({ length: diasNoMes }, (_, i) => {
+              const d = `${mes}-${doisDig(i + 1)}`;
+              const ativo = d === dia;
+              const k = marcas(d);
+              return (
+                <Pressable
+                  key={d}
+                  onPress={() => setDia(d)}
+                  style={styles.celula}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: ativo }}
+                  accessibilityLabel={dataLonga(new Date(ano, numeroMes - 1, i + 1))}
+                >
+                  <View style={[styles.bola, d === hoje && styles.bolaHoje, ativo && styles.bolaAtiva]}>
+                    <Text style={[styles.numero, d === hoje && styles.numeroHoje, ativo && styles.numeroAtivo]}>{i + 1}</Text>
+                  </View>
+                  <View style={styles.pontos}>
+                    {k.visita ? <View style={[styles.ponto, { backgroundColor: colors.primary }]} /> : null}
+                    {k.plano ? <View style={[styles.ponto, { backgroundColor: colors.purple }]} /> : null}
+                    {k.saida ? <View style={[styles.ponto, { backgroundColor: colors.teal }]} /> : null}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </Animated.View>
+          <View style={styles.legenda}>
+            {(
+              [
+                ["Visitas", colors.primary],
+                ["Planos", colors.purple],
+                ["Saídas de campo", colors.teal],
+              ] as const
+            ).map(([rotulo, cor]) => (
+              <View key={rotulo} style={styles.legendaItem}>
+                <View style={[styles.ponto, { backgroundColor: cor }]} />
+                <Text style={styles.legendaTexto}>{rotulo}</Text>
+              </View>
+            ))}
+          </View>
+        </Vidro>
+
+        <Secao titulo={dataLonga(new Date(a, m - 1, n))} acao={dia === hoje ? undefined : "Hoje"} onAcao={irParaHoje} />
 
         <View style={styles.lista}>
           {eventos.length ? (
@@ -152,7 +200,7 @@ export default function AgendaMinisterio() {
               const v = visual(e);
               const meuPlano = e.tipo === "plano" && e.plano.meu;
               return (
-                <Animated.View key={e.chave} entering={FadeInDown.delay(i * 50).duration(320)}>
+                <Animated.View key={e.chave} entering={entrada(i)}>
                   <Pressable
                     onPress={e.tipo === "visita" ? () => router.push({ pathname: "/ministerio/contato", params: { id: String(e.visita.id) } }) : undefined}
                     onLongPress={meuPlano ? () => setMenuPlano(e.plano) : undefined}
@@ -192,7 +240,7 @@ export default function AgendaMinisterio() {
         <CartaoCalendario />
       </ScrollView>
 
-      <PlanoSheet visible={planoAberto} onClose={() => setPlanoAberto(false)} dia={dia} />
+      <PlanoSheet visible={planoAberto} onClose={() => setPlanoAberto(false)} dia={dia >= hoje && dia <= somarDias(hoje, 44) ? dia : undefined} />
       <MenuAcoes
         visible={!!menuPlano}
         onClose={() => setMenuPlano(null)}
@@ -222,23 +270,34 @@ const criarEstilos = (colors: Cores) =>
     tela: { flex: 1 },
     scroll: { paddingHorizontal: 16, paddingTop: 4, gap: 16 },
     pressionado: { opacity: 0.75 },
-    semana: { gap: 8, paddingRight: 16 },
-    dia: {
-      width: 56,
-      alignItems: "center",
-      gap: 2,
-      paddingVertical: 10,
+    mes: { padding: 12, gap: 8 },
+    mesTopo: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    mesNome: { fontSize: 16, fontWeight: "800", color: colors.text },
+    seta: {
+      width: 36,
+      height: 36,
       borderRadius: 18,
+      alignItems: "center",
+      justifyContent: "center",
       backgroundColor: colors.surface,
       borderWidth: 1,
       borderColor: colors.border,
     },
-    diaAtivo: { backgroundColor: colors.primary, borderColor: colors.primary },
-    diaSemana: { fontSize: 11.5, fontWeight: "800", color: colors.textSecondary, textTransform: "uppercase" },
-    diaNumero: { fontSize: 20, fontWeight: "900", color: colors.text },
-    diaTextoAtivo: { color: colors.textOnPrimary },
-    pontos: { flexDirection: "row", gap: 3, height: 6, alignItems: "center" },
+    grade: { flexDirection: "row", flexWrap: "wrap" },
+    // 100 / 7: sete colunas certas, com ou sem a linha incompleta no fim.
+    semanaRotulo: { width: "14.2857%", textAlign: "center", fontSize: 12, fontWeight: "800", color: colors.textMuted, paddingBottom: 4 },
+    celula: { width: "14.2857%", alignItems: "center", gap: 2, paddingVertical: 3 },
+    bola: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "transparent" },
+    bolaHoje: { borderColor: colors.primary },
+    bolaAtiva: { backgroundColor: colors.primary, borderColor: colors.primary },
+    numero: { fontSize: 15, fontWeight: "700", color: colors.text, fontVariant: ["tabular-nums"] },
+    numeroHoje: { color: colors.primary, fontWeight: "900" },
+    numeroAtivo: { color: colors.textOnPrimary },
+    pontos: { flexDirection: "row", gap: 3, height: 5, alignItems: "center" },
     ponto: { width: 5, height: 5, borderRadius: 3 },
+    legenda: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 14 },
+    legendaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
+    legendaTexto: { fontSize: 12, color: colors.textSecondary },
     lista: { gap: 10 },
     evento: { flexDirection: "row", alignItems: "stretch", gap: 10 },
     horaCol: { width: 46, paddingTop: 14 },
