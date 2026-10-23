@@ -135,13 +135,5 @@ export function diaISO(diasAtras = 0): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/** Ponto [lat, lng] dentro do polígono? (ray casting — o mesmo do backend) */
-export function dentro([lat, lng]: [number, number], pontos: [number, number][]): boolean {
-  let resultado = false;
-  for (let i = 0, j = pontos.length - 1; i < pontos.length; j = i++) {
-    const [yi, xi] = pontos[i];
-    const [yj, xj] = pontos[j];
-    if (yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) resultado = !resultado;
-  }
-  return resultado;
-}
+/** Ponto [lat, lng] dentro do polígono? (ray casting — o mesmo do backend). Mora em onde.ts, que dá para testar. */
+export { dentro } from "./onde";

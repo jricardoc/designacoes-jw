@@ -21,6 +21,7 @@ import type { SituacaoTerritorio, TerritorioResumo } from "@/api/types";
 import { SaidasDeCampo } from "@/components/config/SaidasDeCampo";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
 import { FilaBanner } from "@/components/territorio/FilaBanner";
+import { OndeEstou } from "@/components/territorio/OndeEstou";
 import {
   MapaTerritorio,
   mapaDisponivel,
@@ -137,7 +138,8 @@ export default function TerritorioScreen() {
   const { data, isLoading, isError, refetch } = useTerritorios();
   const puxar = usePuxar(refetch);
   const doBanco = data?.fonte === "banco";
-  const { data: mapaGeral } = useMapaTerritorios(doBanco && modo === "mapa");
+  // Sempre que há mapas: além do modo mapa, os contornos dizem em que território o irmão está.
+  const { data: mapaGeral } = useMapaTerritorios(doBanco);
   const imagem = useImagemProtegida();
   const gerencia = !!data?.permissoes.gerenciar;
 
@@ -148,6 +150,7 @@ export default function TerritorioScreen() {
 
   const todos = useMemo(() => data?.territorios ?? [], [data]);
   const cores = data?.cores ?? {};
+  const descricoes = useMemo(() => Object.fromEntries(todos.map((t) => [t.numero, t.observacoes])), [todos]);
 
   // As áreas, na ordem do primeiro número de cada uma; "sem área" por último.
   const grupos = useMemo(() => {
@@ -294,6 +297,11 @@ export default function TerritorioScreen() {
               {item.nome}
             </Text>
           </View>
+          {item.observacoes ? (
+            <Text style={styles.descricao} numberOfLines={2}>
+              {item.observacoes}
+            </Text>
+          ) : null}
           <Text style={styles.ultima} numberOfLines={1}>
             {item.ultimaSaida
               ? `Última saída ${quandoFoi(item.ultimaSaida.dia)}${item.ultimaSaida.autor ? ` · ${item.ultimaSaida.autor}` : ""}`
@@ -385,6 +393,10 @@ export default function TerritorioScreen() {
         </View>
       ) : null}
 
+      {doBanco && !(aba === "saidas" && podeSaidas) ? (
+        <OndeEstou territorios={mapaGeral?.territorios} descricoes={descricoes} onAbrir={abrir} />
+      ) : null}
+
       {aba === "saidas" && podeSaidas ? (
         <ScrollView {...rolagem} contentContainerStyle={[styles.scrollSaidas, recuo]}>
           <SaidasDeCampo />
@@ -440,6 +452,11 @@ export default function TerritorioScreen() {
                         <Text style={styles.nome} numberOfLines={1}>
                           {t.nome}
                         </Text>
+                        {t.observacoes ? (
+                          <Text style={styles.descricao} numberOfLines={1}>
+                            {t.observacoes}
+                          </Text>
+                        ) : null}
                         <Text style={styles.ultima} numberOfLines={1}>
                           {s.rotulo}
                           {t.area ? ` · ${t.area}` : ""}
@@ -763,6 +780,7 @@ const criarEstilos = (colors: Cores) =>
     areaTituloCor: { width: 14, height: 14, borderRadius: 7 },
     areaTitulo: { fontSize: 22, fontWeight: "800", color: colors.text },
     textos: { flex: 1, gap: 3 },
+    descricao: { fontSize: 13.5, lineHeight: 18, color: colors.textSecondary },
     linhaTopo: { flexDirection: "row", alignItems: "baseline", gap: 8 },
     numero: { fontSize: 20, fontWeight: "900", color: colors.text },
     nome: { flex: 1, fontSize: 15.5, fontWeight: "700", color: colors.text },

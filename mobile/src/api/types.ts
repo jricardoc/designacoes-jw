@@ -476,6 +476,8 @@ export interface TerritorioResumo {
   nome: string;
   area: string | null;
   apelidos: string | null;
+  /** Descrição livre, mostrada embaixo do título do cartão. Ausente na API antiga. */
+  observacoes?: string | null;
   cor: string | null;
   quadras: number;
   situacao: SituacaoTerritorio;

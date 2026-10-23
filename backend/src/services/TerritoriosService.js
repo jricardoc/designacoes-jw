@@ -172,6 +172,8 @@ async function listar() {
             nome: t.nome,
             area: t.area,
             apelidos: t.apelidos,
+            // A descricao do cartao: aparece embaixo do titulo na lista.
+            observacoes: t.observacoes,
             cor: t.cor,
             quadras: t._count.quadras,
             situacao: situacao(t, noCiclo, marcas.some(m => m.tipo !== 'nao_bater' && new Date(m.createdAt) >= t.cicloDesde)),

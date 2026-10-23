@@ -38,6 +38,8 @@ export interface MapaTerritorioRef {
   /** Enquadra todos os polígonos de novo, ou só estes pontos. */
   enquadrar: (pontos?: Ponto[]) => void;
   focar: (lat: number, lng: number) => void;
+  /** Foto do mapa como está na tela (com quadras e pinos), num arquivo; null se não deu. */
+  foto: () => Promise<string | null>;
 }
 
 interface MapaTerritorioProps {
@@ -140,6 +142,16 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
     enquadrar,
     focar: (latitude, longitude) =>
       mapa.current?.animateToRegion({ latitude, longitude, latitudeDelta: 0.002, longitudeDelta: 0.002 }, 500),
+    foto: async () => {
+      try {
+        const uri = await mapa.current?.takeSnapshot({ format: "png", quality: 1, result: "file" });
+        if (!uri) return null;
+        // O iPhone devolve o caminho puro; o <Image> precisa do file://.
+        return uri.startsWith("/") ? `file://${uri}` : uri;
+      } catch {
+        return null;
+      }
+    },
   }));
 
   if (!mapaDisponivel) {

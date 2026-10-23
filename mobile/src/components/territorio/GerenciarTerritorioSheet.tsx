@@ -21,7 +21,8 @@ import { useTema } from "@/theme/TemaContext";
 import { AVISOS, diaCurto } from "@/territorios/constantes";
 import { ehAdminGeral } from "@/utils/permissoes";
 
-type Aba = "designar" | "avisos" | "dados" | "ciclo";
+export type AbaGerenciar = "designar" | "avisos" | "dados" | "ciclo";
+type Aba = AbaGerenciar;
 
 const ABAS: { id: Aba; rotulo: string }[] = [
   { id: "designar", rotulo: "Designar" },
@@ -63,15 +64,21 @@ const normalizar = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0
 export function GerenciarTerritorioSheet({
   territorio: t,
   visible,
+  abaInicial = "designar",
   onClose,
 }: {
   territorio: TerritorioDetalhe;
   visible: boolean;
+  /** Em que aba abrir: o lápis do título abre direto em "Dados". */
+  abaInicial?: AbaGerenciar;
   onClose: () => void;
 }) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
-  const [aba, setAba] = useState<Aba>("designar");
+  const [aba, setAba] = useState<Aba>(abaInicial);
+  useEffect(() => {
+    if (visible) setAba(abaInicial);
+  }, [visible, abaInicial]);
   const { data: dirigentes } = useDirigentesTerritorio(visible && aba === "designar");
   const designar = useDesignarTerritorio();
   const atualizarDesignacao = useAtualizarDesignacao();
@@ -291,7 +298,7 @@ export function GerenciarTerritorioSheet({
         {aba === "dados" ? (
           <>
             <TextField label="Número" value={dados.numero} onChangeText={(v) => setDados({ ...dados, numero: v })} autoCapitalize="characters" />
-            <TextField label="Nome" value={dados.nome} onChangeText={(v) => setDados({ ...dados, nome: v })} />
+            <TextField label="Título do cartão" value={dados.nome} onChangeText={(v) => setDados({ ...dados, nome: v })} />
             <Text style={styles.ajuda}>
               Área: {dados.area || "nenhuma"}. Muda em Territórios › Gerenciar › Áreas, onde um território fica numa área só.
             </Text>
@@ -302,7 +309,8 @@ export function GerenciarTerritorioSheet({
               onChangeText={(v) => setDados({ ...dados, apelidos: v })}
             />
             <TextField
-              label="Observações"
+              label="Descrição (aparece embaixo do título)"
+              placeholder="Ex.: atrás do mercado, entrada pela Rua das Flores"
               value={dados.observacoes}
               onChangeText={(v) => setDados({ ...dados, observacoes: v })}
               multiline

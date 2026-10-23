@@ -17,8 +17,9 @@ import { ApiError } from "@/api/client";
 import { useTerritorio } from "@/api/hooks/useTerritorios";
 import type { SaidaTerritorio } from "@/api/types";
 import { FilaBanner } from "@/components/territorio/FilaBanner";
-import { GerenciarTerritorioSheet } from "@/components/territorio/GerenciarTerritorioSheet";
+import { GerenciarTerritorioSheet, type AbaGerenciar } from "@/components/territorio/GerenciarTerritorioSheet";
 import { MapaTerritorio, mapaDisponivel, type MapaTerritorioRef, type PinoMapa } from "@/components/territorio/MapaTerritorio";
+import { MapaShareCard } from "@/components/territorio/MapaShareCard";
 import { MarcarSheet, type PontoEscolhido } from "@/components/territorio/MarcarSheet";
 import { PinoSheet } from "@/components/territorio/PinoSheet";
 import { SaidaSheet } from "@/components/territorio/SaidaSheet";
@@ -28,6 +29,7 @@ import { useTema } from "@/theme/TemaContext";
 import { abrirComoChegar, AVISOS, CASA_TRABALHADA, MARCACOES, quandoFoi, SITUACOES } from "@/territorios/constantes";
 import { useFilaTerritorios } from "@/territorios/fila";
 import { minhaLocalizacao } from "@/territorios/gps";
+import { exportarImagem } from "@/utils/exportImagem";
 import { usePuxar } from "@/utils/usePuxar";
 
 /**
@@ -53,9 +55,14 @@ export default function TerritorioScreen() {
   const [buscandoGps, setBuscandoGps] = useState(false);
   const [ponto, setPonto] = useState<PontoEscolhido | null>(null);
   const [saida, setSaida] = useState(false);
-  const [gerenciar, setGerenciar] = useState(false);
+  // Aberto em qual aba (null = fechado): a engrenagem abre em Designar; o lápis do título, em Dados.
+  const [gerenciar, setGerenciar] = useState<AbaGerenciar | null>(null);
   // O pino tocado no mapa: abre os detalhes e o "remover".
   const [pino, setPino] = useState<string | null>(null);
+  // Foto do mapa para compartilhar: enquanto existe, o cartão escondido fica montado.
+  const [fotoMapa, setFotoMapa] = useState<string | null>(null);
+  const [gerandoFoto, setGerandoFoto] = useState(false);
+  const cartaoMapa = useRef<View>(null);
 
   // Veio do aviso de marcação: centraliza o mapa no ponto e abre os detalhes dele, uma vez.
   const pontoDoAviso = useRef(marcacao);
@@ -175,6 +182,37 @@ export default function TerritorioScreen() {
     mapa.current?.focar(s.lat, s.lng);
   };
 
+  // Compartilhar o mapa com os pinos: a foto do mapa como está na tela entra num cartão
+  // (título, descrição, legenda), que vira imagem quando a foto termina de carregar.
+  const compartilharMapa = async (cheio: boolean) => {
+    if (gerandoFoto) return;
+    setGerandoFoto(true);
+    const uri = await (cheio ? mapaCheio : mapa).current?.foto();
+    if (!uri) {
+      setGerandoFoto(false);
+      toast.show("Não consegui gerar a imagem do mapa", "error");
+      return;
+    }
+    setFotoMapa(uri);
+  };
+  const enviarFotoMapa = async () => {
+    try {
+      await new Promise<void>((pronto) => requestAnimationFrame(() => requestAnimationFrame(() => pronto())));
+      await exportarImagem(cartaoMapa, `territorio-${t.numero}.png`);
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Não consegui compartilhar o mapa", "error");
+    } finally {
+      setFotoMapa(null);
+      setGerandoFoto(false);
+    }
+  };
+  const legendaDoMapa = Object.entries(
+    pinos.reduce<Record<string, number>>((conta, p) => ({ ...conta, [p.tipo]: (conta[p.tipo] ?? 0) + 1 }), {}),
+  ).map(([tipo, quantidade]) => {
+    const m = MARCACOES[tipo as keyof typeof MARCACOES];
+    return { letra: m.letra, rotulo: m.rotulo, cor: m.cor(colors), quantidade };
+  });
+
   const controlesDoMapa = (cheio: boolean) => (
     <View style={styles.controles}>
       <Pressable style={styles.controle} onPress={() => setSatelite((v) => !v)} accessibilityLabel="Alternar satélite">
@@ -193,6 +231,18 @@ export default function TerritorioScreen() {
         accessibilityLabel={cheio ? "Fechar tela cheia" : "Mapa em tela cheia"}
       >
         <Ionicons name={cheio ? "contract" : "expand"} size={20} color={colors.text} />
+      </Pressable>
+      <Pressable
+        style={styles.controle}
+        onPress={() => compartilharMapa(cheio)}
+        disabled={gerandoFoto}
+        accessibilityLabel="Compartilhar o mapa com os pinos"
+      >
+        {gerandoFoto ? (
+          <ActivityIndicator size="small" color={colors.text} />
+        ) : (
+          <Ionicons name="share-outline" size={20} color={colors.text} />
+        )}
       </Pressable>
     </View>
   );
@@ -221,7 +271,7 @@ export default function TerritorioScreen() {
         showBack
         right={
           t.permissoes.gerenciar ? (
-            <Pressable style={styles.gerenciar} onPress={() => setGerenciar(true)} hitSlop={8}>
+            <Pressable style={styles.gerenciar} onPress={() => setGerenciar("designar")} hitSlop={8}>
               <Ionicons name="settings-outline" size={18} color={colors.primaryDark} />
             </Pressable>
           ) : undefined
@@ -233,6 +283,21 @@ export default function TerritorioScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         refreshControl={<RefreshControl {...puxar} />}
       >
+        {/* A descrição fica embaixo do título, como no cartão da lista. */}
+        {t.observacoes || t.permissoes.gerenciar ? (
+          <View style={styles.descricaoCaixa}>
+            {t.observacoes ? <Text style={styles.descricao}>{t.observacoes}</Text> : null}
+            {t.permissoes.gerenciar ? (
+              <Pressable style={styles.editar} onPress={() => setGerenciar("dados")} hitSlop={8} accessibilityRole="button">
+                <Ionicons name="pencil" size={14} color={colors.primaryDark} />
+                <Text style={styles.editarTexto}>
+                  {t.observacoes ? "Editar título e descrição" : "Editar título ou adicionar descrição"}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
+
         {t.copiaLocalDe ? (
           <View style={styles.offline}>
             <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
@@ -385,8 +450,28 @@ export default function TerritorioScreen() {
           ) : null}
         </View>
 
-        {t.observacoes ? <Text style={styles.obs}>{t.observacoes}</Text> : null}
       </ScrollView>
+
+      {/* Fora da tela de propósito: precisa de layout para o view-shot capturar. */}
+      {fotoMapa ? (
+        <View style={styles.shotHost} pointerEvents="none">
+          <MapaShareCard
+            ref={cartaoMapa}
+            numero={t.numero}
+            nome={t.nome}
+            descricao={t.observacoes}
+            foto={fotoMapa}
+            legenda={legendaDoMapa}
+            geradoEm={new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            onPronto={enviarFotoMapa}
+            onErro={() => {
+              setFotoMapa(null);
+              setGerandoFoto(false);
+              toast.show("Não consegui montar a imagem do mapa", "error");
+            }}
+          />
+        </View>
+      ) : null}
 
       {/* Tela cheia: o mapa grande para andar com ele na rua. Segurar o dedo marca outro ponto. */}
       <Modal visible={telaCheia} animationType="slide" onRequestClose={() => setTelaCheia(false)}>
@@ -423,7 +508,12 @@ export default function TerritorioScreen() {
       <PinoSheet chave={telaCheia ? null : pino} territorio={t} onClose={() => setPino(null)} />
       <SaidaSheet territorio={territorio} visible={saida} onClose={() => setSaida(false)} />
       {t.permissoes.gerenciar ? (
-        <GerenciarTerritorioSheet territorio={t} visible={gerenciar} onClose={() => setGerenciar(false)} />
+        <GerenciarTerritorioSheet
+          territorio={t}
+          visible={gerenciar !== null}
+          abaInicial={gerenciar ?? undefined}
+          onClose={() => setGerenciar(null)}
+        />
       ) : null}
     </View>
   );
@@ -518,7 +608,11 @@ const criarEstilos = (colors: Cores) =>
     },
     atalhoTexto: { fontSize: 15.5, fontWeight: "800", color: colors.text, marginTop: 4 },
     atalhoSub: { fontSize: 12.5, color: colors.textSecondary },
-    obs: { fontSize: 13, color: colors.textSecondary, fontStyle: "italic" },
+    descricaoCaixa: { gap: 6, marginTop: -6 },
+    shotHost: { position: "absolute", left: -10000, top: 0 },
+    descricao: { fontSize: 15, lineHeight: 21, color: colors.textSecondary },
+    editar: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start" },
+    editarTexto: { fontSize: 13.5, fontWeight: "700", color: colors.primaryDark },
     cheioTopo: {
       position: "absolute",
       left: 12,
