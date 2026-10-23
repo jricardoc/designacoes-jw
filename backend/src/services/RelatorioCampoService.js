@@ -644,5 +644,8 @@ module.exports = {
     avisarDirigentes,
     gruposQueLidera,
     secretarioIrmaoId,
+    // Para a area de pioneiros: o relatorio que o proprio pioneiro manda conta para o grupo.
+    conferirConclusao,
+    enviarPush,
     _internos: { mesDeReferencia, nomeDoMes, normalizarRelatorio, resumir, textoDoPedido, periodo, estatisticas, isoDeBR, somarMeses, historicoDeRelatorios },
 };

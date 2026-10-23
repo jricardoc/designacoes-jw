@@ -45,6 +45,14 @@ export function podeVerGrupos(usuario: Usuario | null | undefined): boolean {
 }
 
 /**
+ * Usa a área de pioneiros? Pioneiro regular (cadastro) e o admin geral. Espelha o `contexto`
+ * do PioneiroService: lá também exige a conta ligada ao cadastro (as horas são de alguém).
+ */
+export function podeUsarPioneiro(usuario: Usuario | null | undefined): boolean {
+  return !!usuario?.isAdmin || usuario?.irmao?.pioneiro === "regular";
+}
+
+/**
  * Pode registrar saída e marcar pontos no território? Dirigentes (função no cadastro, com a
  * conta vinculada) e quem cuida da área. Espelha `podeMarcarTerritorio` do backend.
  */

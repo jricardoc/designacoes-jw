@@ -55,6 +55,7 @@ export default function LayoutDoMenu() {
               <Stack.Screen name="reuniao" />
               <Stack.Screen name="confirmacoes" />
               <Stack.Screen name="grupos" />
+              <Stack.Screen name="ministerio" />
               <Stack.Screen name="tarefas" />
               <Stack.Screen name="carrinho" />
               <Stack.Screen name="conta" />
