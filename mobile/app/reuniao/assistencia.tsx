@@ -141,6 +141,17 @@ export default function AssistenciaMensalScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         refreshControl={<RefreshControl {...puxar} />}
       >
+        {podeRegistrar ? (
+          <Pressable style={styles.zoom} onPress={() => router.push("/reuniao/zoom-relatorios")} accessibilityRole="button">
+            <Ionicons name="videocam-outline" size={18} color={colors.primaryDark} />
+            <View style={styles.zoomTextos}>
+              <Text style={styles.zoomTitulo}>Relatórios do Zoom</Text>
+              <Text style={styles.zoomDetalhe}>Resumo, participantes e transcrição de cada reunião</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+        ) : null}
+
         <View style={styles.meses}>
           <Pressable style={styles.seta} onPress={() => setEscolhido(somarMeses(mes, -1))} hitSlop={8} accessibilityLabel="Mês anterior">
             <Ionicons name="chevron-back" size={20} color={colors.primaryDark} />
@@ -254,6 +265,19 @@ const criarEstilos = (colors: Cores) =>
     tela: { flex: 1, backgroundColor: colors.background },
     scroll: { padding: 16, gap: 16 },
     meses: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    zoom: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+      padding: 14,
+      borderRadius: radius.lg,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    zoomTextos: { flex: 1 },
+    zoomTitulo: { fontSize: 15, fontWeight: "800", color: colors.text },
+    zoomDetalhe: { fontSize: 12.5, color: colors.textSecondary, marginTop: 1 },
     seta: {
       width: 40,
       height: 40,

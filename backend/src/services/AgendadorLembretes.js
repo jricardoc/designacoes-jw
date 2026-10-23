@@ -62,6 +62,14 @@ async function tique() {
     } catch (erro) {
         console.error('[relatorio] falha no tique:', erro);
     }
+
+    // A fila do Zoom tambem anda aqui (alem do disparo de cada webhook e do timer da proxima
+    // tentativa): no boot, recupera o que ficou pendente enquanto o container estava fora.
+    try {
+        await require('./ZoomSincronizacaoService').processarPendentes();
+    } catch (erro) {
+        console.error('[zoom] falha no tique:', erro.message);
+    }
 }
 
 function agendar() {

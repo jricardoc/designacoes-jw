@@ -38,6 +38,11 @@ services:
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-}
       SENHA_PADRAO: ${SENHA_PADRAO:-}
       FUSO_HORARIO: ${FUSO_HORARIO:-America/Sao_Paulo}
+      # Integracao com o Zoom (opcional; ver backend/.env.example).
+      ZOOM_ACCOUNT_ID: ${ZOOM_ACCOUNT_ID:-}
+      ZOOM_CLIENT_ID: ${ZOOM_CLIENT_ID:-}
+      ZOOM_CLIENT_SECRET: ${ZOOM_CLIENT_SECRET:-}
+      ZOOM_WEBHOOK_SECRET_TOKEN: ${ZOOM_WEBHOOK_SECRET_TOKEN:-}
     volumes:
       # Mapas de territorio (opcional): coloque a pasta "territorios" ao lado deste arquivo.
       - ./territorios:/app/public/territorios:ro

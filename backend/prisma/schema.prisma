@@ -68,32 +68,32 @@ model Historico {
 
 // Configuracoes gerais do sistema
 model Config {
-  id               Int      @id @default(autoincrement())
-  titulo           String
-  subtitulo        String
-  mes              String
+  id                Int      @id @default(autoincrement())
+  titulo            String
+  subtitulo         String
+  mes               String
   // Horario em que a reuniao comeca, "HH:MM" no fuso da congregacao. E o que torna possivel
   // um lembrete "3 horas antes": a designacao guarda so a data, entao sem isto nao existe
   // instante nenhum de onde subtrair as horas.
-  horaMeioSemana   String   @default("19:30")
-  horaFimDeSemana  String   @default("09:00")
+  horaMeioSemana    String   @default("19:30")
+  horaFimDeSemana   String   @default("09:00")
   // Dados do Zoom que entram nos convites: { meio: {link, id, senha, salaAberta}, fds: {...} }.
   // No banco, e nao no codigo, para cada congregacao preencher os seus pela tela de Ajustes
   // (e para link e senha nao irem parar num repositorio publico).
-  zoom             Json?
+  zoom              Json?
   // Cor de cada area de territorios no mapa geral: { "Tokaia": "#E53935" }. A area em si e o
   // campo `area` do Territorio; aqui so o que nao cabe nele.
-  coresAreas       Json?
+  coresAreas        Json?
   // Limite do territorio da congregacao, importado de um KML: { nome, cor, pontos: [[lat, lng]] }.
   // No banco, e nao no repositorio, porque e dado de cada congregacao.
-  limiteTerritorio Json?
+  limiteTerritorio  Json?
   // Onde instalar o app: { android: {url, versao, em}, ios: {...} }. Preenchido sozinho pelo
   // webhook do EAS quando um build de preview termina; /download/:plataforma redireciona para ca.
-  linksDownload    Json?
+  linksDownload     Json?
   // O secretario da congregacao (id do Irmao): ve todos os grupos e o relatorio de campo, e e
   // avisado quando cada grupo conclui. Escolhido pelo admin geral na tela de Grupos.
   secretarioIrmaoId Int?
-  updatedAt        DateTime @updatedAt
+  updatedAt         DateTime @updatedAt
 }
 
 // Usuario para autenticacao (login por nickname)
@@ -187,6 +187,7 @@ model Irmao {
   designacoesTerritorio DesignacaoTerritorio[]
   presencasZoom         PresencaZoom[]
   relatoriosCampo       RelatorioCampo[]
+  participacoesZoom     ZoomParticipante[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -201,20 +202,20 @@ model Irmao {
 // E o que liga a pessoa a limpeza do salao: o campo `limpeza` da programacao importada vem
 // escrito por grupo ("Grupos 1 Fulano & Grupo 2 Sicrano").
 model GrupoCampo {
-  id           Int     @id @default(autoincrement())
-  nome         String  @unique
+  id                   Int                 @id @default(autoincrement())
+  nome                 String              @unique
   // Ordem de exibicao; empate cai no nome. Serve para a lista nao dancar a cada renomeacao.
-  ordem        Int     @default(0)
+  ordem                Int                 @default(0)
   // O numero com que a PROGRAMACAO chama este grupo ("Limpeza: Grupo 4 Evaldo LIma").
   // Nao e a `ordem`: a ordem e de exibicao no app e nada obriga as duas a coincidirem —
   // hoje nao coincidem. Existe porque o nome do grupo no documento chega abreviado e com
   // caixa trocada, e o numero e o unico pedaco estavel; `scripts/vincularLimpeza.js`
   // aprende esse numero a partir do proprio documento. Nulo = casa so por nome.
-  numero       Int?
+  numero               Int?
   // Onde o grupo se reune para sair ("Tokaia", "Casa de uma irmã"), como vem na lista de grupos.
-  local        String?
-  ativo        Boolean @default(true)
-  publicadores Irmao[] @relation("GrupoPublicadores")
+  local                String?
+  ativo                Boolean             @default(true)
+  publicadores         Irmao[]             @relation("GrupoPublicadores")
   relatoriosConcluidos RelatorioGrupoMes[]
 
   // Dirigente e ajudante moram NO GRUPO, e nao como campo do publicador: o papel e do grupo,
@@ -339,14 +340,14 @@ model SemanaReuniao {
 // apaga e recria as semanas (deleteMany + createMany em ReuniaoController.import,
 // ids novos), e o historico de assistencia precisa sobreviver a isso.
 model AssistenciaReuniao {
-  id         Int      @id @default(autoincrement())
-  data       String // "dd/MM/yyyy" — o dia da reuniao contada (meio: a propria; fds: o domingo)
-  tipo       String // "meio" | "fds"
-  presencial Int      @default(0)
-  zoom       Int      @default(0)
+  id            Int            @id @default(autoincrement())
+  data          String // "dd/MM/yyyy" — o dia da reuniao contada (meio: a propria; fds: o domingo)
+  tipo          String // "meio" | "fds"
+  presencial    Int            @default(0)
+  zoom          Int            @default(0)
   presencasZoom PresencaZoom[]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@unique([data, tipo])
 }
@@ -857,3 +858,106 @@ model RelatorioGrupoMes {
   @@unique([grupoId, mes])
 }
 
+// ==========================================================================
+// INTEGRACAO COM O ZOOM (webhooks + API REST, Server-to-Server OAuth)
+// ==========================================================================
+
+// Uma OCORRENCIA de reuniao do Zoom. A chave e o UUID: a reuniao recorrente repete o numero
+// (meetingId) toda semana, e cada ocorrencia ganha o seu UUID.
+model ZoomReuniao {
+  id               Int                 @id @default(autoincrement())
+  uuid             String              @unique
+  meetingId        String
+  accountId        String?
+  hostId           String?
+  hostEmail        String?
+  topico           String?
+  inicio           DateTime?
+  fim              DateTime?
+  duracaoMin       Int?
+  fuso             String?
+  // Resumo do AI Companion. `resumoMarkdown` e o summary_content como veio, sem mexer;
+  // `resumoBruto` e a resposta inteira da API, para rastrear o que foi recebido.
+  resumoTitulo     String?
+  resumoMarkdown   String?
+  resumoBruto      Json?
+  resumoEditadoEm  DateTime?
+  resumoDocUrl     String?
+  // Tirado do Markdown (e dos campos antigos da API) para a tela: [{ titulo, itens }] e [texto].
+  topicos          Json?
+  decisoes         Json?
+  proximosPassos   Json?
+  transcricao      String?
+  transcricaoBruta Json?
+  participantesQtd Int?
+  // Quando todas as partes chegaram a um estado final (ok, indisponivel ou erro).
+  sincronizadoEm   DateTime?
+  participantes    ZoomParticipante[]
+  sincronizacoes   ZoomSincronizacao[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@index([inicio])
+  @@index([meetingId])
+}
+
+// Uma entrada na reuniao, como vem do relatorio de participantes: quem sai e volta aparece
+// de novo (outro user_id). `irmaoId` e o casamento do nome com o cadastro, quando ha certeza.
+model ZoomParticipante {
+  id             Int         @id @default(autoincrement())
+  reuniaoId      Int
+  reuniao        ZoomReuniao @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  zoomUserId     String?
+  participanteId String?
+  nome           String
+  entrada        DateTime?
+  saida          DateTime?
+  duracaoSeg     Int?
+  status         String?
+  irmaoId        Int?
+  irmao          Irmao?      @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
+
+  @@index([reuniaoId])
+}
+
+// A fila: uma linha por reuniao e por parte ("detalhes", "resumo", "participantes",
+// "transcricao"). O processamento pega o que esta pendente e venceu `proximaTentativa`;
+// falha temporaria (429, 5xx, rede, relatorio ainda nao pronto) volta com espera crescente.
+model ZoomSincronizacao {
+  id               Int         @id @default(autoincrement())
+  reuniaoId        Int
+  reuniao          ZoomReuniao @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  parte            String
+  // pendente | ok | indisponivel (o Zoom nao tem: resumo desligado, sem transcricao) | erro
+  status           String      @default("pendente")
+  tentativas       Int         @default(0)
+  proximaTentativa DateTime    @default(now())
+  ultimoErro       String?
+  concluidaEm      DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([reuniaoId, parte])
+  @@index([status, proximaTentativa])
+}
+
+// Cada evento recebido do Zoom, gravado ANTES de processar (nao se perde se o processamento
+// cair). `chave` (evento + UUID + horario do evento) segura a repeticao: o Zoom reenvia o
+// mesmo evento quando nao recebe resposta a tempo.
+model ZoomEvento {
+  id          Int       @id @default(autoincrement())
+  chave       String    @unique
+  evento      String
+  meetingUuid String?
+  meetingId   String?
+  accountId   String?
+  payload     Json
+  // recebido | aplicado | ignorado
+  status      String    @default("recebido")
+  ultimoErro  String?
+  recebidoEm  DateTime  @default(now())
+  aplicadoEm  DateTime?
+
+  @@index([status])
+  @@index([meetingUuid])
+}
