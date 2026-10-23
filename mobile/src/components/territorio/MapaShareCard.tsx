@@ -49,8 +49,8 @@ export const MapaShareCard = forwardRef<View, MapaShareCardProps>(function MapaS
     <View ref={ref} collapsable={false} style={styles.card}>
       <LinearGradient colors={["#6E7B57", "#5E6B48"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
         <Text style={styles.headerRotulo}>MAPA DO TERRITÓRIO</Text>
-        <Text style={styles.headerTitulo}>Território {numero}</Text>
-        <Text style={styles.headerNome}>{nome}</Text>
+        <Text style={styles.headerTitulo}>{nome || `Território ${numero}`}</Text>
+        <Text style={styles.headerNome}>Território {numero}</Text>
         {descricao ? <Text style={styles.headerDescricao}>{descricao}</Text> : null}
       </LinearGradient>
 
