@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
 import {
@@ -12,7 +12,7 @@ import {
 } from "@/api/hooks/useReunioes";
 import type { PresencaZoom, TipoAssistencia } from "@/api/types";
 import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
-import { Button, GradientHeader, Loading, TextField, useToast } from "@/components/ui";
+import { Button, EmptyState, GradientHeader, Loading, TextField, useToast } from "@/components/ui";
 import { DIAS_CURTOS, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
@@ -21,17 +21,108 @@ const normalizar = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-
 
 const ROTULO: Record<TipoAssistencia, string> = { meio: "Meio de semana", fds: "Fim de semana" };
 
+const dataDe = (texto: string) => {
+  const [d, m, a] = texto.split("/").map(Number);
+  return new Date(a, m - 1, d);
+};
+
+/** "Qui, 22/10" */
+const diaCurto = (texto: string) => `${DIAS_CURTOS[dataDe(texto).getDay()]}, ${texto.slice(0, 5)}`;
+
 /**
- * Quem assistiu pelo Zoom numa reunião, e quem levantou a mão.
+ * Quem assistiu pelo Zoom nas reuniões de uma semana (ou numa reunião só, vindo da lista do
+ * mês). Com as duas, a escolha no topo troca entre meio e fim de semana; abre na mais perto
+ * de hoje, que é a que quem registra acabou de assistir.
  *
- * Cada linha é uma conexão: um irmão do cadastro, ou o nome como aparece no Zoom (visitante).
- * "Pessoas" conta a família no mesmo aparelho; a soma é conferida com o número do Zoom que foi
- * contado na reunião, e dá para usar a soma como a contagem. Salvar regrava a lista inteira.
+ * Rota: /reuniao/zoom?meio=22-10-2026&fds=25-10-2026[&tipo=fds]
  */
 export default function ZoomScreen() {
-  const params = useLocalSearchParams<{ data: string; tipo: TipoAssistencia }>();
-  const data = String(params.data ?? "").replace(/-/g, "/");
-  const tipo: TipoAssistencia = params.tipo === "fds" ? "fds" : "meio";
+  const params = useLocalSearchParams<{ meio?: string; fds?: string; tipo?: TipoAssistencia }>();
+  const datas: Partial<Record<TipoAssistencia, string>> = {};
+  if (params.meio) datas.meio = String(params.meio).replace(/-/g, "/");
+  if (params.fds) datas.fds = String(params.fds).replace(/-/g, "/");
+  const disponiveis = (["meio", "fds"] as const).filter((t) => datas[t]);
+  const { styles } = useTema(criarEstilos);
+  const [tipo, setTipo] = useState<TipoAssistencia>(() => {
+    if (params.tipo && datas[params.tipo]) return params.tipo;
+    if (datas.meio && datas.fds) {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const distancia = (t: TipoAssistencia) => Math.abs(dataDe(datas[t]!).getTime() - hoje.getTime());
+      return distancia("fds") < distancia("meio") ? "fds" : "meio";
+    }
+    return datas.fds ? "fds" : "meio";
+  });
+  const [alterada, setAlterada] = useState(false);
+  const data = datas[tipo];
+
+  const trocar = (novo: TipoAssistencia) => {
+    if (novo === tipo) return;
+    if (!alterada) return setTipo(novo);
+    Alert.alert("Descartar as mudanças?", "A lista desta reunião ainda não foi salva.", [
+      { text: "Continuar editando", style: "cancel" },
+      {
+        text: "Descartar",
+        style: "destructive",
+        onPress: () => {
+          setAlterada(false);
+          setTipo(novo);
+        },
+      },
+    ]);
+  };
+
+  return (
+    <View style={styles.tela}>
+      <GradientHeader
+        title="Pelo Zoom"
+        description={data ? `${diaCurto(data)} · ${ROTULO[tipo]}` : "Quem assistiu pelo Zoom"}
+        showBack
+      />
+      {disponiveis.length > 1 ? (
+        <View style={styles.tipos}>
+          {disponiveis.map((t) => {
+            const ativo = t === tipo;
+            return (
+              <Pressable
+                key={t}
+                style={[styles.tipo, ativo && styles.tipoAtivo]}
+                onPress={() => trocar(t)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: ativo }}
+              >
+                <Text style={[styles.tipoRotulo, ativo && styles.tipoRotuloAtivo]}>{ROTULO[t]}</Text>
+                <Text style={[styles.tipoData, ativo && styles.tipoRotuloAtivo]}>{diaCurto(datas[t]!)}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      ) : null}
+      {data ? (
+        // A chave recria a lista ao trocar de reunião: cada uma começa do que está salvo nela.
+        <ListaZoom key={`${tipo}-${data}`} data={data} tipo={tipo} onAlterada={setAlterada} />
+      ) : (
+        <EmptyState icon="calendar-outline" title="Reunião sem data" message="Importe a programação para registrar o Zoom." />
+      )}
+    </View>
+  );
+}
+
+/**
+ * A lista de uma reunião. Cada linha é uma conexão: um irmão do cadastro, ou o nome como
+ * aparece no Zoom (visitante). "Pessoas" conta a família no mesmo aparelho; a soma é
+ * conferida com o número do Zoom contado na reunião, e dá para usar a soma como a contagem.
+ * Salvar regrava a lista inteira.
+ */
+function ListaZoom({
+  data,
+  tipo,
+  onAlterada,
+}: {
+  data: string;
+  tipo: TipoAssistencia;
+  onAlterada: (alterada: boolean) => void;
+}) {
   const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const toast = useToast();
@@ -62,6 +153,15 @@ export default function ZoomScreen() {
       .slice(0, 6);
   }, [busca, irmaos, lista]);
 
+  const original = JSON.stringify(
+    (salvas ?? []).map(({ nome, irmaoId, pessoas: n, levantouMao }) => ({ nome, irmaoId, pessoas: n, levantouMao })),
+  );
+  const alterada = lista !== null && JSON.stringify(lista) !== original;
+  // A tela de cima pergunta antes de trocar de reunião com mudança não salva.
+  useEffect(() => {
+    onAlterada(alterada);
+  }, [alterada, onAlterada]);
+
   if (carregandoAssistencias || (registro && carregandoLista) || lista === null) {
     return <Loading label="Carregando a lista do Zoom..." />;
   }
@@ -69,13 +169,6 @@ export default function ZoomScreen() {
   const pessoas = lista.reduce((s, p) => s + p.pessoas, 0);
   const maos = lista.filter((p) => p.levantouMao).length;
   const contado = registro?.zoom ?? null;
-  const original = JSON.stringify(
-    (salvas ?? []).map(({ nome, irmaoId, pessoas: n, levantouMao }) => ({ nome, irmaoId, pessoas: n, levantouMao })),
-  );
-  const alterada = JSON.stringify(lista) !== original;
-
-  const [d, m, a] = data.split("/").map(Number);
-  const titulo = `${DIAS_CURTOS[new Date(a, m - 1, d).getDay()]}, ${data} · ${ROTULO[tipo]}`;
 
   const adicionar = (nome: string, irmaoId: number | null) => {
     const limpo = nome.replace(/\s+/g, " ").trim();
@@ -115,8 +208,7 @@ export default function ZoomScreen() {
     );
 
   return (
-    <View style={styles.tela}>
-      <GradientHeader title="Pelo Zoom" description={titulo} showBack />
+    <>
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         keyboardShouldPersistTaps="handled"
@@ -251,13 +343,27 @@ export default function ZoomScreen() {
           fullWidth
         />
       </ScrollView>
-    </View>
+    </>
   );
 }
 
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     tela: { flex: 1, backgroundColor: colors.background },
+    tipos: { flexDirection: "row", gap: 10, paddingHorizontal: 16, paddingTop: 4 },
+    tipo: {
+      flex: 1,
+      alignItems: "center",
+      paddingVertical: 9,
+      borderRadius: radius.md,
+      borderWidth: 1.5,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    tipoAtivo: { backgroundColor: colors.primary, borderColor: colors.primary },
+    tipoRotulo: { fontSize: 13.5, fontWeight: "800", color: colors.text },
+    tipoRotuloAtivo: { color: colors.textOnPrimary },
+    tipoData: { fontSize: 12, color: colors.textSecondary },
     scroll: { padding: 16, gap: 12 },
     resumo: { flexDirection: "row", gap: 10 },
     numero: {

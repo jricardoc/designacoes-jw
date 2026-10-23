@@ -218,7 +218,7 @@ export default function AssistenciaMensalScreen() {
                 style={({ pressed }) => [styles.reuniao, pressed && podeRegistrar && { opacity: 0.8 }]}
                 disabled={!podeRegistrar}
                 onPress={() =>
-                  router.push({ pathname: "/reuniao/zoom", params: { data: r.data.replace(/\//g, "-"), tipo: r.tipo } })
+                  router.push({ pathname: "/reuniao/zoom", params: { [r.tipo]: r.data.replace(/\//g, "-"), tipo: r.tipo } })
                 }
                 accessibilityRole={podeRegistrar ? "button" : undefined}
               >

@@ -43,6 +43,7 @@ export function SemanaCard({
   onCompartilhar,
   onPdf,
   onAssistencia,
+  onZoom,
   compartilhando = false,
   gerandoPdf = false,
 }: {
@@ -60,6 +61,8 @@ export function SemanaCard({
    * (diferente de PDF/Compartilhar, que são de leitura e ficam para todos).
    */
   onAssistencia?: () => void;
+  /** Abre quem assistiu pelo Zoom nesta semana. Mesma regra do botão de Assistência. */
+  onZoom?: () => void;
   compartilhando?: boolean;
   gerandoPdf?: boolean;
 }) {
@@ -111,36 +114,48 @@ export function SemanaCard({
       ) : null}
 
       <View style={styles.acoes}>
-        <Pressable
-          style={styles.acao}
-          onPress={onPdf}
-          disabled={gerandoPdf || !onPdf}
-        >
-          {gerandoPdf ? (
-            <ActivityIndicator size="small" color={colors.primaryDark} />
-          ) : (
-            <Ionicons name="download-outline" size={15} color={colors.primaryDark} />
-          )}
-          <Text style={styles.acaoTexto}>PDF</Text>
-        </Pressable>
-        {onAssistencia ? (
-          <Pressable style={styles.acao} onPress={onAssistencia}>
-            <Ionicons name="people-outline" size={15} color={colors.primaryDark} />
-            <Text style={styles.acaoTexto}>Assistência</Text>
+        <View style={styles.acoesLista}>
+          <Pressable
+            style={styles.acao}
+            onPress={onPdf}
+            disabled={gerandoPdf || !onPdf}
+          >
+            {gerandoPdf ? (
+              <ActivityIndicator size="small" color={colors.primaryDark} />
+            ) : (
+              <Ionicons name="download-outline" size={15} color={colors.primaryDark} />
+            )}
+            <Text style={styles.acaoTexto}>PDF</Text>
+          </Pressable>
+          {onAssistencia ? (
+            <Pressable style={styles.acao} onPress={onAssistencia}>
+              <Ionicons name="people-outline" size={15} color={colors.primaryDark} />
+              <Text style={styles.acaoTexto}>Assistência</Text>
+            </Pressable>
+          ) : null}
+          <Pressable
+            style={styles.acao}
+            onPress={onCompartilhar}
+            disabled={compartilhando || !onCompartilhar}
+          >
+            {compartilhando ? (
+              <ActivityIndicator size="small" color={colors.primaryDark} />
+            ) : (
+              <Ionicons name="share-social-outline" size={15} color={colors.primaryDark} />
+            )}
+            <Text style={styles.acaoTexto}>Compartilhar</Text>
+          </Pressable>
+        </View>
+        {onZoom ? (
+          <Pressable
+            style={[styles.acao, styles.acaoOlho]}
+            onPress={onZoom}
+            accessibilityRole="button"
+            accessibilityLabel="Ver quem assistiu pelo Zoom"
+          >
+            <Ionicons name="eye-outline" size={17} color={colors.primaryDark} />
           </Pressable>
         ) : null}
-        <Pressable
-          style={styles.acao}
-          onPress={onCompartilhar}
-          disabled={compartilhando || !onCompartilhar}
-        >
-          {compartilhando ? (
-            <ActivityIndicator size="small" color={colors.primaryDark} />
-          ) : (
-            <Ionicons name="share-social-outline" size={15} color={colors.primaryDark} />
-          )}
-          <Text style={styles.acaoTexto}>Compartilhar</Text>
-        </Pressable>
       </View>
 
     </Animated.View>
@@ -196,13 +211,14 @@ const criarEstilos = (colors: Cores) =>
     },
     acoes: {
       flexDirection: "row",
-      // Com o botão de Assistência são três ações: em telas estreitas a linha
-      // quebra em vez de empurrar o último botão para fora do cartão.
-      flexWrap: "wrap",
-      gap: 8,
+      alignItems: "flex-start",
+      gap: 6,
       paddingHorizontal: 14,
       paddingVertical: 8,
     },
+    // Os botões com texto quebram linha em tela estreita; o olho fica sempre na ponta direita,
+    // alinhado com a primeira linha, em qualquer largura (o cartão em destaque é mais estreito).
+    acoesLista: { flex: 1, flexDirection: "row", flexWrap: "wrap", gap: 6 },
     acao: {
       flexDirection: "row",
       alignItems: "center",
@@ -213,6 +229,7 @@ const criarEstilos = (colors: Cores) =>
       paddingHorizontal: 12,
     },
     acaoTexto: { fontSize: 12.5, fontWeight: "700", color: colors.primaryDark },
+    acaoOlho: { paddingHorizontal: 10 },
     body: { padding: 14, paddingTop: 4, gap: 12 },
     secao: { flexDirection: "row", gap: 10 },
     secaoBar: { width: 4, borderRadius: 2 },
