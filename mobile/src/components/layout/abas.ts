@@ -2,7 +2,7 @@ import type { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
 
 /**
- * As cinco abas da barra flutuante, em ordem.
+ * As quatro abas da barra flutuante, em ordem (o "+" mora no meio, entre a 2ª e a 3ª).
  *
  * Ficam num módulo próprio porque agora DOIS componentes dependem delas e da mesma ordem: a
  * barra, que acende a ativa, e o gesto de arrastar para o lado, que anda para a vizinha.
@@ -23,7 +23,6 @@ export interface Aba {
 export const ABAS: Aba[] = [
   { chave: "minhas", rotulo: "Início", href: "/(tabs)/minhas", icone: "home-outline", iconeAtivo: "home" },
   { chave: "index", rotulo: "Designações", href: "/(tabs)", icone: "clipboard-outline", iconeAtivo: "clipboard" },
-  { chave: "dirigentes", rotulo: "Dirigentes", href: "/(tabs)/dirigentes", icone: "people-outline", iconeAtivo: "people" },
   { chave: "reuniao", rotulo: "Reunião", href: "/(tabs)/reuniao", icone: "calendar-outline", iconeAtivo: "calendar" },
   { chave: "conta", rotulo: "Conta", href: "/(tabs)/conta", icone: "person-circle-outline", iconeAtivo: "person-circle", tamanho: 28 },
 ];
@@ -40,7 +39,7 @@ export function chaveDaRotaAtual(segments: string[]): string {
   return grupo ?? "";
 }
 
-/** O índice da aba aberta, ou -1 fora das cinco (Território, Carrinho, Ajustes...). */
+/** O índice da aba aberta, ou -1 fora das quatro (Dirigentes, Território, Carrinho, Ajustes...). */
 export function indiceDaAba(segments: string[]): number {
   const atual = chaveDaRotaAtual(segments);
   return ABAS.findIndex((a) => a.chave === atual);

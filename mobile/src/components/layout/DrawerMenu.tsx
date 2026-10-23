@@ -48,7 +48,7 @@ interface ItemMenu {
 /**
  * O que o menu lateral guarda.
  *
- * Início, Designações, Dirigentes, Reunião e Conta NÃO estão aqui: são os cinco da barra
+ * Início, Designações, Reunião e Conta NÃO estão aqui: são os quatro da barra
  * flutuante (ver BarraFlutuante.tsx), sempre visível em qualquer tela de (tabs). Repeti-los
  * aqui só faria o irmão escolher entre dois caminhos para o mesmo lugar, e um menu que é
  * quase todo atalho duplicado deixa de valer a abertura.
@@ -57,6 +57,8 @@ interface ItemMenu {
  * todo dia, o menu ao que se abre de vez em quando.
  */
 const ITENS: ItemMenu[] = [
+  // Saiu da barra para o "+" de "Registrar o campo" ficar no meio dela.
+  { chave: "dirigentes", rotulo: "Dirigentes", icone: "flag-outline", href: "/(tabs)/dirigentes" },
   { chave: "territorio", rotulo: "Território", icone: "map-outline", href: "/(tabs)/territorio" },
   { chave: "carrinho", rotulo: "Carrinho", icone: "book-outline", href: "/(tabs)/carrinho" },
   // Falar com quem tem parte de estudante e anotar quem confirmou: área própria.

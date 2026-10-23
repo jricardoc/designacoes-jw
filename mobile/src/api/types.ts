@@ -1094,6 +1094,15 @@ export interface RelatorioCampo {
   observacao: string | null;
 }
 
+/** O relatório do próprio irmão num mês ("Registrar o campo", no "+" do Servir Mais). */
+export interface MeuRelatorio {
+  mes: string;
+  nomeMes: string;
+  /** Pioneiro regular manda pelo Ministério, com as horas lançadas. */
+  pioneiroRegular: boolean;
+  relatorio: Pick<RelatorioCampo, "participou" | "estudos" | "horas" | "pioneiroAuxiliar" | "observacao"> | null;
+}
+
 export interface NovoRelatorio {
   irmaoId: number;
   mes: string;

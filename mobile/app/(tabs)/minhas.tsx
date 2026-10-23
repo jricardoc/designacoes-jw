@@ -8,6 +8,7 @@ import { useTarefas } from "@/api/hooks/useTarefas";
 import type { Compromisso, Config, TipoCompromisso } from "@/api/types";
 import { GradientHeader, Loading } from "@/components/ui";
 import { CompromissoSheet } from "@/components/minhas/CompromissoSheet";
+import { CartaoCronometro } from "@/components/ministerio/CartaoCronometro";
 import { ListaTarefas } from "@/components/tarefas/ListaTarefas";
 import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
@@ -355,6 +356,8 @@ export default function InicioScreen() {
             </View>
           ) : (
             <>
+              {/* Contando no Ministério? O relógio vem junto para cá. */}
+              <CartaoCronometro />
               {/* O que o irmão abre o app para saber. Vem antes do resumo de
                   propósito, e some quando não há nada pela frente. */}
               {resumo.proximo ? (
