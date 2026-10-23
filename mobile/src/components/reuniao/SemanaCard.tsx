@@ -43,6 +43,7 @@ export function SemanaCard({
   onCompartilhar,
   onPdf,
   onAssistencia,
+  onZoom,
   compartilhando = false,
   gerandoPdf = false,
 }: {
@@ -60,6 +61,8 @@ export function SemanaCard({
    * (diferente de PDF/Compartilhar, que são de leitura e ficam para todos).
    */
   onAssistencia?: () => void;
+  /** Abre quem assistiu pelo Zoom nesta semana. Mesma regra do botão de Assistência. */
+  onZoom?: () => void;
   compartilhando?: boolean;
   gerandoPdf?: boolean;
 }) {
@@ -141,6 +144,16 @@ export function SemanaCard({
           )}
           <Text style={styles.acaoTexto}>Compartilhar</Text>
         </Pressable>
+        {onZoom ? (
+          <Pressable
+            style={[styles.acao, styles.acaoOlho]}
+            onPress={onZoom}
+            accessibilityRole="button"
+            accessibilityLabel="Ver quem assistiu pelo Zoom"
+          >
+            <Ionicons name="eye-outline" size={17} color={colors.primaryDark} />
+          </Pressable>
+        ) : null}
       </View>
 
     </Animated.View>
@@ -213,6 +226,8 @@ const criarEstilos = (colors: Cores) =>
       paddingHorizontal: 12,
     },
     acaoTexto: { fontSize: 12.5, fontWeight: "700", color: colors.primaryDark },
+    // Só o ícone, na ponta da linha (ou da linha de baixo, quando a linha quebra).
+    acaoOlho: { marginLeft: "auto", paddingHorizontal: 10 },
     body: { padding: 14, paddingTop: 4, gap: 12 },
     secao: { flexDirection: "row", gap: 10 },
     secaoBar: { width: 4, borderRadius: 2 },
