@@ -159,8 +159,10 @@ async function rodar(prisma, { enviados = [] } = {}) {
     ok(pg.viagens.km === 20 && pg.metaAno === pg.meta * 12, 'quilometragem e meta do ano');
 
     console.log('calendario');
+    ok((await P.painel(uPioneira)).calendario === false, 'sem link ainda: o painel diz que nao assinou');
     const l1 = await P.linkCalendario(uPioneira);
     ok(/^[a-f0-9]{48}$/.test(l1.token) && (await P.linkCalendario(uPioneira)).token === l1.token, 'o link e criado uma vez e reaproveitado');
+    ok((await P.painel(uPioneira)).calendario === true, 'com o link criado, o painel avisa o app');
     const cal = await P.calendarioIcs(l1.token);
     ok(cal.includes('SUMMARY:Revisita: Joana Exemplo') && cal.includes(`DTSTART:${amanha.replace(/-/g, '')}T123000Z`) && (cal.match(/UID:plano-/g) || []).length === 1,
         'a visita remarcada e o meu plano (09:30 da congregacao em UTC); o plano da companheira nao', cal);

@@ -310,6 +310,8 @@ async function painel(usuario, mesPedido) {
         hoje,
         nome: primeiroNome(irmao.nome),
         compartilharPlanos: perfil.compartilharPlanos,
+        // Ja gerou o link do calendario: o app para de convidar a assinar.
+        calendario: !!perfil.calendarioToken,
         conversasHoje: {
             total: doDia.length,
             feitas: doDia.filter((r) => feitas.has(r.id)).length,
