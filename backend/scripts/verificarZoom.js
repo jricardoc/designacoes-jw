@@ -125,6 +125,33 @@ async function principal() {
     eq(R.reuniaoDaCongregacao({ inicio: '2026-10-23T01:00:00Z', meetingId: '85511112222' }, cfg), { tipo: 'fds', data: '22/10/2026' }, 'o dia e o da congregacao (22h de quinta), o tipo pelo numero');
     eq(R.reuniaoDaCongregacao({ inicio: '2026-10-25T12:00:00Z', meetingId: '1' }, { meio: { id: '9' }, fds: { id: '9' } }), { tipo: 'fds', data: '25/10/2026' }, 'mesmo numero para as duas: pelo dia da semana');
 
+    console.log('relatorio de uso exportado (CSV)');
+    const C = require('../src/services/ZoomCsvService')._internos;
+    const CAB = 'Tópico,Tipo,ID,Nome do anfitrião,E-mail do anfitrião,Hora de início,Hora de fim,Participantes,Duração (minutos),Total de minutos do participante,Departamento,Grupo,Fonte,Visualizadores únicos,Máximo de visualizações simultâneas,Hora da criação,Nome (nome original),E-mail,Ingressar na hora,Hora de saída,Duração (minutos),Convidado,Registrando a resposta de isenção de responsabilidade,Na sala de espera';
+    const linha = (topico, id, ini, fim, nome, ent, sai, min, espera) =>
+        `${topico},Reunião,${id},Congregação Teste,c@exemplo.com,"${ini}","${fim}",9,120,300,,,Zoom,-,-,"13/02/2022 02:27:40 PM",${nome},,"${ent}","${sai}",${min},Sim,,${espera}`;
+    const csv = '﻿' + [
+        CAB,
+        linha('"Reunião, meio"', '823 4567 8901', '22/10/2026 07:13:55 PM', '22/10/2026 09:25:48 PM', 'Congregação Teste (Host)', '22/10/2026 07:13:55 PM', '22/10/2026 09:25:48 PM', 132, 'Não'),
+        linha('"Reunião, meio"', '823 4567 8901', '22/10/2026 07:13:55 PM', '22/10/2026 09:25:48 PM', 'Ana Sousa', '22/10/2026 07:14:00 PM', '22/10/2026 07:14:30 PM', 1, 'Sim'),
+        linha('"Reunião, meio"', '823 4567 8901', '22/10/2026 07:13:55 PM', '22/10/2026 09:25:48 PM', 'Ana Sousa', '22/10/2026 07:14:31 PM', '22/10/2026 09:25:00 PM', 131, 'Não'),
+        linha('"Reunião, meio"', '823 4567 8901', '22/10/2026 07:13:55 PM', '22/10/2026 09:25:48 PM', '"Lia ( Carlos Mendes )"', '22/10/2026 07:20:00 PM', '22/10/2026 09:00:00 PM', 100, 'Não'),
+        linha('"Reunião, meio"', '823 4567 8901', '22/10/2026 07:13:55 PM', '22/10/2026 09:25:48 PM', 'Visitante', '22/10/2026 07:30:00 PM', '22/10/2026 07:31:00 PM', 1, 'Sim'),
+        '',
+        linha('Teste', '111 222 333', '01/11/2026 12:05:00 AM', '01/11/2026 12:15:00 AM', 'Congregação Teste (Host)', '01/11/2026 12:05:00 AM', '01/11/2026 12:15:00 AM', 10, 'Não'),
+    ].join('\r\n') + '\r\n';
+    const tabela = C.lerCsv(csv);
+    eq([tabela.length, tabela[1][0], tabela[4][16]], [7, 'Reunião, meio', 'Lia ( Carlos Mendes )'], 'CSV com BOM, aspas, virgula dentro do campo e linha em branco');
+    eq([C.mapearColunas(tabela[0]).mapa.duracao, C.mapearColunas(tabela[0]).faltando], [20, []], 'duracao do participante e a segunda coluna "Duração (minutos)"');
+    eq([C.dataDoRelatorio('22/10/2026 07:13:55 PM').toISOString(), C.dataDoRelatorio('01/11/2026 12:05:00 AM').toISOString(), C.dataDoRelatorio('10/22/2026 07:13 PM', { ingles: true }).toISOString(), C.dataDoRelatorio('lixo')], ['2026-10-22T22:13:55.000Z', '2026-11-01T03:05:00.000Z', '2026-10-22T22:13:00.000Z', null], 'data do relatorio (12 h, meia-noite, ingles)');
+    eq(C.nomesDaLinha('Lia ( Carlos Mendes )'), { exibido: 'Lia', original: 'Carlos Mendes', anfitriao: false }, 'nome trocado no Zoom: o exibido e o original');
+    const doRelatorio = C.reunioesDoRelatorio(tabela);
+    const meio = doRelatorio.reunioes[0];
+    eq([doRelatorio.reunioes.length, meio.meetingId, meio.entradas.length, meio.pessoas, meio.duracaoMin], [2, '82345678901', 4, 2, 132], 'agrupa por reuniao, sem a linha da conta (anfitriao); quem so ficou na sala de espera nao conta');
+    eq(meio.entradas.map((e) => e.status), ['in_waiting_room', 'in_meeting', 'in_meeting', 'in_waiting_room'], 'sala de espera marcada');
+    eq(doRelatorio.reunioes[1].pessoas, 0, 'reuniao so com a conta: 0 pessoas (fica de fora)');
+    eq(C.reunioesDoRelatorio(C.lerCsv('a,b\n1,2')).erro, 'Não parece o relatório de uso do Zoom (exportado com os participantes).', 'arquivo que nao e o relatorio');
+
     console.log('cliente da API');
     eq([A.codificarUuid('abc+def=='), A.codificarUuid('/ajXp112QmuoKj4854875=='), A.codificarUuid('a//b')], ['abc%2Bdef%3D%3D', '%252FajXp112QmuoKj4854875%253D%253D', 'a%252F%252Fb'], 'UUID codificado (duas vezes com "/" no comeco ou "//")');
     eq([A.esperaDoRetryAfter('5'), A.esperaDoRetryAfter(new Date(Date.now() + 60000).toUTCString()) > 55000, A.esperaDoRetryAfter('lixo')], [5000, true, null], 'Retry-After em segundos ou data');

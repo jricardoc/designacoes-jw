@@ -280,13 +280,19 @@ async function detalhe(usuario, grupoId, { mes: mesPedido, periodo: nomePeriodo 
 
     const ids = g.publicadores.map((p) => p.id);
     const intervalo = periodo(nomePeriodo === 'mes' || nomePeriodo === 'ano' ? nomePeriodo : '3m', hojeISO());
-    const [relatorios, presencas] = await Promise.all([
+    const [relatorios, presencas, doRelatorioZoom] = await Promise.all([
         prisma.relatorioCampo.findMany({ where: { mes, irmaoId: { in: ids } } }),
         prisma.presencaZoom.findMany({
             where: { irmaoId: { in: ids } },
             select: { irmaoId: true, assistencia: { select: { data: true } } },
         }),
+        // As reunioes do relatorio do Zoom (API ou CSV) contam mesmo sem a lista da assistencia.
+        prisma.zoomParticipante.findMany({
+            where: { irmaoId: { in: ids }, status: { not: 'in_waiting_room' } },
+            select: { irmaoId: true, reuniao: { select: { inicio: true } } },
+        }),
     ]);
+    const diaDoZoom = (inicio) => (inicio ? relogioDaCongregacao(inicio).toISOString().slice(0, 10) : null);
     const { listarPorIrmao } = require('./MinhasDesignacoesService');
     const compromissos = await Promise.all(g.publicadores.map((p) => listarPorIrmao(p).catch(() => [])));
 
@@ -300,7 +306,11 @@ async function detalhe(usuario, grupoId, { mes: mesPedido, periodo: nomePeriodo 
         whatsapp: linkWhatsApp(p.telefone, textoDoPedido({ mes, nome: p.nome, pioneiro: p.pioneiro === 'regular' })),
         estatisticas: estatisticas(
             compromissos[i],
-            presencas.filter((z) => z.irmaoId === p.id).map((z) => isoDeBR(z.assistencia.data)),
+            // Um dia por reuniao: a mesma pode estar na lista da assistencia e no relatorio do Zoom.
+            [...new Set([
+                ...presencas.filter((z) => z.irmaoId === p.id).map((z) => isoDeBR(z.assistencia.data)),
+                ...doRelatorioZoom.filter((z) => z.irmaoId === p.id).map((z) => diaDoZoom(z.reuniao.inicio)),
+            ])],
             intervalo,
         ),
     }));

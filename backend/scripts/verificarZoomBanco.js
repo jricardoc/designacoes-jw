@@ -64,7 +64,9 @@ async function rodar(prisma) {
         const cru = Buffer.from(JSON.stringify(corpo));
         const ts = String(Math.floor(Date.now() / 1000));
         const assinatura = `v0=${crypto.createHmac('sha256', segredo).update(`v0:${ts}:${cru}`).digest('hex')}`;
-        const cabecalhos = { 'x-zm-signature': estragar ? `${assinatura.slice(0, -2)}00` : assinatura, 'x-zm-request-timestamp': ts };
+        // Troca o ultimo caractere por outro, sempre diferente (com "00" fixo, 1 vez em 256 nao mudava nada).
+        const estragada = assinatura.slice(0, -1) + (assinatura.endsWith('0') ? '1' : '0');
+        const cabecalhos = { 'x-zm-signature': estragar ? estragada : assinatura, 'x-zm-request-timestamp': ts };
         return { body: cru, get: (h) => cabecalhos[h.toLowerCase()] };
     };
     // O controller dispara a fila logo depois de responder; no teste a fila anda quando o
@@ -250,6 +252,62 @@ async function rodar(prisma) {
     ok(levar.adicionados === 2 && levar.total === 3, 'assistencia: entram os que faltavam', levar);
     ok(lista2.find((p) => p.irmaoId === ana.id).pessoas === 2 && lista2.find((p) => p.irmaoId === ana.id).levantouMao === true, 'assistencia: quem ja estava fica como estava (pessoas e mao levantada)');
     ok(lista2.some((p) => p.nome === 'Carlos Mendes') && lista2.some((p) => p.nome === 'Visitante'), 'assistencia: Carlos pelo cadastro, visitante pelo nome do Zoom', lista2.map((p) => p.nome));
+
+    console.log('importacao do relatorio (CSV)');
+    const ZoomCsv = require('../src/services/ZoomCsvService');
+    const CAB = 'Tópico,Tipo,ID,Nome do anfitrião,E-mail do anfitrião,Hora de início,Hora de fim,Participantes,Duração (minutos),Total de minutos do participante,Departamento,Grupo,Fonte,Visualizadores únicos,Máximo de visualizações simultâneas,Hora da criação,Nome (nome original),E-mail,Ingressar na hora,Hora de saída,Duração (minutos),Convidado,Registrando a resposta de isenção de responsabilidade,Na sala de espera';
+    const reuniaoCsv = (id, ini, fim, pessoas) => [
+        `Reunião,Reunião,${id},Congregação Teste,c@exemplo.com,"${ini}","${fim}",9,120,300,,,Zoom,-,-,"13/02/2022 02:27:40 PM",Congregação Teste (Host),c@exemplo.com,"${ini}","${fim}",120,Não,,Não`,
+        ...pessoas.map(([nome, espera]) => `Reunião,Reunião,${id},Congregação Teste,c@exemplo.com,"${ini}","${fim}",9,120,300,,,Zoom,-,-,"13/02/2022 02:27:40 PM","${nome}",,"${ini}","${fim}",${espera ? 1 : 110},Sim,,${espera ? 'Sim' : 'Não'}`),
+    ];
+    const csv = Buffer.from('﻿' + [
+        CAB,
+        // quinta 08/10 (meio): sem contagem registrada na assistencia
+        ...reuniaoCsv('823 4567 8901', '08/10/2026 07:13:00 PM', '08/10/2026 09:20:00 PM', [['Ana Sousa'], ['iPhone de Paulo Lima'], ['Lia ( Carlos Mendes )'], ['Visitante Um'], ['Visitante Dois'], ['Só Esperou', true]]),
+        // domingo 25/10 (fim de semana): contagem ja registrada
+        ...reuniaoCsv('855 1111 2222', '25/10/2026 08:41:00 AM', '25/10/2026 10:40:00 AM', [['Ana Sousa'], ['Paulo Exemplo Lima'], ['Visitante Um'], ['Visitante Dois'], ['Visitante Tres']]),
+        // so a conta e uma pessoa: fica de fora
+        ...reuniaoCsv('823 4567 8901', '26/07/2026 10:52:00 AM', '26/07/2026 11:03:00 AM', [['Visitante Um']]),
+        // reuniao de outra coisa na mesma conta
+        ...reuniaoCsv('999 888 777', '10/10/2026 03:00:00 PM', '10/10/2026 04:00:00 PM', [['A Um'], ['B Dois'], ['C Tres'], ['D Quatro'], ['E Cinco']]),
+    ].join('\r\n'));
+    await prisma.assistenciaReuniao.upsert({ where: { data_tipo: { data: '25/10/2026', tipo: 'fds' } }, update: {}, create: { data: '25/10/2026', tipo: 'fds', presencial: 70, zoom: 10 } });
+    const totalAntes = await prisma.zoomReuniao.count();
+    let imp = await ZoomCsv.importar([{ nome: 'outubro.csv', buffer: csv }]);
+    ok(imp.reunioes.length === 2 && imp.ignoradas.length === 2 && imp.erros.length === 0, 'importa as 2 reunioes da congregacao; ignora a de 1 pessoa e a de outro numero', imp);
+    ok(imp.ignoradas.map((i) => i.motivo).sort().join(' | ') === 'fora das reuniões de Ajustes › Zoom | poucos participantes', 'motivo de cada uma que ficou de fora', imp.ignoradas);
+    const quinta = imp.reunioes.find((r) => r.data === '08/10/2026');
+    const domingo = imp.reunioes.find((r) => r.data === '25/10/2026');
+    ok(quinta.tipo === 'meio' && quinta.pessoas === 5 && quinta.doCadastro === 3 && quinta.assistencia === null, 'quinta: 5 pessoas, 3 do cadastro (inclusive pelo nome original), sem contagem: nao mexe na assistencia', quinta);
+    ok(!(await prisma.assistenciaReuniao.findUnique({ where: { data_tipo: { data: '08/10/2026', tipo: 'meio' } } })), 'nao cria assistencia zerada (puxaria a media do mes)');
+    ok(domingo.tipo === 'fds' && domingo.assistencia && domingo.assistencia.adicionados === 5, 'domingo: os 5 entram em quem assistiu pelo Zoom', domingo);
+    const zQuinta = await prisma.zoomReuniao.findUnique({ where: { id: quinta.id }, include: { participantes: true } });
+    ok(zQuinta.uuid.startsWith('csv:') && zQuinta.participantesQtd === 5 && zQuinta.participantes.length === 6 && zQuinta.participantes.some((p) => p.status === 'in_waiting_room'), 'gravada com as entradas (inclusive a da sala de espera) e 5 pessoas', zQuinta.participantesQtd);
+    const contar = async () => [await prisma.zoomReuniao.count(), await prisma.zoomParticipante.count(), await prisma.presencaZoom.count()];
+    const antesDeReimportar = await contar();
+    imp = await ZoomCsv.importar([{ nome: 'outubro.csv', buffer: csv }]);
+    ok(JSON.stringify(await contar()) === JSON.stringify(antesDeReimportar) && antesDeReimportar[0] === totalAntes + 2, 'importar o mesmo arquivo de novo nao duplica nada', [antesDeReimportar, await contar()]);
+    const listaCsv = await Sync.listar({ de: '2026-10-08', ate: '2026-10-08' });
+    ok(listaCsv.reunioes.length === 1 && listaCsv.reunioes[0].origem === 'csv' && listaCsv.reunioes[0].situacao === 'ok', 'na lista, marcada como vinda do relatorio');
+    const erroCsv = await ZoomCsv.importar([{ nome: 'planilha.csv', buffer: Buffer.from('nome,idade\nx,1') }]);
+    ok(erroCsv.reunioes.length === 0 && /Não parece o relatório/.test(erroCsv.erros[0]), 'arquivo que nao e o relatorio: erro claro');
+
+    // As estatisticas do grupo contam o Zoom do relatorio, sem repetir o dia que tambem esta na assistencia.
+    const carlos = await prisma.irmao.findUnique({ where: { nome: 'Carlos Mendes' } });
+    const grupo = await prisma.grupoCampo.create({ data: { nome: 'Grupo Teste Zoom', numero: 77 } });
+    await prisma.irmao.update({ where: { id: carlos.id }, data: { grupoId: grupo.id } });
+    const adm = await prisma.usuario.create({ data: { nickname: 'admzoom', nome: 'admzoom', senha: 'x', isAdmin: true }, select: { id: true, isAdmin: true, escopos: true, irmaoId: true } });
+    const Relatorio = require('../src/services/RelatorioCampoService');
+    const det = await Relatorio.detalhe(adm, grupo.id, { periodo: 'ano' });
+    const estCarlos = det.membros.find((m) => m.id === carlos.id).estatisticas;
+    ok(estCarlos.zoom === 2, 'grupos: Carlos assistiu 2 reunioes pelo Zoom (22/10 na lista e no relatorio, 08/10 so no relatorio)', estCarlos);
+
+    // Quando a API chegar, a ocorrencia importada vira a de verdade (sem duplicar).
+    zoom.instancias['85511112222'] = [{ uuid: 'fds-real==', start_time: '2026-10-25T11:41:00Z' }];
+    const adocao = await Sync.sincronizarPeriodo({ de: '2026-10-24', ate: '2026-10-26' });
+    await ocioso();
+    const adotada = await prisma.zoomReuniao.findUnique({ where: { id: domingo.id } });
+    ok(adotada.uuid === 'fds-real==' && !(await prisma.zoomReuniao.findFirst({ where: { uuid: 'fds-real==', NOT: { id: domingo.id } } })), 'a reuniao do relatorio ganha o UUID da API, sem criar outra', [adocao, adotada.uuid]);
 
     const est = await Sync.estado();
     ok(est.api && est.webhook && typeof est.pendentes === 'number' && est.ultimoEvento, 'estado da integracao', est);

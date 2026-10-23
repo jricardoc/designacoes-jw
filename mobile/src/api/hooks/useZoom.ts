@@ -1,7 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
-import type { EstadoZoom, PaginaReunioesZoom, ReuniaoZoomDetalhe } from "@/api/types";
+import type { ArquivoSelecionado } from "@/api/hooks/useReunioes";
+import type { EstadoZoom, PaginaReunioesZoom, ResultadoImportacaoZoom, ReuniaoZoomDetalhe } from "@/api/types";
 
 /**
  * Os relatórios das reuniões do Zoom, que o servidor recebe sozinho (webhook + API do Zoom).
@@ -88,6 +89,28 @@ export function useSincronizarReuniaoZoom() {
         body: { forcar: !!forcar },
       }),
     onSuccess: invalidar,
+  });
+}
+
+/**
+ * Importa os relatórios de uso exportados do zoom.us (CSV), vários de uma vez. É o caminho
+ * enquanto a conta do Zoom não tem o app da API.
+ */
+export function useImportarRelatorioZoom() {
+  const qc = useQueryClient();
+  const invalidar = useInvalidarZoom();
+  return useMutation({
+    mutationFn: (arquivos: ArquivoSelecionado[]) => {
+      const form = new FormData();
+      for (const a of arquivos) {
+        form.append("files", { uri: a.uri, name: a.name || "relatorio.csv", type: a.mimeType || "text/csv" } as unknown as Blob);
+      }
+      return apiRequest<ResultadoImportacaoZoom>("/zoom/importar", { method: "POST", body: form, timeoutMs: 180_000 });
+    },
+    onSuccess: () => {
+      invalidar();
+      qc.invalidateQueries({ queryKey: qk.assistencias });
+    },
   });
 }
 

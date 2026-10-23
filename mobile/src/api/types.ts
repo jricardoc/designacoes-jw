@@ -1223,9 +1223,13 @@ export interface ReuniaoDaCongregacao {
   data: string;
 }
 
+/** "api": veio do webhook e da API do Zoom; "csv": do relatório de uso exportado (sem resumo nem transcrição). */
+export type OrigemZoom = "api" | "csv";
+
 export interface ReuniaoZoomResumo extends SincronizacaoZoom {
   id: number;
   uuid: string;
+  origem: OrigemZoom;
   meetingId: string;
   topico: string | null;
   inicio: string | null;
@@ -1271,6 +1275,7 @@ export interface TopicoZoom {
 export interface ReuniaoZoomDetalhe extends SincronizacaoZoom {
   id: number;
   uuid: string;
+  origem: OrigemZoom;
   meetingId: string;
   hostEmail: string | null;
   topico: string | null;
@@ -1293,6 +1298,22 @@ export interface ReuniaoZoomDetalhe extends SincronizacaoZoom {
   assistencia: { id: number; presencial: number; zoom: number; lista: number } | null;
   participantes: ParticipanteZoom[];
   entradas: number;
+}
+
+/** O que a importação do relatório (CSV) fez com cada reunião. */
+export interface ResultadoImportacaoZoom {
+  reunioes: {
+    id: number;
+    data: string;
+    tipo: TipoAssistencia;
+    pessoas: number;
+    /** Quantas pessoas foram reconhecidas no cadastro. */
+    doCadastro: number;
+    /** Null quando a contagem daquele dia ainda não foi registrada (aí não mexe na assistência). */
+    assistencia: { adicionados: number; total: number } | null;
+  }[];
+  ignoradas: { data: string; tipo: TipoAssistencia; pessoas: number; motivo: string }[];
+  erros: string[];
 }
 
 export interface EstadoZoom {
