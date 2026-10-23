@@ -8,7 +8,7 @@ import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 
 /** Ao voltar para o app, procura versão nova no máximo a cada tanto. */
-const INTERVALO_MS = 30 * 60_000;
+const INTERVALO_MS = 60_000;
 
 /**
  * Faixa "Versão nova pronta · Atualizar" para as atualizações pelo ar (`eas update`).

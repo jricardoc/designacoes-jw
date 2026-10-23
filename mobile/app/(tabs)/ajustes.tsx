@@ -75,6 +75,28 @@ export default function AjustesScreen() {
   const [congName, setCongName] = useState("");
   const [canalTeste, setCanalTeste] = useState(false);
   const [trocandoCanal, setTrocandoCanal] = useState(false);
+  const [procurando, setProcurando] = useState(false);
+  const { isUpdatePending } = Updates.useUpdates();
+
+  /**
+   * "Procurar versão nova": o mesmo que a faixa de atualização faz sozinha, na hora em que a
+   * pessoa pede. Achou (ou já tinha baixado), recarrega já na versão nova.
+   */
+  const procurarAtualizacao = async () => {
+    setProcurando(true);
+    try {
+      const resultado = await Updates.fetchUpdateAsync();
+      if (resultado.isNew || isUpdatePending) {
+        await Updates.reloadAsync();
+        return;
+      }
+      toast.show("Você já está na versão mais nova");
+    } catch {
+      toast.show("Não consegui procurar agora. Confira a internet e tente de novo.", "error");
+    } finally {
+      setProcurando(false);
+    }
+  };
 
   useEffect(() => {
     AsyncStorage.getItem(CHAVE_CANAL_TESTE)
@@ -307,6 +329,26 @@ export default function AjustesScreen() {
             <Text style={styles.descricao}>Versão</Text>
             <Text style={styles.valor}>{versao}</Text>
           </View>
+          {Updates.isEnabled && !__DEV__ ? (
+            <Pressable
+              style={[styles.linha, styles.divisoria]}
+              onPress={procurarAtualizacao}
+              disabled={procurando}
+              accessibilityRole="button"
+            >
+              <View style={styles.icone}>
+                {procurando ? (
+                  <ActivityIndicator size="small" color={colors.primaryDark} />
+                ) : (
+                  <Ionicons name="refresh" size={18} color={colors.primaryDark} />
+                )}
+              </View>
+              <View style={styles.textos}>
+                <Text style={styles.titulo}>{procurando ? "Procurando..." : "Procurar versão nova"}</Text>
+                <Text style={styles.descricao}>Baixa e abre a versão mais nova do app, se houver</Text>
+              </View>
+            </Pressable>
+          ) : null}
           {/* Só o admin geral: é por aqui que ele testa uma versão antes de ela ir para todos. */}
           {ehAdminGeral(usuario) && Updates.isEnabled && !__DEV__ ? (
             <View style={[styles.linha, styles.divisoria]}>
