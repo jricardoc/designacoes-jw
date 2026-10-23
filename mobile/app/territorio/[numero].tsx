@@ -265,9 +265,10 @@ export default function TerritorioScreen() {
 
   return (
     <View style={styles.flex}>
+      {/* O título do cartão (o nome que se edita) é o que se lê primeiro; o número fica embaixo. */}
       <GradientHeader
-        title={`Território ${t.numero}`}
-        description={t.nome}
+        title={t.nome || `Território ${t.numero}`}
+        description={`Território ${t.numero}`}
         showBack
         right={
           t.permissoes.gerenciar ? (
