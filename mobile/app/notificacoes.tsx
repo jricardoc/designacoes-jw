@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Notifications from "expo-notifications";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -40,6 +40,8 @@ function quando(iso: string): string {
 export default function NotificacoesScreen() {
   const { colors, styles } = useTema(criarEstilos);
   const { itens, carregando, limpar } = useNotificacoes();
+  // A mesma tela serve aos dois ambientes; a engrenagem fica no ambiente de onde se veio.
+  const noMinisterio = usePathname().startsWith("/ministerio");
   const { config, confirm, close } = useConfirm();
   // Quais estavam por ler quando chegaram à tela. A leitura é marcada na hora,
   // mas sem esta lembrança o destaque sumiria antes de ser visto.
@@ -117,7 +119,7 @@ export default function NotificacoesScreen() {
               style={styles.configurar}
               hitSlop={8}
               accessibilityLabel="Configurar notificações"
-              onPress={() => router.push("/notificacoes-config")}
+              onPress={() => router.push(noMinisterio ? "/ministerio/notificacoes-config" : "/notificacoes-config")}
             >
               <Ionicons name="settings-outline" size={18} color={colors.primaryDark} />
             </Pressable>

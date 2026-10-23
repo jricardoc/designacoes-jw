@@ -237,7 +237,7 @@ export default function AgendaMinisterio() {
           <Text style={styles.nota}>Os planos dos outros pioneiros aparecem aqui. Para esconder os seus, desligue em Perfil e configurações.</Text>
         </View>
 
-        <CartaoCalendario />
+        <CartaoCalendario ocultarSeAssinado />
       </ScrollView>
 
       <PlanoSheet visible={planoAberto} onClose={() => setPlanoAberto(false)} dia={dia >= hoje && dia <= somarDias(hoje, 44) ? dia : undefined} />

@@ -1431,6 +1431,8 @@ export interface PainelPioneiro {
   nome: string;
   /** Os outros pioneiros veem os planos de saída dele na agenda. */
   compartilharPlanos: boolean;
+  /** Já gerou o link do calendário (assinou ou mandou o link). Ausente na API anterior. */
+  calendario?: boolean;
   /** As marcadas para hoje e as que já tiveram visita hoje (`feita` é o tipo da visita). */
   conversasHoje: { total: number; feitas: number; itens: (RevisitaResumo & { feita: TipoVisita | null })[] };
   /** As próximas visitas marcadas, depois de hoje. */
