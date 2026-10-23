@@ -1,40 +1,21 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  BackHandler,
-  Image,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  type PressableProps,
-  type StyleProp,
-  type ViewStyle,
-} from "react-native";
-import Animated, { FadeIn, FadeOut, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
+import { BackHandler, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import Animated from "react-native-reanimated";
 import { useImagemProtegida } from "@/api/hooks/useImagemProtegida";
-import { preCarregarTerritorios, useMapaTerritorios, useTerritorios } from "@/api/hooks/useTerritorios";
+import { useMapaTerritorios, useTerritorios } from "@/api/hooks/useTerritorios";
 import type { SituacaoTerritorio, TerritorioResumo } from "@/api/types";
-import { SaidasDeCampo } from "@/components/config/SaidasDeCampo";
-import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { TituloTela, useRecuo } from "@/components/ministerio/kit";
+import { CabecalhoTerritorio } from "@/components/territorio/CabecalhoTerritorio";
 import { FilaBanner } from "@/components/territorio/FilaBanner";
+import { mapaDisponivel } from "@/components/territorio/MapaTerritorio";
 import { OndeEstou } from "@/components/territorio/OndeEstou";
-import {
-  MapaTerritorio,
-  mapaDisponivel,
-  type AreaMapa,
-  type FundoMapa,
-  type MapaTerritorioRef,
-} from "@/components/territorio/MapaTerritorio";
-import { Button, EmptyState, GradientHeader, Loading, TextField } from "@/components/ui";
-import { useAuth } from "@/context/AuthContext";
+import { APARECE, Pressionavel, Progresso } from "@/components/territorio/pecas";
+import { Button, EmptyState, Loading, TextField } from "@/components/ui";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { DIAS_PARADO, diaCurto, quandoFoi, SITUACOES } from "@/territorios/constantes";
-import { podeGerenciar } from "@/utils/permissoes";
 import { usePuxar } from "@/utils/usePuxar";
 
 /** Acentos fora da busca: "joao" tem que achar "João". */
@@ -82,71 +63,24 @@ function Thumb({
   return <Image source={fonte} style={estilo} resizeMode="cover" onError={() => setErro(true)} />;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-/** Trocas de vista (lista, mapa, prévia) só aparecem e somem: nada desliza nem quica. */
-const APARECE = FadeIn.duration(220);
-const SOME = FadeOut.duration(160);
-
-/** Card que afunda um pouco sob o dedo: o retorno de que o toque pegou, antes de a tela mudar. */
-function Pressionavel({ style, ...props }: Omit<PressableProps, "style"> & { style?: StyleProp<ViewStyle> }) {
-  const escala = useSharedValue(1);
-  const animado = useAnimatedStyle(() => ({ transform: [{ scale: escala.value }] }));
-  return (
-    <AnimatedPressable
-      {...props}
-      onPressIn={() => {
-        escala.value = withTiming(0.98, { duration: 90 });
-      }}
-      onPressOut={() => {
-        escala.value = withTiming(1, { duration: 140 });
-      }}
-      style={[style, animado]}
-    />
-  );
-}
-
-/** Barra de concluídos. Parada: numa lista que rola, encher a cada card que entra virava movimento sem fim. */
-function Progresso({ fracao, cor }: { fracao: number; cor?: string }) {
-  const { styles } = useTema(criarEstilos);
-  return (
-    <View style={styles.progresso}>
-      <View style={[styles.progressoCheio, { width: `${fracao * 100}%` }, cor ? { backgroundColor: cor } : null]} />
-    </View>
-  );
-}
-
-export default function TerritorioScreen() {
-  // Chamado UMA vez, no topo: o conteúdo mora dentro de condicionais (carregando / vazio /
-  // lista), e espalhar o hook lá dentro o tornaria uma chamada condicional.
-  const { rolagem, recuo } = useBarraFlutuante();
-  const { usuario } = useAuth();
-  // Saída de campo é da área de dirigentes — é o escopo que o backend exige em /saidas-campo.
-  const podeSaidas = podeGerenciar(usuario, "dirigentes");
-  const [aba, setAba] = useState<"mapas" | "saidas">("mapas");
-  const [modo, setModo] = useState<"lista" | "mapa">("lista");
+/** Os territórios: as áreas primeiro (com o quanto já foi trabalhado), e dentro delas a lista com filtros e busca. */
+export default function ListaTerritoriosScreen() {
+  // Vindo do mapa ("Lista" no cartão da área): abre já dentro da área.
+  const params = useLocalSearchParams<{ area?: string }>();
+  const { colors, styles } = useTema(criarEstilos);
+  const recuo = useRecuo();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
   // A área aberta: null = a tela das áreas; TODAS = todos os territórios; "" = os sem área.
-  const [area, setArea] = useState<string | null>(null);
-  // No mapa: o território tocado (cartão de prévia) ou a área escolhida na legenda.
-  const [selecionado, setSelecionado] = useState<string | null>(null);
-  const [foco, setFoco] = useState<string | null>(null);
-  const mapaRef = useRef<MapaTerritorioRef>(null);
+  const [area, setArea] = useState<string | null>(params.area ?? null);
 
-  const { colors, styles } = useTema(criarEstilos);
   const { data, isLoading, isError, refetch } = useTerritorios();
   const puxar = usePuxar(refetch);
   const doBanco = data?.fonte === "banco";
-  // Sempre que há mapas: além do modo mapa, os contornos dizem em que território o irmão está.
+  // Sempre que há mapas: os contornos dizem em que território o irmão está.
   const { data: mapaGeral } = useMapaTerritorios(doBanco);
   const imagem = useImagemProtegida();
   const gerencia = !!data?.permissoes.gerenciar;
-
-  // Guarda todos os territórios no celular para abrir no campo sem sinal (de 6 em 6 horas).
-  useEffect(() => {
-    if (data && doBanco && !data.copiaLocalDe) preCarregarTerritorios(data.territorios.map((t) => t.numero));
-  }, [doBanco, data]);
 
   const todos = useMemo(() => data?.territorios ?? [], [data]);
   const cores = data?.cores ?? {};
@@ -168,20 +102,15 @@ export default function TerritorioScreen() {
   const temAreas = doBanco && grupos.some((g) => g.nome !== "");
   const naTelaDasAreas = temAreas && area === null && !busca.trim();
 
-  // O voltar do Android desfaz um passo de cada vez (cartão do mapa, mapa, área) e só então
-  // sai da aba.
+  // O voltar do Android sai da área antes de sair da aba.
   useEffect(() => {
-    if (area === null && modo === "lista") return;
+    if (area === null) return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (selecionado || foco) {
-        setSelecionado(null);
-        setFoco(null);
-      } else if (modo === "mapa") setModo("lista");
-      else setArea(null);
+      setArea(null);
       return true;
     });
     return () => sub.remove();
-  }, [area, modo, selecionado, foco]);
+  }, [area]);
 
   const base = useMemo(
     () => (area === null || area === TODAS ? todos : todos.filter((t) => (t.area?.trim() ?? "") === area)),
@@ -204,36 +133,10 @@ export default function TerritorioScreen() {
     : territorios.map((t) => ({ tipo: "territorio" as const, t }));
   const nomeDaArea = (nome: string) => (nome === TODAS ? "Todos os territórios" : nome || "Sem área");
 
-  const areas = useMemo<AreaMapa[]>(
-    () =>
-      (mapaGeral?.territorios ?? []).flatMap((t) =>
-        t.quadras.map((q, i) => ({
-          chave: `${t.numero}|${i}`,
-          nome: q.nome,
-          pontos: q.pontos,
-          cor: SITUACOES[t.situacao].cor(colors),
-          rotulo: i === 0 ? t.numero : undefined,
-        })),
-      ),
-    [mapaGeral, colors],
-  );
-  // A região de cada área, por baixo dos territórios, na cor da área.
-  const fundos = useMemo<FundoMapa[]>(
-    () =>
-      (mapaGeral?.areas ?? []).flatMap((a) =>
-        a.aneis.map((pontos, i) => ({ chave: `${a.nome}|${i}`, cor: a.cor, pontos })),
-      ),
-    [mapaGeral],
-  );
-  const pontosDaArea = (nome: string | null) => mapaGeral?.areas?.find((a) => a.nome === nome)?.aneis.flat();
-
-  const abrirMapa = () => {
-    setSelecionado(null);
-    setFoco(area && area !== TODAS ? area : null);
-    setModo("mapa");
-  };
-
   const abrir = (numero: string) => router.push({ pathname: "/territorio/[numero]", params: { numero } });
+  // A aba Mapa, já enquadrada na área aberta (se ela tiver desenho no mapa).
+  const verNoMapa = () =>
+    router.replace(area && area !== TODAS ? { pathname: "/territorio", params: { area } } : "/territorio");
 
   const renderArea = (nome: string, lista: TerritorioResumo[]) => {
     const trabalhados = lista.filter((t) => t.ultimaSaida && (t.diasSemTrabalho ?? 99) < 30).length;
@@ -348,229 +251,17 @@ export default function TerritorioScreen() {
 
   return (
     <View style={styles.flex}>
-      <GradientHeader
-        title="Território"
-        description={
-          doBanco
-            ? `${todos.length} territórios · ${todos.filter((t) => t.situacao === "concluido").length} concluídos no ciclo`
-            : "Cartões de mapa de território da congregação"
-        }
-        icon="map"
-        right={
-          gerencia ? (
-            <Pressable style={styles.gerenciar} onPress={() => router.push("/territorio/painel")} hitSlop={8}>
-              <Ionicons name="stats-chart" size={16} color={colors.textOnPrimary} />
-              <Text style={styles.gerenciarTexto}>Gerenciar</Text>
-            </Pressable>
-          ) : undefined
-        }
-      />
+      <CabecalhoTerritorio />
+      {doBanco ? <OndeEstou territorios={mapaGeral?.territorios} resumos={todos} onAbrir={abrir} /> : null}
 
-      {podeSaidas ? (
-        <View style={styles.segmented}>
-          {(["mapas", "saidas"] as const).map((s) => {
-            const ativa = aba === s;
-            return (
-              <Pressable
-                key={s}
-                style={[styles.segment, ativa && styles.segmentActive]}
-                onPress={() => setAba(s)}
-                accessibilityRole="button"
-                accessibilityState={{ selected: ativa }}
-              >
-                <Ionicons
-                  name={s === "mapas" ? "map-outline" : "send-outline"}
-                  size={16}
-                  color={ativa ? colors.primaryDark : colors.textSecondary}
-                />
-                <Text style={[styles.segmentText, ativa && styles.segmentTextActive]}>
-                  {s === "mapas" ? "Territórios" : "Saídas de campo"}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      ) : null}
-
-      {doBanco && !(aba === "saidas" && podeSaidas) ? (
-        <OndeEstou territorios={mapaGeral?.territorios} resumos={todos} onAbrir={abrir} />
-      ) : null}
-
-      {aba === "saidas" && podeSaidas ? (
-        <ScrollView {...rolagem} contentContainerStyle={[styles.scrollSaidas, recuo]}>
-          <SaidasDeCampo />
-        </ScrollView>
-      ) : isLoading ? (
+      {isLoading ? (
         <Loading label="Carregando territórios..." />
       ) : isError ? (
         <EmptyState icon="cloud-offline" title="Não foi possível carregar os territórios" message="Verifique a conexão e tente novamente.">
           <Button label="Tentar de novo" onPress={() => refetch()} />
         </EmptyState>
-      ) : modo === "mapa" && doBanco ? (
-        !mapaGeral ? (
-          <Loading label="Carregando o mapa..." />
-        ) : (
-          <Animated.View entering={FadeIn.duration(320)} style={styles.flex}>
-            <MapaTerritorio
-              ref={mapaRef}
-              areas={areas}
-              fundos={fundos}
-              limite={mapaGeral.limite}
-              enquadrarEm={pontosDaArea(foco)}
-              onAreaPress={(chave) => {
-                setFoco(null);
-                setSelecionado(chave.split("|")[0]);
-              }}
-              style={styles.mapaGeral}
-            />
-            <AnimatedPressable
-              entering={APARECE}
-              style={[styles.alternar, styles.alternarFlutuante]}
-              onPress={() => setModo("lista")}
-            >
-              <Ionicons name="list" size={18} color={colors.textOnPrimary} />
-              <Text style={styles.alternarTexto}>Lista</Text>
-            </AnimatedPressable>
-
-            <View style={styles.rodapeMapa} pointerEvents="box-none">
-              {(() => {
-                const t = selecionado ? todos.find((x) => x.numero === selecionado) : undefined;
-                if (t) {
-                  const s = SITUACOES[t.situacao];
-                  return (
-                    <Animated.View
-                      key={`t-${t.numero}`}
-                      entering={APARECE}
-                      exiting={SOME}
-                      style={styles.previa}
-                    >
-                      <View style={[styles.previaSelo, { backgroundColor: s.cor(colors) }]}>
-                        <Text style={styles.previaSeloTexto}>{t.numero}</Text>
-                      </View>
-                      <View style={styles.textos}>
-                        <Text style={styles.nome} numberOfLines={1}>
-                          {t.nome}
-                        </Text>
-                        {t.observacoes ? (
-                          <Text style={styles.descricao} numberOfLines={1}>
-                            {t.observacoes}
-                          </Text>
-                        ) : null}
-                        <Text style={styles.ultima} numberOfLines={1}>
-                          {s.rotulo}
-                          {t.area ? ` · ${t.area}` : ""}
-                        </Text>
-                        <Text style={styles.ultima} numberOfLines={1}>
-                          {t.ultimaSaida ? `Última saída ${quandoFoi(t.ultimaSaida.dia)}` : "Nunca trabalhado"}
-                        </Text>
-                      </View>
-                      <Pressionavel style={styles.previaAbrir} onPress={() => abrir(t.numero)} accessibilityRole="button">
-                        <Text style={styles.previaAbrirTexto}>Abrir</Text>
-                        <Ionicons name="chevron-forward" size={16} color={colors.textOnPrimary} />
-                      </Pressionavel>
-                      <Pressable style={styles.previaFechar} onPress={() => setSelecionado(null)} hitSlop={10} accessibilityLabel="Fechar">
-                        <Ionicons name="close" size={16} color={colors.textSecondary} />
-                      </Pressable>
-                    </Animated.View>
-                  );
-                }
-                const g = foco ? grupos.find((x) => x.nome === foco) : undefined;
-                if (g) {
-                  const concluidos = g.lista.filter((x) => x.situacao === "concluido").length;
-                  const cor = cores[g.nome] ?? colors.primary;
-                  return (
-                    <Animated.View
-                      key={`a-${g.nome}`}
-                      entering={APARECE}
-                      exiting={SOME}
-                      style={styles.previa}
-                    >
-                      <View style={[styles.previaSelo, { backgroundColor: cor }]}>
-                        <Ionicons name="albums" size={20} color="#fff" />
-                      </View>
-                      <View style={styles.textos}>
-                        <Text style={styles.nome} numberOfLines={1}>
-                          {g.nome}
-                        </Text>
-                        <Text style={styles.ultima}>
-                          {g.lista.length} territórios · {concluidos} concluídos no ciclo
-                        </Text>
-                        <Progresso fracao={concluidos / g.lista.length} cor={cor} />
-                      </View>
-                      <Pressionavel
-                        style={styles.previaAbrir}
-                        onPress={() => {
-                          setArea(g.nome);
-                          setFiltro("todos");
-                          setModo("lista");
-                        }}
-                        accessibilityRole="button"
-                      >
-                        <Text style={styles.previaAbrirTexto}>Lista</Text>
-                        <Ionicons name="chevron-forward" size={16} color={colors.textOnPrimary} />
-                      </Pressionavel>
-                      <Pressable style={styles.previaFechar} onPress={() => setFoco(null)} hitSlop={10} accessibilityLabel="Fechar">
-                        <Ionicons name="close" size={16} color={colors.textSecondary} />
-                      </Pressable>
-                    </Animated.View>
-                  );
-                }
-                return null;
-              })()}
-
-              <Animated.View entering={APARECE} style={styles.legenda}>
-                <View style={styles.legendaLinha}>
-                  {(Object.keys(SITUACOES) as SituacaoTerritorio[]).map((id) => (
-                    <View key={id} style={styles.legendaItem}>
-                      <View style={[styles.legendaCor, { backgroundColor: SITUACOES[id].cor(colors) }]} />
-                      <Text style={styles.legendaTexto}>{SITUACOES[id].rotulo}</Text>
-                    </View>
-                  ))}
-                </View>
-                {mapaGeral.areas?.length || mapaGeral.limite ? (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsAreas}>
-                    {(mapaGeral.areas ?? []).map((a) => {
-                      const ativa = foco === a.nome;
-                      return (
-                        <Pressable
-                          key={a.nome}
-                          style={[styles.chipArea, ativa && { borderColor: a.cor, backgroundColor: `${a.cor}22` }]}
-                          onPress={() => {
-                            setSelecionado(null);
-                            setFoco(a.nome);
-                            mapaRef.current?.enquadrar(a.aneis.flat());
-                          }}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: ativa }}
-                        >
-                          <View style={[styles.chipAreaCor, { backgroundColor: `${a.cor}55`, borderColor: a.cor }]} />
-                          <Text style={styles.legendaTexto}>{a.nome}</Text>
-                        </Pressable>
-                      );
-                    })}
-                    {mapaGeral.limite ? (
-                      <Pressable
-                        style={styles.chipArea}
-                        onPress={() => {
-                          setSelecionado(null);
-                          setFoco(null);
-                          mapaRef.current?.enquadrar();
-                        }}
-                        accessibilityRole="button"
-                      >
-                        <View style={[styles.chipAreaCor, { borderColor: mapaGeral.limite.cor ?? colors.primaryDark, borderWidth: 2.5 }]} />
-                        <Text style={styles.legendaTexto}>{mapaGeral.limite.nome}</Text>
-                      </Pressable>
-                    ) : null}
-                  </ScrollView>
-                ) : null}
-              </Animated.View>
-            </View>
-          </Animated.View>
-        )
       ) : (
         <Animated.FlatList
-          {...rolagem}
           // Entrar numa área (ou voltar para a lista de áreas) é outra lista: troca com um fade só.
           key={`lista:${area ?? ""}`}
           entering={APARECE}
@@ -583,6 +274,16 @@ export default function TerritorioScreen() {
           automaticallyAdjustKeyboardInsets
           ListHeaderComponent={
             <View style={styles.topo}>
+              {area === null ? (
+                <TituloTela
+                  titulo="Territórios"
+                  subtitulo={
+                    doBanco
+                      ? `${todos.length} territórios · ${todos.filter((t) => t.situacao === "concluido").length} concluídos no ciclo`
+                      : "Cartões de mapa de território da congregação"
+                  }
+                />
+              ) : null}
               {data?.copiaLocalDe ? (
                 <View style={styles.offline}>
                   <Ionicons name="cloud-offline-outline" size={16} color={colors.textSecondary} />
@@ -612,7 +313,7 @@ export default function TerritorioScreen() {
                 </View>
               ) : null}
               <View style={styles.buscaLinha}>
-                <View style={styles.flex}>
+                <View style={styles.flex1}>
                   <TextField
                     icon="search"
                     placeholder="Número, nome ou rua..."
@@ -622,7 +323,7 @@ export default function TerritorioScreen() {
                   />
                 </View>
                 {doBanco && mapaDisponivel ? (
-                  <Pressable style={styles.alternar} onPress={abrirMapa} accessibilityLabel="Ver no mapa">
+                  <Pressable style={styles.alternar} onPress={verNoMapa} accessibilityLabel="Ver no mapa">
                     <Ionicons name="map" size={18} color={colors.textOnPrimary} />
                     <Text style={styles.alternarTexto}>Mapa</Text>
                   </Pressable>
@@ -668,38 +369,7 @@ export default function TerritorioScreen() {
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     flex: { flex: 1, backgroundColor: colors.background },
-    gerenciar: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      backgroundColor: colors.primary,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: radius.pill,
-    },
-    gerenciarTexto: { color: colors.textOnPrimary, fontWeight: "700", fontSize: 13 },
-    segmented: {
-      flexDirection: "row",
-      marginHorizontal: 16,
-      marginTop: 12,
-      backgroundColor: colors.sand,
-      borderRadius: radius.md,
-      padding: 5,
-      gap: 5,
-    },
-    segment: {
-      flex: 1,
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 6,
-      paddingVertical: 9,
-      borderRadius: radius.sm,
-    },
-    segmentActive: { backgroundColor: colors.surface, ...shadow.card },
-    segmentText: { fontWeight: "700", color: colors.textSecondary, fontSize: 13.5 },
-    segmentTextActive: { color: colors.primaryDark },
-    scrollSaidas: { padding: 16 },
+    flex1: { flex: 1 },
     lista: { padding: 16, gap: 10 },
     topo: { gap: 10, marginBottom: 4 },
     offline: { flexDirection: "row", gap: 8, alignItems: "center", padding: 10, borderRadius: radius.md, backgroundColor: colors.surfaceMuted },
@@ -724,7 +394,6 @@ const criarEstilos = (colors: Cores) =>
       borderRadius: radius.md,
       backgroundColor: colors.primary,
     },
-    alternarFlutuante: { position: "absolute", top: 12, right: 12, ...shadow.card },
     alternarTexto: { color: colors.textOnPrimary, fontWeight: "800", fontSize: 14 },
     filtros: { gap: 8, paddingRight: 8 },
     filtro: {
@@ -769,8 +438,6 @@ const criarEstilos = (colors: Cores) =>
     areaTodas: { borderColor: colors.primary, borderWidth: 1.5 },
     areaNome: { fontSize: 19, fontWeight: "800", color: colors.text },
     areaSub: { fontSize: 13.5, color: colors.textSecondary },
-    progresso: { height: 6, borderRadius: 3, backgroundColor: colors.surfaceMuted, overflow: "hidden", marginTop: 6 },
-    progressoCheio: { height: 6, borderRadius: 3, backgroundColor: colors.greenDark },
     progressoTexto: { fontSize: 11.5, color: colors.textMuted, marginTop: 2 },
     areaTopo: { gap: 2 },
     voltarArea: { flexDirection: "row", alignItems: "center", gap: 2, alignSelf: "flex-start" },
@@ -787,47 +454,4 @@ const criarEstilos = (colors: Cores) =>
     selos: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 2 },
     selo: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill },
     seloTexto: { fontSize: 11.5, fontWeight: "800" },
-    // Respiro entre as abas (Territórios / Saídas de campo) e o mapa.
-    mapaGeral: { flex: 1, marginTop: 12 },
-    rodapeMapa: { position: "absolute", left: 12, right: 12, bottom: 110, gap: 8 },
-    legenda: { gap: 8, padding: 10, borderRadius: radius.md, backgroundColor: colors.surface, ...shadow.card },
-    legendaLinha: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-    chipsAreas: { gap: 8 },
-    chipArea: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
-      borderRadius: radius.pill,
-      borderWidth: 1.5,
-      borderColor: colors.border,
-    },
-    chipAreaCor: { width: 14, height: 14, borderRadius: 4, borderWidth: 1.5, borderColor: "transparent" },
-    previa: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-      padding: 12,
-      borderRadius: radius.lg,
-      backgroundColor: colors.surface,
-      ...shadow.card,
-    },
-    previaSelo: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-    previaSeloTexto: { color: "#fff", fontSize: 19, fontWeight: "900" },
-    previaAbrir: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 2,
-      paddingLeft: 14,
-      paddingRight: 10,
-      height: 42,
-      borderRadius: radius.md,
-      backgroundColor: colors.primary,
-    },
-    previaAbrirTexto: { color: colors.textOnPrimary, fontWeight: "800", fontSize: 14 },
-    previaFechar: { position: "absolute", top: 6, right: 6, padding: 2 },
-    legendaItem: { flexDirection: "row", alignItems: "center", gap: 5 },
-    legendaCor: { width: 12, height: 12, borderRadius: 3 },
-    legendaTexto: { fontSize: 12, fontWeight: "700", color: colors.text },
   });

@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTemBarraGlobal } from "@/components/layout/contextoBarra";
@@ -33,6 +33,7 @@ export function GradientHeader({
   // Nas telas do menu a barra global já consumiu o safe area do topo; repetir o
   // recuo aqui empilharia dois blocos altos antes do conteúdo.
   const temBarra = useTemBarraGlobal();
+  const pathname = usePathname();
 
   return (
     <View style={[styles.header, { paddingTop: temBarra ? 6 : insets.top + 14 }]}>
@@ -45,9 +46,10 @@ export function GradientHeader({
             // O menu lateral navega com `router.replace` — de propósito, senão cada ida ao
             // menu empilharia uma tela. Só que quem chega por ele não tem histórico, e o
             // `back()` estoura em "GO_BACK was not handled by any navigator", deixando o
-            // botão morto. Sem para onde voltar, o Início é o destino óbvio.
+            // botão morto. Sem para onde voltar, o Início é o destino óbvio (o do ambiente
+            // Território, dentro dele).
             if (router.canGoBack()) return router.back();
-            router.replace("/(tabs)/minhas");
+            router.replace(pathname.startsWith("/territorio") ? "/territorio" : "/(tabs)/minhas");
           }}
         >
           <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />

@@ -1,14 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /**
- * Os dois "apps" dentro do app: o Servir Mais (designações da congregação) e o Ministério (o
- * do pioneiro). O último escolhido é onde o app abre na próxima vez.
+ * Os "apps" dentro do app: o Servir Mais (designações da congregação), o Ministério (o do
+ * pioneiro) e o Território (mapas e saídas). O último escolhido é onde o app abre na próxima vez.
  */
-export type Ambiente = "servir" | "ministerio";
+export type Ambiente = "servir" | "ministerio" | "territorio";
 
 const KEY = "ambiente";
 
-export const HREF_AMBIENTE = { servir: "/(tabs)/minhas", ministerio: "/ministerio" } as const;
+export const HREF_AMBIENTE = { servir: "/(tabs)/minhas", ministerio: "/ministerio", territorio: "/territorio" } as const;
 
 export const guardarAmbiente = (a: Ambiente) => {
   AsyncStorage.setItem(KEY, a).catch(() => {});
@@ -16,7 +16,8 @@ export const guardarAmbiente = (a: Ambiente) => {
 
 export async function lerAmbiente(): Promise<Ambiente> {
   try {
-    return (await AsyncStorage.getItem(KEY)) === "ministerio" ? "ministerio" : "servir";
+    const a = await AsyncStorage.getItem(KEY);
+    return a === "ministerio" || a === "territorio" ? a : "servir";
   } catch {
     return "servir";
   }

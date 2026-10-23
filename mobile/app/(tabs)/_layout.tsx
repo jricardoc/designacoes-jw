@@ -1,5 +1,5 @@
-import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { Stack, useFocusEffect } from "expo-router";
+import { useCallback } from "react";
 import { View } from "react-native";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BarraFlutuante } from "@/components/layout/BarraFlutuante";
@@ -12,9 +12,10 @@ import { guardarAmbiente } from "@/utils/ambiente";
 export default function LayoutDoMenu() {
   const { colors } = useTema();
 
-  // Push, sincronização e biometria moram na raiz (ServicosDoApp), valendo nos dois ambientes.
-  // Daqui só sai o lembrete de que é aqui que o app abre da próxima vez.
-  useEffect(() => guardarAmbiente("servir"), []);
+  // Push, sincronização e biometria moram na raiz (ServicosDoApp), valendo em todos os ambientes.
+  // Daqui só sai o lembrete de que é aqui que o app abre da próxima vez — também ao voltar do
+  // Território aberto pelo menu, que fica por cima daqui.
+  useFocusEffect(useCallback(() => guardarAmbiente("servir"), []));
 
   // A pasta continua "(tabs)" de propósito: o nome entre parênteses não entra na
   // URL, então trocar a tab bar pelo menu lateral não mexeu em nenhuma rota.
@@ -44,7 +45,6 @@ export default function LayoutDoMenu() {
               <Stack.Screen name="minhas" />
               <Stack.Screen name="index" />
               <Stack.Screen name="dirigentes" />
-              <Stack.Screen name="territorio" />
               <Stack.Screen name="reuniao" />
               <Stack.Screen name="confirmacoes" />
               <Stack.Screen name="grupos" />

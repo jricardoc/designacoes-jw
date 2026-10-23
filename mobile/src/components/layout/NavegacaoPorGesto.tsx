@@ -13,7 +13,7 @@ import { ABAS, indiceDaAba } from "./abas";
  * exigiria trocar o Stack do expo-router por um pager, e o layout de (tabs) registra por que
  * isso não se faz aqui: mudaria o formato de todas as rotas do app.
  *
- * SÓ VALE NAS QUATRO ABAS. Em Dirigentes, Território, Carrinho, Confirmações, Publicadores e Ajustes o
+ * SÓ VALE NAS QUATRO ABAS. Em Dirigentes, Carrinho, Confirmações, Publicadores e Ajustes o
  * gesto não faz nada — não há vizinha para onde ir, e é justamente onde moram os únicos
  * scrolls horizontais do app (os chips de filtro de Publicadores), que brigariam pelo dedo.
  *

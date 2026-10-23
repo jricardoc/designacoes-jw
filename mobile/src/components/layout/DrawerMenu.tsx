@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { EscopoAdmin, Usuario } from "@/api/types";
 import { Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
-import { ehAdminGeral, podeGerenciar, podeUsarPioneiro, podeVerGrupos } from "@/utils/permissoes";
+import { ehAdminGeral, podeGerenciar, podeVerGrupos } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { irParaAmbiente, ListaAmbientes } from "./Ambientes";
@@ -59,7 +59,8 @@ interface ItemMenu {
 const ITENS: ItemMenu[] = [
   // Saiu da barra para o "+" de "Registrar o campo" ficar no meio dela.
   { chave: "dirigentes", rotulo: "Dirigentes", icone: "flag-outline", href: "/(tabs)/dirigentes" },
-  { chave: "territorio", rotulo: "Território", icone: "map-outline", href: "/(tabs)/territorio" },
+  // É outro ambiente (mapas e saídas), mas continua aqui: quem só quer olhar um mapa vai direto.
+  { chave: "territorio", rotulo: "Território", icone: "map-outline", href: "/territorio" },
   { chave: "carrinho", rotulo: "Carrinho", icone: "book-outline", href: "/(tabs)/carrinho" },
   // Falar com quem tem parte de estudante e anotar quem confirmou: área própria.
   {
@@ -98,8 +99,8 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   const segments = useSegments();
 
   const largura = Math.min(316, width * 0.84);
-  // O topo (a marca) troca de ambiente: o Ministério é um "app" à parte, do pioneiro.
-  const trocaAmbiente = podeUsarPioneiro(usuario);
+  // O topo (a marca) troca de ambiente: o Território (de todos) e o Ministério (do pioneiro)
+  // são "apps" à parte.
   const [trocando, setTrocando] = useState(false);
   // O Modal some junto com `visible`, então a animação de saída só existe se o
   // desmonte esperar ela terminar.
@@ -140,7 +141,15 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
     router.replace(href);
   };
 
-  const ir = (item: ItemMenu) => irPara(item.chave, item.href);
+  const ir = (item: ItemMenu) => {
+    // O Território abre POR CIMA do Servir Mais: o voltar traz de volta para cá.
+    if (item.chave === "territorio") {
+      onClose();
+      router.push("/territorio");
+      return;
+    }
+    irPara(item.chave, item.href);
+  };
 
   if (!montado) return null;
 
@@ -168,20 +177,17 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           <View style={styles.topo}>
             <Pressable
               onPress={() => setTrocando((t) => !t)}
-              disabled={!trocaAmbiente}
               style={styles.topoMarca}
               accessibilityRole="button"
-              accessibilityLabel={trocaAmbiente ? "Trocar de ambiente" : undefined}
+              accessibilityLabel="Trocar de ambiente"
               accessibilityState={{ expanded: trocando }}
             >
               <MarcaServirMais tamanho={38} />
               <View style={styles.topoTexto}>
                 <Text style={styles.topoNome}>Servir Mais</Text>
-                <Text style={styles.topoTag}>{trocaAmbiente ? "Toque para ir ao Ministério" : "Designações da congregação"}</Text>
+                <Text style={styles.topoTag}>Toque para trocar de ambiente</Text>
               </View>
-              {trocaAmbiente ? (
-                <Ionicons name={trocando ? "chevron-up" : "chevron-down"} size={18} color={colors.textSecondary} />
-              ) : null}
+              <Ionicons name={trocando ? "chevron-up" : "chevron-down"} size={18} color={colors.textSecondary} />
             </Pressable>
             <Pressable hitSlop={10} onPress={onClose} style={styles.fechar}>
               <Ionicons name="close" size={20} color={colors.textSecondary} />

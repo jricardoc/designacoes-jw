@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { Redirect, router } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useConfig } from "@/api/hooks/useMisc";
 import {
   buscarS13,
@@ -12,13 +11,17 @@ import {
   usePainelTerritorios,
   useRevisarSaida,
 } from "@/api/hooks/useTerritorios";
+import { TituloTela, useRecuo } from "@/components/ministerio/kit";
 import { AreasTerritorios, LimiteCongregacao } from "@/components/territorio/AreasTerritorios";
-import { Button, GradientHeader, Loading, useToast } from "@/components/ui";
+import { CabecalhoTerritorio } from "@/components/territorio/CabecalhoTerritorio";
+import { Button, Loading, useToast } from "@/components/ui";
+import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { CASA_TRABALHADA, DIAS_PARADO, diaCurto } from "@/territorios/constantes";
 import { gerarHtmlS13 } from "@/territorios/s13Html";
 import { exportarPdf } from "@/utils/exportPdf";
+import { podeGerenciar } from "@/utils/permissoes";
 import { usePuxar } from "@/utils/usePuxar";
 
 const PERIODOS = [
@@ -38,12 +41,13 @@ function anoDeServicoAtual() {
 }
 
 /**
- * O painel de quem cuida dos territórios: o que pede atenção primeiro (revisão, parados, Não
- * bater vencido), depois as designações, os números do período e o S-13.
+ * O painel de quem cuida dos territórios (a aba Gerenciar): o que pede atenção primeiro
+ * (revisão, parados, Não bater vencido), depois as designações, os números do período e o S-13.
  */
 export default function PainelTerritoriosScreen() {
   const { colors, styles } = useTema(criarEstilos);
-  const insets = useSafeAreaInsets();
+  const { usuario } = useAuth();
+  const recuo = useRecuo();
   const toast = useToast();
   const [dias, setDias] = useState(90);
   const [anoS13, setAnoS13] = useState(anoDeServicoAtual());
@@ -62,7 +66,15 @@ export default function PainelTerritoriosScreen() {
     return [...mapa];
   }, [designacoes]);
 
-  if (isLoading || !data) return <Loading label="Carregando painel..." />;
+  if (!podeGerenciar(usuario, "territorios")) return <Redirect href="/territorio" />;
+  if (isLoading || !data) {
+    return (
+      <View style={styles.flex}>
+        <CabecalhoTerritorio />
+        <Loading label="Carregando painel..." />
+      </View>
+    );
+  }
 
   const r = data.resumo;
   const maiorMes = Math.max(1, ...data.porMes.map((m) => m.saidas));
@@ -92,15 +104,16 @@ export default function PainelTerritoriosScreen() {
 
   return (
     <View style={styles.flex}>
-      <GradientHeader title="Gerenciar territórios" description="Painel, designações e relatórios" showBack />
+      <CabecalhoTerritorio />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
+        contentContainerStyle={[styles.scroll, recuo]}
         refreshControl={
           <RefreshControl
             {...puxar}
           />
         }
       >
+        <TituloTela titulo="Gerenciar" subtitulo="Painel, designações e relatórios" />
         <Pressable style={styles.myMaps} onPress={() => router.push("/territorio/importar")}>
           <Ionicons name="layers" size={22} color={colors.primaryDark} />
           <View style={styles.flex1}>

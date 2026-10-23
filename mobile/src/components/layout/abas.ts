@@ -39,7 +39,7 @@ export function chaveDaRotaAtual(segments: string[]): string {
   return grupo ?? "";
 }
 
-/** O índice da aba aberta, ou -1 fora das quatro (Dirigentes, Território, Carrinho, Ajustes...). */
+/** O índice da aba aberta, ou -1 fora das quatro (Dirigentes, Carrinho, Ajustes...). */
 export function indiceDaAba(segments: string[]): number {
   const atual = chaveDaRotaAtual(segments);
   return ABAS.findIndex((a) => a.chave === atual);

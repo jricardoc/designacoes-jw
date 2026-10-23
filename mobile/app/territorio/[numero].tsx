@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -38,8 +38,9 @@ import { usePuxar } from "@/utils/usePuxar";
  * grandes — marcar onde estou e registrar a saída.
  */
 export default function TerritorioScreen() {
-  // `marcacao` vem do toque no aviso de marcação: abre o território já no ponto.
-  const { numero, marcacao } = useLocalSearchParams<{ numero: string; marcacao?: string }>();
+  // `marcacao` vem do toque no aviso de marcação: abre o território já no ponto. `acao` vem do
+  // "+" da barra: abre já marcando onde está ou registrando a saída.
+  const { numero, marcacao, acao } = useLocalSearchParams<{ numero: string; marcacao?: string; acao?: string }>();
   const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const toast = useToast();
@@ -77,6 +78,30 @@ export default function TerritorioScreen() {
       setPino(`m-${m.id}`);
     }, 700);
   }, [t]);
+
+  const marcarAqui = useCallback(async () => {
+    setBuscandoGps(true);
+    try {
+      const local = await minhaLocalizacao();
+      setPonto({ ...local, origem: "gps" });
+      (telaCheia ? mapaCheio : mapa).current?.focar(local.lat, local.lng);
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Não consegui achar sua localização", "error");
+    } finally {
+      setBuscandoGps(false);
+    }
+  }, [telaCheia, toast]);
+
+  // Veio do "+": faz a ação pedida uma vez, quando o território carrega. Espera a tela terminar
+  // de entrar: no iPhone a folha não abre no meio da animação.
+  const acaoPedida = useRef(acao);
+  useEffect(() => {
+    const a = acaoPedida.current;
+    if (!a || !t?.permissoes.marcar) return;
+    acaoPedida.current = undefined;
+    if (a === "marcar") setTimeout(marcarAqui, 450);
+    else if (a === "saida") setTimeout(() => setSaida(true), 450);
+  }, [t, marcarAqui]);
 
   const areas = useMemo(
     () => (t?.quadras ?? []).map((q) => ({ chave: String(q.id), nome: q.nome, pontos: q.pontos, cor: q.cor })),
@@ -139,19 +164,6 @@ export default function TerritorioScreen() {
   const naoBater = t.marcacoes.filter((m) => m.tipo === "nao_bater");
   const vencidas = naoBater.filter((m) => m.precisaReconfirmar).length;
   const territorio = { id: t.id, numero: t.numero, quadras: t.quadras };
-
-  const marcarAqui = async () => {
-    setBuscandoGps(true);
-    try {
-      const local = await minhaLocalizacao();
-      setPonto({ ...local, origem: "gps" });
-      (telaCheia ? mapaCheio : mapa).current?.focar(local.lat, local.lng);
-    } catch (err) {
-      toast.show(err instanceof Error ? err.message : "Não consegui achar sua localização", "error");
-    } finally {
-      setBuscandoGps(false);
-    }
-  };
 
   // Onde continuar, se houver ponto marcado: o "próximo começa aqui" mais recente, senão o
   // "onde paramos" com GPS, senão o "paramos aqui". As marcações já vêm da mais nova à mais velha.

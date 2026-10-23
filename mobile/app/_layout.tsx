@@ -47,7 +47,7 @@ function AuthGate() {
         <Stack.Screen name="reuniao/meses" />
         <Stack.Screen name="cumprimento" />
         <Stack.Screen name="reuniao/semana/[id]" />
-        <Stack.Screen name="territorio/[numero]" />
+        <Stack.Screen name="territorio" />
         <Stack.Screen name="irmao" />
         <Stack.Screen name="notificacoes" />
         <Stack.Screen name="ministerio" />

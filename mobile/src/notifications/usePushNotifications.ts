@@ -154,18 +154,21 @@ export function usePushNotifications() {
       if (telaPendente.revisitaId) router.push({ pathname: "/ministerio/contato", params: { id: String(telaPendente.revisitaId) } });
       return;
     }
+    // O de território também tem ambiente próprio: abre no Mapa dele e, com o número, no território.
+    if (telaPendente.tela === "territorio") {
+      router.dismissTo("/territorio");
+      if (telaPendente.numero) {
+        router.push({
+          pathname: "/territorio/[numero]",
+          params: { numero: telaPendente.numero, marcacao: String(telaPendente.marcacao ?? "") },
+        });
+      }
+      return;
+    }
     router.dismissTo("/(tabs)/minhas");
-    router.navigate(
-      telaPendente.tela === "territorio" ? "/(tabs)/territorio" : telaPendente.tela === "grupos" ? "/(tabs)/grupos" : "/(tabs)/minhas",
-    );
+    router.navigate(telaPendente.tela === "grupos" ? "/(tabs)/grupos" : "/(tabs)/minhas");
     if (telaPendente.tela === "grupos" && telaPendente.grupoId) {
       router.push({ pathname: "/grupos/[id]", params: { id: String(telaPendente.grupoId) } });
-    }
-    if (telaPendente.tela === "territorio" && telaPendente.numero) {
-      router.push({
-        pathname: "/territorio/[numero]",
-        params: { numero: telaPendente.numero, marcacao: String(telaPendente.marcacao ?? "") },
-      });
     }
   }, [telaPendente, navegacaoPronta, router]);
 

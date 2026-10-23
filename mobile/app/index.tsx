@@ -7,7 +7,7 @@ import { podeUsarPioneiro } from "@/utils/permissoes";
 
 export default function Index() {
   const { isAuthenticated, initializing, usuario } = useAuth();
-  // O app abre no último ambiente usado (Servir Mais ou Ministério).
+  // O app abre no último ambiente usado (Servir Mais, Ministério ou Território).
   const [ambiente, setAmbiente] = useState<Ambiente | null>(null);
   useEffect(() => {
     lerAmbiente().then(setAmbiente);
@@ -18,5 +18,6 @@ export default function Index() {
   // A tela de início do Servir Mais é "minhas". O arquivo (tabs)/index continua sendo o das
   // Designações — não foi renomeado para não mexer em rota nenhuma —, então a porta de entrada
   // aponta direto para a tela certa.
+  if (ambiente === "territorio") return <Redirect href={HREF_AMBIENTE.territorio} />;
   return <Redirect href={ambiente === "ministerio" && podeUsarPioneiro(usuario) ? HREF_AMBIENTE.ministerio : HREF_AMBIENTE.servir} />;
 }
