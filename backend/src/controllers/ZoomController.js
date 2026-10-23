@@ -1,4 +1,5 @@
 const Sync = require('../services/ZoomSincronizacaoService');
+const Csv = require('../services/ZoomCsvService');
 
 const erro = (res, status, mensagem) => res.status(status).json({ error: mensagem });
 
@@ -114,6 +115,23 @@ class ZoomController {
         } catch (e) {
             console.error('[zoom] sincronizar reunião:', e.message);
             return erro(res, 500, 'Erro ao sincronizar a reunião');
+        }
+    }
+
+    /**
+     * POST /zoom/importar — os relatorios de uso exportados do zoom.us (campo "files", ate 12
+     * CSVs). Enquanto a conta nao tem o app da API, e assim que os participantes chegam.
+     */
+    async importarCsv(req, res) {
+        try {
+            const arquivos = (req.files || []).map((f) => ({ nome: f.originalname, buffer: f.buffer }));
+            if (arquivos.length === 0) return erro(res, 400, 'Envie o relatório exportado do Zoom (CSV).');
+            const r = await Csv.importar(arquivos);
+            if (r.reunioes.length === 0 && r.erros.length) return erro(res, 422, r.erros.join(' '));
+            return res.json(r);
+        } catch (e) {
+            console.error('[zoom] importar CSV:', e.message);
+            return erro(res, 500, 'Erro ao importar o relatório');
         }
     }
 

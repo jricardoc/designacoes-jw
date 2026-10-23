@@ -266,6 +266,7 @@ routes.get('/zoom/reunioes', podeReunioes, ZoomController.listar);
 routes.get('/zoom/reunioes/:id(\\d+)', podeReunioes, ZoomController.detalhe);
 routes.get('/zoom/reunioes/:id(\\d+)/transcricao', podeReunioes, ZoomController.transcricao);
 routes.post('/zoom/sincronizar', podeReunioes, ZoomController.sincronizarPeriodo);
+routes.post('/zoom/importar', podeReunioes, upload.array('files', 12), ZoomController.importarCsv);
 routes.post('/zoom/reunioes/:id(\\d+)/sincronizar', podeReunioes, ZoomController.sincronizarReuniao);
 routes.post('/zoom/reunioes/:id(\\d+)/assistencia', podeReunioes, ZoomController.levarParaAssistencia);
 

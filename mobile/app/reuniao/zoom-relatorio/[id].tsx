@@ -33,9 +33,11 @@ export default function RelatorioZoomScreen() {
   const { feito } = useCelebracao();
   const { usuario } = useAuth();
   const id = Number(useLocalSearchParams<{ id: string }>().id);
-  const [aba, setAba] = useState<Aba>("resumo");
+  const [abaEscolhida, setAba] = useState<Aba | null>(null);
   const [filtro, setFiltro] = useState("");
   const { data: r, isLoading, refetch } = useReuniaoZoom(id);
+  // A do relatorio (CSV) nao tem resumo: abre direto nos participantes.
+  const aba: Aba = abaEscolhida ?? (r?.origem === "csv" ? "participantes" : "resumo");
   const transcricao = useTranscricaoZoom(id, aba === "transcricao" && !!r?.temTranscricao);
   const sincronizar = useSincronizarReuniaoZoom();
   const levar = useLevarParaAssistencia();
@@ -298,9 +300,18 @@ export default function RelatorioZoomScreen() {
         refreshControl={<RefreshControl {...puxar} tintColor={colors.primary} />}
         keyboardShouldPersistTaps="handled"
       >
-        {situacao()}
-        <View style={styles.partes}>{(["resumo", "participantes", "transcricao"] as ParteZoom[]).map(etiqueta)}</View>
-        {r.sincronizadoEm ? <Text style={styles.sincronizado}>Sincronizado em {quandoFoi(r.sincronizadoEm)}</Text> : null}
+        {r.origem === "csv" ? (
+          <View style={styles.estado}>
+            <Ionicons name="document-attach-outline" size={18} color={colors.primaryDark} />
+            <Text style={styles.estadoTexto}>Importada do relatório de uso do Zoom: tem os participantes, mas não o resumo nem a transcrição.</Text>
+          </View>
+        ) : (
+          <>
+            {situacao()}
+            <View style={styles.partes}>{(["resumo", "participantes", "transcricao"] as ParteZoom[]).map(etiqueta)}</View>
+            {r.sincronizadoEm ? <Text style={styles.sincronizado}>Sincronizado em {quandoFoi(r.sincronizadoEm)}</Text> : null}
+          </>
+        )}
 
         <View style={styles.abas}>
           {abas.map((a) => {
@@ -325,7 +336,9 @@ export default function RelatorioZoomScreen() {
           {aba === "resumo" ? abaResumo() : aba === "participantes" ? abaParticipantes() : abaTranscricao()}
         </Animated.View>
 
-        <Button label="Sincronizar de novo" icon="refresh" variant="ghost" onPress={refazer} loading={sincronizar.isPending} fullWidth />
+        {r.origem === "api" ? (
+          <Button label="Sincronizar de novo" icon="refresh" variant="ghost" onPress={refazer} loading={sincronizar.isPending} fullWidth />
+        ) : null}
       </ScrollView>
     </View>
   );

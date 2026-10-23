@@ -560,6 +560,9 @@ const pararTimer = () => {
 
 const ehDia = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
 
+/** "csv": veio do relatorio exportado (sem resumo nem transcricao); "api": do webhook e da API. */
+const origemDe = (uuid) => (String(uuid).startsWith('csv:') ? 'csv' : 'api');
+
 /**
  * Recupera reunioes anteriores: as ocorrencias de cada reuniao conhecida (as de Ajustes ›
  * Zoom e as que ja chegaram por webhook) no periodo, mes a mes, e poe na fila o que falta.
@@ -597,7 +600,16 @@ async function sincronizarPeriodo({ de, ate, forcar = false } = {}) {
             for (const o of ocorrencias) {
                 if (!o.uuid) continue;
                 encontradas += 1;
-                const ja = await prisma.zoomReuniao.findUnique({ where: { uuid: o.uuid }, select: { id: true, topico: true } });
+                let ja = await prisma.zoomReuniao.findUnique({ where: { uuid: o.uuid }, select: { id: true, topico: true } });
+                const inicio = data(o.start_time);
+                if (!ja && inicio) {
+                    // A mesma ocorrencia importada antes pelo relatorio (CSV) ganha o UUID de verdade.
+                    const doCsv = await prisma.zoomReuniao.findFirst({
+                        where: { uuid: { startsWith: 'csv:' }, meetingId: numero, inicio: { gte: new Date(inicio.getTime() - 10 * 60_000), lte: new Date(inicio.getTime() + 10 * 60_000) } },
+                        select: { id: true, topico: true },
+                    });
+                    if (doCsv) ja = await prisma.zoomReuniao.update({ where: { id: doCsv.id }, data: { uuid: o.uuid }, select: { id: true, topico: true } });
+                }
                 if (!ja) novas += 1;
                 const r = await guardarReuniao({ uuid: o.uuid, meetingId: numero, dados: { inicio: data(o.start_time) } });
                 await enfileirar(r.id, { ...(r.topico ? {} : { detalhes: 0 }), resumo: 0, participantes: 0, transcricao: 0 }, { refazer: forcar });
@@ -670,6 +682,7 @@ async function listar({ de, ate, busca, pagina } = {}) {
         porPagina,
         reunioes: reunioes.map(({ sincronizacoes, resumoMarkdown, decisoes, proximosPassos, ...r }) => ({
             ...r,
+            origem: origemDe(r.uuid),
             temResumo: !!resumoMarkdown,
             decisoes: Array.isArray(decisoes) ? decisoes.length : 0,
             proximosPassos: Array.isArray(proximosPassos) ? proximosPassos.length : 0,
@@ -697,6 +710,7 @@ async function detalhe(id) {
     const { participantes, sincronizacoes, resumoBruto: _bruto, transcricao, transcricaoBruta: _meta, ...dados } = r;
     return {
         ...dados,
+        origem: origemDe(r.uuid),
         temTranscricao: !!transcricao,
         congregacao,
         assistencia: assistencia ? { id: assistencia.id, presencial: assistencia.presencial, zoom: assistencia.zoom, lista: assistencia._count.presencasZoom } : null,
@@ -714,9 +728,10 @@ async function transcricaoDe(id) {
 /**
  * Leva os participantes para "quem assistiu pelo Zoom" da assistencia daquela reuniao (a data
  * e o tipo saem do horario e do numero da reuniao). JUNTA com a lista que ja existe: quem ja
- * estava fica como estava (pessoas e mao levantada), so entra quem faltava.
+ * estava fica como estava (pessoas e mao levantada), so entra quem faltava. `soSeExistir`: so
+ * quando a contagem daquele dia ja foi registrada.
  */
-async function levarParaAssistencia(id) {
+async function levarParaAssistencia(id, { soSeExistir = false } = {}) {
     const r = await detalhe(id);
     if (!r) return { erro: 404 };
     if (!r.congregacao) return { erro: 400, mensagem: 'A reunião ainda não tem horário: sincronize de novo.' };
@@ -726,6 +741,8 @@ async function levarParaAssistencia(id) {
         where: { data_tipo: { data: dia, tipo } },
         include: { presencasZoom: { select: { nome: true, irmaoId: true, pessoas: true, levantouMao: true } } },
     });
+    // Na importacao em lote: sem contagem registrada, nao cria assistencia zerada (entraria na media).
+    if (!atual && soSeExistir) return { semContagem: true, data: dia, tipo };
     const existentes = atual ? atual.presencasZoom : [];
     const norm = (t) => limparNomeZoom(t).toLowerCase();
     const novos = r.participantes
@@ -781,6 +798,8 @@ module.exports = {
         reuniaoDaCongregacao,
         consolidarParticipantes,
         situacaoDe,
+        cadastroParaCasar,
+        ehReuniaoDaCongregacao,
         LIMITE_AGUARDANDO,
         LIMITE_TEMPORARIO,
         /** Ha uma rodada da fila em andamento? (os testes esperam ela acabar) */

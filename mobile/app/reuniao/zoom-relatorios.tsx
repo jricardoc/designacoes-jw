@@ -1,11 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEstadoZoom, useReunioesZoom, useSincronizarPeriodoZoom } from "@/api/hooks/useZoom";
-import type { ReuniaoZoomResumo } from "@/api/types";
+import { useEstadoZoom, useImportarRelatorioZoom, useReunioesZoom, useSincronizarPeriodoZoom } from "@/api/hooks/useZoom";
+import type { ResultadoImportacaoZoom, ReuniaoZoomResumo } from "@/api/types";
+import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { Button, EmptyState, GradientHeader, Loading, SelectSheet, TextField, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
@@ -60,6 +62,8 @@ export default function RelatoriosZoomScreen() {
   const estado = useEstadoZoom();
   const lista = useReunioesZoom(filtro);
   const sincronizar = useSincronizarPeriodoZoom();
+  const importar = useImportarRelatorioZoom();
+  const { feito } = useCelebracao();
   const puxar = usePuxar(() => Promise.all([lista.refetch(), estado.refetch()]));
 
   if (!pode) {
@@ -74,6 +78,44 @@ export default function RelatoriosZoomScreen() {
   const reunioes = lista.data?.pages.flatMap((p) => p.reunioes) ?? [];
   const total = lista.data?.pages[0]?.total ?? 0;
   const faltaConfigurar = estado.data && (!estado.data.api || !estado.data.webhook);
+
+  /** "08/10" de "08/10/2026" */
+  const diaMes = (data: string) => data.slice(0, 5);
+
+  const contarImportacao = (r: ResultadoImportacaoZoom) => {
+    const juntas = r.reunioes.filter((x) => x.assistencia);
+    const semContagem = r.reunioes.filter((x) => !x.assistencia);
+    const linhas = [
+      `${r.reunioes.length} ${r.reunioes.length === 1 ? "reunião importada" : "reuniões importadas"}${
+        r.reunioes.length ? ` (${diaMes(r.reunioes[0].data)} a ${diaMes(r.reunioes[r.reunioes.length - 1].data)})` : ""
+      }.`,
+      juntas.length
+        ? `${juntas.length} ${juntas.length === 1 ? "entrou" : "entraram"} em "quem assistiu pelo Zoom" da assistência (${juntas.reduce((s, x) => s + (x.assistencia?.adicionados ?? 0), 0)} nomes novos).`
+        : null,
+      semContagem.length
+        ? `${semContagem.length} sem a contagem da assistência registrada: ficam só aqui nos relatórios (${semContagem.map((x) => diaMes(x.data)).join(", ")}).`
+        : null,
+      r.ignoradas.length ? `${r.ignoradas.length} ${r.ignoradas.length === 1 ? "ignorada" : "ignoradas"} (só a conta ou poucas pessoas).` : null,
+      ...r.erros,
+    ].filter(Boolean);
+    return linhas.join("\n\n");
+  };
+
+  const escolherRelatorios = async () => {
+    // "*/*": o CSV chega com tipos diferentes (baixado, do WhatsApp, do Drive); quem confere é o servidor.
+    const res = await DocumentPicker.getDocumentAsync({ type: "*/*", multiple: true, copyToCacheDirectory: true });
+    if (res.canceled || !res.assets?.length) return;
+    importar.mutate(
+      res.assets.map((a) => ({ uri: a.uri, name: a.name, mimeType: a.mimeType })),
+      {
+        onSuccess: (r) => {
+          if (r.reunioes.length) feito({ titulo: "Relatórios importados", detalhe: `${r.reunioes.length} reuniões`, icone: "videocam" });
+          Alert.alert(r.reunioes.length ? "Importado" : "Nada importado", contarImportacao(r));
+        },
+        onError: (e) => toast.show(e instanceof Error ? e.message : "Não deu para importar", "error"),
+      },
+    );
+  };
 
   const recuperar = (dias: string) =>
     sincronizar.mutate(
@@ -130,8 +172,12 @@ export default function RelatoriosZoomScreen() {
             </View>
           ) : null}
           <View style={styles.numero}>
-            <Ionicons name={r.temResumo ? "document-text-outline" : "document-outline"} size={14} color={colors.textSecondary} />
-            <Text style={styles.numeroTexto}>{r.temResumo ? "Resumo" : "Sem resumo"}</Text>
+            <Ionicons
+              name={r.origem === "csv" ? "document-attach-outline" : r.temResumo ? "document-text-outline" : "document-outline"}
+              size={14}
+              color={colors.textSecondary}
+            />
+            <Text style={styles.numeroTexto}>{r.origem === "csv" ? "Do relatório" : r.temResumo ? "Resumo" : "Sem resumo"}</Text>
           </View>
           {r.decisoes + r.proximosPassos > 0 ? (
             <View style={styles.numero}>
@@ -156,10 +202,8 @@ export default function RelatoriosZoomScreen() {
           <View style={styles.aviso}>
             <Ionicons name="construct-outline" size={18} color={colors.amber} />
             <Text style={styles.avisoTexto}>
-              A integração com o Zoom ainda não está ligada no servidor
-              {!estado.data?.api ? " (faltam as credenciais da API)" : ""}
-              {!estado.data?.webhook ? " (falta o secret token do webhook)" : ""}. Os relatórios aparecem aqui quando
-              ela for configurada.
+              A integração automática com o Zoom ainda não está ligada. Enquanto isso, importe o relatório de uso
+              exportado do zoom.us (Relatórios › Uso): os participantes de cada reunião entram aqui e na assistência.
             </Text>
           </View>
         ) : null}
@@ -192,7 +236,7 @@ export default function RelatoriosZoomScreen() {
             message={
               buscaAplicada
                 ? "Tente outra palavra ou um período maior."
-                : "Quando uma reunião do Zoom termina, o relatório chega sozinho. Para as que já passaram, use o botão abaixo."
+                : "Importe o relatório de uso do Zoom (CSV) com o botão abaixo. Com a integração ligada, cada reunião chega sozinha."
             }
           />
         ) : (
@@ -208,14 +252,23 @@ export default function RelatoriosZoomScreen() {
         )}
 
         <Button
-          label="Buscar reuniões anteriores no Zoom"
-          icon="cloud-download-outline"
-          variant="secondary"
-          onPress={() => setRecuperando(true)}
-          loading={sincronizar.isPending}
-          disabled={!estado.data?.api}
+          label="Importar relatório do Zoom (CSV)"
+          icon="document-attach-outline"
+          variant={estado.data?.api ? "secondary" : "primary"}
+          onPress={escolherRelatorios}
+          loading={importar.isPending}
           fullWidth
         />
+        {estado.data?.api ? (
+          <Button
+            label="Buscar reuniões anteriores no Zoom"
+            icon="cloud-download-outline"
+            variant="secondary"
+            onPress={() => setRecuperando(true)}
+            loading={sincronizar.isPending}
+            fullWidth
+          />
+        ) : null}
       </ScrollView>
 
       <SelectSheet
