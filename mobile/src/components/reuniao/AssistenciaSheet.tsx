@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { ApiError } from "@/api/client";
@@ -10,7 +11,7 @@ import {
 import { useConfig } from "@/api/hooks/useMisc";
 import type { SemanaReuniao, TipoAssistencia } from "@/api/types";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
-import { radius, spacing, type Cores } from "@/theme";
+import { motion, radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { exportarImagem } from "@/utils/exportImagem";
 import { datasDaSemana, faixaSemana, type DataDaSemana } from "@/utils/semanaReuniao";
@@ -240,6 +241,26 @@ export function AssistenciaSheet({ semana, onClose }: AssistenciaSheetProps) {
             icon="checkmark"
             onPress={handleSalvar}
             loading={salvar.isPending}
+            fullWidth
+          />
+
+          {/* A lista vive numa tela própria: tem busca no cadastro e pode ser longa. */}
+          <Button
+            label={
+              registro?.zoomConexoes
+                ? `Quem assistiu pelo Zoom (${registro.zoomConexoes})`
+                : "Quem assistiu pelo Zoom"
+            }
+            icon="videocam-outline"
+            variant="secondary"
+            onPress={() => {
+              if (!dataSelecionada) return;
+              const data = chaveData(dataSelecionada.data).replace(/\//g, "-");
+              onClose();
+              // Espera a folha sair: navegar com o Modal ainda fechando deixa a tela por baixo.
+              setTimeout(() => router.push({ pathname: "/reuniao/zoom", params: { data, tipo } }), motion.saida);
+            }}
+            disabled={!dataSelecionada}
             fullWidth
           />
 

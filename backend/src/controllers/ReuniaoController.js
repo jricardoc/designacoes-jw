@@ -2,6 +2,7 @@ const prisma = require('../prisma');
 const { parseExcel } = require('../services/ExcelReuniaoParser');
 const { parsePdf } = require('../services/PdfReuniaoParser');
 const { buildIndisponibilidadePreview } = require('../services/MatchIrmaosService');
+const Assistencia = require('../services/AssistenciaService');
 const { reconciliarSemanas, domingoDaSemana } = require('../utils/semanaReuniao');
 const ConviteReuniaoService = require('../services/ConviteReuniaoService');
 
@@ -311,7 +312,11 @@ class ReuniaoController {
      */
     async listarAssistencias(req, res) {
         try {
-            const registros = await prisma.assistenciaReuniao.findMany();
+            // A lista do Zoom vai so resumida (conexoes, pessoas, maos): os nomes ficam no
+            // GET da reuniao, para quem cuida das reunioes.
+            const registros = (await prisma.assistenciaReuniao.findMany({
+                include: { presencasZoom: { select: { pessoas: true, levantouMao: true } } },
+            })).map(({ presencasZoom, ...r }) => ({ ...r, ...Assistencia.resumoZoom(presencasZoom) }));
             // "dd/MM/yyyy" nao ordena como texto; compara pela chave invertida.
             const chave = (r) => {
                 const m = String(r.data).match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -337,21 +342,8 @@ class ReuniaoController {
     async salvarAssistencia(req, res) {
         try {
             const { data, tipo, presencial, zoom } = req.body || {};
-
-            const m = String(data || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-            if (!m) {
-                return res.status(400).json({ error: 'Data inválida. Use o formato dd/MM/yyyy.' });
-            }
-            const dia = Number(m[1]);
-            const mes = Number(m[2]);
-            const valida = new Date(Number(m[3]), mes - 1, dia);
-            if (valida.getDate() !== dia || valida.getMonth() !== mes - 1) {
-                return res.status(400).json({ error: 'Data inexistente no calendário.' });
-            }
-
-            if (tipo !== 'meio' && tipo !== 'fds') {
-                return res.status(400).json({ error: 'Tipo inválido. Use "meio" ou "fds".' });
-            }
+            const erro = Assistencia.erroDaReuniao(data, tipo);
+            if (erro) return res.status(400).json({ error: erro });
 
             const contagens = {};
             for (const [campo, valor] of [['presencial', presencial], ['zoom', zoom]]) {
@@ -372,6 +364,72 @@ class ReuniaoController {
         } catch (error) {
             console.error('Erro ao salvar assistência:', error);
             return res.status(500).json({ error: 'Erro ao salvar assistência' });
+        }
+    }
+
+    /**
+     * GET /reunioes/assistencias/:id/zoom — quem assistiu pelo Zoom nessa reuniao (e quem
+     * levantou a mao). So para quem cuida das reunioes.
+     */
+    async presencasZoom(req, res) {
+        try {
+            const id = parseInt(req.params.id, 10);
+            const lista = await prisma.presencaZoom.findMany({
+                where: { assistenciaId: id },
+                orderBy: { nome: 'asc' },
+                select: { id: true, nome: true, irmaoId: true, pessoas: true, levantouMao: true },
+            });
+            return res.json(lista);
+        } catch (error) {
+            console.error('Erro ao buscar presenças do Zoom:', error);
+            return res.status(500).json({ error: 'Erro ao buscar quem assistiu pelo Zoom' });
+        }
+    }
+
+    /**
+     * PUT /reunioes/assistencias/zoom — regrava a lista inteira de uma reuniao.
+     * Body: { data: "dd/MM/yyyy", tipo, presencas: [{ nome, irmaoId?, pessoas, levantouMao }] }
+     *
+     * Sem contagem registrada ainda, cria o registro com 0 e 0: a lista pode vir antes do numero.
+     */
+    async salvarPresencasZoom(req, res) {
+        try {
+            const { data, tipo } = req.body || {};
+            const erro = Assistencia.erroDaReuniao(data, tipo);
+            if (erro) return res.status(400).json({ error: erro });
+            const presencas = Assistencia.normalizarPresencas(req.body.presencas);
+            if (!presencas) return res.status(400).json({ error: 'Lista de presenças inválida' });
+
+            // Irmao apagado do cadastro no meio do caminho: fica o nome, sem o vinculo.
+            const ids = presencas.map(p => p.irmaoId).filter(Boolean);
+            const existentes = new Set((await prisma.irmao.findMany({
+                where: { id: { in: ids } },
+                select: { id: true },
+            })).map(i => i.id));
+
+            const assistencia = await prisma.$transaction(async (tx) => {
+                const a = await tx.assistenciaReuniao.upsert({
+                    where: { data_tipo: { data, tipo } },
+                    update: {},
+                    create: { data, tipo },
+                });
+                await tx.presencaZoom.deleteMany({ where: { assistenciaId: a.id } });
+                if (presencas.length > 0) {
+                    await tx.presencaZoom.createMany({
+                        data: presencas.map(p => ({
+                            ...p,
+                            irmaoId: existentes.has(p.irmaoId) ? p.irmaoId : null,
+                            assistenciaId: a.id,
+                        })),
+                    });
+                }
+                return a;
+            });
+
+            return res.json({ success: true, assistenciaId: assistencia.id, ...Assistencia.resumoZoom(presencas) });
+        } catch (error) {
+            console.error('Erro ao salvar presenças do Zoom:', error);
+            return res.status(500).json({ error: 'Erro ao salvar quem assistiu pelo Zoom' });
         }
     }
 

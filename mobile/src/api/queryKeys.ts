@@ -19,6 +19,7 @@ export const qk = {
   // diferentes, e uma nao pode servir cache para a outra.
   confirmacoes: (passadas: boolean) => ["confirmacoes", passadas] as const,
   assistencias: ["assistencias"] as const,
+  presencasZoom: (assistenciaId: number) => ["assistencias", "zoom", assistenciaId] as const,
   cumprimento: ["cumprimento"] as const,
   // Tudo de território começa por "territorios": invalidar o prefixo renova lista, detalhe e
   // painel de uma vez depois que a fila offline envia.

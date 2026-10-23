@@ -230,6 +230,9 @@ routes.post('/reunioes/indisponibilidades', podeReunioes, ReuniaoController.apli
 routes.get('/reunioes/assistencias', ReuniaoController.listarAssistencias);
 routes.put('/reunioes/assistencias', podeReunioes, ReuniaoController.salvarAssistencia);
 routes.delete('/reunioes/assistencias/:id', podeReunioes, ReuniaoController.excluirAssistencia);
+// Quem assistiu pelo Zoom (e levantou a mao): nomes so para quem cuida das reunioes.
+routes.get('/reunioes/assistencias/:id(\\d+)/zoom', podeReunioes, ReuniaoController.presencasZoom);
+routes.put('/reunioes/assistencias/zoom', podeReunioes, ReuniaoController.salvarPresencasZoom);
 routes.delete('/reunioes/:id', podeReunioes, ReuniaoController.delete);
 routes.put('/reunioes/semanas/:id', podeReunioes, ReuniaoController.updateSemana);
 // Os textos de compartilhamento sao montados no servidor (ver ConviteReuniaoService):

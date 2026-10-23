@@ -179,6 +179,7 @@ model Irmao {
   dirigenteSaidas       DirigenteSaidaCampo[]
   carrinhoEscalas       CarrinhoEscala[]
   designacoesTerritorio DesignacaoTerritorio[]
+  presencasZoom         PresencaZoom[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -333,10 +334,29 @@ model AssistenciaReuniao {
   tipo       String // "meio" | "fds"
   presencial Int      @default(0)
   zoom       Int      @default(0)
+  presencasZoom PresencaZoom[]
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@unique([data, tipo])
+}
+
+// Quem assistiu pelo Zoom numa reuniao: uma linha por conexao. `pessoas` conta a familia no
+// mesmo aparelho; a soma e o que se confere com o numero do Zoom em AssistenciaReuniao.
+// `nome` e o do cadastro (irmaoId) ou o nome da conexao no Zoom, para visitante.
+model PresencaZoom {
+  id            Int                @id @default(autoincrement())
+  assistenciaId Int
+  assistencia   AssistenciaReuniao @relation(fields: [assistenciaId], references: [id], onDelete: Cascade)
+  nome          String
+  irmaoId       Int?
+  irmao         Irmao?             @relation(fields: [irmaoId], references: [id], onDelete: SetNull)
+  pessoas       Int                @default(1)
+  levantouMao   Boolean            @default(false)
+  createdAt     DateTime           @default(now())
+
+  @@unique([assistenciaId, nome])
+  @@index([irmaoId])
 }
 
 // Confirmacao das partes de estudante: o irmao/irma com parte disse se vai cumprir.
