@@ -196,8 +196,9 @@ routes.put('/confirmacoes/telefone', podeConfirmacoes, ConfirmacaoController.sal
 // nao e informacao reservada. Gestao e do admin geral, junto do resto do cadastro.
 routes.get('/grupos', GrupoCampoController.index);
 routes.post('/grupos', requireAdmin, GrupoCampoController.create);
-routes.put('/grupos/:id', requireAdmin, GrupoCampoController.update);
-routes.delete('/grupos/:id', requireAdmin, GrupoCampoController.delete);
+// `:id` so com digitos: sem isso, PUT /grupos/secretario (mais abaixo) caia aqui com id "secretario".
+routes.put('/grupos/:id(\\d+)', requireAdmin, GrupoCampoController.update);
+routes.delete('/grupos/:id(\\d+)', requireAdmin, GrupoCampoController.delete);
 // Grupos para quem lidera (o proprio) e para admin/secretario (todos), e o relatorio de campo.
 // O controle de quem ve o que mora no RelatorioCampoService.
 routes.get('/grupos/painel', GruposController.painel);
