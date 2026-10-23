@@ -150,7 +150,6 @@ export default function TerritorioScreen() {
 
   const todos = useMemo(() => data?.territorios ?? [], [data]);
   const cores = data?.cores ?? {};
-  const descricoes = useMemo(() => Object.fromEntries(todos.map((t) => [t.numero, t.observacoes])), [todos]);
 
   // As áreas, na ordem do primeiro número de cada uma; "sem área" por último.
   const grupos = useMemo(() => {
@@ -394,7 +393,7 @@ export default function TerritorioScreen() {
       ) : null}
 
       {doBanco && !(aba === "saidas" && podeSaidas) ? (
-        <OndeEstou territorios={mapaGeral?.territorios} descricoes={descricoes} onAbrir={abrir} />
+        <OndeEstou territorios={mapaGeral?.territorios} resumos={todos} onAbrir={abrir} />
       ) : null}
 
       {aba === "saidas" && podeSaidas ? (
