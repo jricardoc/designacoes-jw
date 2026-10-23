@@ -6,12 +6,10 @@ import { useEffect, useState } from "react";
 import { BackHandler, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, {
   FadeIn,
-  FadeInDown,
   FadeOut,
   FadeOutDown,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +17,7 @@ import { useAlturaTeclado } from "@/components/ui/useAlturaTeclado";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { HorasSheet } from "./HorasSheet";
-import type { Icone } from "./kit";
+import { EASE, entrada, LEVE, type Icone } from "./kit";
 import { PlanoSheet } from "./PlanoSheet";
 import { RevisitaSheet } from "./RevisitaSheet";
 import { efeitosDe } from "./tema";
@@ -71,7 +69,7 @@ export function BarraMinisterio() {
 
   useEffect(() => {
     if (indice < 0 || !cada) return;
-    x.value = withSpring(indice < 2 ? indice * cada : indice * cada + VAO, { damping: 18, stiffness: 190 });
+    x.value = withTiming(indice < 2 ? indice * cada : indice * cada + VAO, { duration: LEVE, easing: EASE });
   }, [indice, cada, x]);
 
   useEffect(() => {
@@ -80,7 +78,7 @@ export function BarraMinisterio() {
   }, [visivel, oculta]);
 
   useEffect(() => {
-    giro.value = withSpring(aberto ? 1 : 0, { damping: 14, stiffness: 200 });
+    giro.value = withTiming(aberto ? 1 : 0, { duration: LEVE, easing: EASE });
     if (!aberto) return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       setAberto(false);
@@ -117,7 +115,7 @@ export function BarraMinisterio() {
           {ATALHOS.map((a, i) => (
             <Animated.View
               key={a.folha}
-              entering={FadeInDown.delay((ATALHOS.length - 1 - i) * 45).springify().damping(16)}
+              entering={entrada(ATALHOS.length - 1 - i)}
               exiting={FadeOutDown.duration(140)}
             >
               <Pressable onPress={() => escolher(a.folha)} style={({ pressed }) => [styles.atalho, pressed && styles.pressionado]} accessibilityRole="button">

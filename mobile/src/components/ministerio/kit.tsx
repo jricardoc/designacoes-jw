@@ -16,13 +16,13 @@ import {
 import Animated, {
   cancelAnimation,
   Easing,
+  FadeInDown,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
   withRepeat,
   withSequence,
-  withSpring,
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
@@ -36,6 +36,12 @@ import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { doisDig, isoDoDia } from "./escolhas";
 import { efeitosDe, METAL } from "./tema";
+
+/** As transições do ambiente: 350 ms com a curva "ease" do CSS. Os movimentos de fundo seguem lentos. */
+export const LEVE = 350;
+export const EASE = Easing.bezier(0.25, 0.1, 0.25, 1);
+/** Um bloco entrando na tela; `i` escalona de leve (30 ms por passo, até 4). */
+export const entrada = (i = 0) => FadeInDown.duration(LEVE).easing(EASE).delay(Math.min(i, 4) * 30);
 
 export type Icone = keyof typeof Ionicons.glyphMap;
 
@@ -83,6 +89,8 @@ export const mesAtual = () => {
   const d = new Date();
   return `${d.getFullYear()}-${doisDig(d.getMonth() + 1)}`;
 };
+
+export const maiuscula = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Dia "2026-10-23" mais `n` dias (pelo calendário, não por 24 h). */
 export const somarDias = (dia: string, n: number) => {
@@ -246,7 +254,7 @@ export function Anel({ tamanho, fracao, pulsando, children }: { tamanho: number;
   const comprimento = Math.max(10, tamanho * 0.075);
 
   useEffect(() => {
-    progresso.value = withTiming(Math.max(0, Math.min(1, fracao)), { duration: parado ? 0 : 1100, easing: Easing.out(Easing.cubic) });
+    progresso.value = withTiming(Math.max(0, Math.min(1, fracao)), { duration: parado ? 0 : LEVE, easing: EASE });
   }, [fracao, progresso, parado]);
 
   useEffect(() => {
@@ -444,7 +452,7 @@ export function Segmentos<T extends string>({ opcoes, valor, onMudar }: { opcoes
   const x = useSharedValue(0);
   const cada = largura ? (largura - 8) / opcoes.length : 0;
   useEffect(() => {
-    x.value = withSpring(indice * cada, { damping: 18, stiffness: 180 });
+    x.value = withTiming(indice * cada, { duration: LEVE, easing: EASE });
   }, [indice, cada, x]);
   const estilo = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
   return (
