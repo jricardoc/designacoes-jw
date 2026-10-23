@@ -5,9 +5,11 @@ const prisma = require('../prisma');
 // /download/* e /webhooks/eas: quem baixa o app ainda nao tem login, e o EAS se identifica pela
 // assinatura do corpo, conferida no proprio controller.
 const PUBLIC_ROUTES = ['/auth/login', '/health', '/config/publica', '/download/android', '/download/ios', '/webhooks/eas', '/api/integrations/zoom/webhook'];
+// O calendario assinado no celular: o app Calendario nao manda token; quem tem o link tem o calendario.
+const CALENDARIO = /^\/calendario\/[a-f0-9]{48}\.ics$/;
 
 async function authMiddleware(req, res, next) {
-    if (PUBLIC_ROUTES.includes(req.path)) {
+    if (PUBLIC_ROUTES.includes(req.path) || CALENDARIO.test(req.path)) {
         return next();
     }
 

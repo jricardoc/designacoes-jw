@@ -3,7 +3,7 @@ import * as Location from "expo-location";
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { useSalvarRevisita } from "@/api/hooks/usePioneiro";
-import type { RevisitaDetalhe } from "@/api/types";
+import type { Revisita } from "@/api/types";
 import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
 import { radius, type Cores } from "@/theme";
@@ -23,8 +23,11 @@ async function enderecoDaPosicao(lat: number, lng: number) {
   }
 }
 
-/** Nova revisita ou edição: nome, endereço (com a posição pelo GPS), telefone, estudo e a próxima visita. */
-export function RevisitaSheet({ visible, onClose, revisita }: { visible: boolean; onClose: () => void; revisita?: RevisitaDetalhe | null }) {
+/** O que a edição usa: serve tanto o contato da lista quanto o detalhe. */
+type ContatoEditavel = Pick<Revisita, "id" | "nome" | "endereco" | "lat" | "lng" | "telefone" | "observacao" | "estudo" | "proximaVisita">;
+
+/** Novo contato (revisita) ou edição: nome, endereço (com a posição pelo GPS), telefone, estudo e a próxima visita. */
+export function RevisitaSheet({ visible, onClose, revisita }: { visible: boolean; onClose: () => void; revisita?: ContatoEditavel | null }) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const { feito } = useCelebracao();
@@ -86,7 +89,7 @@ export function RevisitaSheet({ visible, onClose, revisita }: { visible: boolean
       {
         onSuccess: () => {
           onClose();
-          feito({ titulo: revisita ? "Revisita atualizada" : "Revisita anotada", detalhe: nome.trim(), icone: estudo ? "book" : "person-add" });
+          feito({ titulo: revisita ? "Contato atualizado" : "Contato anotado", detalhe: nome.trim(), icone: estudo ? "book" : "person-add" });
         },
         onError: (e) => toast.show(e instanceof Error ? e.message : "Não deu para salvar", "error"),
       },
@@ -95,7 +98,7 @@ export function RevisitaSheet({ visible, onClose, revisita }: { visible: boolean
   return (
     <Sheet visible={visible} onClose={onClose} scroll>
       <View style={styles.conteudo}>
-        <Text style={styles.titulo}>{revisita ? "Editar revisita" : "Nova revisita"}</Text>
+        <Text style={styles.titulo}>{revisita ? "Editar contato" : "Novo contato"}</Text>
         <TextField label="Nome" value={nome} onChangeText={setNome} maxLength={80} placeholder="Como você chama a pessoa" />
         <TextField label="Endereço" value={endereco} onChangeText={setEndereco} maxLength={200} placeholder="Rua, número, ponto de referência" />
         <Pressable style={styles.local} onPress={usarLocalizacao} disabled={localizando} accessibilityRole="button">
@@ -131,7 +134,7 @@ export function RevisitaSheet({ visible, onClose, revisita }: { visible: boolean
           </View>
         ) : null}
         <TextField label="Observações (opcional)" value={observacao} onChangeText={setObservacao} maxLength={1000} multiline placeholder="Assunto da conversa, publicação deixada..." />
-        <Button label={revisita ? "Salvar" : "Anotar revisita"} icon="checkmark" onPress={confirmar} loading={salvar.isPending} disabled={!nome.trim()} fullWidth />
+        <Button label={revisita ? "Salvar" : "Anotar contato"} icon="checkmark" onPress={confirmar} loading={salvar.isPending} disabled={!nome.trim()} fullWidth />
       </View>
     </Sheet>
   );

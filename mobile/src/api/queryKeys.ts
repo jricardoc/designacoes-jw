@@ -24,6 +24,9 @@ export const qk = {
   pioneiroPainel: (mes: string) => ["pioneiro", "painel", mes] as const,
   pioneiroRevisitas: (arquivadas: boolean) => ["pioneiro", "revisitas", arquivadas] as const,
   pioneiroRevisita: (id: number) => ["pioneiro", "revisita", id] as const,
+  pioneiroAgenda: (de: string, ate: string) => ["pioneiro", "agenda", de, ate] as const,
+  pioneiroViagens: (mes: string) => ["pioneiro", "viagens", mes] as const,
+  pioneiroProgresso: (mes: string) => ["pioneiro", "progresso", mes] as const,
   // Relatórios do Zoom.
   zoomEstado: ["zoom-estado"] as const,
   zoomReunioes: (de: string, ate: string, busca: string) => ["zoom-reunioes", de, ate, busca] as const,

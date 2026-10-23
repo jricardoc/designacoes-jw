@@ -70,7 +70,7 @@ const noExpoGo = Constants.executionEnvironment === "storeClient";
 export const mapaDisponivel =
   Platform.OS === "ios" || noExpoGo || (Platform.OS === "android" && !!extra?.mapaGoogle?.android);
 
-const provedor = Platform.OS === "android" || extra?.mapaGoogle?.ios ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
+export const provedor = Platform.OS === "android" || extra?.mapaGoogle?.ios ? PROVIDER_GOOGLE : PROVIDER_DEFAULT;
 
 const centro = (pontos: Ponto[]) => {
   const n = pontos.length || 1;

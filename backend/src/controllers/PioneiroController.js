@@ -30,4 +30,27 @@ module.exports = {
     apagarRevisita: responder('apagar revisita', (req) => Pioneiro.apagarRevisita(req.user, id(req))),
     registrarVisita: responder('visita', (req) => Pioneiro.registrarVisita(req.user, id(req), req.body)),
     enviarRelatorio: responder('relatório', (req) => Pioneiro.enviarRelatorio(req.user, req.body)),
+    atualizarPerfil: responder('perfil', (req) => Pioneiro.atualizarPerfil(req.user, req.body)),
+    agenda: responder('agenda', (req) => Pioneiro.agenda(req.user, req.query)),
+    criarPlano: responder('novo plano', (req) => Pioneiro.criarPlano(req.user, req.body)),
+    apagarPlano: responder('apagar plano', (req) => Pioneiro.apagarPlano(req.user, id(req))),
+    viagens: responder('viagens', (req) => Pioneiro.viagens(req.user, req.query.mes)),
+    criarViagem: responder('nova viagem', (req) => Pioneiro.criarViagem(req.user, req.body)),
+    apagarViagem: responder('apagar viagem', (req) => Pioneiro.apagarViagem(req.user, id(req))),
+    progresso: responder('progresso', (req) => Pioneiro.progresso(req.user, req.query.mes)),
+    linkCalendario: responder('calendário', (req) => Pioneiro.linkCalendario(req.user, { trocar: !!(req.body && req.body.trocar) })),
+
+    // Sem login: o app Calendario do celular busca o arquivo sozinho, de hora em hora.
+    async calendario(req, res) {
+        try {
+            const ics = await Pioneiro.calendarioIcs(String(req.params.arquivo || '').replace(/\.ics$/, ''));
+            if (!ics) return res.status(404).send('Calendário não encontrado');
+            res.set('Content-Type', 'text/calendar; charset=utf-8');
+            res.set('Cache-Control', 'private, max-age=900');
+            return res.send(ics);
+        } catch (e) {
+            console.error('[pioneiro] calendário:', e);
+            return res.status(500).send('Erro no calendário');
+        }
+    },
 };

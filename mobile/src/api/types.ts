@@ -1405,6 +1405,10 @@ export interface RevisitaResumo {
   proximaVisita: string | null;
 }
 
+/** A visita marcada já passou (`atrasada`), é `hoje`, é em até 3 dias (`breve`), depois (`marcada`) ou não tem data. */
+export type SituacaoContato = "semData" | "atrasada" | "hoje" | "breve" | "marcada";
+export type TipoVisita = "conversa" | "estudo" | "nao_em_casa";
+
 export interface PainelPioneiro {
   mes: string;
   nomeMes: string;
@@ -1423,6 +1427,86 @@ export interface PainelPioneiro {
   revisitas: number;
   proximas: RevisitaResumo[];
   relatorio: RelatorioCampo | null;
+  /** Primeiro nome, para o "Bom dia". */
+  nome: string;
+  /** Os outros pioneiros veem os planos de saída dele na agenda. */
+  compartilharPlanos: boolean;
+  /** As marcadas para hoje e as que já tiveram visita hoje (`feita` é o tipo da visita). */
+  conversasHoje: { total: number; feitas: number; itens: (RevisitaResumo & { feita: TipoVisita | null })[] };
+  /** As próximas visitas marcadas, depois de hoje. */
+  aSeguir: (RevisitaResumo & { situacao: SituacaoContato })[];
+}
+
+export interface PlanoSaida {
+  id: number;
+  /** "2026-10-25" */
+  data: string;
+  /** "09:30" */
+  hora: string;
+  duracaoMin: number;
+  local: string | null;
+  nota: string | null;
+  meu: boolean;
+  /** O primeiro nome do companheiro (null quando é meu). */
+  nome: string | null;
+}
+
+export interface SaidaAgenda {
+  id: number;
+  data: string;
+  hora: string | null;
+  local: string | null;
+  dirigente: string | null;
+}
+
+export interface AgendaPioneiro {
+  de: string;
+  ate: string;
+  hoje: string;
+  visitas: (RevisitaResumo & { situacao: SituacaoContato })[];
+  planos: PlanoSaida[];
+  saidas: SaidaAgenda[];
+}
+
+export interface Viagem {
+  id: number;
+  data: string;
+  km: number;
+  custo: number | null;
+  nota: string | null;
+}
+
+export interface ViagensMes {
+  mes: string;
+  viagens: Viagem[];
+  quantidade: number;
+  km: number;
+  custo: number;
+  porDia: Record<string, number>;
+}
+
+export type NivelEmblema = "bronze" | "prata" | "ouro";
+
+export interface EmblemaPioneiro {
+  id: "constancia" | "regando" | "estudos" | "pronto";
+  nome: string;
+  icone: string;
+  valor: number;
+  unidade: string;
+  nivel: NivelEmblema | null;
+  proximo: { nivel: NivelEmblema; falta: number } | null;
+}
+
+export interface ProgressoPioneiro {
+  mes: string;
+  nomeMes: string;
+  meta: number;
+  metaAno: number;
+  minutosMes: number;
+  minutosAno: number;
+  porMes: { mes: string; minutos: number; status: "meta" | "parcial" | "vazio" | "futuro"; relatorio: boolean }[];
+  emblemas: EmblemaPioneiro[];
+  viagens: { quantidade: number; km: number; custo: number };
 }
 
 export interface Revisita {
@@ -1442,7 +1526,7 @@ export interface Revisita {
 }
 
 export interface RevisitaDetalhe extends Omit<Revisita, "ultimaVisita" | "visitas"> {
-  visitas: { id: number; data: string; observacao: string | null }[];
+  visitas: { id: number; data: string; observacao: string | null; tipo: TipoVisita }[];
 }
 
 export interface NovaRevisita {

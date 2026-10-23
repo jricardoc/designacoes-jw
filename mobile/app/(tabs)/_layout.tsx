@@ -1,27 +1,20 @@
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 import { View } from "react-native";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BarraFlutuante } from "@/components/layout/BarraFlutuante";
 import { NavegacaoPorGesto } from "@/components/layout/NavegacaoPorGesto";
 import { ProvedorRolagem } from "@/components/layout/contextoRolagem";
 import { BarraGlobalProvider } from "@/components/layout/contextoBarra";
-import { usePushNotifications } from "@/notifications/usePushNotifications";
-import { useSincronizarNotificacoes } from "@/notifications/useSincronizarNotificacoes";
-import { useSincronizarFila } from "@/territorios/fila";
-import { AvisoAtualizacao } from "@/components/AvisoAtualizacao";
-import { BloqueioBiometria } from "@/components/BloqueioBiometria";
 import { useTema } from "@/theme/TemaContext";
+import { guardarAmbiente } from "@/utils/ambiente";
 
 export default function LayoutDoMenu() {
   const { colors } = useTema();
 
-  // Registra o dispositivo para notificações push após o login.
-  usePushNotifications();
-  // E puxa do servidor a cópia dos avisos que o aparelho perdeu.
-  useSincronizarNotificacoes();
-  // Envia o que foi marcado no território sem internet. Aqui, e não na tela do território:
-  // o envio tem de acontecer mesmo com o irmão em outra tela quando o sinal volta.
-  useSincronizarFila();
+  // Push, sincronização e biometria moram na raiz (ServicosDoApp), valendo nos dois ambientes.
+  // Daqui só sai o lembrete de que é aqui que o app abre da próxima vez.
+  useEffect(() => guardarAmbiente("servir"), []);
 
   // A pasta continua "(tabs)" de propósito: o nome entre parênteses não entra na
   // URL, então trocar a tab bar pelo menu lateral não mexeu em nenhuma rota.
@@ -55,7 +48,6 @@ export default function LayoutDoMenu() {
               <Stack.Screen name="reuniao" />
               <Stack.Screen name="confirmacoes" />
               <Stack.Screen name="grupos" />
-              <Stack.Screen name="ministerio" />
               <Stack.Screen name="tarefas" />
               <Stack.Screen name="carrinho" />
               <Stack.Screen name="conta" />
@@ -69,9 +61,6 @@ export default function LayoutDoMenu() {
             inteiro do app; esta barra é o atalho dos cinco destinos do dia a dia. */}
         <BarraFlutuante />
       </ProvedorRolagem>
-      <AvisoAtualizacao />
-      {/* Face ID / digital ao abrir o app, para quem ligou na Conta. Por cima de tudo. */}
-      <BloqueioBiometria />
     </View>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import Animated, {
   Easing,
+  FadeInUp,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -25,6 +26,7 @@ import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral, podeGerenciar, podeUsarPioneiro, podeVerGrupos } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { irParaAmbiente, ListaAmbientes } from "./Ambientes";
 import { MarcaServirMais } from "./MarcaServirMais";
 
 const CURVA = Easing.bezier(...motion.curvaSuave);
@@ -67,8 +69,6 @@ const ITENS: ItemMenu[] = [
   },
   // O dirigente e o ajudante veem o próprio grupo; o secretário e o admin geral, todos.
   { chave: "grupos", rotulo: "Grupos", icone: "people-outline", href: "/(tabs)/grupos", visivel: podeVerGrupos },
-  // Horas, revisitas e estudos do próprio pioneiro.
-  { chave: "ministerio", rotulo: "Ministério", icone: "timer-outline", href: "/(tabs)/ministerio", visivel: podeUsarPioneiro },
   // Acompanhar as tarefas da congregação inteira (e designá-las) é do admin geral, pela
   // mesma razão que o cadastro: quem cobra a tarefa é quem a distribui.
   { chave: "tarefas", rotulo: "Tarefas", icone: "clipboard-outline", href: "/(tabs)/tarefas", somenteAdmin: true },
@@ -96,6 +96,9 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   const segments = useSegments();
 
   const largura = Math.min(316, width * 0.84);
+  // O topo (a marca) troca de ambiente: o Ministério é um "app" à parte, do pioneiro.
+  const trocaAmbiente = podeUsarPioneiro(usuario);
+  const [trocando, setTrocando] = useState(false);
   // O Modal some junto com `visible`, então a animação de saída só existe se o
   // desmonte esperar ela terminar.
   const [montado, setMontado] = useState(visible);
@@ -103,6 +106,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
 
   useEffect(() => {
     if (visible) setMontado(true);
+    else setTrocando(false);
   }, [visible]);
 
   useEffect(() => {
@@ -160,15 +164,38 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           ]}
         >
           <View style={styles.topo}>
-            <MarcaServirMais tamanho={38} />
-            <View style={styles.topoTexto}>
-              <Text style={styles.topoNome}>Servir Mais</Text>
-              <Text style={styles.topoTag}>Designações da congregação</Text>
-            </View>
+            <Pressable
+              onPress={() => setTrocando((t) => !t)}
+              disabled={!trocaAmbiente}
+              style={styles.topoMarca}
+              accessibilityRole="button"
+              accessibilityLabel={trocaAmbiente ? "Trocar de ambiente" : undefined}
+              accessibilityState={{ expanded: trocando }}
+            >
+              <MarcaServirMais tamanho={38} />
+              <View style={styles.topoTexto}>
+                <Text style={styles.topoNome}>Servir Mais</Text>
+                <Text style={styles.topoTag}>{trocaAmbiente ? "Toque para ir ao Ministério" : "Designações da congregação"}</Text>
+              </View>
+              {trocaAmbiente ? (
+                <Ionicons name={trocando ? "chevron-up" : "chevron-down"} size={18} color={colors.textSecondary} />
+              ) : null}
+            </Pressable>
             <Pressable hitSlop={10} onPress={onClose} style={styles.fechar}>
               <Ionicons name="close" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
+          {trocando ? (
+            <Animated.View entering={FadeInUp.duration(220)} style={styles.ambientes}>
+              <ListaAmbientes
+                atual="servir"
+                onEscolher={(a) => {
+                  onClose();
+                  if (a !== "servir") irParaAmbiente(a);
+                }}
+              />
+            </Animated.View>
+          ) : null}
 
           <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
             {ITENS.filter((item) => {
@@ -260,7 +287,9 @@ const criarEstilos = (colors: Cores) =>
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
+    topoMarca: { flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.md },
     topoTexto: { flex: 1 },
+    ambientes: { paddingTop: spacing.md, paddingBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
     topoNome: {
       color: colors.text,
       fontSize: 18,

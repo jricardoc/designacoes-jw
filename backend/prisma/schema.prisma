@@ -191,6 +191,8 @@ model Irmao {
   pioneiroPerfil        PioneiroPerfil?
   pioneiroHoras         PioneiroHoras[]
   revisitas             Revisita[]
+  pioneiroPlanos        PioneiroPlano[]
+  pioneiroViagens       PioneiroViagem[]
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 }
@@ -981,6 +983,11 @@ model PioneiroPerfil {
   // Rodando desde (null = parado ou pausado) e o que ja somou antes das pausas.
   cronometroInicio DateTime?
   cronometroSeg    Int       @default(0)
+  // Os companheiros pioneiros veem os planos de saida dele na Agenda.
+  compartilharPlanos Boolean @default(true)
+  // O segredo do link do calendario (webcal) que o celular assina: visitas marcadas e planos.
+  // Trocar o token derruba o link antigo.
+  calendarioToken  String?   @unique
   updatedAt        DateTime  @updatedAt
 }
 
@@ -1029,9 +1036,44 @@ model RevisitaVisita {
   revisitaId Int
   revisita   Revisita @relation(fields: [revisitaId], references: [id], onDelete: Cascade)
   data       DateTime
+  // conversa | estudo | nao_em_casa
+  tipo       String   @default("conversa")
   observacao String?
   createdAt  DateTime @default(now())
 
   @@index([revisitaId])
 }
 
+
+
+// Quando o pioneiro pretende sair (a Agenda). Os companheiros pioneiros veem os planos de quem
+// deixou compartilhar (PioneiroPerfil.compartilharPlanos).
+model PioneiroPlano {
+  id         Int      @id @default(autoincrement())
+  irmaoId    Int
+  irmao      Irmao    @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  // "2026-10-24" e "09:30", no relogio da congregacao.
+  data       String
+  hora       String
+  duracaoMin Int      @default(120)
+  local      String?
+  nota       String?
+  createdAt  DateTime @default(now())
+
+  @@index([data])
+  @@index([irmaoId])
+}
+
+// Viagens do ministerio (quilometragem e combustivel), opcional.
+model PioneiroViagem {
+  id        Int      @id @default(autoincrement())
+  irmaoId   Int
+  irmao     Irmao    @relation(fields: [irmaoId], references: [id], onDelete: Cascade)
+  data      String
+  km        Float
+  custo     Float?
+  nota      String?
+  createdAt DateTime @default(now())
+
+  @@index([irmaoId, data])
+}

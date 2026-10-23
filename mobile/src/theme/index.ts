@@ -261,10 +261,13 @@ const daltonicoEscuro: Partial<Cores> = {
 
 export type Esquema = "claro" | "escuro";
 
+/** O eixo azul × laranja do modo daltônico; o ambiente Ministério aplica o mesmo por cima da paleta dele. */
+export const ajusteDaltonico = (esquema: Esquema): Partial<Cores> => (esquema === "escuro" ? daltonicoEscuro : daltonicoClaro);
+
 export function paletaDe(esquema: Esquema, daltonico: boolean): Cores {
   const base = esquema === "escuro" ? escuro : claro;
   if (!daltonico) return base;
-  return { ...base, ...(esquema === "escuro" ? daltonicoEscuro : daltonicoClaro) };
+  return { ...base, ...ajusteDaltonico(esquema) };
 }
 
 /**

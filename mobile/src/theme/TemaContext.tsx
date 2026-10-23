@@ -103,6 +103,26 @@ export function TemaProvider({ children }: { children: ReactNode }) {
 }
 
 /**
+ * Um pedaço do app com paleta própria (o ambiente Ministério). Claro/escuro e daltônico
+ * continuam os de Ajustes; só as cores mudam, e todo componente de dentro (folhas, botões,
+ * campos) acompanha sem saber. `paleta` deve ser uma função de módulo (entra na memoização).
+ */
+export function PaletaPropria({
+  paleta,
+  children,
+}: {
+  paleta: (esquema: Esquema, daltonico: boolean) => Cores;
+  children: ReactNode;
+}) {
+  const tema = useTema();
+  const value = useMemo(
+    () => ({ ...tema, colors: paleta(tema.esquema, tema.daltonico) }),
+    [tema, paleta],
+  );
+  return <TemaCtx.Provider value={value}>{children}</TemaCtx.Provider>;
+}
+
+/**
  * O tema atual — e, com uma fábrica de estilos, os estilos já na paleta certa.
  *
  *   const criarEstilos = (colors: Cores) => StyleSheet.create({ ... });
