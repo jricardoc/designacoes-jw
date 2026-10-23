@@ -174,8 +174,11 @@ export function useAtualizarPerfilPioneiro() {
 
 /** O token do calendário que o celular assina (`trocar` derruba o link antigo). */
 export function useLinkCalendario() {
+  const invalidar = useInvalidar();
   return useMutation({
     mutationFn: (trocar: boolean) => apiRequest<{ token: string }>("/pioneiro/calendario", { method: "POST", body: { trocar } }),
+    // O painel passa a dizer `calendario: true`: o convite para assinar some.
+    onSuccess: () => invalidar(),
   });
 }
 
