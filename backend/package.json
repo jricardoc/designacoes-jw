@@ -26,6 +26,7 @@
     "verificar:grupos": "node scripts/verificarGrupos.js",
     "verificar:zoom": "node scripts/verificarZoom.js",
     "verificar:zoom-banco": "node scripts/verificarZoomBanco.js",
+    "verificar:rotas": "node scripts/verificarRotas.js",
     "vincular:limpeza": "node scripts/vincularLimpeza.js",
     "backfill:publicacoes": "node scripts/backfillPublicacoes.js"
   },
