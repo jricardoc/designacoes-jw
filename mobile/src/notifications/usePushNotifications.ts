@@ -148,21 +148,18 @@ export function usePushNotifications() {
     // SEGUNDO grupo (tabs) — o layout inteiro montaria de novo, com outra
     // rodada de listeners de push. `dismissTo` volta para a instância que já
     // existe e o `navigate` seguinte resolve a tela de dentro.
+    // O aviso da visita marcada é do ambiente Ministério: abre lá, por cima do Início dele.
+    if (telaPendente.tela === "revisita") {
+      router.dismissTo("/ministerio");
+      if (telaPendente.revisitaId) router.push({ pathname: "/ministerio/contato", params: { id: String(telaPendente.revisitaId) } });
+      return;
+    }
     router.dismissTo("/(tabs)/minhas");
     router.navigate(
-      telaPendente.tela === "territorio"
-        ? "/(tabs)/territorio"
-        : telaPendente.tela === "grupos"
-          ? "/(tabs)/grupos"
-          : telaPendente.tela === "revisita"
-            ? "/(tabs)/ministerio"
-            : "/(tabs)/minhas",
+      telaPendente.tela === "territorio" ? "/(tabs)/territorio" : telaPendente.tela === "grupos" ? "/(tabs)/grupos" : "/(tabs)/minhas",
     );
     if (telaPendente.tela === "grupos" && telaPendente.grupoId) {
       router.push({ pathname: "/grupos/[id]", params: { id: String(telaPendente.grupoId) } });
-    }
-    if (telaPendente.tela === "revisita" && telaPendente.revisitaId) {
-      router.push({ pathname: "/ministerio/revisita", params: { id: String(telaPendente.revisitaId) } });
     }
     if (telaPendente.tela === "territorio" && telaPendente.numero) {
       router.push({

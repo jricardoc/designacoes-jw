@@ -57,6 +57,38 @@ eq([
 ], [true, false, true, false, false, false], 'avisa ate 1 h antes (e ate 2 h depois, se o servidor esteve fora); uma vez so; arquivada nao');
 eq(P.horaDaCongregacao('2026-10-23T18:30:00Z'), '15:30', 'hora no relogio da congregacao');
 
+console.log('contatos');
+const sit = (iso) => P.situacaoDoContato({ proximaVisita: iso ? new Date(iso) : null }, '2026-10-23');
+eq([sit(null), sit('2026-10-23T02:00:00Z'), sit('2026-10-23T18:00:00Z'), sit('2026-10-25T13:00:00Z'), sit('2026-10-30T13:00:00Z')], ['semData', 'atrasada', 'hoje', 'breve', 'marcada'], 'situacao: 23h de ontem (no relogio da congregacao) ja e atrasada; ate 3 dias e breve');
+eq(P.inicioDoDia('2026-10-23').toISOString(), '2026-10-23T03:00:00.000Z', 'meia-noite da congregacao em UTC');
+
+console.log('emblemas');
+eq([P.nivelDe(0, [1, 3, 6]), P.nivelDe(3, [1, 3, 6]), P.nivelDe(7, [1, 3, 6])], [
+    { nivel: null, proximo: { nivel: 'bronze', falta: 1 } },
+    { nivel: 'prata', proximo: { nivel: 'ouro', falta: 3 } },
+    { nivel: 'ouro', proximo: null },
+], 'nivel e o que falta para o proximo');
+const constancia = (meses) => P.emblemas({ mesesComMeta: meses, visitas: 0, estudos: 0, dias: 0 })[0].valor;
+eq([constancia([true, true, true, false]), constancia([false, true, true, true]), constancia([true, false, false]), constancia([true, true, false, true, true])], [3, 3, 0, 2],
+    'meses seguidos com a meta: o mes atual so conta quando ja bateu; o anterior sem meta quebra');
+const todos = P.emblemas({ mesesComMeta: [true], visitas: 16, estudos: 2, dias: 12 });
+eq(todos.map((e) => [e.id, e.nivel]), [['constancia', 'bronze'], ['regando', 'prata'], ['estudos', 'bronze'], ['pronto', 'ouro']], 'os quatro emblemas');
+eq([P.statusDoMes({ mes: '2026-11', minutos: 0, meta: 50, mesAtual: '2026-10' }), P.statusDoMes({ mes: '2026-09', minutos: 3000, meta: 50, mesAtual: '2026-10' }), P.statusDoMes({ mes: '2026-10', minutos: 600, meta: 50, mesAtual: '2026-10' }), P.statusDoMes({ mes: '2026-08', minutos: 0, meta: 50, mesAtual: '2026-10' })],
+    ['futuro', 'meta', 'parcial', 'vazio'], 'status por mes');
+
+console.log('agenda e viagens');
+eq(P.normalizarPlano({ data: '2026-10-24', hora: '09:30', duracaoMin: 120, local: ' Praça ' }, '2026-10-23'), { plano: { data: '2026-10-24', hora: '09:30', duracaoMin: 120, local: 'Praça', nota: null } }, 'plano de sabado');
+eq([P.normalizarPlano({ data: '2026-10-22', hora: '09:30' }, '2026-10-23').erro, P.normalizarPlano({ data: '2026-10-24', hora: '9h' }, '2026-10-23').erro, P.normalizarPlano({ data: '2026-10-24', hora: '09:30', duracaoMin: 5 }, '2026-10-23').erro],
+    ['Escolha um dia de hoje em diante.', 'Hora inválida.', 'Duração de 15 minutos a 12 horas.'], 'plano no passado, hora ruim, duracao curta');
+eq(P.normalizarViagem({ data: '2026-10-23', km: '12,5', custo: '14,7' }, '2026-10-23'), { viagem: { data: '2026-10-23', km: 12.5, custo: 14.7, nota: null } }, 'viagem com virgula decimal');
+eq([P.normalizarViagem({ data: '2026-10-24', km: 10 }, '2026-10-23').erro, P.normalizarViagem({ data: '2026-10-23', km: 0 }, '2026-10-23').erro], ['Escolha um dia até hoje.', 'Informe a distância em km.'], 'viagem no futuro, sem km');
+
+console.log('calendario');
+const ics = P.montarIcs([{ uid: 'plano-1', inicio: '2026-10-24T12:30:00Z', fim: '2026-10-24T14:30:00Z', titulo: 'Ministério', local: 'Praça, 10; fundos', descricao: `${'x'.repeat(100)} 🙂` }], { agora });
+const linhasIcs = ics.split('\r\n');
+eq([linhasIcs[0], linhasIcs.includes('DTSTART:20261024T123000Z'), linhasIcs.includes('LOCATION:Praça\\, 10\\; fundos'), ics.endsWith('END:VCALENDAR\r\n')], ['BEGIN:VCALENDAR', true, true, true], 'evento em UTC, texto escapado, linhas com CRLF');
+eq([linhasIcs.every((l) => Array.from(l).length <= 75), linhasIcs.some((l) => l.startsWith(' x')), ics.includes('🙂')], [true, true, true], 'linha longa dobrada, sem partir o emoji');
+
 if (falhas > 0) {
     console.log(`\n${falhas} falha(s).`);
     process.exit(1);

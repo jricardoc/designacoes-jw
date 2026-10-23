@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ProvedorCelebracao } from "@/components/celebracao/contextoCelebracao";
+import { ServicosDoApp } from "@/components/layout/ServicosDoApp";
 import { SplashAnimated } from "@/components/SplashAnimated";
 import { Loading, ToastProvider } from "@/components/ui";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -37,18 +38,22 @@ function AuthGate() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
-      <Stack.Screen name="login" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="quadro/[id]" />
-      <Stack.Screen name="escala/[id]" />
-      <Stack.Screen name="reuniao/meses" />
-      <Stack.Screen name="cumprimento" />
-      <Stack.Screen name="reuniao/semana/[id]" />
-      <Stack.Screen name="territorio/[numero]" />
-      <Stack.Screen name="irmao" />
-      <Stack.Screen name="notificacoes" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+        <Stack.Screen name="login" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="quadro/[id]" />
+        <Stack.Screen name="escala/[id]" />
+        <Stack.Screen name="reuniao/meses" />
+        <Stack.Screen name="cumprimento" />
+        <Stack.Screen name="reuniao/semana/[id]" />
+        <Stack.Screen name="territorio/[numero]" />
+        <Stack.Screen name="irmao" />
+        <Stack.Screen name="notificacoes" />
+        <Stack.Screen name="ministerio" />
+      </Stack>
+      {isAuthenticated ? <ServicosDoApp /> : null}
+    </>
   );
 }
 

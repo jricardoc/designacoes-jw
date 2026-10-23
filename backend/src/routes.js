@@ -95,6 +95,8 @@ routes.get('/download/:plataforma', ConfigController.download);
 routes.post('/webhooks/eas', ConfigController.webhookEas);
 // Zoom: sem login, autenticado pela assinatura do Zoom (ver ZoomController.webhook).
 routes.post('/api/integrations/zoom/webhook', ZoomController.webhook);
+// Calendario do pioneiro (webcal): sem login, o token longo do link e a chave (ver PioneiroService.calendarioIcs).
+routes.get('/calendario/:arquivo', PioneiroController.calendario);
 
 // ==================== QUADROS ====================
 // Leitura livre; toda escrita e admin — usuario comum ve os quadros, nao mexe.
@@ -276,6 +278,15 @@ routes.put('/pioneiro/revisitas/:id(\\d+)', PioneiroController.atualizarRevisita
 routes.delete('/pioneiro/revisitas/:id(\\d+)', PioneiroController.apagarRevisita);
 routes.post('/pioneiro/revisitas/:id(\\d+)/visitas', PioneiroController.registrarVisita);
 routes.post('/pioneiro/relatorio', PioneiroController.enviarRelatorio);
+routes.put('/pioneiro/perfil', PioneiroController.atualizarPerfil);
+routes.get('/pioneiro/agenda', PioneiroController.agenda);
+routes.post('/pioneiro/planos', PioneiroController.criarPlano);
+routes.delete('/pioneiro/planos/:id(\\d+)', PioneiroController.apagarPlano);
+routes.get('/pioneiro/viagens', PioneiroController.viagens);
+routes.post('/pioneiro/viagens', PioneiroController.criarViagem);
+routes.delete('/pioneiro/viagens/:id(\\d+)', PioneiroController.apagarViagem);
+routes.get('/pioneiro/progresso', PioneiroController.progresso);
+routes.post('/pioneiro/calendario', PioneiroController.linkCalendario);
 
 // ==================== ZOOM ====================
 // Os relatorios das reunioes do Zoom (resumo, participantes, transcricao): quem cuida das

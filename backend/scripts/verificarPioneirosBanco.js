@@ -107,6 +107,67 @@ async function rodar(prisma, { enviados = [] } = {}) {
     ok(!(await P.enviarRelatorio(uAdmin, { mes, estudos: 0, pioneiroAuxiliar: true })).erro, 'com auxiliar marcado, manda');
     ok((await P.enviarRelatorio(uPioneira, { mes: '2099-01', estudos: 0 })).erro === 400, 'mes no futuro: 400');
 
+    console.log('conversas de hoje e tipos de visita');
+    const meioDia = new Date(P._internos.inicioDoDia(hoje).getTime() + 12 * 3600000).toISOString();
+    const hojeA = await P.criarRevisita(uPioneira, { nome: 'Joana Exemplo', proximaVisita: meioDia });
+    const hojeB = await P.criarRevisita(uPioneira, { nome: 'Rita Exemplo', proximaVisita: meioDia, estudo: true });
+    let pc = await P.painel(uPioneira);
+    // A Maria (la de cima) tambem esta marcada para hoje e ja foi visitada hoje.
+    ok(pc.nome === 'Pioneira' && pc.conversasHoje.total === 3 && pc.conversasHoje.feitas === 1, 'tres conversas hoje: duas marcadas e a ja visitada', pc.conversasHoje);
+    await P.registrarVisita(uPioneira, hojeA.revisita.id, { tipo: 'nao_em_casa', proximaVisita: new Date(Date.now() + 7 * 86400000).toISOString() });
+    await P.registrarVisita(uPioneira, hojeB.revisita.id, { tipo: 'estudo', observacao: 'Lição 3' });
+    pc = await P.painel(uPioneira);
+    ok(pc.conversasHoje.total === 3 && pc.conversasHoje.feitas === 3 && pc.conversasHoje.itens.find((i) => i.id === hojeA.revisita.id).feita === 'nao_em_casa', 'as tres feitas (uma "nao em casa", remarcada para a semana que vem)', pc.conversasHoje);
+    ok(pc.aSeguir.some((r) => r.id === hojeA.revisita.id && r.situacao === 'marcada'), 'a remarcada vai para "a seguir"');
+    const det = await P.revisita(uPioneira, hojeB.revisita.id);
+    ok(det.revisita.visitas[0].tipo === 'estudo', 'a visita guarda o tipo');
+
+    console.log('agenda (planos, companheiros e saidas de campo)');
+    const amanha = new Date(P._internos.inicioDoDia(hoje).getTime() + 36 * 3600000).toISOString().slice(0, 10);
+    const outra = await irmao('Companheira Teste', { pioneiro: 'regular' });
+    const uOutra = await usuario('companheira-teste', outra.id);
+    ok((await P.criarPlano(uPioneira, { data: amanha, hora: '09:30', duracaoMin: 120, local: 'Praça' })).plano, 'plano de amanha');
+    const dela = await P.criarPlano(uOutra, { data: amanha, hora: '14:00', duracaoMin: 90 });
+    ok(dela.plano && (await P.criarPlano(uOutra, { data: '2000-01-01', hora: '14:00' })).erro === 400, 'a companheira planeja; plano no passado e recusado');
+    const saida = await prisma.saidaCampo.create({ data: { diaSemana: 'sabado', local: 'Salão do Reino', horario: '08:45' } });
+    const [anoAm, mesAm, diaAm] = amanha.split('-').map(Number);
+    const quadro = await prisma.quadroDirigente.create({ data: { mes: mesAm, ano: anoAm, titulo: 'Teste', status: 'publicado' } });
+    await prisma.escalaDirigente.create({ data: { quadroId: quadro.id, saidaCampoId: saida.id, data: `${String(diaAm).padStart(2, '0')}/${String(mesAm).padStart(2, '0')}`, dia: 'Sábado', principal: 'Dirigente Teste' } });
+    let ag = await P.agenda(uPioneira, { de: hoje, ate: amanha });
+    ok(ag.planos.length === 2 && ag.planos.find((p) => p.meu).local === 'Praça' && ag.planos.find((p) => !p.meu).nome === 'Companheira', 'agenda: o meu plano e o da companheira (so o primeiro nome)', ag.planos);
+    ok(ag.saidas.length === 1 && ag.saidas[0].data === amanha && ag.saidas[0].hora === '08:45' && ag.saidas[0].dirigente === 'Dirigente Teste', 'agenda: a saida de campo publicada', ag.saidas);
+    ok(ag.visitas.some((v) => v.id === hojeA.revisita.id) === false && ag.visitas.some((v) => v.situacao), 'agenda: as visitas marcadas no periodo, com a situacao');
+    ok((await P.atualizarPerfil(uOutra, { compartilharPlanos: false })).compartilharPlanos === false, 'a companheira deixa de compartilhar');
+    ag = await P.agenda(uPioneira, { de: hoje, ate: amanha });
+    ok(ag.planos.length === 1 && ag.planos[0].meu, 'some o plano dela da minha agenda');
+    ok((await P.apagarPlano(uPioneira, dela.plano.id)).erro === 404, 'nao apago o plano de outra');
+    ok((await P.agenda(uPioneira, { de: '2026-01-01', ate: '2026-06-01' })).erro === 400, 'periodo de mais de 2 meses: 400');
+
+    console.log('viagens');
+    ok((await P.criarViagem(uPioneira, { data: hoje, km: '12,5', custo: '14,70' })).viagem.km === 12.5, 'viagem de 12,5 km');
+    await P.criarViagem(uPioneira, { data: hoje, km: 7.5 });
+    const vg = await P.viagens(uPioneira, mes);
+    ok(vg.quantidade === 2 && vg.km === 20 && vg.custo === 14.7 && vg.porDia[hoje] === 20, 'totais do mes e o km do dia', vg);
+    const deOutraViagem = await prisma.pioneiroViagem.create({ data: { irmaoId: outra.id, data: hoje, km: 3 } });
+    ok((await P.apagarViagem(uPioneira, deOutraViagem.id)).erro === 404, 'nao apago viagem de outra');
+
+    console.log('progresso');
+    const pg = await P.progresso(uPioneira, mes);
+    const doMes = pg.porMes.find((m) => m.mes === mes);
+    ok(pg.porMes.length === 12 && doMes.relatorio === true && doMes.minutos === 150, 'o mes com as horas e o relatorio enviado', doMes);
+    ok(pg.emblemas.length === 4 && pg.emblemas.find((e) => e.id === 'estudos').valor === 1 && pg.emblemas.find((e) => e.id === 'regando').valor === 2, 'emblemas contam as visitas do mes (sem o "nao em casa") e os estudos', pg.emblemas);
+    ok(pg.viagens.km === 20 && pg.metaAno === pg.meta * 12, 'quilometragem e meta do ano');
+
+    console.log('calendario');
+    const l1 = await P.linkCalendario(uPioneira);
+    ok(/^[a-f0-9]{48}$/.test(l1.token) && (await P.linkCalendario(uPioneira)).token === l1.token, 'o link e criado uma vez e reaproveitado');
+    const cal = await P.calendarioIcs(l1.token);
+    ok(cal.includes('SUMMARY:Revisita: Joana Exemplo') && cal.includes(`DTSTART:${amanha.replace(/-/g, '')}T123000Z`) && (cal.match(/UID:plano-/g) || []).length === 1,
+        'a visita remarcada e o meu plano (09:30 da congregacao em UTC); o plano da companheira nao', cal);
+    const l2 = await P.linkCalendario(uPioneira, { trocar: true });
+    ok(l2.token !== l1.token && (await P.calendarioIcs(l1.token)) === null && (await P.calendarioIcs(l2.token)) !== null, 'trocar o link derruba o antigo');
+    ok((await P.calendarioIcs('nao-e-token')) === null && (await P.linkCalendario(uPublicador)).erro === 403, 'token invalido nao abre; publicador comum nao tem calendario');
+
     return falhas;
 }
 
