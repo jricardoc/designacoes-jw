@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import * as Updates from "expo-updates";
 import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -29,6 +31,11 @@ import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
  * por isso só aparece para o admin geral: ela veio da aba "Sistema" da tela de cadastro,
  * que deixou de existir — aquela tela virou "Publicadores" e é só de pessoas.
  */
+
+/** O canal das versões de teste (EAS Update). Só quem liga a chave em Ajustes recebe. */
+const CANAL_TESTE = "teste";
+/** Onde o aparelho lembra que a chave está ligada (o próprio expo-updates guarda a troca). */
+const CHAVE_CANAL_TESTE = "canal-de-teste";
 
 const OPCOES_TEMA: {
   id: TemaPreferido;
@@ -66,6 +73,39 @@ export default function AjustesScreen() {
   const atualizarConfig = useAtualizarConfig();
   const toast = useToast();
   const [congName, setCongName] = useState("");
+  const [canalTeste, setCanalTeste] = useState(false);
+  const [trocandoCanal, setTrocandoCanal] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(CHAVE_CANAL_TESTE)
+      .then((v) => setCanalTeste(v === "1"))
+      .catch(() => {});
+  }, []);
+
+  /**
+   * Liga ou desliga o canal de teste: troca só o canal que o app pede ao servidor de
+   * atualizações (o resto continua o do build) e recarrega na versão daquele canal. A troca
+   * fica gravada entre aberturas. As novidades saem primeiro em "teste", e só depois de
+   * aprovadas vão para todos.
+   */
+  const trocarCanal = async (ligar: boolean) => {
+    setTrocandoCanal(true);
+    try {
+      Updates.setUpdateRequestHeadersOverride(ligar ? { "expo-channel-name": CANAL_TESTE } : null);
+      await AsyncStorage.setItem(CHAVE_CANAL_TESTE, ligar ? "1" : "0");
+      setCanalTeste(ligar);
+      const resultado = await Updates.fetchUpdateAsync();
+      if (resultado.isNew) {
+        await Updates.reloadAsync();
+        return;
+      }
+      toast.show(ligar ? "Canal de teste ligado. Nenhuma versão de teste nova agora." : "Canal de teste desligado.");
+    } catch (err) {
+      toast.show(err instanceof Error ? err.message : "Não consegui trocar de canal", "error");
+    } finally {
+      setTrocandoCanal(false);
+    }
+  };
 
   useEffect(() => {
     if (config) setCongName(config.subtitulo ?? "");
@@ -93,7 +133,7 @@ export default function AjustesScreen() {
     !Updates.isEnabled || Updates.isEmbeddedLaunch || !Updates.createdAt
       ? "do build"
       : `atualização de ${Updates.createdAt.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}`
-  }`;
+  }${canalTeste ? " · canal de teste" : ""}`;
 
   return (
     <View style={styles.screen}>
@@ -267,6 +307,27 @@ export default function AjustesScreen() {
             <Text style={styles.descricao}>Versão</Text>
             <Text style={styles.valor}>{versao}</Text>
           </View>
+          {/* Só o admin geral: é por aqui que ele testa uma versão antes de ela ir para todos. */}
+          {ehAdminGeral(usuario) && Updates.isEnabled && !__DEV__ ? (
+            <View style={[styles.linha, styles.divisoria]}>
+              <View style={styles.textos}>
+                <Text style={styles.titulo}>Canal de teste</Text>
+                <Text style={styles.descricao}>
+                  Recebe as versões novas antes de todo mundo, para testar. Desligue para voltar à versão de todos.
+                </Text>
+              </View>
+              {trocandoCanal ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <Switch
+                  value={canalTeste}
+                  onValueChange={trocarCanal}
+                  trackColor={{ true: colors.primary, false: colors.borderStrong }}
+                  thumbColor="#fff"
+                />
+              )}
+            </View>
+          ) : null}
         </View>
       </ScrollView>
     </View>
