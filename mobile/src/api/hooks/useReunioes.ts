@@ -5,6 +5,7 @@ import type {
   AssistenciaReuniao,
   ImportarReuniaoResponse,
   OpcaoCompartilhamento,
+  PresencaZoom,
   TipoAssistencia,
 } from "@/api/types";
 
@@ -108,6 +109,29 @@ export function useSalvarAssistencia() {
         "/reunioes/assistencias",
         { method: "PUT", body: payload },
       ),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.assistencias }),
+  });
+}
+
+/** Quem assistiu pelo Zoom numa reunião (só para quem cuida das reuniões). */
+export function usePresencasZoom(assistenciaId: number | undefined) {
+  return useQuery({
+    queryKey: qk.presencasZoom(assistenciaId ?? 0),
+    queryFn: () => apiRequest<PresencaZoom[]>(`/reunioes/assistencias/${assistenciaId}/zoom`),
+    enabled: !!assistenciaId,
+  });
+}
+
+/** Regrava a lista inteira do Zoom de uma reunião (cria o registro da reunião se faltar). */
+export function useSalvarPresencasZoom() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { data: string; tipo: TipoAssistencia; presencas: PresencaZoom[] }) =>
+      apiRequest<{ success: boolean; assistenciaId: number }>("/reunioes/assistencias/zoom", {
+        method: "PUT",
+        body: payload,
+      }),
+    // O prefixo "assistencias" renova a lista (com o resumo novo) e a lista do Zoom.
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.assistencias }),
   });
 }

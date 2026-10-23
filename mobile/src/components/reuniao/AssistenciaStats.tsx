@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useMemo } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useAssistencias } from "@/api/hooks/useReunioes";
 import type { AssistenciaReuniao, TipoAssistencia } from "@/api/types";
 import { radius, spacing, type Cores } from "@/theme";
@@ -164,7 +165,18 @@ export function AssistenciaStats({ podeRegistrar }: { podeRegistrar: boolean }) 
 
   return (
     <View style={styles.grupo}>
-      <Text style={styles.titulo}>Assistência</Text>
+      <View style={styles.tituloLinha}>
+        <Text style={styles.titulo}>Assistência</Text>
+        <Pressable
+          style={styles.porMes}
+          onPress={() => router.push("/reuniao/assistencia")}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          <Text style={styles.porMesTexto}>Por mês</Text>
+          <Ionicons name="chevron-forward" size={15} color={colors.primaryDark} />
+        </Pressable>
+      </View>
       <Text style={styles.legenda}>
         Média das últimas {JANELA} reuniões registradas
       </Text>
@@ -178,6 +190,9 @@ export function AssistenciaStats({ podeRegistrar }: { podeRegistrar: boolean }) 
 
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
+    tituloLinha: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    porMes: { flexDirection: "row", alignItems: "center", gap: 2 },
+    porMesTexto: { fontSize: 14, fontWeight: "700", color: colors.primaryDark },
     grupo: { gap: 8 },
     titulo: { fontSize: 18, fontWeight: "800", color: colors.text },
     legenda: { fontSize: 12.5, color: colors.textSecondary, marginTop: -4 },

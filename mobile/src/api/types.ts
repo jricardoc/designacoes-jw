@@ -761,8 +761,22 @@ export interface AssistenciaReuniao {
   tipo: TipoAssistencia;
   presencial: number;
   zoom: number;
+  /** Resumo da lista de quem assistiu pelo Zoom. Ausentes na API antiga. */
+  zoomConexoes?: number;
+  zoomPessoas?: number;
+  maos?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Uma conexão no Zoom numa reunião. `pessoas` conta a família no mesmo aparelho. */
+export interface PresencaZoom {
+  id?: number;
+  /** O nome do cadastro, ou como a conexão aparece no Zoom (visitante). */
+  nome: string;
+  irmaoId: number | null;
+  pessoas: number;
+  levantouMao: boolean;
 }
 
 // ===== Importação (preview de indisponibilidades) =====
