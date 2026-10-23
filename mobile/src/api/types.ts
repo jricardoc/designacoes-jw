@@ -1203,3 +1203,105 @@ export interface ResultadoDivisao {
   criados: string[];
   sairam: number;
 }
+
+// --- Relatórios do Zoom -----------------------------------------------------
+
+/** Em que pé está cada parte vinda do Zoom. */
+export type StatusParteZoom = "pendente" | "ok" | "indisponivel" | "erro";
+export type ParteZoom = "detalhes" | "resumo" | "participantes" | "transcricao";
+
+export interface SincronizacaoZoom {
+  situacao: "sincronizando" | "erro" | "ok";
+  partes: Partial<
+    Record<ParteZoom, { status: StatusParteZoom; tentativas: number; ultimoErro: string | null; proximaTentativa: string | null }>
+  >;
+}
+
+/** A reunião no calendário da congregação (data dd/MM/yyyy e tipo). */
+export interface ReuniaoDaCongregacao {
+  tipo: TipoAssistencia;
+  data: string;
+}
+
+export interface ReuniaoZoomResumo extends SincronizacaoZoom {
+  id: number;
+  uuid: string;
+  meetingId: string;
+  topico: string | null;
+  inicio: string | null;
+  fim: string | null;
+  duracaoMin: number | null;
+  resumoTitulo: string | null;
+  participantesQtd: number | null;
+  sincronizadoEm: string | null;
+  temResumo: boolean;
+  decisoes: number;
+  proximosPassos: number;
+  congregacao: ReuniaoDaCongregacao | null;
+}
+
+export interface PaginaReunioesZoom {
+  total: number;
+  pagina: number;
+  porPagina: number;
+  reunioes: ReuniaoZoomResumo[];
+}
+
+export interface ParticipanteZoom {
+  nome: string;
+  /** Como apareceu no Zoom ("iPhone de Ana"), quando o nome é o do cadastro. */
+  nomeZoom: string;
+  irmaoId: number | null;
+  entrada: string | null;
+  saida: string | null;
+  duracaoSeg: number;
+  /** Quantas vezes entrou (saiu e voltou conta de novo). */
+  entradas: number;
+  /** Falso para quem ficou só na sala de espera. */
+  naSala: boolean;
+}
+
+export interface TopicoZoom {
+  titulo: string;
+  descricao: string | null;
+  itens: string[];
+  conclusoes: string[];
+}
+
+export interface ReuniaoZoomDetalhe extends SincronizacaoZoom {
+  id: number;
+  uuid: string;
+  meetingId: string;
+  hostEmail: string | null;
+  topico: string | null;
+  inicio: string | null;
+  fim: string | null;
+  duracaoMin: number | null;
+  resumoTitulo: string | null;
+  /** O resumo do AI Companion como veio, em Markdown. */
+  resumoMarkdown: string | null;
+  resumoEditadoEm: string | null;
+  resumoDocUrl: string | null;
+  topicos: TopicoZoom[] | null;
+  decisoes: string[] | null;
+  proximosPassos: string[] | null;
+  participantesQtd: number | null;
+  sincronizadoEm: string | null;
+  temTranscricao: boolean;
+  congregacao: ReuniaoDaCongregacao | null;
+  /** A assistência registrada para aquele dia, se já existe. */
+  assistencia: { id: number; presencial: number; zoom: number; lista: number } | null;
+  participantes: ParticipanteZoom[];
+  entradas: number;
+}
+
+export interface EstadoZoom {
+  /** Credenciais da API configuradas no servidor. */
+  api: boolean;
+  /** Secret token do webhook configurado. */
+  webhook: boolean;
+  pendentes: number;
+  erros: number;
+  ultimoEvento: { evento: string; recebidoEm: string } | null;
+}
+

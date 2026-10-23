@@ -24,6 +24,8 @@
     "verificar:links-download": "node scripts/verificarLinksDownload.js",
     "verificar:assistencia": "node scripts/verificarAssistencia.js",
     "verificar:grupos": "node scripts/verificarGrupos.js",
+    "verificar:zoom": "node scripts/verificarZoom.js",
+    "verificar:zoom-banco": "node scripts/verificarZoomBanco.js",
     "vincular:limpeza": "node scripts/vincularLimpeza.js",
     "backfill:publicacoes": "node scripts/backfillPublicacoes.js"
   },

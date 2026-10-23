@@ -2,6 +2,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const ConfigController = require('./controllers/ConfigController');
 const GruposController = require('./controllers/GruposController');
+const ZoomController = require('./controllers/ZoomController');
 const AuthController = require('./controllers/AuthController');
 const IrmaoController = require('./controllers/IrmaoController');
 const IndisponibilidadeController = require('./controllers/IndisponibilidadeController');
@@ -91,6 +92,8 @@ routes.post('/config/reset', requireAdmin, ConfigController.resetDatabase);
 // Baixar o app: sem login. O link e guardado pelo webhook do EAS a cada build (ver LinksDownloadService).
 routes.get('/download/:plataforma', ConfigController.download);
 routes.post('/webhooks/eas', ConfigController.webhookEas);
+// Zoom: sem login, autenticado pela assinatura do Zoom (ver ZoomController.webhook).
+routes.post('/api/integrations/zoom/webhook', ZoomController.webhook);
 
 // ==================== QUADROS ====================
 // Leitura livre; toda escrita e admin — usuario comum ve os quadros, nao mexe.
@@ -254,6 +257,17 @@ routes.get('/reunioes/semanas/:id/compartilhamentos', ReuniaoController.comparti
 // Mensagem pronta para confirmar a designacao com quem tem parte na semana. Montada no
 // backend como os convites, e pedida no toque porque a saudacao depende da hora.
 routes.get('/reunioes/confirmacao', ReuniaoController.textoConfirmacao);
+
+// ==================== ZOOM ====================
+// Os relatorios das reunioes do Zoom (resumo, participantes, transcricao): quem cuida das
+// reunioes — nomes de quem assistiu e o conteudo da reuniao nao sao para todo irmao.
+routes.get('/zoom/estado', podeReunioes, ZoomController.estado);
+routes.get('/zoom/reunioes', podeReunioes, ZoomController.listar);
+routes.get('/zoom/reunioes/:id(\\d+)', podeReunioes, ZoomController.detalhe);
+routes.get('/zoom/reunioes/:id(\\d+)/transcricao', podeReunioes, ZoomController.transcricao);
+routes.post('/zoom/sincronizar', podeReunioes, ZoomController.sincronizarPeriodo);
+routes.post('/zoom/reunioes/:id(\\d+)/sincronizar', podeReunioes, ZoomController.sincronizarReuniao);
+routes.post('/zoom/reunioes/:id(\\d+)/assistencia', podeReunioes, ZoomController.levarParaAssistencia);
 
 // ==================== TERRITORIOS ====================
 // Ver e livre para quem esta logado (as imagens em /territorios/arquivos tambem exigem login:

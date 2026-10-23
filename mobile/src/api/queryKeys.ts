@@ -19,6 +19,11 @@ export const qk = {
   painelGrupos: (mes: string) => ["grupos-painel", mes] as const,
   detalheGrupo: (id: number, mes: string, periodo: string) => ["grupo-detalhe", id, mes, periodo] as const,
   resumoRelatorio: (mes: string) => ["relatorio-resumo", mes] as const,
+  // Relatórios do Zoom.
+  zoomEstado: ["zoom-estado"] as const,
+  zoomReunioes: (de: string, ate: string, busca: string) => ["zoom-reunioes", de, ate, busca] as const,
+  zoomReuniao: (id: number) => ["zoom-reuniao", id] as const,
+  zoomTranscricao: (id: number) => ["zoom-transcricao", id] as const,
   reunioes: ["reunioes"] as const,
   // Com o recorte no nome: a lista "so as proximas" e a "com as passadas" sao consultas
   // diferentes, e uma nao pode servir cache para a outra.

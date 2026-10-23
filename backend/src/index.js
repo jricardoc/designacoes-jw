@@ -71,6 +71,8 @@ app.use('/auth/foto', express.json({ limit: '1mb' }));
 app.use('/territorios/limite', express.json({ limit: '2mb' }));
 // O webhook do EAS precisa do corpo CRU: a assinatura e calculada sobre os bytes exatos.
 app.use('/webhooks/eas', express.raw({ type: '*/*', limit: '1mb' }));
+// O do Zoom tambem (HMAC-SHA256 sobre o corpo). 2 MB: o evento de resumo traz o texto inteiro.
+app.use('/api/integrations/zoom/webhook', express.raw({ type: '*/*', limit: '2mb' }));
 app.use(express.json());
 
 // Middleware de autenticacao
