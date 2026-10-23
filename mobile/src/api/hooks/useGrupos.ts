@@ -4,6 +4,7 @@ import type { ArquivoSelecionado } from "@/api/hooks/useReunioes";
 import { qk } from "@/api/queryKeys";
 import type {
   DetalheGrupo,
+  FichaMembro,
   GrupoCampo,
   NovoRelatorio,
   PainelGrupos,
@@ -86,6 +87,15 @@ export function useDetalheGrupo(id: number, mes: string, periodo: PeriodoGrupo) 
     enabled: Number.isInteger(id) && id > 0,
     // Trocar o mês ou o período não pisca a tela: o anterior fica até o novo chegar.
     placeholderData: keepPreviousData,
+  });
+}
+
+/** A ficha de um irmão do grupo (relatórios, Zoom, designações e contato). */
+export function useFichaMembro(grupoId: number, irmaoId: number) {
+  return useQuery({
+    queryKey: qk.fichaMembro(grupoId, irmaoId),
+    queryFn: () => apiRequest<FichaMembro>(`/grupos/${grupoId}/membros/${irmaoId}`),
+    enabled: grupoId > 0 && irmaoId > 0,
   });
 }
 
