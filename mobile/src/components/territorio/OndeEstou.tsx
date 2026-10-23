@@ -2,9 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppState, Pressable, StyleSheet, Text, View } from "react-native";
+import { AppState, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
-import type { MapaGeralTerritorios } from "@/api/types";
+import { useImagemProtegida } from "@/api/hooks/useImagemProtegida";
+import type { MapaGeralTerritorios, TerritorioResumo } from "@/api/types";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { territorioDoPonto, type PontoGeo } from "@/territorios/onde";
@@ -54,48 +55,55 @@ function useOndeEstou(territorios: MapaGeralTerritorios["territorios"] | undefin
 }
 
 /**
- * "Você está no território 12": o aviso no topo da tela de Territórios, no mesmo jeito da
- * "Reunião desta semana". Tocar abre o território.
+ * "Você está aqui": o cartão do território onde o irmão está, no topo da tela de Territórios.
+ * Mesmo jeito do cartão da lista (miniatura do mapa, título, descrição), com o selo dentro.
+ * Tocar abre o território.
  */
 export function OndeEstou({
   territorios,
-  descricoes,
+  resumos,
   onAbrir,
 }: {
   territorios: MapaGeralTerritorios["territorios"] | undefined;
-  /** Descrição de cada território, por número (vem da lista). */
-  descricoes?: Record<string, string | null | undefined>;
+  /** A lista de territórios: de lá vêm a miniatura e a descrição. */
+  resumos?: TerritorioResumo[];
   onAbrir: (numero: string) => void;
 }) {
   const { colors, styles } = useTema(criarEstilos);
+  const imagem = useImagemProtegida();
+  const [semImagem, setSemImagem] = useState(false);
   const aqui = useOndeEstou(territorios);
   if (!aqui) return null;
-  const descricao = descricoes?.[aqui.numero];
+  const resumo = resumos?.find((t) => t.numero === aqui.numero);
+  const fonte = resumo?.imagens?.thumb ? imagem(resumo.imagens.thumb) : null;
 
   return (
     <Animated.View entering={FadeIn.duration(220)} style={styles.grupo}>
-      <View style={styles.selo}>
-        <Ionicons name="navigate" size={12} color={colors.textOnPrimary} />
-        <Text style={styles.seloTexto}>Você está aqui</Text>
-      </View>
       <Pressable
         style={({ pressed }) => [styles.cartao, pressed && { opacity: 0.85 }]}
         onPress={() => onAbrir(aqui.numero)}
         accessibilityRole="button"
         accessibilityLabel={`Você está no território ${aqui.numero}, ${aqui.nome}. Abrir`}
       >
-        <View style={styles.numeroCaixa}>
-          <Text style={styles.numero}>{aqui.numero}</Text>
-        </View>
+        {fonte && !semImagem ? (
+          <Image source={fonte} style={styles.miniatura} resizeMode="cover" onError={() => setSemImagem(true)} />
+        ) : (
+          <View style={[styles.miniatura, styles.miniaturaVazia]}>
+            <Ionicons name="map-outline" size={24} color={colors.textMuted} />
+          </View>
+        )}
         <View style={styles.textos}>
+          <View style={styles.selo}>
+            <Ionicons name="navigate" size={10} color={colors.textOnPrimary} />
+            <Text style={styles.seloTexto}>Você está aqui</Text>
+          </View>
           <Text style={styles.titulo} numberOfLines={1}>
-            Território {aqui.numero} · {aqui.nome}
+            {aqui.nome || `Território ${aqui.numero}`}
           </Text>
-          {descricao ? (
-            <Text style={styles.descricao} numberOfLines={2}>
-              {descricao}
-            </Text>
-          ) : null}
+          <Text style={styles.descricao} numberOfLines={2}>
+            Território {aqui.numero}
+            {resumo?.observacoes ? ` · ${resumo.observacoes}` : ""}
+          </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.primaryDark} />
       </Pressable>
@@ -105,20 +113,21 @@ export function OndeEstou({
 
 const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
-    grupo: { gap: 8, paddingHorizontal: 16, paddingTop: 12 },
+    grupo: { paddingHorizontal: 16, paddingTop: 12 },
     selo: {
       alignSelf: "flex-start",
       flexDirection: "row",
       alignItems: "center",
-      gap: 6,
+      gap: 4,
       backgroundColor: colors.primary,
       borderRadius: radius.pill,
-      paddingVertical: 5,
-      paddingHorizontal: 11,
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+      marginBottom: 2,
     },
     seloTexto: {
       color: colors.textOnPrimary,
-      fontSize: 11.5,
+      fontSize: 10.5,
       fontWeight: "800",
       textTransform: "uppercase",
       letterSpacing: 0.5,
@@ -134,16 +143,8 @@ const criarEstilos = (colors: Cores) =>
       backgroundColor: colors.surface,
       ...shadow.card,
     },
-    numeroCaixa: {
-      minWidth: 44,
-      height: 44,
-      borderRadius: 22,
-      paddingHorizontal: 6,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.primary,
-    },
-    numero: { color: colors.textOnPrimary, fontSize: 17, fontWeight: "900" },
+    miniatura: { width: 64, height: 64, borderRadius: radius.sm, backgroundColor: colors.surfaceMuted },
+    miniaturaVazia: { alignItems: "center", justifyContent: "center" },
     textos: { flex: 1, gap: 2 },
     titulo: { fontSize: 16, fontWeight: "800", color: colors.text },
     descricao: { fontSize: 13.5, lineHeight: 18, color: colors.textSecondary },
