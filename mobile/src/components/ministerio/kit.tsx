@@ -320,7 +320,7 @@ export function CabecalhoMinisterio() {
         <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
       </Pressable>
       <View style={styles.flex} />
-      <SinoNotificacoes onPress={() => router.push("/notificacoes")} />
+      <SinoNotificacoes onPress={() => router.push("/ministerio/notificacoes")} />
       {usuario ? (
         <Pressable onPress={() => setMenu(true)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Perfil, ajuda e mais" style={styles.avatar}>
           <Avatar usuario={usuario} tamanho={34} fundo={colors.sand} corTexto={colors.primaryDark} />
