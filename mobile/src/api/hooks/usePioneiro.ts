@@ -27,10 +27,11 @@ function useInvalidar() {
   return () => qc.invalidateQueries({ queryKey: ["pioneiro"] });
 }
 
-export function usePainelPioneiro(mes: string) {
+export function usePainelPioneiro(mes: string, ativo = true) {
   return useQuery({
     queryKey: qk.pioneiroPainel(mes),
     queryFn: () => apiRequest<PainelPioneiro>(`/pioneiro/painel?mes=${mes}`),
+    enabled: ativo,
     retry: false,
   });
 }

@@ -17,9 +17,10 @@ const INTERVALO_MS = 60_000;
  * Em que território o irmão está, pelo GPS, ao abrir a tela (e ao voltar para o app).
  *
  * Pede a permissão só se ela nunca foi respondida; negada, a tela segue sem o aviso. Vale a
- * última posição conhecida se for recente: é rápida e não liga o GPS à toa.
+ * última posição conhecida se for recente: é rápida e não liga o GPS à toa. Com `ativo` falso
+ * não lê (a folha do "+" fechada); ao virar verdadeiro, lê na hora.
  */
-function useOndeEstou(territorios: MapaGeralTerritorios["territorios"] | undefined) {
+export function useOndeEstou(territorios: MapaGeralTerritorios["territorios"] | undefined, ativo = true) {
   const [ponto, setPonto] = useState<PontoGeo | null>(null);
   const ultimaLeitura = useRef(0);
 
@@ -41,15 +42,15 @@ function useOndeEstou(territorios: MapaGeralTerritorios["territorios"] | undefin
 
   useFocusEffect(
     useCallback(() => {
-      ler();
-    }, [ler]),
+      if (ativo) ler();
+    }, [ler, ativo]),
   );
   useEffect(() => {
     const sub = AppState.addEventListener("change", (estado) => {
-      if (estado === "active") ler();
+      if (estado === "active" && ativo) ler();
     });
     return () => sub.remove();
-  }, [ler]);
+  }, [ler, ativo]);
 
   return useMemo(() => (ponto && territorios ? territorioDoPonto(ponto, territorios) : null), [ponto, territorios]);
 }
@@ -105,7 +106,7 @@ export function OndeEstou({
             {resumo?.observacoes ? ` · ${resumo.observacoes}` : ""}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.primaryDark} />
+        <Ionicons name="chevron-forward" size={18} color={colors.orangeDark} />
       </Pressable>
     </Animated.View>
   );
@@ -119,7 +120,8 @@ const criarEstilos = (colors: Cores) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-      backgroundColor: colors.primary,
+      // O laranja é o destaque do ambiente Território: é onde o irmão está.
+      backgroundColor: colors.orange,
       borderRadius: radius.pill,
       paddingVertical: 3,
       paddingHorizontal: 8,
@@ -139,7 +141,7 @@ const criarEstilos = (colors: Cores) =>
       padding: 14,
       borderRadius: radius.lg,
       borderWidth: 2,
-      borderColor: colors.primary,
+      borderColor: colors.orange,
       backgroundColor: colors.surface,
       ...shadow.card,
     },

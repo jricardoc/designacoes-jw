@@ -6,6 +6,7 @@ import type {
   DetalheGrupo,
   FichaMembro,
   GrupoCampo,
+  MeuRelatorio,
   NovoRelatorio,
   PainelGrupos,
   PeriodoGrupo,
@@ -118,6 +119,29 @@ function useInvalidarRelatorio() {
     qc.invalidateQueries({ queryKey: ["relatorio-resumo"] });
     qc.invalidateQueries({ queryKey: qk.tarefas });
   };
+}
+
+/** O relatório do próprio irmão no mês, para "Registrar o campo" abrir preenchido. */
+export function useMeuRelatorio(mes: string, ativo: boolean) {
+  return useQuery({
+    queryKey: qk.meuRelatorio(mes),
+    queryFn: () => apiRequest<MeuRelatorio>(`/relatorios-campo/meu?mes=${mes}`),
+    enabled: ativo,
+    retry: false,
+  });
+}
+
+/** O próprio irmão manda o relatório: cai no relatório do grupo. */
+export function useEnviarMeuRelatorio() {
+  const qc = useQueryClient();
+  const invalidar = useInvalidarRelatorio();
+  return useMutation({
+    mutationFn: (body: Omit<NovoRelatorio, "irmaoId">) => apiRequest<RelatorioCampo>("/relatorios-campo/meu", { method: "PUT", body }),
+    onSuccess: () => {
+      invalidar();
+      qc.invalidateQueries({ queryKey: ["meu-relatorio"] });
+    },
+  });
 }
 
 export function useSalvarRelatorio() {

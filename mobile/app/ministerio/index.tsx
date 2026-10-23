@@ -1,13 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { ApiError } from "@/api/client";
-import { useCronometro, usePainelPioneiro } from "@/api/hooks/usePioneiro";
+import { usePainelPioneiro } from "@/api/hooks/usePioneiro";
 import type { TipoVisita } from "@/api/types";
-import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
-import { doisDig, duracao, quando } from "@/components/ministerio/escolhas";
+import { duracao, quando } from "@/components/ministerio/escolhas";
 import {
   Anel,
   BotaoPilula,
@@ -25,15 +24,15 @@ import {
   useRecuo,
   Vidro,
 } from "@/components/ministerio/kit";
+import { relogio, useControleCronometro } from "@/components/ministerio/cronometro";
 import { RelatorioPioneiroSheet } from "@/components/ministerio/RelatorioPioneiroSheet";
 import { VisitaSheet } from "@/components/ministerio/VisitaSheet";
-import { Button, EmptyState, Loading, useToast } from "@/components/ui";
+import { Button, EmptyState, Loading } from "@/components/ui";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { usePuxar } from "@/utils/usePuxar";
 
 /** 5025 s -> "1:23:45" */
-const relogio = (s: number) => `${Math.floor(s / 3600)}:${doisDig(Math.floor((s % 3600) / 60))}:${doisDig(s % 60)}`;
 /** 1950 min -> "32,5" (o centro do anel) */
 const horasDecimais = (min: number) => String(Math.floor(min / 6) / 10).replace(".", ",");
 
@@ -41,22 +40,11 @@ const horasDecimais = (min: number) => String(Math.floor(min / 6) / 10).replace(
 export default function InicioMinisterio() {
   const { colors, styles } = useTema(criarEstilos);
   const recuo = useRecuo();
-  const toast = useToast();
-  const { feito } = useCelebracao();
   const { data: p, isLoading, error, refetch } = usePainelPioneiro(mesAtual());
-  const cronometro = useCronometro();
+  const cron = useControleCronometro(p?.cronometro);
   const puxar = usePuxar(refetch);
-  const [agora, setAgora] = useState(() => Date.now());
   const [visita, setVisita] = useState<{ id: number; nome: string; tipo: TipoVisita } | null>(null);
   const [relatorioAberto, setRelatorioAberto] = useState(false);
-
-  const rodando = !!p?.cronometro.rodando;
-  // O relógio anda na tela de segundo em segundo; quem guarda o tempo é o servidor.
-  useEffect(() => {
-    if (!rodando) return;
-    const t = setInterval(() => setAgora(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [rodando]);
 
   if (isLoading && !p) {
     return (
@@ -80,37 +68,11 @@ export default function InicioMinisterio() {
     );
   }
 
-  const segundos =
-    p.cronometro.acumuladoSeg +
-    (p.cronometro.rodando && p.cronometro.inicio ? Math.max(0, Math.floor((agora - new Date(p.cronometro.inicio).getTime()) / 1000)) : 0);
-  const emAndamento = p.cronometro.rodando || p.cronometro.acumuladoSeg > 0;
+  const { segundos, emAndamento, acao, parar } = cron;
   const metaMin = p.meta * 60;
   const fracao = metaMin ? p.minutosMes / metaMin : 0;
   const mesCurto = p.nomeMes.split(" de ")[0];
   const conversas = p.conversasHoje;
-
-  const acao = (a: "iniciar" | "pausar" | "parar" | "descartar") =>
-    cronometro.mutate(a, {
-      onSuccess: (r) => {
-        if (a === "parar" && r.registro) feito({ titulo: "Horas lançadas", detalhe: `${duracao(r.registro.minutos)} de hoje`, icone: "time" });
-        if (a === "iniciar") setAgora(Date.now());
-      },
-      onError: (e) => toast.show(e instanceof Error ? e.message : "Não deu", "error"),
-    });
-
-  const parar = () => {
-    const minutos = Math.round(segundos / 60);
-    if (minutos < 1) {
-      acao("descartar");
-      toast.show("Menos de 1 minuto: não lançado");
-      return;
-    }
-    Alert.alert("Parar o cronômetro?", `Lança ${duracao(minutos)} hoje.`, [
-      { text: "Continuar", style: "cancel" },
-      { text: "Descartar", style: "destructive", onPress: () => acao("descartar") },
-      { text: "Lançar", onPress: () => acao("parar") },
-    ]);
-  };
 
   const abrirContato = (id: number) => router.push({ pathname: "/ministerio/contato", params: { id: String(id) } });
 
@@ -147,9 +109,9 @@ export default function InicioMinisterio() {
             </Text>
             <View style={styles.botoes}>
               {p.cronometro.rodando ? (
-                <Button label="Pausar" icon="pause" variant="secondary" onPress={() => acao("pausar")} loading={cronometro.isPending} style={styles.flex} />
+                <Button label="Pausar" icon="pause" variant="secondary" onPress={() => acao("pausar")} loading={cron.pendente} style={styles.flex} />
               ) : (
-                <Button label={emAndamento ? "Continuar" : "Iniciar"} icon="play" onPress={() => acao("iniciar")} loading={cronometro.isPending} style={styles.flex} />
+                <Button label={emAndamento ? "Continuar" : "Iniciar"} icon="play" onPress={() => acao("iniciar")} loading={cron.pendente} style={styles.flex} />
               )}
               {emAndamento ? <Button label="Parar" icon="stop" variant="secondary" onPress={parar} style={styles.flex} /> : null}
             </View>

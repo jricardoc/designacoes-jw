@@ -1,14 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+import type { ComponentType } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Sheet } from "@/components/ui";
+import { useAuth } from "@/context/AuthContext";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { guardarAmbiente, HREF_AMBIENTE, type Ambiente } from "@/utils/ambiente";
+import { podeUsarPioneiro } from "@/utils/permissoes";
 import { MarcaServirMais } from "./MarcaServirMais";
 
-/** A marca do Ministério: a folha num círculo esmeralda. Fixa, igual nos dois ambientes. */
+/** A marca do Ministério: a folha num círculo esmeralda. Fixa, igual em todos os ambientes. */
 export function MarcaMinisterio({ tamanho = 28 }: { tamanho?: number }) {
   return (
     <LinearGradient
@@ -22,24 +25,44 @@ export function MarcaMinisterio({ tamanho = 28 }: { tamanho?: number }) {
   );
 }
 
-const AMBIENTES: { chave: Ambiente; nome: string; tag: string }[] = [
-  { chave: "servir", nome: "Servir Mais", tag: "Designações da congregação" },
-  { chave: "ministerio", nome: "Ministério", tag: "Horas, contatos e agenda do pioneiro" },
+/** A marca do Território: o mapa num quadrado azul. Fixa, igual em todos os ambientes. */
+export function MarcaTerritorio({ tamanho = 28 }: { tamanho?: number }) {
+  return (
+    <LinearGradient
+      colors={["#3381E6", "#164A96"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ width: tamanho, height: tamanho, borderRadius: tamanho * 0.32, alignItems: "center", justifyContent: "center" }}
+    >
+      <Ionicons name="map" size={tamanho * 0.54} color="#FFFFFF" />
+    </LinearGradient>
+  );
+}
+
+const AMBIENTES: { chave: Ambiente; nome: string; tag: string; Marca: ComponentType<{ tamanho?: number }> }[] = [
+  { chave: "servir", nome: "Servir Mais", tag: "Designações da congregação", Marca: MarcaServirMais },
+  { chave: "ministerio", nome: "Ministério", tag: "Horas, contatos e agenda do pioneiro", Marca: MarcaMinisterio },
+  { chave: "territorio", nome: "Território", tag: "Mapas, saídas e onde paramos", Marca: MarcaTerritorio },
 ];
 
 /** Troca o app de ambiente e lembra a escolha para a próxima abertura. */
 export function irParaAmbiente(a: Ambiente) {
-  guardarAmbiente(a);
-  // `replace`: o ambiente novo toma o lugar do antigo, e o voltar do Android sai do app em vez
-  // de passear de um para o outro.
-  router.replace(HREF_AMBIENTE[a]);
+  // O Território se guarda sozinho, e só para quem trabalha nele (app/territorio/_layout).
+  if (a !== "territorio") guardarAmbiente(a);
+  // `dismissTo`: o ambiente novo toma o lugar do antigo, e o voltar do Android sai do app em
+  // vez de passear de um para o outro. Se ele já está embaixo (o Servir Mais, quando o
+  // Território foi aberto pelo menu), volta para ele em vez de montar um segundo.
+  router.dismissTo(HREF_AMBIENTE[a]);
 }
 
 export function ListaAmbientes({ atual, onEscolher }: { atual: Ambiente; onEscolher: (a: Ambiente) => void }) {
   const { colors, styles } = useTema(criarEstilos);
+  const { usuario } = useAuth();
+  // O Território é de todos; o Ministério, só de quem é pioneiro.
+  const disponiveis = AMBIENTES.filter((a) => a.chave !== "ministerio" || podeUsarPioneiro(usuario));
   return (
     <View style={styles.lista}>
-      {AMBIENTES.map((a) => {
+      {disponiveis.map((a) => {
         const ativo = a.chave === atual;
         return (
           <Pressable
@@ -49,7 +72,7 @@ export function ListaAmbientes({ atual, onEscolher }: { atual: Ambiente; onEscol
             accessibilityRole="radio"
             accessibilityState={{ selected: ativo }}
           >
-            {a.chave === "servir" ? <MarcaServirMais tamanho={36} /> : <MarcaMinisterio tamanho={36} />}
+            <a.Marca tamanho={36} />
             <View style={styles.texto}>
               <Text style={styles.nome}>{a.nome}</Text>
               <Text style={styles.tag}>{a.tag}</Text>
@@ -62,7 +85,7 @@ export function ListaAmbientes({ atual, onEscolher }: { atual: Ambiente; onEscol
   );
 }
 
-/** A troca de ambiente dentro do Ministério (no Servir Mais ela abre no topo do menu lateral). */
+/** A troca de ambiente no Ministério e no Território (no Servir Mais ela abre no topo do menu lateral). */
 export function TrocarAmbienteSheet({ visible, onClose, atual }: { visible: boolean; onClose: () => void; atual: Ambiente }) {
   const { styles } = useTema(criarEstilos);
   return (

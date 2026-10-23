@@ -19,6 +19,7 @@ export const qk = {
   painelGrupos: (mes: string) => ["grupos-painel", mes] as const,
   detalheGrupo: (id: number, mes: string, periodo: string) => ["grupo-detalhe", id, mes, periodo] as const,
   resumoRelatorio: (mes: string) => ["relatorio-resumo", mes] as const,
+  meuRelatorio: (mes: string) => ["meu-relatorio", mes] as const,
   fichaMembro: (grupoId: number, irmaoId: number) => ["grupo-detalhe", "ficha", grupoId, irmaoId] as const,
   // Área de pioneiros (do próprio usuário).
   pioneiroPainel: (mes: string) => ["pioneiro", "painel", mes] as const,
