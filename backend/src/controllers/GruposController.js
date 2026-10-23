@@ -33,6 +33,18 @@ class GruposController {
         }
     }
 
+    /** GET /grupos/:id/membros/:irmaoId — a ficha do irmao para o dirigente */
+    async membro(req, res) {
+        try {
+            const r = await Relatorio.membro(req.user, parseInt(req.params.id, 10), parseInt(req.params.irmaoId, 10));
+            if (r.erro) return erro(res, r.erro, r.erro === 404 ? 'Irmão não encontrado neste grupo.' : MENSAGENS[403]);
+            return res.json(r);
+        } catch (e) {
+            console.error('Erro na ficha do irmão:', e);
+            return erro(res, 500, 'Erro ao carregar o irmão');
+        }
+    }
+
     /** PUT /relatorios-campo — body: { irmaoId, mes, participou, estudos, horas, pioneiroAuxiliar, observacao } */
     async salvarRelatorio(req, res) {
         try {

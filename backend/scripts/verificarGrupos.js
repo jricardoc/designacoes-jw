@@ -122,6 +122,15 @@ eq(R.estatisticas([
 ], ['2026-09-10', '2026-06-01', null], { inicioISO: '2026-08-01', fimISO: '2026-10-23' }),
 { mecanicas: 1, reuniao: 1, dirigente: 1, zoom: 1, designacoes: 3 }, 'so o que caiu no periodo; a mesma saida conta uma vez');
 
+console.log('ficha do irmao');
+eq([R.somarMeses('2026-10', 3), R.somarMeses('2026-01', -1), R.somarMeses('2026-10', -11)], ['2027-01', '2025-12', '2025-11'], 'somar meses');
+const hist = R.historicoDeRelatorios([
+    { mes: '2026-10', participou: true, estudos: 2, horas: null, pioneiroAuxiliar: false, pioneiroRegular: false },
+    { mes: '2026-12', participou: false, estudos: 0, horas: null, pioneiroAuxiliar: false, pioneiroRegular: false },
+], '2027-01', 12);
+eq([hist.meses.length, hist.meses[0].mes, hist.meses[11].mes, hist.meses[0].antesDoApp, hist.meses[8].mes, hist.meses[8].antesDoApp], [12, '2026-02', '2027-01', true, '2026-10', false], '12 meses ate o de referencia; antes de outubro/2026 foi no papel');
+eq([hist.mesesNoApp, hist.comRelatorio, hist.participou], [4, 2, 1], 'conta so os meses do app: 4 meses, 2 relatorios, 1 participou');
+
 console.log('pedido no WhatsApp');
 const grupo = R.textoDoPedido({ grupo: 'Grupo de Paulo', mes: '2026-10' });
 eq([grupo.startsWith('Olá, irmãos do grupo de Paulo!'), grupo.includes('*outubro*')], [true, true], 'mensagem para o grupo');

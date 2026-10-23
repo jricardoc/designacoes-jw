@@ -203,6 +203,7 @@ routes.delete('/grupos/:id(\\d+)', requireAdmin, GrupoCampoController.delete);
 // O controle de quem ve o que mora no RelatorioCampoService.
 routes.get('/grupos/painel', GruposController.painel);
 routes.get('/grupos/:id(\\d+)/detalhe', GruposController.detalhe);
+routes.get('/grupos/:id(\\d+)/membros/:irmaoId(\\d+)', GruposController.membro);
 routes.put('/relatorios-campo', GruposController.salvarRelatorio);
 routes.delete('/relatorios-campo/:id(\\d+)', GruposController.apagarRelatorio);
 routes.get('/relatorios-campo/resumo', GruposController.resumo);

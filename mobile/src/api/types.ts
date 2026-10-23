@@ -1143,6 +1143,58 @@ export interface DetalheGrupo {
   textoPedido: string;
 }
 
+/** Um compromisso do irmão (quadro, reunião, saída de campo), como em Minhas designações. */
+export interface CompromissoFicha {
+  tipo: "designacao" | "reuniao" | "dirigente";
+  titulo: string;
+  detalhe: string | null;
+  papel: string | null;
+  dataISO: string;
+  local: string | null;
+  horario: string | null;
+}
+
+/** A ficha de um irmão do grupo, para o dirigente analisar. */
+export interface FichaMembro {
+  irmao: {
+    id: number;
+    nome: string;
+    privilegio: PrivilegioId | null;
+    pioneiro: "regular" | null;
+    genero: GeneroPessoa | null;
+    telefone: string | null;
+    whatsapp: string | null;
+  };
+  grupo: { id: number; rotulo: string };
+  lider: "dirigente" | "ajudante" | null;
+  relatorios: {
+    /** Os 12 meses, do mais antigo ao mais novo. */
+    meses: {
+      mes: string;
+      nome: string;
+      /** Antes do primeiro mês do app o relatório foi no papel. */
+      antesDoApp: boolean;
+      relatorio: Pick<RelatorioCampo, "participou" | "estudos" | "horas" | "pioneiroAuxiliar" | "pioneiroRegular"> | null;
+    }[];
+    mesesNoApp: number;
+    comRelatorio: number;
+    participou: number;
+    /** Só do pioneiro regular: as horas relatadas no ano de serviço. */
+    horasAnoServico: number | null;
+  };
+  zoom: {
+    /** Dias (ISO) de reuniões assistidas pelo Zoom no último ano, do mais novo ao mais antigo. */
+    datas: string[];
+    anoServico: number;
+    ultimos3Meses: number;
+  };
+  designacoes: {
+    anoServico: EstatisticasMembro & { inicioISO: string };
+    proximas: CompromissoFicha[];
+    recentes: CompromissoFicha[];
+  };
+}
+
 export interface TotaisRelatorio {
   publicadores: { quantidade: number; estudos: number };
   auxiliares: { quantidade: number; horas: number; estudos: number };

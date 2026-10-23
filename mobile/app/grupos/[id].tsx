@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { Linking, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -235,22 +235,30 @@ export default function GrupoScreen() {
 
             <View style={styles.bloco}>
               {membros.map((m, i) => (
-                <Animated.View key={m.id} entering={FadeInDown.duration(220).delay(Math.min(i, 10) * 25)} style={styles.membro}>
-                  <View style={styles.flex}>
-                    <Text style={styles.membroNome}>{m.nome}</Text>
-                    {etiquetas(m)}
-                    <View style={styles.numeros}>
-                      {NUMEROS.map((n) => {
-                        const valor = m.estatisticas[n.chave];
-                        return (
-                          <View key={n.chave} style={[styles.numero, valor === 0 && { opacity: 0.45 }]} accessibilityLabel={`${n.legenda}: ${valor}`}>
-                            <Ionicons name={n.icone} size={13} color={colors.textSecondary} />
-                            <Text style={styles.numeroTexto}>{valor}</Text>
-                          </View>
-                        );
-                      })}
+                <Animated.View key={m.id} entering={FadeInDown.duration(220).delay(Math.min(i, 10) * 25)}>
+                  <Pressable
+                    style={({ pressed }) => [styles.membro, pressed && { opacity: 0.8 }]}
+                    onPress={() => router.push({ pathname: "/grupos/membro", params: { grupo: String(grupo.id), irmao: String(m.id) } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Abrir a ficha de ${m.nome}`}
+                  >
+                    <View style={styles.flex}>
+                      <Text style={styles.membroNome}>{m.nome}</Text>
+                      {etiquetas(m)}
+                      <View style={styles.numeros}>
+                        {NUMEROS.map((n) => {
+                          const valor = m.estatisticas[n.chave];
+                          return (
+                            <View key={n.chave} style={[styles.numero, valor === 0 && { opacity: 0.45 }]} accessibilityLabel={`${n.legenda}: ${valor}`}>
+                              <Ionicons name={n.icone} size={13} color={colors.textSecondary} />
+                              <Text style={styles.numeroTexto}>{valor}</Text>
+                            </View>
+                          );
+                        })}
+                      </View>
                     </View>
-                  </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </Pressable>
                 </Animated.View>
               ))}
             </View>

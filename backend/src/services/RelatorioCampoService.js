@@ -148,6 +148,38 @@ function periodo(nome, hojeISO) {
     return { inicioISO: primeiroDia(Math.floor(total / 12), (total % 12) + 1), fimISO: hojeISO };
 }
 
+/** "2026-10" + 2 -> "2026-12" */
+function somarMeses(mes, delta) {
+    const [ano, numero] = String(mes).split('-').map(Number);
+    const total = ano * 12 + (numero - 1) + delta;
+    return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Os ultimos `n` meses de relatorio de um irmao, do mais antigo ao mais novo, ate `ate`. Antes
+ * do primeiro mes do app o relatorio foi no papel: `antesDoApp`, e nao "sem relatorio".
+ */
+function historicoDeRelatorios(relatorios, ate, n = 12) {
+    const meses = Array.from({ length: n }, (_, i) => somarMeses(ate, i - n + 1)).map((mes) => {
+        const r = relatorios.find((x) => x.mes === mes);
+        return {
+            mes,
+            nome: nomeDoMes(mes, true),
+            antesDoApp: mes < PRIMEIRO_MES,
+            relatorio: r
+                ? { participou: r.participou, estudos: r.estudos, horas: r.horas, pioneiroAuxiliar: r.pioneiroAuxiliar, pioneiroRegular: r.pioneiroRegular }
+                : null,
+        };
+    });
+    const doApp = meses.filter((m) => !m.antesDoApp);
+    return {
+        meses,
+        mesesNoApp: doApp.length,
+        comRelatorio: doApp.filter((m) => m.relatorio).length,
+        participou: doApp.filter((m) => m.relatorio && m.relatorio.participou).length,
+    };
+}
+
 /** "16/10/2026" -> "2026-10-16" (null se ilegivel). */
 function isoDeBR(data) {
     const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(data || ''));
@@ -324,6 +356,79 @@ async function detalhe(usuario, grupoId, { mes: mesPedido, periodo: nomePeriodo 
         entregues: membros.filter((m) => m.relatorio).length,
         concluidoEm: g.relatoriosConcluidos[0] ? g.relatoriosConcluidos[0].concluidoEm : null,
         textoPedido: textoDoPedido({ grupo: rotulo, mes }),
+    };
+}
+
+/**
+ * A ficha de um irmao do grupo, para o dirigente: relatorios dos ultimos 12 meses, reunioes
+ * pelo Zoom, designacoes (proximas, recentes e o total do ano de servico) e o contato.
+ */
+async function membro(usuario, grupoId, irmaoId) {
+    if (!(await podeNoGrupo(usuario, grupoId))) return { erro: 403 };
+    const p = await prisma.irmao.findFirst({
+        where: { id: irmaoId, grupoId, ativo: true },
+        select: { id: true, nome: true, privilegio: true, pioneiro: true, genero: true, telefone: true },
+    });
+    if (!p) return { erro: 404 };
+    const g = await prisma.grupoCampo.findUnique({
+        where: { id: grupoId },
+        select: { id: true, nome: true, dirigenteId: true, ajudanteId: true, dirigente: { select: { nome: true } } },
+    });
+    const hoje = hojeISO();
+    const mesAtual = hoje.slice(0, 7);
+    const anoServico = periodo('ano', hoje);
+    const [relatorios, presencas, doRelatorioZoom] = await Promise.all([
+        prisma.relatorioCampo.findMany({ where: { irmaoId, mes: { gte: somarMeses(mesAtual, -12), lte: mesAtual } } }),
+        prisma.presencaZoom.findMany({ where: { irmaoId }, select: { assistencia: { select: { data: true } } } }),
+        prisma.zoomParticipante.findMany({
+            where: { irmaoId, status: { not: 'in_waiting_room' } },
+            select: { reuniao: { select: { inicio: true } } },
+        }),
+    ]);
+    const umAnoAtras = `${somarMeses(hoje.slice(0, 7), -11)}-01`;
+    const datasZoom = [...new Set([
+        ...presencas.map((z) => isoDeBR(z.assistencia.data)),
+        ...doRelatorioZoom.map((z) => (z.reuniao.inicio ? relogioDaCongregacao(z.reuniao.inicio).toISOString().slice(0, 10) : null)),
+    ])]
+        .filter((d) => d && d >= umAnoAtras && d <= hoje)
+        .sort()
+        .reverse();
+
+    const { listarPorIrmao } = require('./MinhasDesignacoesService');
+    const compromissos = await listarPorIrmao(p).catch(() => []);
+    const curto = (c) => ({ tipo: c.tipo, titulo: c.titulo, detalhe: c.detalhe, papel: c.papel, dataISO: c.dataISO, local: c.local, horario: c.horario });
+    // Ate o mes que se pede agora (o anterior), ou o atual se o dirigente ja anotou ele.
+    const ate = relatorios.some((r) => r.mes === mesAtual) ? mesAtual : mesDeReferencia(hoje);
+    const historico = historicoDeRelatorios(relatorios, ate);
+    const doAno = relatorios.filter((r) => r.mes >= anoServico.inicioISO.slice(0, 7));
+
+    return {
+        irmao: {
+            id: p.id,
+            nome: p.nome,
+            privilegio: p.privilegio,
+            pioneiro: p.pioneiro,
+            genero: p.genero,
+            telefone: p.telefone || null,
+            whatsapp: linkWhatsApp(p.telefone, ''),
+        },
+        grupo: { id: g.id, rotulo: rotuloDoGrupo(g.dirigente && g.dirigente.nome, g.nome) },
+        lider: g.dirigenteId === p.id ? 'dirigente' : g.ajudanteId === p.id ? 'ajudante' : null,
+        relatorios: {
+            ...historico,
+            // So do pioneiro: as horas relatadas no ano de servico.
+            horasAnoServico: p.pioneiro === 'regular' ? doAno.reduce((s, r) => s + (r.horas || 0), 0) : null,
+        },
+        zoom: {
+            datas: datasZoom,
+            anoServico: datasZoom.filter((d) => d >= anoServico.inicioISO).length,
+            ultimos3Meses: datasZoom.filter((d) => d >= periodo('3m', hoje).inicioISO).length,
+        },
+        designacoes: {
+            anoServico: { inicioISO: anoServico.inicioISO, ...estatisticas(compromissos, datasZoom, anoServico) },
+            proximas: compromissos.filter((c) => c.dataISO && c.dataISO >= hoje).sort((a, b) => a.dataISO.localeCompare(b.dataISO)).slice(0, 6).map(curto),
+            recentes: compromissos.filter((c) => c.dataISO && c.dataISO < hoje).sort((a, b) => b.dataISO.localeCompare(a.dataISO)).slice(0, 8).map(curto),
+        },
     };
 }
 
@@ -531,6 +636,7 @@ async function avisarDirigentes(agora = new Date()) {
 module.exports = {
     painel,
     detalhe,
+    membro,
     salvarRelatorio,
     apagarRelatorio,
     resumoDoMes,
@@ -538,5 +644,5 @@ module.exports = {
     avisarDirigentes,
     gruposQueLidera,
     secretarioIrmaoId,
-    _internos: { mesDeReferencia, nomeDoMes, normalizarRelatorio, resumir, textoDoPedido, periodo, estatisticas, isoDeBR },
+    _internos: { mesDeReferencia, nomeDoMes, normalizarRelatorio, resumir, textoDoPedido, periodo, estatisticas, isoDeBR, somarMeses, historicoDeRelatorios },
 };
