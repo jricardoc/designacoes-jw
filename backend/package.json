@@ -15,6 +15,7 @@
     "verificar:indisponibilidade-import": "node scripts/verificarIndisponibilidadeImport.js",
     "verificar:rodizio-quadro": "node scripts/verificarRodizioQuadro.js",
     "verificar:confirmacoes": "node scripts/verificarConfirmacoes.js",
+    "verificar:confirmar-parte-banco": "node scripts/verificarConfirmarParteBanco.js",
     "normalizar:nomes": "node scripts/normalizarNomesDesignacoes.js",
     "unificar:pessoas": "node scripts/unificarPessoas.js",
     "pessoas:duplicados": "node scripts/duplicadosPessoas.js",
@@ -31,7 +32,6 @@
     "verificar:pioneiros-banco": "node scripts/verificarPioneirosBanco.js",
     "verificar:estudo": "node scripts/verificarEstudo.js",
     "verificar:estudo-banco": "node scripts/verificarEstudoBanco.js",
-    "verificar:confirmar-parte-banco": "node scripts/verificarConfirmarParteBanco.js",
     "vincular:limpeza": "node scripts/vincularLimpeza.js",
     "backfill:publicacoes": "node scripts/backfillPublicacoes.js"
   },
