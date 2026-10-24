@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
+import type { AcaoCronometro } from "@/components/ministerio/cronometroFila";
+import { enfileirar, novaChave } from "@/territorios/fila";
 import type {
   AgendaPioneiro,
   CronometroPioneiro,
@@ -36,11 +38,20 @@ export function usePainelPioneiro(mes: string, ativo = true) {
   });
 }
 
+export type RespostaCronometro = { cronometro: CronometroPioneiro | null; registro: RegistroHoras | null; naFila?: boolean };
+
+/**
+ * O cronômetro passa pela fila (src/territorios/fila): sem internet, a ação fica no celular com
+ * a hora em que foi feita e sobe sozinha depois; o relógio da tela já anda com ela.
+ */
 export function useCronometro() {
   const invalidar = useInvalidar();
   return useMutation({
-    mutationFn: (acao: "iniciar" | "pausar" | "parar" | "descartar") =>
-      apiRequest<{ cronometro: CronometroPioneiro; registro: RegistroHoras | null }>("/pioneiro/cronometro", { method: "POST", body: { acao } }),
+    mutationFn: async (acao: AcaoCronometro): Promise<RespostaCronometro> => {
+      const r = await enfileirar({ clientKey: novaChave(), tipo: "cronometro", corpo: { acao, em: Date.now() }, titulo: "Cronômetro" });
+      if (r.erro) throw new Error(r.erro);
+      return r.enviado ? (r.resposta as RespostaCronometro) : { cronometro: null, registro: null, naFila: true };
+    },
     onSuccess: invalidar,
   });
 }

@@ -61,6 +61,14 @@ async function rodar(prisma, { enviados = [] } = {}) {
     c = await P.cronometro(uPioneira, 'descartar', min(120));
     ok(!c.registro && (await prisma.pioneiroHoras.count({ where: { irmaoId: pioneira.id } })) === 1, 'descartar nao lanca');
     ok((await P.cronometro(uPioneira, 'voar')).erro === 400, 'acao invalida');
+    // Sem internet: o celular manda depois, com a hora em que cada acao foi feita.
+    const feitoAs = Date.now() - 3 * 3600000;
+    await P.cronometro(uPioneira, 'iniciar', undefined, feitoAs);
+    await P.cronometro(uPioneira, 'iniciar', undefined, feitoAs + 5 * 60000);
+    c = await P.cronometro(uPioneira, 'parar', undefined, feitoAs + 45 * 60000);
+    ok(c.registro && c.registro.minutos === 45, 'iniciar e parar mandados depois contam a hora em que foram feitos (o reenvio do iniciar nao muda nada)', c.registro);
+    ok((await P.cronometro(uPioneira, 'iniciar', undefined, Date.now() - 15 * 86400000)).erro === 400, 'acao guardada ha mais de 14 dias: 400');
+    if (c.registro) await prisma.pioneiroHoras.delete({ where: { id: c.registro.id } });
 
     console.log('horas e meta');
     const ontem = new Date(`${hoje}T12:00:00Z`);

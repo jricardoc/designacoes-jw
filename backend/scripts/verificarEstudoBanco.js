@@ -52,6 +52,13 @@ async function rodar(prisma, { enviados = [] } = {}) {
     ok((await E.marcarLeituras(ana, { plano: 'jw', itens: ['<x>'] })).erro === 400, 'trecho invalido: 400');
     ok((await E.marcarLeituras(ana, { plano: 'jw', itens: ['1:1-3', '1:4-7'], nota: 'x' })).erro === 400, 'anotacao de dois trechos: 400');
     ok((await E.marcarLeituras(ana, { plano: 'livre', itens: ['19:151'] })).erro === 400, 'leitura livre: so capitulo que existe');
+    // Marcada sem internet, chega depois com `em`: conta o dia em que foi lida.
+    const ontem = new Date(Date.now() - 86400000);
+    await E.marcarLeituras(ana, { plano: 'livre', itens: ['1:1'], em: ontem.getTime() });
+    const lidaOntem = await prisma.leituraFeita.findFirst({ where: { usuarioId: ana.id, plano: 'livre', item: '1:1' } });
+    ok(lidaOntem && lidaOntem.dia === relogioDaCongregacao(ontem).toISOString().slice(0, 10), 'marcada sem internet: conta o dia em que foi lida', lidaOntem);
+    ok((await E.marcarLeituras(ana, { plano: 'livre', itens: ['1:2'], em: Date.now() - 15 * 86400000 })).erro === 400, 'guardada ha mais de 14 dias: 400');
+    await prisma.leituraFeita.deleteMany({ where: { usuarioId: ana.id, plano: 'livre', item: '1:1' } });
 
     console.log('assuntos');
     const a1 = (await E.criarAssunto(ana, { titulo: 'A oração de Ana', tipo: 'oracao', link: 'https://wol.jw.org/pt/wol/b/r5/lp-t/nwtsty/9/2' })).assunto;

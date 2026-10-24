@@ -19,7 +19,7 @@ const id = (req) => parseInt(req.params.id, 10);
 
 module.exports = {
     painel: responder('painel', (req) => Pioneiro.painel(req.user, req.query.mes)),
-    cronometro: responder('cronômetro', (req) => Pioneiro.cronometro(req.user, req.body && req.body.acao)),
+    cronometro: responder('cronômetro', (req) => Pioneiro.cronometro(req.user, req.body && req.body.acao, undefined, req.body && req.body.em)),
     lancarHoras: responder('lançar horas', (req) => Pioneiro.lancarHoras(req.user, req.body)),
     apagarHoras: responder('apagar horas', (req) => Pioneiro.apagarHoras(req.user, id(req))),
     definirMeta: responder('meta', (req) => Pioneiro.definirMeta(req.user, req.body && req.body.metaMensal)),
