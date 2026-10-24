@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { DIAS_CURTOS, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -84,11 +84,14 @@ export function SeletorDia({
   );
 }
 
-const HORAS = Array.from({ length: 31 }, (_, i) => `${doisDig(6 + Math.floor(i / 2))}:${i % 2 ? "30" : "00"}`);
+/** De meia em meia hora, das `de` às `ate` horas. */
+const horasDe = (de: number, ate: number) =>
+  Array.from({ length: (ate - de) * 2 + 1 }, (_, i) => `${doisDig(de + Math.floor(i / 2))}:${i % 2 ? "30" : "00"}`);
 
-export function SeletorHora({ valor, onMudar }: { valor: string; onMudar: (hora: string) => void }) {
+export function SeletorHora({ valor, onMudar, de = 6, ate = 21 }: { valor: string; onMudar: (hora: string) => void; de?: number; ate?: number }) {
   const { styles } = useTema(criarEstilos);
   const rolagem = useRef<ScrollView>(null);
+  const HORAS = useMemo(() => horasDe(de, ate), [de, ate]);
   // Abre já perto da hora escolhida (cada chip tem uns 72 pt).
   useEffect(() => {
     const i = HORAS.indexOf(valor);

@@ -1556,3 +1556,77 @@ export interface NovaRevisita {
   proximaVisita?: string | null;
 }
 
+// --- Estudo pessoal ------------------------------------------------------------
+// De cada usuário (não do cadastro de irmão): só ele vê.
+
+export interface PerfilEstudo {
+  /** "jw" (o programa do jw.org), "comece" (Seja Feliz para Sempre!), "reuniao" ou "livre". */
+  plano: "jw" | "comece" | "reuniao" | "livre";
+  /** No programa do jw.org: "tudo", "vermelho", "azul" ou "cat:N" (uma das 11 categorias). */
+  opcao: string;
+  /** O dia do primeiro trecho ("2026-10-24"); null = ainda não começou. */
+  inicio: string | null;
+  /** Dias para cada trecho: 1 (a Bíblia em um ano), 2 ou 3. */
+  ritmo: number;
+  /** "21:30": se até lá não houve leitura no dia, chega o aviso. */
+  planoB: string | null;
+  /** O estudo rodando no cronômetro (ISO). */
+  sessaoInicio: string | null;
+  sessaoAssuntoId: number | null;
+}
+
+export interface LeituraFeita {
+  plano: PerfilEstudo["plano"];
+  /** O id do trecho no programa ("1:4-7", "noe", "2026-10-21", "43:3"). */
+  item: string;
+  /** O dia em que leu ("2026-10-24"). */
+  dia: string;
+  /** A joia espiritual anotada. */
+  nota: string | null;
+}
+
+export type TipoAssunto = "assunto" | "pergunta" | "reuniao" | "relato" | "oracao" | "video" | "campo" | "criacao";
+
+export interface AssuntoEstudo {
+  id: number;
+  titulo: string;
+  tipo: TipoAssunto;
+  /** Só do jw.org ou da Biblioteca On-line. */
+  link: string | null;
+  nota: string | null;
+  estudadoEm: string | null;
+  createdAt: string;
+}
+
+export interface SessaoEstudo {
+  id: number;
+  dia: string;
+  minutos: number;
+  assuntoId: number | null;
+  titulo: string | null;
+  resumo: string | null;
+  aplicacao: string | null;
+}
+
+export type TipoRotina = "leitura" | "estudo" | "familia" | "reuniao";
+
+export interface RotinaEstudo {
+  id: number;
+  tipo: TipoRotina;
+  /** 0 (domingo) a 6 (sábado). */
+  dias: number[];
+  hora: string;
+  /** Minutos antes do aviso (0, 15, 30, 60); null = sem aviso. */
+  avisoMin: number | null;
+}
+
+export interface EstadoEstudo {
+  /** Hoje no relógio da congregação. */
+  hoje: string;
+  perfil: PerfilEstudo;
+  leituras: LeituraFeita[];
+  assuntos: AssuntoEstudo[];
+  /** As últimas 60. */
+  sessoes: SessaoEstudo[];
+  rotina: RotinaEstudo[];
+}

@@ -28,6 +28,8 @@ export const qk = {
   pioneiroAgenda: (de: string, ate: string) => ["pioneiro", "agenda", de, ate] as const,
   pioneiroViagens: (mes: string) => ["pioneiro", "viagens", mes] as const,
   pioneiroProgresso: (mes: string) => ["pioneiro", "progresso", mes] as const,
+  // Estudo pessoal (do próprio usuário): tudo numa consulta só.
+  estudo: ["estudo"] as const,
   // Relatórios do Zoom.
   zoomEstado: ["zoom-estado"] as const,
   zoomReunioes: (de: string, ate: string, busca: string) => ["zoom-reunioes", de, ate, busca] as const,

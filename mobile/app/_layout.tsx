@@ -51,6 +51,7 @@ function AuthGate() {
         <Stack.Screen name="irmao" />
         <Stack.Screen name="notificacoes" />
         <Stack.Screen name="ministerio" />
+        <Stack.Screen name="estudo" />
       </Stack>
       {isAuthenticated ? <ServicosDoApp /> : null}
     </>

@@ -61,6 +61,8 @@ const ITENS: ItemMenu[] = [
   { chave: "dirigentes", rotulo: "Dirigentes", icone: "flag-outline", href: "/(tabs)/dirigentes" },
   // É outro ambiente (mapas e saídas), mas continua aqui: quem só quer olhar um mapa vai direto.
   { chave: "territorio", rotulo: "Território", icone: "map-outline", href: "/territorio" },
+  // Outro ambiente, de todos: a leitura da Bíblia e o estudo pessoal.
+  { chave: "estudo", rotulo: "Estudo pessoal", icone: "book-outline", href: "/estudo" },
   { chave: "carrinho", rotulo: "Carrinho", icone: "book-outline", href: "/(tabs)/carrinho" },
   // Falar com quem tem parte de estudante e anotar quem confirmou: área própria.
   {
@@ -142,10 +144,10 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   };
 
   const ir = (item: ItemMenu) => {
-    // O Território abre POR CIMA do Servir Mais: o voltar traz de volta para cá.
-    if (item.chave === "territorio") {
+    // O Território e o Estudo abrem POR CIMA do Servir Mais: o voltar traz de volta para cá.
+    if (item.chave === "territorio" || item.chave === "estudo") {
       onClose();
-      router.push("/territorio");
+      router.push(item.chave === "territorio" ? "/territorio" : "/estudo");
       return;
     }
     irPara(item.chave, item.href);
