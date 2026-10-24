@@ -9,7 +9,7 @@
  */
 const S = require('../src/services/MinhasDesignacoesService');
 const V = require('../src/services/VinculoIrmaoService');
-const { mesmaPessoa, tokens, campoMenciona, datasDaSemana } = S._internos;
+const { mesmaPessoa, tokens, campoMenciona, datasDaSemana, fragmentoDe, isoDaReuniao } = S._internos;
 
 let falhas = 0;
 const chk = (ok, m) => { console.log(`${ok ? '  OK  ' : ' FALHA'} ${m}`); if (!ok) falhas++; };
@@ -73,6 +73,14 @@ chk(iso(r.meio) === '2026-02-25' && !r.corrigida, 'dia fora do intervalo do rotu
 
 r = datasDaSemana({ faixaData: null, dataReuniao: null });
 chk(r.meio === null && r.fds === null, 'semana sem data nao quebra');
+
+sec('a parte de estudante que o proprio irmao confirma');
+chk(fragmentoDe(T('Maria de Lourdes'), 'Odete Pereira e Souza / Maria de Lourdes') === 'Maria de Lourdes', 'o nome dele, como esta escrito (a chave da confirmacao)');
+chk(fragmentoDe(T('Mauro Santana'), 'Mauro Rodrigues / Ana Lima') === null, 'parte de outro: nada');
+chk(fragmentoDe(T('Ana Lima'), 'a definir') === null, 'campo sem nome: nada');
+chk(datasDaSemana({ faixaData: 'Setembro 1 - 7', dataReuniao: '03/09/2026' }).dataReuniao === '03/09/2026', 'a data vai junto, como as confirmacoes a guardam');
+chk(isoDaReuniao('3/9/2026') === '2026-09-03' && isoDaReuniao('03/09/2026') === '2026-09-03', 'data da reuniao com e sem zero');
+chk(isoDaReuniao('Setembro') === null && isoDaReuniao(null) === null, 'data ilegivel: null');
 
 sec('sugestao de vinculo usuario -> irmao');
 const irmaos = [

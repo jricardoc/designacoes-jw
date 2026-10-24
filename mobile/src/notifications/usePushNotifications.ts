@@ -68,7 +68,7 @@ async function varrerBandeja() {
 export function usePushNotifications() {
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [telaPendente, setTelaPendente] = useState<
-    { tela: "minhas" | "territorio" | "grupos" | "revisita" | "estudo"; numero?: string; marcacao?: number; grupoId?: number; revisitaId?: number } | null
+    { tela: "minhas" | "territorio" | "grupos" | "revisita" | "estudo" | "confirmacoes"; numero?: string; marcacao?: number; grupoId?: number; revisitaId?: number } | null
   >(null);
   const router = useRouter();
   // Fica falso enquanto o router não montou: na abertura fria o toque na
@@ -108,6 +108,8 @@ export function usePushNotifications() {
       if (data?.screen === "revisita") setTelaPendente({ tela: "revisita", revisitaId: data.revisitaId });
       // Os avisos da rotina de estudo e o plano B da leitura abrem o Estudo pessoal.
       if (data?.screen === "estudo") setTelaPendente({ tela: "estudo" });
+      // "Não posso" de um estudante, para quem cuida das confirmações: abre a lista delas.
+      if (data?.screen === "confirmacoes") setTelaPendente({ tela: "confirmacoes" });
     };
 
     // Abertura fria: o toque chega ao nativo antes de haver listener em JS.
@@ -172,7 +174,9 @@ export function usePushNotifications() {
       return;
     }
     router.dismissTo("/(tabs)/minhas");
-    router.navigate(telaPendente.tela === "grupos" ? "/(tabs)/grupos" : "/(tabs)/minhas");
+    router.navigate(
+      telaPendente.tela === "grupos" ? "/(tabs)/grupos" : telaPendente.tela === "confirmacoes" ? "/(tabs)/confirmacoes" : "/(tabs)/minhas",
+    );
     if (telaPendente.tela === "grupos" && telaPendente.grupoId) {
       router.push({ pathname: "/grupos/[id]", params: { id: String(telaPendente.grupoId) } });
     }

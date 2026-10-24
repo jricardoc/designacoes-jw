@@ -3,6 +3,32 @@ import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
 import type { IrmaoDisponivel, MinhasDesignacoesResposta, Usuario } from "@/api/types";
 
+/**
+ * O irmão responde a própria parte de estudante: true "confirmo", false "não posso", null desfaz.
+ * A resposta aparece na hora; se o servidor recusar, volta ao que era.
+ */
+export function useConfirmarParte() {
+  const qc = useQueryClient();
+  const lista = { queryKey: ["minhas-designacoes"] };
+  return useMutation({
+    mutationFn: (body: { id: string; confirmou: boolean | null }) =>
+      apiRequest<{ confirmou: boolean | null }>("/minhas-designacoes/confirmacao", { method: "PUT", body }),
+    onMutate: async ({ id, confirmou }) => {
+      await qc.cancelQueries(lista);
+      const antes = qc.getQueriesData<MinhasDesignacoesResposta>(lista);
+      qc.setQueriesData<MinhasDesignacoesResposta>(lista, (r) =>
+        r ? { ...r, compromissos: r.compromissos.map((c) => (c.id === id && c.confirmacao ? { ...c, confirmacao: { confirmou } } : c)) } : r,
+      );
+      return { antes };
+    },
+    onError: (_e, _v, ctx) => ctx?.antes.forEach(([chave, dados]) => qc.setQueryData(chave, dados)),
+    onSettled: () => {
+      qc.invalidateQueries(lista);
+      qc.invalidateQueries({ queryKey: ["confirmacoes"] });
+    },
+  });
+}
+
 export function useMinhasDesignacoes(escopo: "proximas" | "todas") {
   return useQuery({
     queryKey: qk.minhasDesignacoes(escopo),

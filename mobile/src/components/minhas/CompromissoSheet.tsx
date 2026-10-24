@@ -5,6 +5,7 @@ import type { Compromisso } from "@/api/types";
 import { Button, Sheet } from "@/components/ui";
 import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { RespostaParte } from "./RespostaParte";
 
 /** Visual da categoria, resolvido pelo tema na tela que abre a folha. */
 export interface VisualCategoria {
@@ -23,6 +24,8 @@ interface CompromissoSheetProps {
   quando: string;
   /** Rótulo de status quando o quadro de origem ainda é rascunho. */
   rascunho?: boolean;
+  /** A parte de estudante ainda vem: dá para responder "confirmo" ou "não posso". */
+  podeResponder?: boolean;
 }
 
 /**
@@ -42,6 +45,7 @@ export function CompromissoSheet({
   visual,
   quando,
   rascunho,
+  podeResponder,
 }: CompromissoSheetProps) {
   const { colors, styles, statusConfig } = useTema(criarEstilos);
 
@@ -115,6 +119,13 @@ export function CompromissoSheet({
             </View>
           ) : null}
 
+          {compromisso.confirmacao && podeResponder ? (
+            <View style={styles.resposta}>
+              <Text style={styles.respostaTitulo}>Você vai fazer esta parte?</Text>
+              <RespostaParte compromisso={compromisso} />
+            </View>
+          ) : null}
+
           {/* Território designado: o atalho leva direto ao mapa e ao "onde paramos". */}
           {compromisso.origem?.tipo === "territorio" ? (
             <Button
@@ -156,6 +167,8 @@ const criarEstilos = (colors: Cores) =>
   StyleSheet.create({
     flex: { flex: 1 },
     corpo: { paddingBottom: 8 },
+    resposta: { marginTop: 16 },
+    respostaTitulo: { fontSize: 15, fontWeight: "800", color: colors.text },
     topo: { flexDirection: "row", alignItems: "flex-start", gap: 12, marginBottom: 14 },
     icone: {
       width: 40,
