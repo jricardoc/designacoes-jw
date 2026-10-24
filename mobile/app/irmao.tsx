@@ -23,7 +23,7 @@ import {
   useExcluirIrmao,
   useIrmaos,
 } from "@/api/hooks/useIrmaos";
-import type { FuncaoId, NivelAudioVideo, PrivilegioId, GeneroPessoa} from "@/api/types";
+import type { FuncaoId, NivelAudioVideo, PrivilegioId, GeneroPessoa, TipoPioneiro } from "@/api/types";
 import { ConfirmDialog, EmptyState, GradientHeader, SelectSheet, useConfirm, useToast } from "@/components/ui";
 import { CalendarioIndisponibilidade } from "@/components/config/CalendarioIndisponibilidade";
 import { useGrupos } from "@/api/hooks/useGrupos";
@@ -77,7 +77,7 @@ export default function IrmaoScreen() {
   const [funcoes, setFuncoes] = useState<FuncaoId[]>([]);
   const [nivel, setNivel] = useState<NivelAudioVideo>("experiente");
   const [privilegio, setPrivilegio] = useState<PrivilegioId | null>(null);
-  const [pioneiro, setPioneiro] = useState(false);
+  const [pioneiro, setPioneiro] = useState<TipoPioneiro | null>(null);
   const [genero, setGenero] = useState<GeneroPessoa | null>(null);
   const [telefone, setTelefone] = useState("");
   const [grupoId, setGrupoId] = useState<number | null>(null);
@@ -92,7 +92,7 @@ export default function IrmaoScreen() {
       setFuncoes(existente.funcoes);
       setNivel(existente.nivelAudioVideo);
       setPrivilegio(existente.privilegio ?? null);
-      setPioneiro(existente.pioneiro === "regular");
+      setPioneiro(existente.pioneiro ?? null);
       setGenero(existente.genero ?? null);
       setTelefone(existente.telefone ?? "");
       setGrupoId(existente.grupoId ?? null);
@@ -146,7 +146,7 @@ export default function IrmaoScreen() {
   const summary = [
     grupoAtual?.nome,
     privilegioLabel(privilegio),
-    pioneiro ? "Pioneiro regular" : null,
+    pioneiro ? `Pioneiro ${pioneiro}` : null,
     funcoes.length
       ? `${funcoes.length} ${funcoes.length === 1 ? "função" : "funções"}`
       : "Sem funções",
@@ -184,7 +184,7 @@ export default function IrmaoScreen() {
           funcoes,
           nivelAudioVideo: nivel,
           privilegio,
-          pioneiro: pioneiro ? "regular" : null,
+          pioneiro,
           genero,
           telefone,
           grupoId,
@@ -196,7 +196,7 @@ export default function IrmaoScreen() {
           funcoes,
           nivelAudioVideo: nivel,
           privilegio,
-          pioneiro: pioneiro ? "regular" : null,
+          pioneiro,
           genero,
           telefone,
           grupoId,
@@ -494,18 +494,37 @@ export default function IrmaoScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Vem da lista de grupos (o verde), mas a nomeação pode sair no meio do ano. */}
+        {/* O regular também vem da lista de grupos (o verde), mas a nomeação pode sair no meio do
+            ano. O auxiliar contínuo só se marca aqui; quem é auxiliar num mês só marca no relatório. */}
         <View style={styles.ativoCard}>
           <View style={styles.flex}>
-            <Text style={styles.ativoTitle}>Pioneiro regular</Text>
-            <Text style={styles.ativoSub}>Relata horas no relatório de campo</Text>
+            <Text style={styles.ativoTitle}>Pioneiro</Text>
+            <Text style={styles.ativoSub}>
+              {pioneiro === "regular"
+                ? "50 horas por mês. Relata horas e usa o Ministério"
+                : pioneiro === "auxiliar"
+                  ? "30 horas por mês. Relata horas e usa o Ministério"
+                  : "Auxiliar: 30 horas por mês. Regular: 50 horas por mês"}
+            </Text>
+            <View style={styles.segTrack}>
+              {([null, "auxiliar", "regular"] as const).map((tipo) => {
+                const on = pioneiro === tipo;
+                return (
+                  <Pressable
+                    key={tipo ?? "nao"}
+                    onPress={() => setPioneiro(tipo)}
+                    style={[styles.seg, on && styles.segOn]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: on }}
+                  >
+                    <Text style={[styles.segText, on && styles.segTextOn]}>
+                      {tipo === "regular" ? "Regular" : tipo === "auxiliar" ? "Auxiliar" : "Não"}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-          <Switch
-            value={pioneiro}
-            onValueChange={setPioneiro}
-            trackColor={{ true: colors.oliveSoft, false: "#D8CDBA" }}
-            thumbColor="#fff"
-          />
         </View>
 
         {irmaoId ? (

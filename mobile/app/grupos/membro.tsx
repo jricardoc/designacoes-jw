@@ -53,7 +53,7 @@ export default function FichaMembroScreen() {
 
   const abrir = (url: string) => Linking.openURL(url).catch(() => toast.show("Não consegui abrir", "error"));
   const { irmao, relatorios, zoom, designacoes } = f;
-  const pioneiro = irmao.pioneiro === "regular";
+  const pioneiro = irmao.pioneiro;
   const papel = f.lider === "dirigente" ? "Dirigente do grupo" : f.lider === "ajudante" ? "Ajudante do grupo" : null;
 
   return (
@@ -66,7 +66,7 @@ export default function FichaMembroScreen() {
         {papel || pioneiro || irmao.privilegio ? (
           <View style={styles.etiquetas}>
             {papel ? <Etiqueta texto={papel} cor={colors.primaryDark} fundo={colors.infoBg} /> : null}
-            {pioneiro ? <Etiqueta texto="Pioneiro regular" icone="leaf" cor={colors.greenDark} fundo={colors.successBg} /> : null}
+            {pioneiro ? <Etiqueta texto={`Pioneiro ${pioneiro}`} icone="leaf" cor={colors.greenDark} fundo={colors.successBg} /> : null}
             {irmao.privilegio ? <PrivilegioBadge privilegio={irmao.privilegio} /> : null}
           </View>
         ) : null}

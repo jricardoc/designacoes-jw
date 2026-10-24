@@ -1,4 +1,5 @@
 const prisma = require('../prisma');
+const Pioneiro = require('../services/PioneiroService');
 
 /** Privilegios de servico reconhecidos. `null` = o irmao nao tem nenhum dos dois. */
 const PRIVILEGIOS = ['servoMinisterial', 'anciao'];
@@ -14,10 +15,10 @@ function normalizarPrivilegio(valor) {
     return PRIVILEGIOS.includes(valor) ? valor : null;
 }
 
-/** "regular" ou nada. Mesma regra do privilegio: `undefined` mantem, vazio limpa. */
+/** "regular", "auxiliar" ou nada. Mesma regra do privilegio: `undefined` mantem, vazio limpa. */
 function normalizarPioneiro(valor) {
     if (valor === undefined) return undefined;
-    return valor === 'regular' ? 'regular' : null;
+    return valor === 'regular' || valor === 'auxiliar' ? valor : null;
 }
 
 /**
@@ -169,7 +170,7 @@ class IrmaoController {
             // "ainda nao designado" no quadro em que ele esta escalado.
             const anterior = await prisma.irmao.findUnique({
                 where: { id: parseInt(id) },
-                select: { nome: true }
+                select: { nome: true, pioneiro: true }
             });
             if (!anterior) {
                 return res.status(404).json({ error: 'Irmao nao encontrado' });
@@ -222,7 +223,11 @@ class IrmaoController {
                         where: { principal: nomeAntigo },
                         data: { principal: updateData.nome }
                     })
-                ] : [])
+                ] : []),
+                // Virou auxiliar ou regular: a meta do Ministerio vai para a do tipo novo (30 ou 50 h).
+                ...(pioneiroNormalizado && pioneiroNormalizado !== anterior.pioneiro
+                    ? [Pioneiro.metaDoTipo(prisma, [parseInt(id)], pioneiroNormalizado)]
+                    : [])
             ]);
 
             return res.json(irmao);

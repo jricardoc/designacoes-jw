@@ -335,7 +335,7 @@ async function detalhe(usuario, grupoId, { mes: mesPedido, periodo: nomePeriodo 
         privilegio: p.privilegio,
         lider: g.dirigente && g.dirigente.id === p.id ? 'dirigente' : g.ajudante && g.ajudante.id === p.id ? 'ajudante' : null,
         relatorio: relatorios.find((r) => r.irmaoId === p.id) || null,
-        whatsapp: linkWhatsApp(p.telefone, textoDoPedido({ mes, nome: p.nome, pioneiro: p.pioneiro === 'regular' })),
+        whatsapp: linkWhatsApp(p.telefone, textoDoPedido({ mes, nome: p.nome, pioneiro: !!p.pioneiro })),
         estatisticas: estatisticas(
             compromissos[i],
             // Um dia por reuniao: a mesma pode estar na lista da assistencia e no relatorio do Zoom.

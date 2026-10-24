@@ -1,7 +1,7 @@
 /**
  * O fluxo da area de pioneiros com banco de verdade: quem entra, cronometro (com pausa e com
  * dois "parar" ao mesmo tempo), horas, meta, revisitas de um que o outro nao ve, aviso da visita
- * marcada e o relatorio que cai no grupo.
+ * marcada, o relatorio que cai no grupo e o pioneiro auxiliar do cadastro (meta e lista de grupos).
  *
  *   ZOOM_TESTE_BANCO=1 DATABASE_URL=postgres://.../banco_descartavel npm run verificar:pioneiros-banco
  *
@@ -193,6 +193,60 @@ async function rodar(prisma, { enviados = [] } = {}) {
     ok((await R.enviarMeuRelatorio(uPioneira, { mes, participou: true })).erro === 400, 'pioneiro regular manda pelo Ministerio');
     ok((await R.enviarMeuRelatorio(uAdminSemCadastro, { mes, participou: true })).erro === 403, 'conta sem cadastro: 403');
     ok((await R.enviarMeuRelatorio(uPublicador, { mes, participou: true })).relatorio.grupoId === null, 'sem grupo tambem grava (o secretario ve)');
+
+    console.log('pioneiro auxiliar do cadastro');
+    const resposta = () => {
+        const r = { statusCode: 200, body: null };
+        r.status = (codigo) => ((r.statusCode = codigo), r);
+        r.json = (corpo) => ((r.body = corpo), r);
+        return r;
+    };
+    const Irmaos = require('../src/controllers/IrmaoController');
+    const auxiliar = await irmao('Auxiliar Teste', { pioneiro: 'auxiliar', grupoId: grupo.id });
+    const uAuxiliar = await usuario('auxiliar-teste', auxiliar.id);
+    const pa = await P.painel(uAuxiliar);
+    ok(!pa.erro && pa.regular === false && pa.meta === 30, 'auxiliar do cadastro entra, com meta de 30 h', pa);
+    await Irmaos.update({ params: { id: String(auxiliar.id) }, body: { pioneiro: 'regular' } }, resposta());
+    ok((await P.painel(uAuxiliar)).meta === 50, 'virou regular no cadastro: a meta vai para 50 h');
+    await Irmaos.update({ params: { id: String(auxiliar.id) }, body: { pioneiro: 'auxiliar' } }, resposta());
+    ok((await P.painel(uAuxiliar)).meta === 30, 'voltou a auxiliar: 30 h');
+    const estranho = resposta();
+    await Irmaos.update({ params: { id: String(auxiliar.id) }, body: { pioneiro: 'especial' } }, estranho);
+    ok(estranho.body && estranho.body.pioneiro === null, 'tipo desconhecido limpa', estranho.body);
+    ok((await P.painel(uAuxiliar)).erro === 403, 'sem tipo, sai da area');
+    await Irmaos.update({ params: { id: String(auxiliar.id) }, body: { pioneiro: 'auxiliar' } }, resposta());
+
+    // A lista de grupos (PDF) so sabe do regular (o verde): o auxiliar do cadastro fica como esta.
+    const regularSemVerde = await irmao('Regular Sem Verde Teste', { pioneiro: 'regular' });
+    const viraRegular = await irmao('Vira Regular Teste', { pioneiro: 'auxiliar' });
+    await P.painel(await usuario('vira-regular-teste', viraRegular.id)); // cria o perfil, com 30 h
+    const divisao = resposta();
+    await require('../src/controllers/GruposController').aplicarDivisao(
+        {
+            body: {
+                tirarDosGrupos: false,
+                grupos: [
+                    {
+                        numero: 92,
+                        membros: [
+                            { nomeDocumento: auxiliar.nome, irmaoId: auxiliar.id, pioneiro: false },
+                            { nomeDocumento: regularSemVerde.nome, irmaoId: regularSemVerde.id, pioneiro: false },
+                            { nomeDocumento: viraRegular.nome, irmaoId: viraRegular.id, pioneiro: true },
+                        ],
+                    },
+                ],
+            },
+        },
+        divisao,
+    );
+    const depois = await prisma.irmao.findMany({ where: { id: { in: [auxiliar.id, regularSemVerde.id, viraRegular.id] } }, select: { id: true, pioneiro: true } });
+    const tipo = (i) => depois.find((d) => d.id === i.id).pioneiro;
+    ok(
+        divisao.statusCode === 200 && tipo(auxiliar) === 'auxiliar' && tipo(regularSemVerde) === null && tipo(viraRegular) === 'regular',
+        'lista de grupos: o auxiliar fica, o regular sem verde sai, o verde vira regular',
+        { status: divisao.statusCode, corpo: divisao.body, depois },
+    );
+    ok((await prisma.pioneiroPerfil.findUnique({ where: { irmaoId: viraRegular.id } })).metaMensal === 50, 'quem virou regular pela lista vai para 50 h');
 
     return falhas;
 }

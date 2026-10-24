@@ -46,10 +46,11 @@ export function RegistrarCampoSheet({ visible, onClose }: { visible: boolean; on
     const r = data.relatorio;
     setParticipou(r ? r.participou : true);
     setEstudos(r?.estudos ?? 0);
-    setAuxiliar(!!r?.pioneiroAuxiliar);
+    // Sem relatório ainda, o auxiliar do cadastro já começa marcado.
+    setAuxiliar(r ? r.pioneiroAuxiliar : usuario?.irmao?.pioneiro === "auxiliar");
     setHoras(r?.horas != null ? String(r.horas) : "");
     setObservacao(r?.observacao ?? "");
-  }, [visible, data]);
+  }, [visible, data, usuario?.irmao?.pioneiro]);
 
   const nome = nomeDo(mes);
   const comHoras = participou && auxiliar;

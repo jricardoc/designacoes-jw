@@ -55,7 +55,7 @@ export default function PerfilMinisterio() {
               <Avatar usuario={usuario} tamanho={84} fundo={colors.sand} corTexto={colors.primaryDark} />
             </View>
             <Text style={styles.nome}>{usuario.nome}</Text>
-            <Text style={styles.sub}>{p?.regular === false ? "Usando como pioneiro auxiliar" : "Pioneiro regular"}</Text>
+            <Text style={styles.sub}>{usuario.irmao?.pioneiro === "auxiliar" ? "Pioneiro auxiliar" : p?.regular === false ? "Usando como pioneiro auxiliar" : "Pioneiro regular"}</Text>
           </View>
         ) : null}
 
