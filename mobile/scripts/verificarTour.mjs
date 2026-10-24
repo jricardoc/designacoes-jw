@@ -9,7 +9,7 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { mudou, raioDo, recorte, topoDoCartao } from "../src/tour/geometria.ts";
+import { cantoDoVeu, faixasDoVeu, mudou, raioDo, recorte, topoDoCartao } from "../src/tour/geometria.ts";
 import { NOVIDADES, VERSAO_NOVIDADES } from "../src/tour/novidades.ts";
 import { TOURS } from "../src/tour/passos.ts";
 
@@ -39,6 +39,38 @@ ok(grande === 844 - 34 - 14 - 420, "sem lugar nem em cima nem embaixo (letra gra
 ok(topoDoCartao(null, area, 900) >= area.topo, "cartão maior que a tela: não passa do entalhe");
 ok(raioDo({ x: 0, y: 0, w: 60, h: 40 }, "circulo") === 20 && raioDo({ x: 0, y: 0, w: 200, h: 80 }) === 16, "raio do recorte");
 ok(!mudou({ x: 1, y: 1, w: 10, h: 10 }, { x: 1.4, y: 1, w: 10, h: 10 }) && mudou({ x: 1, y: 1, w: 10, h: 10 }, { x: 4, y: 1, w: 10, h: 10 }), "meio ponto de diferença não é mudança");
+
+console.log("véu em faixas");
+// Onde a faixa W×H vai parar com o transform (escala em volta do centro, depois o deslocamento).
+const caixa = (t, W, H) => {
+  const k = t.scaleY ?? 1;
+  const y = (t.translateY ?? 0) + H / 2 - (k * H) / 2;
+  return { x0: t.translateX ?? 0, x1: (t.translateX ?? 0) + W, y0: y, y1: y + k * H };
+};
+const dentro = (c, x, y) => x > c.x0 && x < c.x1 && y > c.y0 && y < c.y1;
+const ladrilha = (furo, W, H, pr, larguraTela, alturaTela) => {
+  const f = faixasDoVeu(furo, W, H, pr);
+  const pecas = [f.cima, f.baixo, f.esquerda, f.direita].map((t) => caixa(t, W, H));
+  const px = (v) => Math.round(v * pr) / pr;
+  const miolo = { x0: px(furo.x), x1: px(furo.x + furo.w), y0: px(furo.y), y1: px(furo.y + furo.h) };
+  // Centro de cada pixel do aparelho: coberto por exatamente uma peça (as faixas ou o recorte).
+  for (let i = 0; i < larguraTela * pr; i += 3) {
+    for (let j = 0; j < alturaTela * pr; j += 3) {
+      const x = (i + 0.5) / pr;
+      const y = (j + 0.5) / pr;
+      const n = pecas.filter((c) => dentro(c, x, y)).length + (dentro(miolo, x, y) ? 1 : 0);
+      if (n !== 1) return false;
+    }
+  }
+  return true;
+};
+ok(ladrilha({ x: 20.4, y: 100.7, w: 50.2, h: 40.9 }, 590, 1044, 3, 390, 844), "recorte no meio: as faixas cobrem a tela sem fresta nem sobra");
+ok(ladrilha({ x: 150.3, y: 760.1, w: 64, h: 64 }, 590, 1044, 2.75, 390, 844), "recorte na barra, outra densidade de tela");
+ok(ladrilha({ x: 195, y: 422, w: 0, h: 0 }, 590, 1044, 3, 390, 844), "recorte fechado: véu inteiro");
+ok(ladrilha({ x: 0, y: 0, w: 390, h: 60 }, 590, 1044, 3, 390, 844), "recorte encostado no topo e nas laterais");
+const c = cantoDoVeu({ x: 20, y: 100, w: 50, h: 40 }, 16, true, true, 3, 40);
+const cc = { x0: c.translateX + 20 - (40 * c.scale) / 2, y0: c.translateY + 20 - (40 * c.scale) / 2 };
+ok(Math.abs(cc.x0 - (70 - 16)) < 1e-9 && Math.abs(cc.y0 - (140 - 16)) < 1e-9 && Math.abs(c.scale - 0.4) < 1e-9, "o canto vai ao raio e encosta no canto do recorte");
 
 console.log("passos");
 const raiz = fileURLToPath(new URL("..", import.meta.url));
