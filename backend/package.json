@@ -31,6 +31,7 @@
     "verificar:pioneiros-banco": "node scripts/verificarPioneirosBanco.js",
     "verificar:estudo": "node scripts/verificarEstudo.js",
     "verificar:estudo-banco": "node scripts/verificarEstudoBanco.js",
+    "verificar:confirmar-parte-banco": "node scripts/verificarConfirmarParteBanco.js",
     "vincular:limpeza": "node scripts/vincularLimpeza.js",
     "backfill:publicacoes": "node scripts/backfillPublicacoes.js"
   },

@@ -3,6 +3,11 @@
 const prisma = require('../prisma');
 const { resolverDataDeQuadro, formatarDiaMes, chaveISO, nomeDoDia } = require('../utils/datas');
 const { reconciliarDataReuniao, domingoDaSemana } = require('../utils/semanaReuniao');
+const Confirmacoes = require('./ConfirmacaoDesignacaoService');
+
+const { CAMPOS_CONFIRMACAO, registrar: registrarConfirmacao } = Confirmacoes;
+const { tituloLimpo, ROTULO_DA_SALA } = Confirmacoes._internos;
+const { relogioDaCongregacao } = require('./RegrasLembrete');
 
 /**
  * Reune, num lugar so, tudo em que um irmao esta designado.
@@ -76,9 +81,14 @@ function ehValorUtil(valor) {
     return limpo.length > 0 && !LIXO.has(limpo);
 }
 
+/** O nome do campo que e o irmao, como esta escrito ("Fulano / Beltrano" -> "Fulano"), ou null. */
+function fragmentoDe(tokensIrmao, valor) {
+    if (!ehValorUtil(valor)) return null;
+    return fragmentos(valor).find(f => mesmaPessoa(tokensIrmao, f)) || null;
+}
+
 function campoMenciona(tokensIrmao, valor) {
-    if (!ehValorUtil(valor)) return false;
-    return fragmentos(valor).some(f => mesmaPessoa(tokensIrmao, f));
+    return fragmentoDe(tokensIrmao, valor) !== null;
 }
 
 // --- colunas de SemanaReuniao que guardam nome -----------------------------
@@ -143,12 +153,13 @@ function datasDaSemana(semana) {
     const { dataReuniao, corrigida } = reconciliarDataReuniao(semana.faixaData, semana.dataReuniao);
 
     const m = String(dataReuniao || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-    if (!m) return { meio: null, fds: null, corrigida: false };
+    if (!m) return { meio: null, fds: null, corrigida: false, dataReuniao: null };
 
     const meio = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
-    if (Number.isNaN(meio.getTime())) return { meio: null, fds: null, corrigida: false };
+    if (Number.isNaN(meio.getTime())) return { meio: null, fds: null, corrigida: false, dataReuniao: null };
 
-    return { meio, fds: domingoDaSemana(dataReuniao), corrigida };
+    // `dataReuniao` e a data como as confirmacoes a guardam (a chave da linha).
+    return { meio, fds: domingoDaSemana(dataReuniao), corrigida, dataReuniao };
 }
 
 // --- montagem dos compromissos ---------------------------------------------
@@ -240,16 +251,20 @@ async function listarPorIrmao(irmao) {
 
     // 3. Programacao da reuniao ----------------------------------------------
     const reunioes = await prisma.reuniao.findMany({ include: { semanas: true } });
+    // As partes de estudante, que o proprio irmao pode confirmar: a resposta vem da mesma
+    // tabela da tela de Confirmacoes.
+    const aConfirmar = [];
 
     for (const reuniao of reunioes) {
         for (const semana of reuniao.semanas) {
-            const { meio, fds, corrigida } = datasDaSemana(semana);
+            const { meio, fds, corrigida, dataReuniao } = datasDaSemana(semana);
 
             for (const { campo, rotulo, momento } of CAMPOS_REUNIAO) {
-                if (!campoMenciona(tokensIrmao, semana[campo])) continue;
+                const nome = fragmentoDe(tokensIrmao, semana[campo]);
+                if (!nome) continue;
 
                 const data = momento === 'fds' ? fds : meio;
-                compromissos.push(compromisso({
+                const c = compromisso({
                     id: `reuniao-${semana.id}-${campo}`,
                     tipo: 'reuniao',
                     data,
@@ -258,8 +273,20 @@ async function listarPorIrmao(irmao) {
                     origem: { tipo: 'reuniao', id: reuniao.id, titulo: semana.faixaData, status: 'publicado' },
                     // Data reconciliada com o rótulo da semana merece ressalva na tela.
                     aproximada: !data || corrigida,
-                }));
+                });
+                compromissos.push(c);
+                if (dataReuniao && CAMPOS_CONFIRMACAO.some(p => p.campo === campo)) aConfirmar.push({ c, data: dataReuniao, campo, nome });
             }
+        }
+    }
+
+    if (aConfirmar.length) {
+        const salvas = await prisma.confirmacaoDesignacao.findMany({
+            where: { OR: aConfirmar.map(({ data, campo, nome }) => ({ data, campo, nome })) },
+        });
+        const resposta = new Map(salvas.map(r => [`${r.data}|${r.campo}|${r.nome}`, r.confirmou]));
+        for (const { c, data, campo, nome } of aConfirmar) {
+            c.confirmacao = { confirmou: resposta.get(`${data}|${campo}|${nome}`) ?? null };
         }
     }
 
@@ -292,8 +319,74 @@ async function listarPorIrmao(irmao) {
     });
 }
 
+// --- o proprio irmao confirma a parte de estudante ---------------------------
+
+const hojeISO = (agora = new Date()) => relogioDaCongregacao(agora).toISOString().slice(0, 10);
+
+/** "3/9/2026" ou "03/09/2026" -> "2026-09-03". */
+function isoDaReuniao(dataReuniao) {
+    const m = String(dataReuniao || '').match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : null;
+}
+
+/** "Fulano avisou pelo app que não pode fazer a parte de 03/09: ..." para quem cuida das confirmacoes. */
+async function avisarQuemConfirma(usuario, corpo) {
+    const destinatarios = await prisma.usuario.findMany({
+        where: { id: { not: usuario.id }, OR: [{ isAdmin: true }, { escopos: { has: 'confirmacoes' } }] },
+        select: { id: true, pushTokens: { select: { token: true } } },
+    });
+    const titulo = 'Parte sem quem faça';
+    const mensagens = [];
+    for (const u of destinatarios) {
+        const registro = await prisma.notificacaoEnviada.create({
+            data: { usuarioId: u.id, titulo, corpo, data: { screen: 'confirmacoes' } },
+        });
+        for (const { token } of u.pushTokens) {
+            mensagens.push({ to: token, title: titulo, body: corpo, data: { screen: 'confirmacoes', notifId: registro.id } });
+        }
+    }
+    if (mensagens.length) await require('./ExpoPushService').enviar(mensagens);
+}
+
+/**
+ * O irmao responde a propria parte de estudante: true ("confirmo"), false ("nao posso") ou null
+ * (volta a sem resposta). Grava na MESMA linha que a tela de Confirmacoes mostra, e o "nao
+ * posso" avisa por push quem cuida delas. So a parte que e dele, de reuniao que nao passou.
+ */
+async function confirmarParte(usuario, corpo, agora = new Date()) {
+    const c = corpo || {};
+    if (![true, false, null].includes(c.confirmou)) return { erro: 400, mensagem: 'Resposta inválida.' };
+    const m = /^reuniao-(\d+)-(\w+)$/.exec(String(c.id || ''));
+    const parte = m && CAMPOS_CONFIRMACAO.find(p => p.campo === m[2]);
+    if (!parte) return { erro: 400, mensagem: 'Esta designação não pede confirmação.' };
+    if (!usuario.irmaoId) return { erro: 403, mensagem: 'Sua conta ainda não está vinculada a um irmão do cadastro.' };
+
+    const [irmao, semana] = await Promise.all([
+        prisma.irmao.findUnique({ where: { id: usuario.irmaoId }, select: { nome: true } }),
+        prisma.semanaReuniao.findUnique({ where: { id: Number(m[1]) } }),
+    ]);
+    const nome = irmao && semana ? fragmentoDe(tokens(irmao.nome), semana[parte.campo]) : null;
+    if (!nome) return { erro: 404, mensagem: 'Esta parte não está mais com você.' };
+    const { dataReuniao } = reconciliarDataReuniao(semana.faixaData, semana.dataReuniao);
+    const dia = isoDaReuniao(dataReuniao);
+    if (!dia || dia < hojeISO(agora)) return { erro: 400, mensagem: 'Esta reunião já passou.' };
+
+    const chave = { data: dataReuniao, campo: parte.campo, nome };
+    const antes = await prisma.confirmacaoDesignacao.findUnique({ where: { data_campo_nome: chave } });
+    await registrarConfirmacao({ ...chave, confirmou: c.confirmou });
+    if (c.confirmou === false && (!antes || antes.confirmou !== false)) {
+        const titulo = tituloLimpo(semana[parte.tituloDe]) || parte.parte;
+        await avisarQuemConfirma(
+            usuario,
+            `${nome} avisou pelo app que não pode fazer a parte de ${dia.slice(8, 10)}/${dia.slice(5, 7)}: ${titulo}, ${ROTULO_DA_SALA[parte.sala]}.`,
+        );
+    }
+    return { confirmou: c.confirmou };
+}
+
 module.exports = {
     listarPorIrmao,
+    confirmarParte,
     CAMPOS_REUNIAO,
-    _internos: { normalizar, tokens, mesmaPessoa, fragmentos, campoMenciona, datasDaSemana },
+    _internos: { normalizar, tokens, mesmaPessoa, fragmentos, fragmentoDe, campoMenciona, datasDaSemana, isoDaReuniao },
 };

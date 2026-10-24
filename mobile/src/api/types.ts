@@ -930,6 +930,8 @@ export interface Compromisso {
   horario: string | null;
   origem: { tipo: string; id: number; titulo: string; status: string } | null;
   dataAproximada: boolean;
+  /** Só nas partes de estudante: a resposta do irmão (true confirmou, false não pode). */
+  confirmacao?: { confirmou: boolean | null };
 }
 
 export interface MinhasDesignacoesResposta {

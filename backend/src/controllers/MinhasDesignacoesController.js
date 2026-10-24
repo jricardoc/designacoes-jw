@@ -53,6 +53,23 @@ class MinhasDesignacoesController {
             return res.status(500).json({ error: 'Erro interno' });
         }
     }
+
+    /**
+     * PUT /minhas-designacoes/confirmacao
+     * Body: { id, confirmou: true|false|null }, com o `id` do compromisso ("reuniao-<semana>-<campo>").
+     *
+     * O proprio irmao responde a parte de estudante dele (ver MinhasDesignacoesService.confirmarParte).
+     */
+    async confirmar(req, res) {
+        try {
+            const r = await MinhasDesignacoesService.confirmarParte(req.user, req.body);
+            if (r.erro) return res.status(r.erro).json({ error: r.mensagem });
+            return res.json(r);
+        } catch (error) {
+            console.error('Erro ao confirmar a parte:', error);
+            return res.status(500).json({ error: 'Erro interno' });
+        }
+    }
 }
 
 module.exports = new MinhasDesignacoesController();

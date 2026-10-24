@@ -135,6 +135,9 @@ routes.delete('/carrinho/publicadores/:id', podeCarrinho, CarrinhoController.exc
 
 // ==================== MINHAS DESIGNACOES ====================
 routes.get('/minhas-designacoes', MinhasDesignacoesController.index);
+// A parte de estudante respondida pelo proprio irmao: "confirmo" ou "nao posso". Grava junto das
+// Confirmacoes, e o "nao posso" avisa quem cuida delas.
+routes.put('/minhas-designacoes/confirmacao', MinhasDesignacoesController.confirmar);
 
 // ==================== TAREFAS DO SISTEMA ====================
 // A lista e sempre do PROPRIO usuario logado: nao ha rota para ver nem concluir a tarefa

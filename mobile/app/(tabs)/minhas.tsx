@@ -8,6 +8,7 @@ import { useTarefas } from "@/api/hooks/useTarefas";
 import type { Compromisso, Config, TipoCompromisso } from "@/api/types";
 import { Avatar, GradientHeader, Loading } from "@/components/ui";
 import { CompromissoSheet } from "@/components/minhas/CompromissoSheet";
+import { RespostaParte, rotuloResposta } from "@/components/minhas/RespostaParte";
 import { CartaoCronometro } from "@/components/ministerio/CartaoCronometro";
 import { ListaTarefas } from "@/components/tarefas/ListaTarefas";
 import { PioneiroBadge, PrivilegioBadge } from "@/components/PrivilegioBadge";
@@ -322,6 +323,8 @@ export default function InicioScreen() {
   }, [filtro, resumo]);
 
   const funcoes = data?.irmao?.funcoes ?? [];
+  // A folha mostra a versão atual do compromisso aberto: a resposta da parte muda na hora.
+  const detalheAtual = detalhe ? (data?.compromissos.find((c) => c.id === detalhe.id) ?? detalhe) : null;
 
   const subtitulo = !data?.vinculado
     ? "Vamos conectar sua conta ao cadastro"
@@ -413,6 +416,9 @@ export default function InicioScreen() {
                             Data aproximada — confira na programação
                           </Text>
                         ) : null}
+
+                        {/* Parte de estudante: responde daqui mesmo, sem abrir nada. */}
+                        {c.confirmacao ? <RespostaParte compromisso={c} /> : null}
                       </Pressable>
                     );
                   })()}
@@ -493,6 +499,9 @@ export default function InicioScreen() {
                     {grupo.itens.map((c, i) => {
                       const tipo = TIPOS[c.tipo] ?? TIPOS.designacao;
                       const rascunho = c.origem?.status === "rascunho";
+                      // "Confirme" só no que ainda vem; a resposta dada fica como histórico.
+                      const resposta = rotuloResposta(c, colors);
+                      const mostrarResposta = resposta && (c.confirmacao?.confirmou !== null || aindaPorVir(c, agora, config, configPronta));
                       return (
                         <Animated.View
                           key={c.id}
@@ -530,6 +539,11 @@ export default function InicioScreen() {
                                     <Text style={[styles.tagTexto, { color: statusConfig.rascunho.color }]}>Rascunho</Text>
                                   </View>
                                 ) : null}
+                                {mostrarResposta && resposta ? (
+                                  <View style={[styles.tag, { backgroundColor: resposta.fundo }]}>
+                                    <Text style={[styles.tagTexto, { color: resposta.cor }]}>{resposta.texto}</Text>
+                                  </View>
+                                ) : null}
                               </View>
                               <Text style={styles.detalhe} numberOfLines={2}>
                                 {[tipo.label, c.detalhe, c.local, c.horario].filter(Boolean).join(" · ")}
@@ -553,11 +567,12 @@ export default function InicioScreen() {
       )}
 
       <CompromissoSheet
-        compromisso={detalhe}
+        compromisso={detalheAtual}
         onClose={() => setDetalhe(null)}
         visual={TIPOS[detalhe?.tipo ?? "designacao"] ?? TIPOS.designacao}
         quando={detalhe ? rotuloQuando(detalhe, agora, config) : ""}
         rascunho={detalhe?.origem?.status === "rascunho"}
+        podeResponder={detalhe ? aindaPorVir(detalhe, agora, config, configPronta) : false}
       />
     </View>
   );
