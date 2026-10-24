@@ -127,9 +127,8 @@ for (const [ambiente, passos] of Object.entries(TOURS)) {
   ok(perdidos.length === 0, `${ambiente}: todo alvo está registrado numa tela${perdidos.length ? ` (faltam ${perdidos.join(", ")})` : ""}`);
   const abasErradas = passos.filter((p) => p.aba && !ABAS[ambiente].has(p.aba)).map((p) => p.aba);
   ok(abasErradas.length === 0, `${ambiente}: toda aba é do ambiente${abasErradas.length ? ` (${abasErradas.join(", ")})` : ""}`);
-  ok(ambiente === "servir" || passos.every((p) => !p.camada && !p.acao), `${ambiente}: o menu lateral só no Servir Mais`);
 }
-ok(TOURS.servir.some((p) => p.alvo === "menu.ambientes"), "o Servir Mais ensina a trocar de ambiente");
+ok(Object.entries(TOURS).every(([a, passos]) => passos.some((p) => p.alvo === `${a}.marca`)), "todo ambiente ensina a trocar de ambiente pela marca");
 
 console.log("novidades");
 ok(/^\d{4}-\d{2}$/.test(VERSAO_NOVIDADES), "versão no formato ano-mês");

@@ -59,7 +59,7 @@ export const NOVIDADES: SecaoNovidades[] = [
     nome: "Ministério",
     se: "pioneiro",
     itens: [
-      { icone: "leaf", titulo: "Um ambiente para o pioneiro", texto: "Horas, contatos e agenda num app dentro do app. Entre pela marca no topo do menu." },
+      { icone: "leaf", titulo: "Um ambiente para o pioneiro", texto: "Horas, contatos e agenda num app dentro do app. Entre pela marca no topo." },
       { icone: "timer", titulo: "Cronômetro", texto: "Fica no servidor: continua contando com o app fechado e até sem internet." },
       { icone: "trophy", titulo: "Meta do mês", texto: "50 h para o regular e 30 h para o auxiliar, com o anel do quanto falta." },
       { icone: "people", titulo: "Revisitas e estudos", texto: "Na lista e no mapa, com GPS, a linha do tempo de cada um e aviso uma hora antes da visita marcada." },
@@ -74,7 +74,7 @@ export const NOVIDADES: SecaoNovidades[] = [
     chave: "territorio",
     nome: "Território",
     itens: [
-      { icone: "map", titulo: "Um ambiente para os mapas", texto: "Mapa em tela cheia, lista por áreas, saídas e gerenciar. Entre pelo menu." },
+      { icone: "map", titulo: "Um ambiente para os mapas", texto: "Mapa em tela cheia, lista por áreas, saídas e gerenciar. Entre pela marca no topo." },
       { icone: "layers", titulo: "Mapas do My Maps", texto: "Os territórios vêm do Google My Maps, com as áreas coloridas e o limite da congregação." },
       { icone: "location", titulo: "Onde paramos", texto: "O dirigente marca pelo GPS onde parou, até sem internet. Todos veem o ponto e como chegar até ele." },
       { icone: "navigate", titulo: "Você está aqui", texto: "O GPS mostra em qual território você está." },

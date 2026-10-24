@@ -26,7 +26,6 @@ import {
   alvoDoTour,
   ambienteDaRota,
   encerrarTour,
-  executarAcaoTour,
   passoAnterior,
   proximoPasso,
   pularPasso,
@@ -42,12 +41,12 @@ const VEU = "rgba(0,0,0,0.62)";
 const BASE = { servir: "/(tabs)", ministerio: "/ministerio", territorio: "/territorio", estudo: "/estudo" } as const;
 const GRUPO = { servir: "(tabs)", ministerio: "ministerio", territorio: "territorio", estudo: "estudo" } as const;
 
-/** Quanto esperar o alvo: mais quando o passo troca de aba ou mexe no menu; pouco no opcional, que pode não existir. */
-const espera = (p: Passo) => (p.opcional ? 1000 : p.aba || p.camada || p.acao ? 2600 : 1500);
+/** Quanto esperar o alvo: mais quando o passo troca de aba; pouco no opcional, que pode não existir. */
+const espera = (p: Passo) => (p.opcional ? 1000 : p.aba ? 2600 : 1500);
 
 /**
- * O que o passo pede antes de aparecer (o menu aberto ou fechado, os ambientes à vista, a aba
- * certa) e o que encerra o tutorial no meio. Montado uma vez, na raiz da área logada.
+ * O que o passo pede antes de aparecer (a aba certa) e o que encerra o tutorial no meio.
+ * Montado uma vez, na raiz da área logada.
  */
 export function ControleTour() {
   const tour = useTour();
@@ -58,8 +57,6 @@ export function ControleTour() {
 
   useEffect(() => {
     if (!tour || !passo) return;
-    executarAcaoTour(passo.camada === "menu" ? "abrirMenu" : "fecharMenu");
-    if (passo.acao === "mostrarAmbientes") executarAcaoTour("mostrarAmbientes");
     if (passo.aba && !(segments[0] === GRUPO[tour.ambiente] && (segments[1] ?? "index") === passo.aba)) {
       // `replace`, como as barras: as abas são irmãs.
       router.replace(`${BASE[tour.ambiente]}${passo.aba === "index" ? "" : `/${passo.aba}`}` as Href);
@@ -77,7 +74,7 @@ export function ControleTour() {
   useEffect(() => {
     if (!ativo) return;
     Keyboard.dismiss();
-    // O voltar do Android volta um passo; no primeiro, fecha. Com o menu aberto, quem recebe é o Modal dele.
+    // O voltar do Android volta um passo; no primeiro, fecha.
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
       passoAnterior();
       return true;
@@ -89,13 +86,13 @@ export function ControleTour() {
 }
 
 /**
- * O tutorial na tela: o véu, o recorte em volta do alvo e o cartão. Há uma camada na raiz e outra
- * dentro do menu lateral (um Modal fica por cima de tudo); cada uma desenha os passos dela.
+ * O tutorial na tela: o véu, o recorte em volta do alvo e o cartão. Montado uma vez, na raiz:
+ * um Modal fica por cima dele, então nenhum passo mora dentro de um.
  */
-export function CamadaTour({ camada = "app" }: { camada?: "app" | "menu" }) {
+export function CamadaTour() {
   const tour = useTour();
   const passo = tour?.passos[tour.i];
-  if (!tour || !passo || (passo.camada ?? "app") !== camada) return null;
+  if (!tour || !passo) return null;
   const desenho = <Desenho tour={tour} passo={passo} />;
   // O cartão nas cores do ambiente (a camada da raiz fica fora das paletas de cada um).
   return tour.ambiente === "servir" ? desenho : <PaletaPropria paleta={PALETAS[tour.ambiente]}>{desenho}</PaletaPropria>;

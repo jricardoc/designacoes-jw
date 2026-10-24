@@ -30,10 +30,6 @@ export interface Passo {
   icone?: Icone;
   /** A aba do ambiente que precisa estar aberta ("index" é a primeira). */
   aba?: string;
-  /** O que o tutorial faz antes de mostrar o passo (o menu abre e fecha sozinho pela `camada`). */
-  acao?: "mostrarAmbientes";
-  /** O alvo mora no menu lateral do Servir Mais, que é um Modal com camada própria: o tutorial abre o menu. */
-  camada?: "menu";
   /** Só para quem pode ver aquilo. */
   se?: Regra;
   /** Sem o alvo na tela, pula em vez de mostrar no meio. */
@@ -105,20 +101,12 @@ export const TOURS: Record<Ambiente, Passo[]> = {
     {
       alvo: "servir.menu",
       titulo: "O menu",
-      texto: "Tudo o que não está na barra: Dirigentes, Território, Estudo pessoal, Carrinho e Ajustes, além do que é da sua função.",
+      texto: "Tudo o que não está na barra: Dirigentes, Carrinho e Ajustes, além do que é da sua função.",
     },
     {
-      camada: "menu",
-      alvo: "menu.marca",
+      alvo: "servir.marca",
       titulo: "Troque de ambiente",
-      texto: "O app tem quatro ambientes, cada um com a sua barra e as suas cores. Para trocar, toque na marca Servir Mais, aqui no topo do menu.",
-    },
-    {
-      acao: "mostrarAmbientes",
-      camada: "menu",
-      alvo: "menu.ambientes",
-      titulo: "Os ambientes",
-      texto: "Território: os mapas e as saídas. Estudo pessoal: a leitura da Bíblia e o estudo. Os pioneiros têm o Ministério. Para voltar, toque na marca no topo de cada um; o app abre no último que você usou.",
+      texto: "Toque na marca para trocar de ambiente: Território (mapas e saídas), Estudo pessoal (leitura da Bíblia e estudo) e, para os pioneiros, Ministério. Para voltar, a marca no topo de cada um. O app abre no último que você usou.",
     },
     { ...FIM("vá em Ajustes › Tutorial do app"), aba: "minhas" },
   ],

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
 import { router, useSegments } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import Animated, {
   Easing,
-  FadeInUp,
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
@@ -26,9 +25,6 @@ import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral, podeGerenciar, podeVerGrupos } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
-import { CamadaTour } from "@/tour/CamadaTour";
-import { alvoTour, passoAnterior, tourAtivo, useAcaoTour } from "@/tour/estado";
-import { irParaAmbiente, ListaAmbientes } from "./Ambientes";
 import { MarcaServirMais } from "./MarcaServirMais";
 
 const CURVA = Easing.bezier(...motion.curvaSuave);
@@ -54,6 +50,9 @@ interface ItemMenu {
  * flutuante (ver BarraFlutuante.tsx), sempre visível em qualquer tela de (tabs). Repeti-los
  * aqui só faria o irmão escolher entre dois caminhos para o mesmo lugar, e um menu que é
  * quase todo atalho duplicado deixa de valer a abertura.
+ *
+ * Os outros ambientes (Território, Estudo pessoal e Ministério) também não: troca-se de
+ * ambiente pela marca no topo da tela (ver AppHeader.tsx), igual em todos eles.
  *
  * Sobra o que a barra não alcança — e a divisão não é arbitrária: a barra leva ao que se abre
  * todo dia, o menu ao que se abre de vez em quando.
@@ -99,9 +98,6 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   const segments = useSegments();
 
   const largura = Math.min(316, width * 0.84);
-  // O topo (a marca) troca de ambiente: o Território e o Estudo pessoal (de todos) e o
-  // Ministério (do pioneiro) são "apps" à parte, e por isso não entram na lista abaixo.
-  const [trocando, setTrocando] = useState(false);
   // O Modal some junto com `visible`, então a animação de saída só existe se o
   // desmonte esperar ela terminar.
   const [montado, setMontado] = useState(visible);
@@ -109,11 +105,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
 
   useEffect(() => {
     if (visible) setMontado(true);
-    else setTrocando(false);
   }, [visible]);
-
-  // O tutorial abre a lista para mostrar os ambientes.
-  useAcaoTour("mostrarAmbientes", useCallback(() => setTrocando(true), []));
 
   useEffect(() => {
     if (!montado) return;
@@ -152,8 +144,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
       transparent
       animationType="none"
       statusBarTranslucent
-      // Com o tutorial no menu, o voltar do Android volta um passo dele.
-      onRequestClose={() => (tourAtivo() ? passoAnterior() : onClose())}
+      onRequestClose={onClose}
     >
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, backdropStyle]}>
@@ -169,40 +160,14 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           ]}
         >
           <View style={styles.topo}>
-            <Pressable
-              ref={alvoTour("menu.marca")}
-              collapsable={false}
-              onPress={() => setTrocando((t) => !t)}
-              style={styles.topoMarca}
-              accessibilityRole="button"
-              accessibilityLabel="Trocar de ambiente"
-              accessibilityState={{ expanded: trocando }}
-            >
+            <View style={styles.topoMarca}>
               <MarcaServirMais tamanho={38} />
-              <View style={styles.topoTexto}>
-                <Text style={styles.topoNome}>Servir Mais</Text>
-                <Text style={styles.topoTag}>Toque para trocar de ambiente</Text>
-              </View>
-              <Ionicons name={trocando ? "chevron-up" : "chevron-down"} size={18} color={colors.textSecondary} />
-            </Pressable>
+              <Text style={styles.topoNome}>Servir Mais</Text>
+            </View>
             <Pressable hitSlop={10} onPress={onClose} style={styles.fechar}>
               <Ionicons name="close" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>
-          {trocando ? (
-            <Animated.View entering={FadeInUp.duration(220)} style={styles.ambientes}>
-              {/* View comum para o tutorial medir (o ref de um Animated.View não é a view). */}
-              <View ref={alvoTour("menu.ambientes")} collapsable={false}>
-                <ListaAmbientes
-                  atual="servir"
-                  onEscolher={(a) => {
-                    onClose();
-                    if (a !== "servir") irParaAmbiente(a);
-                  }}
-                />
-              </View>
-            </Animated.View>
-          ) : null}
 
           <ScrollView contentContainerStyle={styles.lista} showsVerticalScrollIndicator={false}>
             {ITENS.filter((item) => {
@@ -268,8 +233,6 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
             </Pressable>
           ) : null}
         </Animated.View>
-        {/* O Modal fica por cima de tudo: o tutorial tem aqui a camada dos passos do menu. */}
-        <CamadaTour camada="menu" />
       </View>
     </Modal>
   );
@@ -297,15 +260,12 @@ const criarEstilos = (colors: Cores) =>
       borderBottomColor: colors.border,
     },
     topoMarca: { flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.md },
-    topoTexto: { flex: 1 },
-    ambientes: { paddingTop: spacing.md, paddingBottom: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
     topoNome: {
       color: colors.text,
       fontSize: 18,
       fontWeight: "700",
       letterSpacing: -0.3,
     },
-    topoTag: { color: colors.textSecondary, fontSize: 11.5, marginTop: 2 },
     fechar: {
       width: 30,
       height: 30,
