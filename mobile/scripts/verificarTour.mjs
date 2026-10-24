@@ -72,6 +72,18 @@ const c = cantoDoVeu({ x: 20, y: 100, w: 50, h: 40 }, 16, true, true, 3, 40);
 const cc = { x0: c.translateX + 20 - (40 * c.scale) / 2, y0: c.translateY + 20 - (40 * c.scale) / 2 };
 ok(Math.abs(cc.x0 - (70 - 16)) < 1e-9 && Math.abs(cc.y0 - (140 - 16)) < 1e-9 && Math.abs(c.scale - 0.4) < 1e-9, "o canto vai ao raio e encosta no canto do recorte");
 
+console.log("animações");
+// O Reanimated só refaz um estilo quando muda um valor animado que aparece no próprio estilo: um
+// valor lido por uma função auxiliar não conta, e o estilo fica parado (foi o recorte que ficava no
+// alvo do passo anterior). Então: nada de auxiliar com "worklet" na camada, todo estilo lê `.value`
+// direto, e as contas de geometria.ts só recebem números.
+const camadaFonte = readFileSync(fileURLToPath(new URL("../src/tour/CamadaTour.tsx", import.meta.url)), "utf8");
+const geometriaFonte = readFileSync(fileURLToPath(new URL("../src/tour/geometria.ts", import.meta.url)), "utf8");
+const corpos = camadaFonte.split("useAnimatedStyle(").slice(1).map((t) => t.slice(0, t.indexOf("\n  });") + 1 || t.indexOf("}));") + 1));
+ok(!camadaFonte.includes('"worklet"'), "a camada não tem função auxiliar de animação");
+ok(corpos.length >= 10 && corpos.every((c) => c.includes(".value")), `cada estilo animado (${corpos.length}) lê os valores direto`);
+ok(!/\.value\b/.test(geometriaFonte), "as contas da geometria só recebem números");
+
 console.log("passos");
 const raiz = fileURLToPath(new URL("..", import.meta.url));
 const ler = (rel) => readFileSync(join(raiz, rel), "utf8");
