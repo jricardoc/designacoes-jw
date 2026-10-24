@@ -96,9 +96,10 @@ app.use('/territorios/arquivos', express.static(
 // Rotas da API
 app.use('/', routes);
 
-// Health check
+// Health check. A `versao` diz qual codigo esta no ar (ver src/versao.js).
+const { versao, iniciadoEm } = require('./versao');
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date() });
+    res.json({ status: 'ok', timestamp: new Date(), versao, iniciadoEm });
 });
 
 // Iniciar servidor

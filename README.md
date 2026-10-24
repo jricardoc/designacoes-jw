@@ -286,6 +286,13 @@ cd backend && for f in scripts/verificar*.js; do case "$f" in *Banco.js) continu
 Os testes `scripts/verificar*Banco.js` gravam dados: rode-os só num banco descartável
 (`ZOOM_TESTE_BANCO=1 DATABASE_URL=...`).
 
+O GitHub roda essas mesmas verificações em cada PR (`.github/workflows/ci.yml`). O
+`npm run typecheck` gera antes os tipos das rotas (`scripts/tipos-rotas.js`), então não
+precisa do `expo start` aberto.
+
+Para saber se um merge já está no ar, compare a `versao` do `/health` da API com a da main:
+`cd backend && node -p "require('./src/versao').versao"`.
+
 ## 📄 Licença
 
 [MIT](LICENSE) — use, modifique e distribua à vontade, mantendo o aviso de copyright.

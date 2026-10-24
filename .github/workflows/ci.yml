@@ -1,0 +1,45 @@
+# As verificações de cada PR: as mesmas do "Contribuindo" do README.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      # Node 24: os scripts/verificar*.mjs leem o .ts direto.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - name: Verificações do app
+        run: for f in scripts/verificar*.mjs; do echo "== $f"; node --no-warnings "$f" || exit 1; done
+
+  servidor:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      # Os *Banco.js gravam num banco: só rodam à mão, num banco descartável.
+      - name: Verificações do servidor (sem banco)
+        run: for f in scripts/verificar*.js; do case "$f" in *Banco.js) continue;; esac; echo "== $f"; node "$f" || exit 1; done
