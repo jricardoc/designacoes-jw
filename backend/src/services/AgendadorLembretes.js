@@ -68,6 +68,11 @@ async function tique() {
     } catch (erro) {
         console.error('[pioneiro] falha no tique:', erro.message);
     }
+    try {
+        await require('./EstudoService').avisarRotina();
+    } catch (erro) {
+        console.error('[estudo] falha no tique:', erro.message);
+    }
 
     // A fila do Zoom tambem anda aqui (alem do disparo de cada webhook e do timer da proxima
     // tentativa): no boot, recupera o que ficou pendente enquanto o container estava fora.

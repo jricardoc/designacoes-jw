@@ -4,6 +4,7 @@ const ConfigController = require('./controllers/ConfigController');
 const GruposController = require('./controllers/GruposController');
 const ZoomController = require('./controllers/ZoomController');
 const PioneiroController = require('./controllers/PioneiroController');
+const EstudoController = require('./controllers/EstudoController');
 const AuthController = require('./controllers/AuthController');
 const IrmaoController = require('./controllers/IrmaoController');
 const IndisponibilidadeController = require('./controllers/IndisponibilidadeController');
@@ -290,6 +291,22 @@ routes.post('/pioneiro/viagens', PioneiroController.criarViagem);
 routes.delete('/pioneiro/viagens/:id(\\d+)', PioneiroController.apagarViagem);
 routes.get('/pioneiro/progresso', PioneiroController.progresso);
 routes.post('/pioneiro/calendario', PioneiroController.linkCalendario);
+
+// ==================== ESTUDO PESSOAL ====================
+// A leitura da Biblia e o estudo de cada um (de todo usuario logado). So o dono ve: o servico usa
+// sempre o usuario do login.
+routes.get('/estudo', EstudoController.estado);
+routes.put('/estudo/perfil', EstudoController.perfil);
+routes.put('/estudo/leituras', EstudoController.leituras);
+routes.post('/estudo/assuntos', EstudoController.criarAssunto);
+routes.put('/estudo/assuntos/:id(\\d+)', EstudoController.atualizarAssunto);
+routes.delete('/estudo/assuntos/:id(\\d+)', EstudoController.apagarAssunto);
+routes.post('/estudo/sessao', EstudoController.sessao);
+routes.post('/estudo/sessoes', EstudoController.registrarSessao);
+routes.delete('/estudo/sessoes/:id(\\d+)', EstudoController.apagarSessao);
+routes.post('/estudo/rotina', EstudoController.criarRotina);
+routes.put('/estudo/rotina/:id(\\d+)', EstudoController.atualizarRotina);
+routes.delete('/estudo/rotina/:id(\\d+)', EstudoController.apagarRotina);
 
 // ==================== ZOOM ====================
 // Os relatorios das reunioes do Zoom (resumo, participantes, transcricao): quem cuida das

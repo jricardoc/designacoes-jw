@@ -134,6 +134,12 @@ model Usuario {
   foto                 FotoUsuario?
   saidasTerritorio     RegistroSaida[]         @relation("SaidasTerritorio")
   marcacoesTerritorio  Marcacao[]              @relation("MarcacoesTerritorio")
+  // O estudo pessoal (leitura da Biblia, assuntos, sessoes e rotina): de cada um, so ele ve.
+  estudoPerfil         EstudoPerfil?
+  leituras             LeituraFeita[]
+  estudoAssuntos       EstudoAssunto[]
+  estudoSessoes        EstudoSessao[]
+  estudoRotina         EstudoRotina[]
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
 }
@@ -1081,4 +1087,107 @@ model PioneiroViagem {
   createdAt DateTime @default(now())
 
   @@index([irmaoId, data])
+}
+
+// ---------------------------------------------------------------------------
+// ESTUDO PESSOAL: a leitura da Biblia e o estudo de cada um. E do usuario, nao do cadastro:
+// quem nao tem cadastro ligado tambem estuda. So o dono ve.
+// Os programas de leitura (o do jw.org, o "Comece sua leitura da Biblia" e os capitulos de cada
+// livro) sao dados fixos do app; aqui fica so o que cada um escolheu e marcou.
+// ---------------------------------------------------------------------------
+
+// O programa de leitura escolhido e o estudo que esta rodando.
+model EstudoPerfil {
+  usuarioId       Int       @id
+  usuario         Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  // "jw" (o programa do jw.org), "comece" (Seja Feliz para Sempre!), "reuniao" ou "livre".
+  plano           String    @default("jw")
+  // No programa do jw.org: "tudo", "vermelho", "azul" ou "cat:N" (uma das 11 categorias).
+  opcao           String    @default("tudo")
+  // O dia do primeiro trecho ("2026-10-24"). Reprogramar muda so isto. Null = nao comecou.
+  inicio          String?
+  // Dias para cada trecho: 1 (a Biblia em um ano), 2 ou 3.
+  ritmo           Int       @default(1)
+  // "21:30": se ate essa hora nao houve leitura no dia, o plano B lembra. `planoBEm` e o dia do
+  // ultimo aviso, para nao repetir.
+  planoB          String?
+  planoBEm        String?
+  // O estudo rodando: o cronometro e do servidor, entao fechar o app nao perde.
+  sessaoInicio    DateTime?
+  sessaoAssuntoId Int?
+  updatedAt       DateTime  @updatedAt
+}
+
+// Um trecho lido: um item de programa ou um capitulo da leitura livre.
+model LeituraFeita {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  // "jw", "comece", "reuniao" ou "livre".
+  plano     String
+  // O id estavel do trecho dentro do programa: "1:4-7" (jw), "noe" (comece), "2026-10-19"
+  // (reuniao, a segunda da semana), "1:4" (livre: livro e capitulo).
+  item      String
+  // O dia em que leu, no relogio da congregacao: e por ele que se ve a regularidade.
+  dia       String
+  // A "joia espiritual" anotada sobre o trecho.
+  nota      String?
+  createdAt DateTime @default(now())
+
+  @@unique([usuarioId, plano, item])
+  @@index([usuarioId, dia])
+}
+
+// A lista do que estudar: assuntos, artigos e perguntas que surgem durante a semana.
+model EstudoAssunto {
+  id         Int       @id @default(autoincrement())
+  usuarioId  Int
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  titulo     String
+  // "assunto", "pergunta", "reuniao", "relato", "oracao", "video", "campo" ou "criacao".
+  tipo       String    @default("assunto")
+  // So do jw.org ou da Biblioteca On-line (o servico recusa os outros).
+  link       String?
+  nota       String?
+  estudadoEm DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([usuarioId])
+}
+
+// Uma sessao de estudo, pelo cronometro ou registrada a mao.
+model EstudoSessao {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  dia       String
+  minutos   Int
+  assuntoId Int?
+  // O titulo do assunto no dia: ele pode ser apagado da lista depois.
+  titulo    String?
+  resumo    String?
+  aplicacao String?
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId, dia])
+}
+
+// A programacao (leitura, estudo, adoracao em familia, preparar a reuniao), com aviso por push.
+model EstudoRotina {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  // "leitura", "estudo", "familia" ou "reuniao".
+  tipo      String
+  // Dias da semana: 0 (domingo) a 6 (sabado).
+  dias      Int[]
+  // "20:00", de 15 em 15 minutos: o agendador acorda nos quartos de hora.
+  hora      String
+  // Quantos minutos antes avisar: 0, 15, 30 ou 60. Null = sem aviso.
+  avisoMin  Int?
+  // O dia do ultimo aviso, para nao repetir.
+  avisadoEm String?
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId])
 }
