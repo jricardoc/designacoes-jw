@@ -7,10 +7,8 @@ import { LEVE } from "@/components/ministerio/kit";
 import { BarraTerritorio } from "@/components/territorio/BarraTerritorio";
 import { paletaTerritorio } from "@/components/territorio/tema";
 import { ToastProvider } from "@/components/ui";
-import { useAuth } from "@/context/AuthContext";
 import { PaletaPropria, useTema } from "@/theme/TemaContext";
 import { guardarAmbiente } from "@/utils/ambiente";
-import { podeMarcarTerritorio } from "@/utils/permissoes";
 
 /**
  * O ambiente Território: mapas, saídas e onde paramos, com paleta e barra próprias. É de todos
@@ -26,15 +24,12 @@ export default function LayoutTerritorio() {
 
 function Ambiente() {
   const { colors } = useTema();
-  const { usuario } = useAuth();
-  const trabalha = podeMarcarTerritorio(usuario);
   const { data } = useTerritorios();
 
-  // Só quem trabalha no território (dirigentes e quem cuida) reabre o app aqui. Quem só veio
-  // olhar um mapa volta para o ambiente de antes.
+  // Quem está aqui reabre o app aqui. Quem voltar para o Servir Mais reabre nele (ele se guarda ao voltar).
   useEffect(() => {
-    if (trabalha) guardarAmbiente("territorio");
-  }, [trabalha]);
+    guardarAmbiente("territorio");
+  }, []);
 
   // Guarda todos os territórios no celular para abrir no campo sem sinal (de 6 em 6 horas).
   useEffect(() => {

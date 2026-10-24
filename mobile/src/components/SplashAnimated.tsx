@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
@@ -16,16 +17,29 @@ import Animated, {
 } from "react-native-reanimated";
 import { motion } from "@/theme";
 import { useConfigPublica } from "@/api/hooks/useMisc";
+import { AMBIENTES } from "@/components/layout/Ambientes";
+import type { Icone } from "@/components/ministerio/kit";
+import type { Ambiente } from "@/utils/ambiente";
 
 const CURVA = Easing.bezier(...motion.curvaSuave);
 
+/** O degradê e o desenho de cada ambiente, tirados da marca dele. O Servir Mais é o "S+". */
+const VISUAL: Record<Ambiente, { fundo: [string, string, string]; icone?: Icone }> = {
+  servir: { fundo: ["#7C895F", "#5E6A46", "#404930"] },
+  ministerio: { fundo: ["#1B9271", "#086A53", "#04402F"], icone: "leaf" },
+  territorio: { fundo: ["#3381E6", "#1F5BB0", "#123A73"], icone: "map" },
+  estudo: { fundo: ["#B5506E", "#7E2C45", "#4F1828"], icone: "book" },
+};
+
 /**
- * Splash animada do app "Servir Mais" — recria a tela de splash do design:
- * fundo oliva, marca "S+", anel/glow pulsando, wordmark, tagline e dots.
- * Toca uma vez na abertura e some chamando onDone.
+ * Splash animada da abertura, a do ambiente em que o app vai abrir — recria a tela de
+ * splash do design: fundo no degradê do ambiente, a marca dele, anel/glow pulsando,
+ * nome, tagline e dots. Toca uma vez na abertura e some chamando onDone.
  */
-export function SplashAnimated({ onDone }: { onDone: () => void }) {
+export function SplashAnimated({ ambiente, onDone }: { ambiente: Ambiente; onDone: () => void }) {
   const { data: publica } = useConfigPublica();
+  const { fundo, icone } = VISUAL[ambiente];
+  const { nome, tag } = AMBIENTES.find((a) => a.chave === ambiente) ?? AMBIENTES[0];
   const fade = useSharedValue(1); // opacidade do container (fade-out no fim)
   const logo = useSharedValue(0); // entrada do "S"
   const plus = useSharedValue(0); // pop do "+"
@@ -86,7 +100,7 @@ export function SplashAnimated({ onDone }: { onDone: () => void }) {
     <Animated.View style={[StyleSheet.absoluteFill, styles.root, containerStyle]}>
       <StatusBar style="light" />
       <LinearGradient
-        colors={["#7C895F", "#5E6A46", "#404930"]}
+        colors={fundo}
         locations={[0, 0.46, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -94,17 +108,23 @@ export function SplashAnimated({ onDone }: { onDone: () => void }) {
       <View style={styles.stage}>
         <Animated.View style={[styles.glow, glowStyle]} />
         <Animated.View style={[styles.ring, ringStyle]} />
-        <Animated.View style={[styles.markRow, logoStyle]}>
-          <Text style={styles.s}>S</Text>
-          <Animated.Text style={[styles.plus, plusStyle]}>+</Animated.Text>
-        </Animated.View>
+        {icone ? (
+          <Animated.View style={logoStyle}>
+            <Ionicons name={icone} size={84} color={CREAM} style={styles.icone} />
+          </Animated.View>
+        ) : (
+          <Animated.View style={[styles.markRow, logoStyle]}>
+            <Text style={styles.s}>S</Text>
+            <Animated.Text style={[styles.plus, plusStyle]}>+</Animated.Text>
+          </Animated.View>
+        )}
       </View>
 
       <Animated.Text entering={FadeInDown.delay(320).duration(520)} style={styles.word}>
-        Servir Mais
+        {nome}
       </Animated.Text>
       <Animated.Text entering={FadeIn.delay(520).duration(520)} style={styles.tag}>
-        Designações da congregação
+        {tag}
       </Animated.Text>
 
       <View style={styles.dots}>
@@ -160,6 +180,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 24,
     lineHeight: 112,
   },
+  icone: { textShadowColor: "rgba(0,0,0,0.22)", textShadowOffset: { width: 0, height: 8 }, textShadowRadius: 24 },
   plus: {
     fontSize: 50,
     fontWeight: "800",

@@ -55,7 +55,7 @@ export function MarcaEstudo({ tamanho = 28 }: { tamanho?: number }) {
   );
 }
 
-const AMBIENTES: { chave: Ambiente; nome: string; tag: string; Marca: ComponentType<{ tamanho?: number }> }[] = [
+export const AMBIENTES: { chave: Ambiente; nome: string; tag: string; Marca: ComponentType<{ tamanho?: number }> }[] = [
   { chave: "servir", nome: "Servir Mais", tag: "Designações da congregação", Marca: MarcaServirMais },
   { chave: "ministerio", nome: "Ministério", tag: "Horas, contatos e agenda do pioneiro", Marca: MarcaMinisterio },
   { chave: "territorio", nome: "Território", tag: "Mapas, saídas e onde paramos", Marca: MarcaTerritorio },
@@ -64,8 +64,7 @@ const AMBIENTES: { chave: Ambiente; nome: string; tag: string; Marca: ComponentT
 
 /** Troca o app de ambiente e lembra a escolha para a próxima abertura. */
 export function irParaAmbiente(a: Ambiente) {
-  // O Território se guarda sozinho, e só para quem trabalha nele (app/territorio/_layout).
-  if (a !== "territorio") guardarAmbiente(a);
+  guardarAmbiente(a);
   // `dismissTo`: o ambiente novo toma o lugar do antigo, e o voltar do Android sai do app em
   // vez de passear de um para o outro. Se ele já está embaixo (o Servir Mais, quando o
   // Território foi aberto pelo menu), volta para ele em vez de montar um segundo.
