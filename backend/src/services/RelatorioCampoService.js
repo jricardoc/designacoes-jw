@@ -522,6 +522,62 @@ async function apagarRelatorio(usuario, id) {
     return { ok: true };
 }
 
+// ---------------------------------------------------------------------------
+// O relatorio que o proprio irmao manda ("Registrar o campo", no "+" do app)
+// ---------------------------------------------------------------------------
+
+/** Quantos meses para tras o irmao ainda corrige: o do mes que passou e o anterior a ele. */
+const MESES_PARA_TRAS = 2;
+
+/** O cadastro ligado a conta, num mes que ainda da para relatar. */
+async function irmaoDaConta(usuario, mes) {
+    if (!usuario || !usuario.irmaoId) {
+        return { erro: 403, mensagem: 'Sua conta não está ligada ao seu cadastro. Fale com o secretário.' };
+    }
+    const atual = hojeISO().slice(0, 7);
+    if (!ehMes(mes) || mes > atual || mes < somarMeses(atual, -MESES_PARA_TRAS)) return { erro: 400, mensagem: 'Mês inválido.' };
+    const irmao = await prisma.irmao.findUnique({ where: { id: usuario.irmaoId }, select: { id: true, grupoId: true, pioneiro: true } });
+    if (!irmao) return { erro: 404, mensagem: 'Cadastro não encontrado.' };
+    return { irmao };
+}
+
+/** O relatorio dele no mes (null se ainda nao mandou), para o app abrir ja preenchido. */
+async function meuRelatorio(usuario, mes) {
+    const r = await irmaoDaConta(usuario, mes);
+    if (r.erro) return r;
+    const relatorio = await prisma.relatorioCampo.findUnique({
+        where: { irmaoId_mes: { irmaoId: r.irmao.id, mes } },
+        select: { participou: true, estudos: true, horas: true, pioneiroAuxiliar: true, observacao: true, updatedAt: true },
+    });
+    return { mes, nomeMes: nomeDoMes(mes), pioneiroRegular: r.irmao.pioneiro === 'regular', relatorio };
+}
+
+/**
+ * O publicador manda o proprio relatorio: cai no relatorio do grupo, como o que o dirigente
+ * anota (e o dirigente ainda pode corrigir). O pioneiro regular manda pelo Ministerio, com as
+ * horas lancadas.
+ */
+async function enviarMeuRelatorio(usuario, corpo) {
+    const c = corpo || {};
+    const r = await irmaoDaConta(usuario, c.mes);
+    if (r.erro) return r;
+    const { irmao } = r;
+    if (irmao.pioneiro === 'regular') {
+        return { erro: 400, mensagem: 'Pioneiro regular manda o relatório pelo Ministério, com as horas lançadas.' };
+    }
+    const { relatorio, erro } = normalizarRelatorio(c, { pioneiroRegular: false });
+    if (erro) return { erro: 400, mensagem: erro };
+    const salvo = await prisma.relatorioCampo.upsert({
+        where: { irmaoId_mes: { irmaoId: irmao.id, mes: c.mes } },
+        update: { ...relatorio, grupoId: irmao.grupoId, registradoPorId: usuario.id },
+        create: { ...relatorio, irmaoId: irmao.id, mes: c.mes, grupoId: irmao.grupoId, registradoPorId: usuario.id },
+    });
+    if (irmao.grupoId) {
+        await conferirConclusao(irmao.grupoId, c.mes).catch((e) => console.error('[relatorio] aviso de conclusão:', e));
+    }
+    return { relatorio: salvo };
+}
+
 /** O relatorio da congregacao no mes (so quem ve todos os grupos). */
 async function resumoDoMes(usuario, mesPedido) {
     if (!(await veTodos(usuario))) return { erro: 403 };
@@ -639,6 +695,8 @@ module.exports = {
     membro,
     salvarRelatorio,
     apagarRelatorio,
+    meuRelatorio,
+    enviarMeuRelatorio,
     resumoDoMes,
     tarefasDoUsuario,
     avisarDirigentes,

@@ -170,6 +170,30 @@ async function rodar(prisma, { enviados = [] } = {}) {
     ok(l2.token !== l1.token && (await P.calendarioIcs(l1.token)) === null && (await P.calendarioIcs(l2.token)) !== null, 'trocar o link derruba o antigo');
     ok((await P.calendarioIcs('nao-e-token')) === null && (await P.linkCalendario(uPublicador)).erro === 403, 'token invalido nao abre; publicador comum nao tem calendario');
 
+    console.log('relatorio do proprio publicador ("Registrar o campo")');
+    const R = require('../src/services/RelatorioCampoService');
+    const somar = R._internos.somarMeses;
+    const doGrupo = await irmao('Publicadora Do Grupo', { grupoId: grupo.id });
+    const uDoGrupo = await usuario('publicadora-do-grupo', doGrupo.id);
+    ok((await R.meuRelatorio(uDoGrupo, mes)).relatorio === null, 'antes de mandar: sem relatorio');
+    const m1 = await R.enviarMeuRelatorio(uDoGrupo, { mes, participou: true, estudos: 2, observacao: ' tudo certo ' });
+    ok(m1.relatorio && m1.relatorio.grupoId === grupo.id && m1.relatorio.registradoPorId === uDoGrupo.id && m1.relatorio.observacao === 'tudo certo',
+        'manda e cai no grupo dela, registrado por ela', m1);
+    const lido = await R.meuRelatorio(uDoGrupo, mes);
+    ok(lido.relatorio.participou === true && lido.relatorio.estudos === 2 && lido.pioneiroRegular === false, 'o app reabre o relatorio preenchido', lido);
+    const m2 = await R.enviarMeuRelatorio(uDoGrupo, { mes, participou: false, estudos: 3 });
+    ok(m2.relatorio.estudos === 0 && (await prisma.relatorioCampo.count({ where: { irmaoId: doGrupo.id } })) === 1,
+        'mandar de novo corrige (sem participar, sem estudo), sem duplicar');
+    const aux = await R.enviarMeuRelatorio(uDoGrupo, { mes, participou: true, pioneiroAuxiliar: true, horas: 30.4, estudos: 1 });
+    ok(aux.relatorio.pioneiroAuxiliar === true && aux.relatorio.horas === 30, 'auxiliar relata horas inteiras', aux.relatorio);
+    ok((await R.enviarMeuRelatorio(uDoGrupo, { mes, pioneiroAuxiliar: true, estudos: 1 })).erro === 400, 'auxiliar sem horas: 400');
+    ok((await R.enviarMeuRelatorio(uDoGrupo, { mes: somar(mes, 1), participou: true })).erro === 400, 'mes que nao chegou: 400');
+    ok((await R.enviarMeuRelatorio(uDoGrupo, { mes: somar(mes, -3), participou: true })).erro === 400, 'mes antigo demais: 400');
+    ok(!(await R.enviarMeuRelatorio(uDoGrupo, { mes: somar(mes, -2), participou: true })).erro, 'dois meses para tras ainda corrige');
+    ok((await R.enviarMeuRelatorio(uPioneira, { mes, participou: true })).erro === 400, 'pioneiro regular manda pelo Ministerio');
+    ok((await R.enviarMeuRelatorio(uAdminSemCadastro, { mes, participou: true })).erro === 403, 'conta sem cadastro: 403');
+    ok((await R.enviarMeuRelatorio(uPublicador, { mes, participou: true })).relatorio.grupoId === null, 'sem grupo tambem grava (o secretario ve)');
+
     return falhas;
 }
 
