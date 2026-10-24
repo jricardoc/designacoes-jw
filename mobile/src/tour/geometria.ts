@@ -67,3 +67,36 @@ export function mudou(a: Retangulo | null, b: Retangulo | null, tolerancia = 1.5
   if (!a || !b) return a !== b;
   return Math.abs(a.x - b.x) > tolerancia || Math.abs(a.y - b.y) > tolerancia || Math.abs(a.w - b.w) > tolerancia || Math.abs(a.h - b.h) > tolerancia;
 }
+
+/**
+ * As quatro faixas do véu em volta do recorte, como o transform de uma faixa W×H: deslocamento e,
+ * nas laterais, escala vertical (que o React Native aplica em volta do centro, antes de deslocar).
+ * Tudo em pixel inteiro: as bordas das faixas coincidem e não fica fresta. Roda nas animações.
+ */
+export function faixasDoVeu(f: Retangulo, W: number, H: number, pr: number) {
+  "worklet";
+  const px = (v: number) => Math.round(v * pr) / pr;
+  const x0 = px(f.x);
+  const x1 = px(f.x + f.w);
+  const y0 = px(f.y);
+  const y1 = px(f.y + f.h);
+  const k = Math.max(0.0001, (y1 - y0) / H);
+  const meio = y0 - (H * (1 - k)) / 2;
+  return {
+    cima: { translateY: y0 - H },
+    baixo: { translateY: y1 },
+    esquerda: { translateX: x0 - W, translateY: meio, scaleY: k },
+    direita: { translateX: x1, translateY: meio, scaleY: k },
+  };
+}
+
+/** Um canto do recorte: o desenho de lado `r0` em escala `r / r0`, encostado no canto pedido. */
+export function cantoDoVeu(f: Retangulo, r: number, direita: boolean, baixo: boolean, pr: number, r0: number) {
+  "worklet";
+  const px = (v: number) => Math.round(v * pr) / pr;
+  const raio = px(Math.max(0, r));
+  const s = Math.max(0.0001, raio / r0);
+  const x = direita ? px(f.x + f.w) - raio : px(f.x);
+  const y = baixo ? px(f.y + f.h) - raio : px(f.y);
+  return { translateX: x - (r0 * (1 - s)) / 2, translateY: y - (r0 * (1 - s)) / 2, scale: s };
+}

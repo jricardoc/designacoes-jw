@@ -1,8 +1,20 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname, useSegments, type Href } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, ActivityIndicator, BackHandler, Keyboard, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
-import Animated, { useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from "react-native-reanimated";
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  BackHandler,
+  Keyboard,
+  PixelRatio,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import Animated, { FadeOut, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { paletaEstudo } from "@/components/estudo/tema";
 import { EASE, LEVE } from "@/components/ministerio/kit";
@@ -21,7 +33,7 @@ import {
   useTour,
   type TourAtivo,
 } from "./estado";
-import { mudou, raioDo, recorte, topoDoCartao, type Retangulo } from "./geometria";
+import { cantoDoVeu, faixasDoVeu, mudou, raioDo, recorte, topoDoCartao, type Retangulo } from "./geometria";
 import type { Passo } from "./passos";
 
 const PALETAS = { ministerio: paletaMinisterio, territorio: paletaTerritorio, estudo: paletaEstudo } as const;
@@ -89,6 +101,9 @@ export function CamadaTour({ camada = "app" }: { camada?: "app" | "menu" }) {
   return tour.ambiente === "servir" ? desenho : <PaletaPropria paleta={PALETAS[tour.ambiente]}>{desenho}</PaletaPropria>;
 }
 
+/** O canto de referência: os quatro cantos do recorte são este desenho, só que em escala. */
+const R0 = 40;
+
 function Desenho({ tour, passo }: { tour: TourAtivo; passo: Passo }) {
   const parado = useReducedMotion();
   const tela = useWindowDimensions();
@@ -97,31 +112,46 @@ function Desenho({ tour, passo }: { tour: TourAtivo; passo: Passo }) {
   const [furo, setFuro] = useState<Retangulo | null>(null);
   const [pronto, setPronto] = useState(false);
   const [procurando, setProcurando] = useState(false);
+  const furoAtual = useRef<Retangulo | null>(null);
 
-  // Procura o alvo e acompanha: ele pode demorar (a aba trocando, o menu abrindo) e mudar de lugar
-  // depois (a barra encolhe ao rolar, a lista carrega). Só vale a posição que se repete: no meio de
-  // uma animação a medida muda a cada vez.
+  // Procura o alvo a cada quadro até achar (o recorte começa a andar uns 2 quadros depois do
+  // toque) e depois só acompanha, mais devagar: ele pode mudar de lugar (a barra encolhe ao rolar,
+  // a lista carrega). Só vale a posição que se repete, porque no meio de uma animação ela muda.
+  // O estado só muda quando algo muda de verdade: nada de render a cada medida.
   useEffect(() => {
     let vivo = true;
     let saiu = false;
     let decidido = false;
+    let mostrou = false;
+    let girando = false;
     let anterior: Retangulo | null = null;
+    let quadro: number | undefined;
+    let relogio: ReturnType<typeof setInterval> | undefined;
     const inicio = Date.now();
+    const mudarFuro = (r: Retangulo | null) => {
+      if (!mudou(furoAtual.current, r)) return;
+      furoAtual.current = r;
+      setFuro(r);
+    };
+    const mostrar = () => {
+      if (girando) setProcurando((girando = false));
+      if (!mostrou) setPronto((mostrou = true));
+    };
     setPronto(false);
     setProcurando(false);
     if (!passo.alvo) {
-      setFuro(null);
-      setPronto(true);
+      mudarFuro(null);
+      mostrar();
       return;
     }
     const alvo = passo.alvo;
     const semAlvo = () => {
       anterior = null;
       const passou = Date.now() - inicio;
-      // O recorte do passo anterior não fica à toa enquanto este procura.
-      if (decidido || passou > 350) setFuro(null);
+      // O recorte do passo anterior não fica parado no lugar errado enquanto este procura.
+      if (decidido || passou > 300) mudarFuro(null);
       if (decidido) return;
-      if (passou > 400) setProcurando(true);
+      if (passou > 600 && !girando) setProcurando((girando = true));
       if (passou < espera(passo)) return;
       if (passo.opcional) {
         saiu = true;
@@ -129,8 +159,7 @@ function Desenho({ tour, passo }: { tour: TourAtivo; passo: Passo }) {
         return;
       }
       decidido = true;
-      setProcurando(false);
-      setPronto(true);
+      mostrar();
     };
     const medir = () => {
       if (!vivo || saiu) return;
@@ -146,81 +175,130 @@ function Desenho({ tour, passo }: { tour: TourAtivo; passo: Passo }) {
           anterior = corte;
           if (!estavel) return;
           decidido = true;
-          setFuro((f) => (mudou(f, corte) ? corte : f));
-          setProcurando(false);
-          setPronto(true);
+          mudarFuro(corte);
+          mostrar();
         });
       });
     };
-    medir();
-    const relogio = setInterval(medir, 120);
+    const acompanhar = () => {
+      if (!vivo || saiu) return;
+      medir();
+      if (decidido) relogio = setInterval(medir, 150);
+      else quadro = requestAnimationFrame(acompanhar);
+    };
+    acompanhar();
     return () => {
       vivo = false;
-      clearInterval(relogio);
+      if (quadro !== undefined) cancelAnimationFrame(quadro);
+      if (relogio) clearInterval(relogio);
     };
   }, [passo, tour.i]);
 
-  // O recorte anda até o alvo novo; o véu inteiro e o recortado trocam em fade.
-  const fx = useSharedValue(0);
-  const fy = useSharedValue(0);
+  // O recorte: posição, tamanho e raio, animados. Sem alvo, ele se fecha no próprio centro e o véu
+  // fica inteiro; o próximo alvo abre a partir dali. Começa fechado, no meio da tela.
+  const fx = useSharedValue(tela.width / 2);
+  const fy = useSharedValue(tela.height / 2);
   const fw = useSharedValue(0);
   const fh = useSharedValue(0);
   const fr = useSharedValue(0);
-  const comFuro = useSharedValue(0);
-  const tinhaFuro = useRef(false);
+  const surgir = useSharedValue(0);
   useEffect(() => {
-    if (furo) {
-      const animar = tinhaFuro.current && !parado;
-      const ir = (sv: typeof fx, v: number) => {
-        sv.value = animar ? withTiming(v, { duration: LEVE, easing: EASE }) : v;
-      };
-      ir(fx, furo.x);
-      ir(fy, furo.y);
-      ir(fw, furo.w);
-      ir(fh, furo.h);
-      ir(fr, raioDo(furo, passo.forma));
-    }
-    comFuro.value = withTiming(furo ? 1 : 0, { duration: parado ? 0 : 200 });
-    tinhaFuro.current = !!furo;
-  }, [furo, passo.forma, parado, fx, fy, fw, fh, fr, comFuro]);
+    surgir.value = withTiming(1, { duration: parado ? 0 : 250 });
+  }, [surgir, parado]);
+  useEffect(() => {
+    const destino = furo ?? { x: fx.value + fw.value / 2, y: fy.value + fh.value / 2, w: 0, h: 0 };
+    const ir = (sv: typeof fx, v: number) => {
+      sv.value = parado ? v : withTiming(v, { duration: LEVE, easing: EASE });
+    };
+    ir(fx, destino.x);
+    ir(fy, destino.y);
+    ir(fw, destino.w);
+    ir(fh, destino.h);
+    ir(fr, furo ? raioDo(furo, passo.forma) : 0);
+  }, [furo, passo.forma, parado, fx, fy, fw, fh, fr]);
 
-  // O véu recortado é uma borda enorme em volta de um miolo vazio: o miolo é o recorte, com cantos
-  // redondos, sem SVG. A borda precisa passar das bordas da tela de qualquer lado.
-  const B = Math.max(tela.width, tela.height);
-  const estiloFuro = useAnimatedStyle(() => ({
-    left: fx.value - B,
-    top: fy.value - B,
-    width: fw.value + 2 * B,
-    height: fh.value + 2 * B,
-    borderRadius: fr.value + B,
-    opacity: comFuro.value,
-  }));
+  // O véu são quatro faixas do tamanho da tela em volta do recorte, e os quatro cantos dele: tudo
+  // só desliza e muda de escala, que é o que o celular anima sem esforço. Nada maior que a tela e
+  // nada que precise ser redesenhado a cada quadro. As posições caem em pixel inteiro, para as
+  // faixas não deixarem fresta entre si.
+  // Com folga: no Android de ponta a ponta a altura da janela pode não contar a barra de navegação.
+  const W = Math.max(tela.width, area.w) + 200;
+  const H = Math.max(tela.height, area.h) + 200;
+  const pr = PixelRatio.get();
+  const furoAgora = () => {
+    "worklet";
+    return { x: fx.value, y: fy.value, w: fw.value, h: fh.value };
+  };
+  const estiloCima = useAnimatedStyle(() => {
+    const { cima } = faixasDoVeu(furoAgora(), W, H, pr);
+    return { opacity: surgir.value, transform: [{ translateY: cima.translateY }] };
+  });
+  const estiloBaixo = useAnimatedStyle(() => {
+    const { baixo } = faixasDoVeu(furoAgora(), W, H, pr);
+    return { opacity: surgir.value, transform: [{ translateY: baixo.translateY }] };
+  });
+  const estiloEsquerda = useAnimatedStyle(() => {
+    const { esquerda: e } = faixasDoVeu(furoAgora(), W, H, pr);
+    return { opacity: surgir.value, transform: [{ translateX: e.translateX }, { translateY: e.translateY }, { scaleY: e.scaleY }] };
+  });
+  const estiloDireita = useAnimatedStyle(() => {
+    const { direita: d } = faixasDoVeu(furoAgora(), W, H, pr);
+    return { opacity: surgir.value, transform: [{ translateX: d.translateX }, { translateY: d.translateY }, { scaleY: d.scaleY }] };
+  });
+  const cantoNo = (direita: boolean, baixo: boolean) => {
+    "worklet";
+    const c = cantoDoVeu(furoAgora(), fr.value, direita, baixo, pr, R0);
+    return { opacity: surgir.value, transform: [{ translateX: c.translateX }, { translateY: c.translateY }, { scale: c.scale }] };
+  };
+  const cantoSE = useAnimatedStyle(() => cantoNo(false, false));
+  const cantoSD = useAnimatedStyle(() => cantoNo(true, false));
+  const cantoIE = useAnimatedStyle(() => cantoNo(false, true));
+  const cantoID = useAnimatedStyle(() => cantoNo(true, true));
+  // O anel em volta do recorte é pequeno: ele pode acompanhar pelo tamanho. Some quando o recorte fecha.
   const estiloAnel = useAnimatedStyle(() => ({
     left: fx.value - 2,
     top: fy.value - 2,
     width: fw.value + 4,
     height: fh.value + 4,
     borderRadius: fr.value + 2,
-    opacity: comFuro.value,
+    opacity: surgir.value * Math.min(1, Math.min(fw.value, fh.value) / 24),
   }));
-  const estiloVeu = useAnimatedStyle(() => ({ opacity: 1 - comFuro.value }));
+  const faixa = { width: W, height: H };
+  /**
+   * Um canto do recorte: o véu fora de um quarto de círculo, desenhado como a borda grossa de um
+   * círculo cortada por um quadrado de lado R0. Fica pequeno (nunca do tamanho da tela) e vai ao
+   * raio de cada alvo por escala.
+   */
+  const canto = (estilo: typeof cantoSE, direita: boolean, baixo: boolean) => (
+    <Animated.View pointerEvents="none" style={[styles.canto, estilo]}>
+      <View style={[styles.circulo, { left: (direita ? 0 : R0) - 2 * R0, top: (baixo ? 0 : R0) - 2 * R0 }]} />
+    </Animated.View>
+  );
 
   return (
-    <View
-      ref={raiz}
-      collapsable={false}
-      style={styles.raiz}
-      onLayout={(e) => setArea({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
-      // Segura todo toque: o app por baixo não responde enquanto o tutorial está na tela.
-      onStartShouldSetResponder={() => true}
-      accessibilityViewIsModal
-    >
-      <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: VEU }, estiloVeu]} />
-      <Animated.View pointerEvents="none" style={[styles.absoluto, { borderWidth: B, borderColor: VEU }, estiloFuro]} />
-      <Animated.View pointerEvents="none" style={[styles.absoluto, styles.anel, estiloAnel]} />
-      {procurando && !pronto ? <ActivityIndicator style={styles.procurando} color="#FFFFFF" /> : null}
-      <Cartao key={`${tour.ambiente}-${tour.i}`} tour={tour} passo={passo} furo={furo} area={area} pronto={pronto} />
-    </View>
+    <Animated.View style={styles.raiz} exiting={parado ? undefined : FadeOut.duration(200)} pointerEvents="box-none">
+      <View
+        ref={raiz}
+        collapsable={false}
+        style={StyleSheet.absoluteFill}
+        onLayout={(e) => setArea({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+        // Segura todo toque: o app por baixo não responde enquanto o tutorial está na tela.
+        onStartShouldSetResponder={() => true}
+        accessibilityViewIsModal
+      >
+        <Animated.View pointerEvents="none" style={[styles.faixa, faixa, estiloCima]} />
+        <Animated.View pointerEvents="none" style={[styles.faixa, faixa, estiloBaixo]} />
+        <Animated.View pointerEvents="none" style={[styles.faixa, faixa, estiloEsquerda]} />
+        <Animated.View pointerEvents="none" style={[styles.faixa, faixa, estiloDireita]} />
+        {canto(cantoSE, false, false)}
+        {canto(cantoSD, true, false)}
+        {canto(cantoIE, false, true)}
+        {canto(cantoID, true, true)}
+        <Animated.View pointerEvents="none" style={[styles.anel, estiloAnel]} />
+        {procurando && !pronto ? <ActivityIndicator style={styles.procurando} color="#FFFFFF" /> : null}
+        <Cartao key={`${tour.ambiente}-${tour.i}`} tour={tour} passo={passo} furo={furo} area={area} pronto={pronto} />
+      </View>
+    </Animated.View>
   );
 }
 
@@ -241,24 +319,36 @@ function Cartao({
   const insets = useSafeAreaInsets();
   const parado = useReducedMotion();
   const [altura, setAltura] = useState(0);
-  const opacidade = useSharedValue(0);
   const mostrar = pronto && altura > 0 && area.h > 0;
   const primeiro = tour.i === 0;
   const ultimo = tour.i === tour.passos.length - 1;
-
-  useEffect(() => {
-    opacidade.value = withTiming(mostrar ? 1 : 0, { duration: parado ? 0 : 220 });
-  }, [mostrar, parado, opacidade]);
-  useEffect(() => {
-    if (mostrar) AccessibilityInfo.announceForAccessibility(`${passo.titulo}. ${passo.texto}`);
-  }, [mostrar, passo]);
-
-  const estilo = useAnimatedStyle(() => ({ opacity: opacidade.value }));
   const top = topoDoCartao(furo, { ...area, topo: insets.top, base: insets.bottom }, altura);
+
+  // Entra subindo um pouco e aparecendo enquanto o recorte chega; depois, se o alvo mudar de lugar,
+  // vai junto deslizando. Posição por transform, para não recalcular layout a cada quadro.
+  const y = useSharedValue(top);
+  const entrou = useSharedValue(0);
+  const visto = useRef(false);
+  useEffect(() => {
+    if (!mostrar) return;
+    if (!visto.current || parado) y.value = top;
+    else y.value = withTiming(top, { duration: LEVE, easing: EASE });
+    if (!visto.current) {
+      visto.current = true;
+      entrou.value = parado ? 1 : withDelay(90, withTiming(1, { duration: 260, easing: EASE }));
+      AccessibilityInfo.announceForAccessibility(`${passo.titulo}. ${passo.texto}`);
+    }
+  }, [mostrar, top, parado, passo, y, entrou]);
+
+  const estilo = useAnimatedStyle(() => ({
+    opacity: entrou.value,
+    transform: [{ translateY: y.value + (1 - entrou.value) * 14 }],
+  }));
 
   return (
     <Animated.View
-      style={[s.cartao, { top }, estilo]}
+      style={[s.cartao, estilo]}
+      exiting={parado ? undefined : FadeOut.duration(120)}
       onLayout={(e) => setAltura(e.nativeEvent.layout.height)}
       pointerEvents={mostrar ? "auto" : "none"}
     >
@@ -305,8 +395,10 @@ function Cartao({
 const styles = StyleSheet.create({
   // Acima de tudo da área logada; no Android a elevação também ordena.
   raiz: { ...StyleSheet.absoluteFillObject, zIndex: 1000, elevation: 1000 },
-  absoluto: { position: "absolute" },
-  anel: { borderWidth: 2, borderColor: "rgba(255,255,255,0.9)" },
+  faixa: { position: "absolute", left: 0, top: 0, backgroundColor: VEU },
+  canto: { position: "absolute", left: 0, top: 0, width: R0, height: R0, overflow: "hidden" },
+  circulo: { position: "absolute", width: 4 * R0, height: 4 * R0, borderRadius: 2 * R0, borderWidth: R0, borderColor: VEU },
+  anel: { position: "absolute", borderWidth: 1.5, borderColor: "rgba(255,255,255,0.75)" },
   procurando: { position: "absolute", alignSelf: "center", top: "48%" },
 });
 
@@ -317,6 +409,7 @@ const criarEstilos = (colors: Cores) =>
       position: "absolute",
       left: 16,
       right: 16,
+      top: 0,
       padding: 18,
       gap: 6,
       borderRadius: radius.xl,
