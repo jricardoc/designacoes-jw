@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { BackHandler, Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import Animated, { FadeInDown, FadeOutDown } from "react-native-reanimated";
 import { useRevisitas } from "@/api/hooks/usePioneiro";
 import type { Revisita, TipoVisita } from "@/api/types";
 import { useAcoesContato } from "@/components/ministerio/acoesContato";
+import { useCompartilharContatos } from "@/components/ministerio/CompartilharContatos";
 import { quando } from "@/components/ministerio/escolhas";
 import {
   BotaoIcone,
@@ -46,7 +47,10 @@ const normal = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLower
 
 const abrirContato = (id: number) => router.push({ pathname: "/ministerio/contato", params: { id: String(id) } });
 
-/** Os contatos (revisitas e estudos) em lista ou no mapa, com a situação de cada um na cor do pino. */
+/**
+ * Os contatos (revisitas e estudos) em lista ou no mapa, com a situação de cada um na cor do pino.
+ * Para compartilhar, a lista vira escolha: um ou vários, em imagem ou na mensagem do WhatsApp.
+ */
 export default function ContatosMinisterio() {
   const { colors, styles } = useTema(criarEstilos);
   const recuo = useRecuo();
@@ -60,6 +64,19 @@ export default function ContatosMinisterio() {
   const [visita, setVisita] = useState<{ id: number; nome: string; tipo: TipoVisita } | null>(null);
   const [editando, setEditando] = useState<Revisita | null>(null);
   const [novo, setNovo] = useState(false);
+  // Escolhendo quem compartilhar (null: a lista normal).
+  const [selecao, setSelecao] = useState<Set<number> | null>(null);
+  const { compartilhar, overlays } = useCompartilharContatos();
+  const selecionando = selecao !== null;
+
+  useEffect(() => {
+    if (!selecionando) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      setSelecao(null);
+      return true;
+    });
+    return () => sub.remove();
+  }, [selecionando]);
 
   const lista = useMemo(() => {
     const q = normal(busca.trim());
@@ -72,19 +89,58 @@ export default function ContatosMinisterio() {
     });
   }, [revisitas, busca, filtro]);
 
+  const escolhidos = selecao ? revisitas.filter((r) => selecao.has(r.id)) : [];
+  const todos = !!selecao && lista.length > 0 && lista.every((r) => selecao.has(r.id));
+  const selecionar = (ids: number[]) => {
+    setModo("lista");
+    setSelecao(new Set(ids));
+  };
+  const alternar = (id: number) =>
+    setSelecao((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+
   return (
     <View style={styles.tela}>
       <CabecalhoMinisterio />
       <View style={styles.topo}>
-        <TituloTela titulo="Contatos" subtitulo={`${revisitas.length} ${filtro === "arquivados" ? "arquivados" : revisitas.length === 1 ? "contato" : "contatos"}`} />
-        <Segmentos
-          opcoes={[
-            { valor: "lista", rotulo: "Lista", icone: "list" },
-            { valor: "mapa", rotulo: "Mapa", icone: "map" },
-          ]}
-          valor={modo}
-          onMudar={setModo}
-        />
+        {selecao ? (
+          <>
+            <TituloTela
+              titulo="Compartilhar"
+              subtitulo={escolhidos.length ? `${escolhidos.length} ${escolhidos.length === 1 ? "escolhido" : "escolhidos"}` : "Toque nos contatos para escolher"}
+              direita={<BotaoIcone icone="close" rotulo="Cancelar" onPress={() => setSelecao(null)} />}
+            />
+            <View style={styles.linha}>
+              <Button
+                label={todos ? "Desmarcar" : "Marcar todos"}
+                variant="secondary"
+                onPress={() => setSelecao(todos ? new Set() : new Set([...selecao, ...lista.map((r) => r.id)]))}
+                style={styles.flex}
+              />
+              <Button label="Compartilhar" icon="share-social" disabled={!escolhidos.length} onPress={() => compartilhar(escolhidos)} style={styles.flex} />
+            </View>
+          </>
+        ) : (
+          <>
+            <TituloTela
+              titulo="Contatos"
+              subtitulo={`${revisitas.length} ${filtro === "arquivados" ? "arquivados" : revisitas.length === 1 ? "contato" : "contatos"}`}
+              direita={revisitas.length ? <BotaoIcone icone="share-social-outline" rotulo="Compartilhar contatos" onPress={() => selecionar([])} /> : null}
+            />
+            <Segmentos
+              opcoes={[
+                { valor: "lista", rotulo: "Lista", icone: "list" },
+                { valor: "mapa", rotulo: "Mapa", icone: "map" },
+              ]}
+              valor={modo}
+              onMudar={setModo}
+            />
+          </>
+        )}
       </View>
 
       {modo === "lista" ? (
@@ -131,15 +187,17 @@ export default function ContatosMinisterio() {
             <Vidro style={styles.lista}>
               {lista.map((r, i) => {
                 const s = situacaoDe(r.proximaVisita);
+                const marcado = !!selecao?.has(r.id);
                 return (
                   <Animated.View key={r.id} entering={entrada(i)}>
                     <Pressable
-                      onPress={() => abrirContato(r.id)}
-                      onLongPress={() => setMenu(r)}
+                      onPress={() => (selecao ? alternar(r.id) : abrirContato(r.id))}
+                      onLongPress={selecao ? undefined : () => setMenu(r)}
                       delayLongPress={350}
-                      style={({ pressed }) => [styles.item, i > 0 && styles.itemBorda, pressed && styles.pressionado]}
-                      accessibilityRole="button"
-                      accessibilityHint="Toque longo para mais ações"
+                      style={({ pressed }) => [styles.item, i > 0 && styles.itemBorda, marcado && styles.itemMarcado, pressed && styles.pressionado]}
+                      accessibilityRole={selecao ? "checkbox" : "button"}
+                      accessibilityState={selecao ? { checked: marcado } : undefined}
+                      accessibilityHint={selecao ? undefined : "Toque longo para mais ações"}
                     >
                       <View style={[styles.avatar, { backgroundColor: SITUACAO[s].fundo(colors) }]}>
                         <Text style={[styles.avatarTexto, { color: SITUACAO[s].cor(colors) }]}>{iniciais(r.nome)}</Text>
@@ -165,7 +223,11 @@ export default function ContatosMinisterio() {
                           </Text>
                         ) : null}
                       </View>
-                      <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                      {selecao ? (
+                        <Ionicons name={marcado ? "checkmark-circle" : "ellipse-outline"} size={24} color={marcado ? colors.primary : colors.textMuted} />
+                      ) : (
+                        <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                      )}
                     </Pressable>
                   </Animated.View>
                 );
@@ -195,6 +257,7 @@ export default function ContatosMinisterio() {
             ? acoesDe(menu, {
                 registrar: () => setVisita({ id: menu.id, nome: menu.nome, tipo: menu.estudo ? "estudo" : "conversa" }),
                 editar: () => setEditando(menu),
+                compartilhar: () => selecionar([menu.id]),
               })
             : []
         }
@@ -208,6 +271,7 @@ export default function ContatosMinisterio() {
           setNovo(false);
         }}
       />
+      {overlays}
     </View>
   );
 }
@@ -356,6 +420,7 @@ const criarEstilos = (colors: Cores) =>
     lista: { padding: 0 },
     item: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
     itemBorda: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+    itemMarcado: { backgroundColor: `${colors.primary}14` },
     avatar: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
     avatarTexto: { fontSize: 16, fontWeight: "900" },
     linha: { flexDirection: "row", alignItems: "center", gap: 8 },
