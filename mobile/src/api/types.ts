@@ -1630,3 +1630,21 @@ export interface EstadoEstudo {
   sessoes: SessaoEstudo[];
   rotina: RotinaEstudo[];
 }
+
+/** Um erro do app de alguém (Ajustes › Erros do app). O mesmo erro soma `vezes`. */
+export interface ErroApp {
+  id: number;
+  mensagem: string;
+  pilha: string | null;
+  tela: string | null;
+  fatal: boolean;
+  plataforma: string | null;
+  versaoApp: string | null;
+  updateId: string | null;
+  canal: string | null;
+  vezes: number;
+  primeiraEm: string;
+  ultimaEm: string;
+  /** Quem viu por último. */
+  usuario: string | null;
+}

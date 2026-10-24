@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { AvisoAtualizacao } from "@/components/AvisoAtualizacao";
 import { BloqueioBiometria } from "@/components/BloqueioBiometria";
+import { enviarErros } from "@/lib/erros";
 import { usePushNotifications } from "@/notifications/usePushNotifications";
 import { useSincronizarNotificacoes } from "@/notifications/useSincronizarNotificacoes";
 import { useSincronizarFila } from "@/territorios/fila";
@@ -17,6 +19,10 @@ export function ServicosDoApp() {
   useSincronizarNotificacoes();
   // Envia o que foi marcado no território sem internet, em qualquer tela, quando o sinal volta.
   useSincronizarFila();
+  // Os erros que ficaram guardados (o fatal, o de antes do login) sobem agora.
+  useEffect(() => {
+    enviarErros();
+  }, []);
   return (
     <>
       <AvisoAtualizacao />

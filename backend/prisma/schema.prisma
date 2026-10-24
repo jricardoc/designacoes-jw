@@ -1191,3 +1191,26 @@ model EstudoRotina {
 
   @@index([usuarioId])
 }
+
+// O que quebrou no app de alguem (tela que deu erro, excecao do JS), para o admin ver em Ajustes.
+// Uma linha por assinatura: o mesmo erro, na mesma tela e na mesma atualizacao, soma `vezes`.
+// Sem relacao com Usuario de proposito: o erro fica mesmo se a conta for apagada.
+model ErroApp {
+  id         Int      @id @default(autoincrement())
+  assinatura String   @unique
+  mensagem   String
+  pilha      String?
+  tela       String?
+  fatal      Boolean  @default(false)
+  plataforma String?
+  versaoApp  String?
+  updateId   String?
+  canal      String?
+  vezes      Int      @default(1)
+  // Quem viu por ultimo.
+  usuarioId  Int?
+  primeiraEm DateTime @default(now())
+  ultimaEm   DateTime @default(now())
+
+  @@index([ultimaEm])
+}
