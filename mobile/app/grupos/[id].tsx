@@ -13,6 +13,7 @@ import { RelatorioSheet } from "@/components/grupos/RelatorioSheet";
 import { Button, EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { rotuloPioneiro } from "@/utils/funcoes";
 import { usePuxar } from "@/utils/usePuxar";
 
 type Aba = "relatorio" | "membros";
@@ -88,7 +89,7 @@ export default function GrupoScreen() {
       {m.pioneiro ? (
         <View style={[styles.etiqueta, { backgroundColor: colors.successBg }]}>
           <Ionicons name="leaf" size={11} color={colors.greenDark} />
-          <Text style={[styles.etiquetaTexto, { color: colors.greenDark }]}>Pioneiro {m.pioneiro}</Text>
+          <Text style={[styles.etiquetaTexto, { color: colors.greenDark }]}>{rotuloPioneiro(m.pioneiro, m.genero)}</Text>
         </View>
       ) : null}
       {m.privilegio ? <PrivilegioBadge privilegio={m.privilegio} size="sm" abreviado /> : null}

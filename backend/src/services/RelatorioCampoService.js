@@ -332,6 +332,7 @@ async function detalhe(usuario, grupoId, { mes: mesPedido, periodo: nomePeriodo 
         id: p.id,
         nome: p.nome,
         pioneiro: p.pioneiro,
+        genero: p.genero,
         privilegio: p.privilegio,
         lider: g.dirigente && g.dirigente.id === p.id ? 'dirigente' : g.ajudante && g.ajudante.id === p.id ? 'ajudante' : null,
         relatorio: relatorios.find((r) => r.irmaoId === p.id) || null,

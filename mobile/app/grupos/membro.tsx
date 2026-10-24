@@ -10,6 +10,7 @@ import { PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { EmptyState, GradientHeader, Loading, useToast } from "@/components/ui";
 import { DIAS_CURTOS, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { rotuloPioneiro } from "@/utils/funcoes";
 import { usePuxar } from "@/utils/usePuxar";
 
 /** "2026-10-16" -> "Qui, 16/10" */
@@ -66,7 +67,7 @@ export default function FichaMembroScreen() {
         {papel || pioneiro || irmao.privilegio ? (
           <View style={styles.etiquetas}>
             {papel ? <Etiqueta texto={papel} cor={colors.primaryDark} fundo={colors.infoBg} /> : null}
-            {pioneiro ? <Etiqueta texto={`Pioneiro ${pioneiro}`} icone="leaf" cor={colors.greenDark} fundo={colors.successBg} /> : null}
+            {pioneiro ? <Etiqueta texto={rotuloPioneiro(pioneiro, irmao.genero)} icone="leaf" cor={colors.greenDark} fundo={colors.successBg} /> : null}
             {irmao.privilegio ? <PrivilegioBadge privilegio={irmao.privilegio} /> : null}
           </View>
         ) : null}

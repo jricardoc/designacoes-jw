@@ -1,6 +1,8 @@
+import { Ionicons } from "@expo/vector-icons";
 import { StyleSheet, Text, View } from "react-native";
-import type { PrivilegioId } from "@/api/types";
-import { privilegioInfo } from "@/utils/funcoes";
+import type { GeneroPessoa, PrivilegioId, TipoPioneiro } from "@/api/types";
+import { useTema } from "@/theme/TemaContext";
+import { privilegioInfo, rotuloPioneiro } from "@/utils/funcoes";
 
 interface Props {
   privilegio?: PrivilegioId | null;
@@ -38,7 +40,40 @@ export function PrivilegioBadge({ privilegio, size = "md", abreviado = false }: 
   );
 }
 
+/** O pioneiro do cadastro, no mesmo formato: verde, com a folha. Sem pioneiro, nada. */
+export function PioneiroBadge({
+  pioneiro,
+  genero,
+  size = "md",
+}: {
+  pioneiro?: TipoPioneiro | null;
+  genero?: GeneroPessoa | null;
+  size?: "sm" | "md";
+}) {
+  const { colors } = useTema();
+  if (!pioneiro) return null;
+
+  const pequeno = size === "sm";
+
+  return (
+    <View
+      style={[
+        styles.badge,
+        styles.comIcone,
+        pequeno ? styles.badgeSm : styles.badgeMd,
+        { backgroundColor: colors.successBg, borderColor: `${colors.greenDark}33` },
+      ]}
+    >
+      <Ionicons name="leaf" size={pequeno ? 10 : 11} color={colors.greenDark} />
+      <Text style={[styles.texto, pequeno ? styles.textoSm : styles.textoMd, { color: colors.greenDark }]} numberOfLines={1}>
+        {rotuloPioneiro(pioneiro, genero)}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  comIcone: { flexDirection: "row", alignItems: "center", gap: 3 },
   badge: {
     alignSelf: "flex-start",
     borderRadius: 999,
