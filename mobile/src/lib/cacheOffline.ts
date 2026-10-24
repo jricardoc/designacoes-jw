@@ -4,9 +4,9 @@ import * as Updates from "expo-updates";
 import { queryClient } from "./queryClient";
 
 /**
- * O último painel do pioneiro e o estudo pessoal ficam guardados no celular: aberto sem
- * internet, o app mostra o que viu por último (e o cronômetro anda com a fila). Os territórios
- * têm a cópia própria (src/territorios).
+ * O último painel do pioneiro, os contatos dele e o estudo pessoal ficam guardados no celular:
+ * aberto sem internet, o app mostra o que viu por último (e o cronômetro, os contatos novos e as
+ * visitas andam com a fila). Os territórios têm a cópia própria (src/territorios).
  *
  * É de quem está logado (o AuthContext liga e desliga) e só vale para o mesmo código do app:
  * depois de uma atualização o formato pode ter mudado, e ele recomeça vazio.
@@ -16,8 +16,9 @@ const CHAVE = "cache-offline";
 /** O código do app que está rodando: o que foi guardado por outro não serve. */
 export const VERSAO = Updates.updateId ?? "embutido";
 
+const DO_PIONEIRO = new Set(["painel", "revisitas", "revisita"]);
 const guardar = (q: Query) =>
-  q.state.status === "success" && (q.queryKey[0] === "estudo" || (q.queryKey[0] === "pioneiro" && q.queryKey[1] === "painel"));
+  q.state.status === "success" && (q.queryKey[0] === "estudo" || (q.queryKey[0] === "pioneiro" && DO_PIONEIRO.has(String(q.queryKey[1]))));
 
 let dono: number | null = null;
 let assinado = false;

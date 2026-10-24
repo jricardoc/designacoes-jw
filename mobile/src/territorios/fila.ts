@@ -10,14 +10,15 @@ import { queryClient } from "@/lib/queryClient";
 
 /**
  * Fila do que foi registrado no território (marcações do GPS e saídas), da leitura marcada no
- * Estudo pessoal e do cronômetro do Ministério.
+ * Estudo pessoal e, no Ministério, do cronômetro, dos contatos novos e das visitas.
  *
  * TUDO desses tipos passa por aqui, com ou sem internet: o registro entra na fila (gravada no celular) e a
  * fila tenta enviar na hora. Sem sinal, ele fica guardado e sobe sozinho quando a conexão
  * volta, quando o app volta ao primeiro plano, ou a cada 20 s enquanto houver pendência.
  *
  * Cada item leva um `clientKey` gerado aqui. O servidor trata o mesmo clientKey como o mesmo
- * registro, então reenviar depois de uma resposta que se perdeu no caminho não duplica nada. A
+ * registro, então reenviar depois de uma resposta que se perdeu no caminho não duplica nada (os
+ * contatos e as visitas também: o servidor procura a chave antes de criar). A
  * leitura e o cronômetro já são assim por natureza (marcar de novo, iniciar rodando), e levam
  * `em`, a hora em que foram feitos, que é a que conta no servidor.
  *
@@ -26,16 +27,16 @@ import { queryClient } from "@/lib/queryClient";
  * fila (não há lista para ele). Falta de rede, sessão vencida e servidor fora do ar não são
  * recusa (nem o limite de chamadas): o item espera a próxima tentativa.
  *
- * A leitura e o cronômetro são de uma pessoa: levam o `usuarioId` e só sobem com ela logada,
- * para nada cair na conta de outro no mesmo celular.
+ * A leitura, o cronômetro, os contatos e as visitas são de uma pessoa: levam o `usuarioId` e só
+ * sobem com ela logada, para nada cair na conta de outro no mesmo celular.
  */
 
 export interface ItemFila {
   clientKey: string;
-  tipo: "saida" | "marcacao" | "leitura" | "cronometro";
+  tipo: "saida" | "marcacao" | "leitura" | "cronometro" | "revisita" | "visita";
   /** Número do território, para mostrar o pendente no mapa certo (só nos do território). */
   numero?: string;
-  /** De quem é (a leitura e o cronômetro). */
+  /** De quem é (os do Estudo e do Ministério). */
   usuarioId?: number;
   /** O corpo da chamada, já com o clientKey. */
   corpo: Record<string, unknown>;
@@ -51,9 +52,14 @@ const DESTINO = {
   marcacao: { rota: "/territorios/marcacoes", metodo: "POST" },
   leitura: { rota: "/estudo/leituras", metodo: "PUT" },
   cronometro: { rota: "/pioneiro/cronometro", metodo: "POST" },
+  revisita: { rota: "/pioneiro/revisitas", metodo: "POST" },
+  visita: { rota: "/pioneiro/revisitas/:id/visitas", metodo: "POST" },
 } as const;
 
-const doTerritorio = (i: ItemFila) => i.tipo === "saida" || i.tipo === "marcacao";
+/** A visita vai para o contato dela (`corpo.revisitaId`). */
+const rotaDe = (i: ItemFila) => DESTINO[i.tipo].rota.replace(":id", String(i.corpo.revisitaId));
+
+const doTerritorio = (i: Pick<ItemFila, "tipo">) => i.tipo === "saida" || i.tipo === "marcacao";
 
 let itens: ItemFila[] = [];
 let enviando = false;
@@ -117,8 +123,7 @@ async function rodar() {
       const atual: ItemFila = item;
       const esperado = esperados.get(atual.clientKey);
       try {
-        const { rota, metodo } = DESTINO[atual.tipo];
-        const resposta = await apiRequest(rota, { method: metodo, body: atual.corpo, timeoutMs: 20000 });
+        const resposta = await apiRequest(rotaDe(atual), { method: DESTINO[atual.tipo].metodo, body: atual.corpo, timeoutMs: 20000 });
         itens = itens.filter((i) => i.clientKey !== atual.clientKey);
         if (esperado) esperado.resposta = resposta;
         chegou(atual, resposta);
@@ -140,7 +145,7 @@ async function rodar() {
     avisar();
     if (enviou.has("saida") || enviou.has("marcacao")) queryClient.invalidateQueries({ queryKey: qk.territorios });
     if (enviou.has("leitura")) queryClient.invalidateQueries({ queryKey: qk.estudo });
-    if (enviou.has("cronometro")) queryClient.invalidateQueries({ queryKey: ["pioneiro"] });
+    if (enviou.has("cronometro") || enviou.has("revisita") || enviou.has("visita")) queryClient.invalidateQueries({ queryKey: ["pioneiro"] });
   }
 }
 
@@ -159,7 +164,7 @@ function chegou(item: ItemFila, resposta: unknown) {
 export async function enfileirar(item: Omit<ItemFila, "criadoEm">): Promise<{ enviado: boolean; erro?: string; resposta?: unknown }> {
   await carregar();
   esperados.set(item.clientKey, {});
-  const pessoal = item.tipo === "leitura" || item.tipo === "cronometro";
+  const pessoal = !doTerritorio(item);
   itens = [...itens, { ...item, ...(pessoal && dono !== null ? { usuarioId: dono } : {}), criadoEm: new Date().toISOString() }];
   avisar();
   await gravar();

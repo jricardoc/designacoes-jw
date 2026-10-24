@@ -27,7 +27,9 @@ import {
 import { relogio, useControleCronometro } from "@/components/ministerio/cronometro";
 import { RelatorioPioneiroSheet } from "@/components/ministerio/RelatorioPioneiroSheet";
 import { VisitaSheet } from "@/components/ministerio/VisitaSheet";
+import { conversasComPendentes } from "@/components/ministerio/visitasFila";
 import { Button, EmptyState, Loading } from "@/components/ui";
+import { usePendentes } from "@/territorios/fila";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { usePuxar } from "@/utils/usePuxar";
@@ -45,6 +47,8 @@ export default function InicioMinisterio() {
   const puxar = usePuxar(refetch);
   const [visita, setVisita] = useState<{ id: number; nome: string; tipo: TipoVisita } | null>(null);
   const [relatorioAberto, setRelatorioAberto] = useState(false);
+  // As visitas guardadas sem internet já contam nas conversas de hoje.
+  const visitasNaFila = usePendentes("visita").map((v) => ({ revisitaId: Number(v.corpo.revisitaId), tipo: (v.corpo.tipo ?? "conversa") as TipoVisita }));
 
   if (isLoading && !p) {
     return (
@@ -72,7 +76,7 @@ export default function InicioMinisterio() {
   const metaMin = p.meta * 60;
   const fracao = metaMin ? p.minutosMes / metaMin : 0;
   const mesCurto = p.nomeMes.split(" de ")[0];
-  const conversas = p.conversasHoje;
+  const conversas = conversasComPendentes(p.conversasHoje, visitasNaFila);
 
   const abrirContato = (id: number) => router.push({ pathname: "/ministerio/contato", params: { id: String(id) } });
 

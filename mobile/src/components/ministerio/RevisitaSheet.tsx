@@ -87,9 +87,13 @@ export function RevisitaSheet({ visible, onClose, revisita }: { visible: boolean
         proximaVisita: marcar ? dataHoraISO(dia, hora) : null,
       },
       {
-        onSuccess: () => {
+        onSuccess: ({ naFila }) => {
           onClose();
-          feito({ titulo: revisita ? "Contato atualizado" : "Contato anotado", detalhe: nome.trim(), icone: estudo ? "book" : "person-add" });
+          feito(
+            naFila
+              ? { titulo: "Contato guardado", detalhe: "Sem internet: sobe quando o sinal voltar", icone: "cloud-upload" }
+              : { titulo: revisita ? "Contato atualizado" : "Contato anotado", detalhe: nome.trim(), icone: estudo ? "book" : "person-add" },
+          );
         },
         onError: (e) => toast.show(e instanceof Error ? e.message : "Não deu para salvar", "error"),
       },

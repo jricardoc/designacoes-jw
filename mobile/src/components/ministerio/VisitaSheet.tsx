@@ -67,15 +67,19 @@ export function VisitaSheet({
   const salvar = () => {
     if (!revisitaId) return;
     registrar.mutate(
-      { id: revisitaId, tipo, observacao: observacao.trim() || null, proximaVisita: marcar ? dataHoraISO(dia, hora) : null },
+      { id: revisitaId, nome, tipo, observacao: observacao.trim() || null, proximaVisita: marcar ? dataHoraISO(dia, hora) : null },
       {
-        onSuccess: () => {
+        onSuccess: ({ naFila }) => {
           onClose();
-          feito({
-            titulo: tipo === "nao_em_casa" ? "Anotado: não estava" : "Visita registrada",
-            detalhe: nome,
-            icone: tipo === "nao_em_casa" ? "home" : "checkmark-done",
-          });
+          feito(
+            naFila
+              ? { titulo: "Visita guardada", detalhe: "Sem internet: sobe quando o sinal voltar", icone: "cloud-upload" }
+              : {
+                  titulo: tipo === "nao_em_casa" ? "Anotado: não estava" : "Visita registrada",
+                  detalhe: nome,
+                  icone: tipo === "nao_em_casa" ? "home" : "checkmark-done",
+                },
+          );
         },
         onError: (e) => toast.show(e instanceof Error ? e.message : "Não deu para registrar", "error"),
       },
