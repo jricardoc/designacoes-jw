@@ -34,6 +34,7 @@ import { Avatar, Sheet } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { alvoTour, iniciarTour } from "@/tour/estado";
 import { doisDig, isoDoDia } from "./escolhas";
 import { efeitosDe, METAL } from "./tema";
 
@@ -305,11 +306,13 @@ export function CabecalhoMinisterio() {
   const { usuario } = useAuth();
   const [menu, setMenu] = useState(false);
   const [trocar, setTrocar] = useState(false);
-  const ir = (href: "/ministerio/perfil" | "/ministerio/ajuda" | "/ministerio/novidades") => router.push(href);
+  const ir = (href: "/ministerio/perfil" | "/ministerio/ajuda" | "/novidades") => router.push(href);
 
   return (
     <View style={[styles.cabecalho, { paddingTop: insets.top + 6 }]}>
       <Pressable
+        ref={alvoTour("ministerio.marca")}
+        collapsable={false}
         onPress={() => setTrocar(true)}
         style={({ pressed }) => [styles.marca, pressed && styles.pressionado]}
         accessibilityRole="button"
@@ -322,7 +325,15 @@ export function CabecalhoMinisterio() {
       <View style={styles.flex} />
       <SinoNotificacoes onPress={() => router.push("/ministerio/notificacoes")} />
       {usuario ? (
-        <Pressable onPress={() => setMenu(true)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Perfil, ajuda e mais" style={styles.avatar}>
+        <Pressable
+          ref={alvoTour("ministerio.avatar")}
+          collapsable={false}
+          onPress={() => setMenu(true)}
+          hitSlop={6}
+          accessibilityRole="button"
+          accessibilityLabel="Perfil, ajuda e mais"
+          style={styles.avatar}
+        >
           <Avatar usuario={usuario} tamanho={34} fundo={colors.sand} corTexto={colors.primaryDark} />
         </Pressable>
       ) : null}
@@ -334,7 +345,9 @@ export function CabecalhoMinisterio() {
         acoes={[
           { rotulo: "Perfil e configurações", icone: "person-circle-outline", onPress: () => ir("/ministerio/perfil") },
           { rotulo: "Centro de Ajuda", icone: "help-buoy-outline", onPress: () => ir("/ministerio/ajuda") },
-          { rotulo: "Novidades", icone: "sparkles-outline", onPress: () => ir("/ministerio/novidades") },
+          // O menu fecha antes: o tutorial começa sem nada por cima.
+          { rotulo: "Tutorial", icone: "school-outline", onPress: () => setTimeout(() => iniciarTour("ministerio", usuario), 350) },
+          { rotulo: "O que há de novo", icone: "sparkles-outline", onPress: () => ir("/novidades") },
           { rotulo: "Ir para o Servir Mais", icone: "swap-horizontal", onPress: () => irParaAmbiente("servir") },
         ]}
       />

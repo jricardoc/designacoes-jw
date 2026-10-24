@@ -17,6 +17,8 @@ import { EASE, entrada, LEVE, type Icone } from "@/components/ministerio/kit";
 import { useAlturaTeclado } from "@/components/ui/useAlturaTeclado";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { alvoTour } from "@/tour/estado";
+import type { Ambiente } from "@/utils/ambiente";
 
 export interface AbaAmbiente {
   /** O segmento da rota dentro do ambiente ("index" é a primeira). */
@@ -51,11 +53,14 @@ const MAIS = 62;
  * o "+" no meio, que os abre subindo em leque. Some nas telas empilhadas e com o teclado aberto.
  */
 export function BarraAmbiente({
+  tour,
   abas,
   atalhos,
   vidro,
   rotuloMais,
 }: {
+  /** O ambiente, para o tutorial achar as abas e o "+" ("ministerio.aba.agenda", "ministerio.mais"). */
+  tour: Ambiente;
   abas: AbaAmbiente[];
   /** Vazio: a barra fica sem o "+". */
   atalhos: AtalhoAmbiente[];
@@ -121,6 +126,8 @@ export function BarraAmbiente({
               return (
                 <Pressable
                   key={aba.chave}
+                  ref={alvoTour(`${tour}.aba.${aba.chave}`)}
+                  collapsable={false}
                   onPress={() => ir(i)}
                   style={[styles.aba, vao > 0 && i === meio && { marginLeft: vao }]}
                   accessibilityRole="tab"
@@ -138,6 +145,8 @@ export function BarraAmbiente({
         </View>
         {largura && atalhos.length ? (
           <Pressable
+            ref={alvoTour(`${tour}.mais`)}
+            collapsable={false}
             onPress={() => setAberto((a) => !a)}
             style={({ pressed }) => [styles.mais, { left: meio * cada + vao / 2 - MAIS / 2 }, pressed && { transform: [{ scale: 0.94 }] }]}
             accessibilityRole="button"

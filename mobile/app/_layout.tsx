@@ -16,6 +16,7 @@ import { definirTelaDoErro, ligarRegistroDeErros, registrarErro } from "@/lib/er
 import { queryClient } from "@/lib/queryClient";
 import { paletaDe } from "@/theme";
 import { TemaProvider, useTema } from "@/theme/TemaContext";
+import { marcarAberturaPronta } from "@/utils/abertura";
 import { lerAmbiente, type Ambiente } from "@/utils/ambiente";
 
 // Mantém a splash nativa (oliva + S+) até a JS saber o ambiente; aí entra a animada dele.
@@ -105,6 +106,7 @@ function AuthGate() {
         <Stack.Screen name="ministerio" />
         <Stack.Screen name="estudo" />
         <Stack.Screen name="erros" />
+        <Stack.Screen name="novidades" options={{ animation: "fade_from_bottom" }} />
       </Stack>
       {isAuthenticated ? <ServicosDoApp /> : null}
     </>
@@ -124,6 +126,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     lerAmbiente().then(setAmbiente);
+    // Rede de segurança: se a splash não avisar o fim, as novidades e o tutorial não ficam presos.
+    const t = setTimeout(marcarAberturaPronta, 8000);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
@@ -150,7 +155,15 @@ export default function RootLayout() {
                 </ProvedorCelebracao>
               </ToastProvider>
             </TemaProvider>
-            {!splashDone && ambiente ? <SplashAnimated ambiente={ambiente} onDone={() => setSplashDone(true)} /> : null}
+            {!splashDone && ambiente ? (
+              <SplashAnimated
+                ambiente={ambiente}
+                onDone={() => {
+                  setSplashDone(true);
+                  marcarAberturaPronta();
+                }}
+              />
+            ) : null}
           </AuthProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

@@ -37,6 +37,7 @@ export function BarraEstudo() {
   return (
     <>
       <BarraAmbiente
+        tour="estudo"
         abas={ABAS}
         atalhos={[
           { chave: "estudar", rotulo: "Começar estudo", icone: "play", onPress: () => router.push("/estudo/sessao") },

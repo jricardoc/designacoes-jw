@@ -9,6 +9,7 @@ import { Sheet } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { alvoTour, iniciarTour } from "@/tour/estado";
 import { guardarAmbiente, HREF_AMBIENTE, type Ambiente } from "@/utils/ambiente";
 import { podeUsarPioneiro } from "@/utils/permissoes";
 import { MarcaServirMais } from "./MarcaServirMais";
@@ -114,6 +115,8 @@ export function CabecalhoAmbiente({ atual, sobreOMapa }: { atual: "territorio" |
   return (
     <View style={[styles.cabecalho, { paddingTop: insets.top + 6 }]} pointerEvents="box-none">
       <Pressable
+        ref={alvoTour(`${atual}.marca`)}
+        collapsable={false}
         onPress={() => setTrocar(true)}
         style={({ pressed }) => [styles.marca, sobreOMapa && styles.pilula, pressed && styles.pressionado]}
         accessibilityRole="button"
@@ -130,7 +133,9 @@ export function CabecalhoAmbiente({ atual, sobreOMapa }: { atual: "territorio" |
 
 /** A troca de ambiente no Ministério, no Território e no Estudo (no Servir Mais ela abre no topo do menu lateral). */
 export function TrocarAmbienteSheet({ visible, onClose, atual }: { visible: boolean; onClose: () => void; atual: Ambiente }) {
-  const { styles } = useTema(criarEstilos);
+  const { colors, styles } = useTema(criarEstilos);
+  const { usuario } = useAuth();
+  const nome = AMBIENTES.find((a) => a.chave === atual)?.nome ?? "";
   return (
     <Sheet visible={visible} onClose={onClose}>
       <View style={styles.folha}>
@@ -142,6 +147,18 @@ export function TrocarAmbienteSheet({ visible, onClose, atual }: { visible: bool
             if (a !== atual) irParaAmbiente(a);
           }}
         />
+        {/* O tutorial deste ambiente, de novo (começa depois de a folha fechar). */}
+        <Pressable
+          onPress={() => {
+            onClose();
+            setTimeout(() => iniciarTour(atual, usuario), 450);
+          }}
+          style={({ pressed }) => [styles.tutorial, pressed && styles.pressionado]}
+          accessibilityRole="button"
+        >
+          <Ionicons name="school-outline" size={18} color={colors.primary} />
+          <Text style={styles.tutorialTexto}>Ver o tutorial do {nome}</Text>
+        </Pressable>
       </View>
     </Sheet>
   );
@@ -166,6 +183,8 @@ const criarEstilos = (colors: Cores) =>
     nome: { fontSize: 15.5, fontWeight: "800", color: colors.text },
     tag: { fontSize: 12.5, color: colors.textSecondary, marginTop: 1 },
     folha: { gap: 14, paddingBottom: 8 },
+    tutorial: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10 },
+    tutorialTexto: { fontSize: 15, fontWeight: "700", color: colors.primary },
     titulo: { fontSize: 20, fontWeight: "800", color: colors.text },
     cabecalho: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingBottom: 6 },
     marca: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 4, paddingRight: 6 },

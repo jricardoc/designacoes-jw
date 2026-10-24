@@ -8,6 +8,7 @@ import { BarraTerritorio } from "@/components/territorio/BarraTerritorio";
 import { paletaTerritorio } from "@/components/territorio/tema";
 import { ToastProvider } from "@/components/ui";
 import { PaletaPropria, useTema } from "@/theme/TemaContext";
+import { useTourAutomatico } from "@/tour/estado";
 import { guardarAmbiente } from "@/utils/ambiente";
 
 /**
@@ -30,6 +31,8 @@ function Ambiente() {
   useEffect(() => {
     guardarAmbiente("territorio");
   }, []);
+  // A primeira vez aqui, o tutorial começa sozinho.
+  useTourAutomatico("territorio");
 
   // Guarda todos os territórios no celular para abrir no campo sem sinal (de 6 em 6 horas).
   useEffect(() => {

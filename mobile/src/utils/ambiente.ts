@@ -24,5 +24,3 @@ export async function lerAmbiente(): Promise<Ambiente> {
   }
 }
 
-/** O tour das novidades do Ministério, mostrado na primeira entrada. */
-export const KEY_TOUR_MINISTERIO = "ministerio_tour_v1";

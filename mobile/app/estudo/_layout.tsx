@@ -7,6 +7,7 @@ import { paletaEstudo } from "@/components/estudo/tema";
 import { LEVE } from "@/components/ministerio/kit";
 import { ToastProvider } from "@/components/ui";
 import { PaletaPropria, useTema } from "@/theme/TemaContext";
+import { useTourAutomatico } from "@/tour/estado";
 import { guardarAmbiente } from "@/utils/ambiente";
 
 /**
@@ -28,6 +29,8 @@ function Ambiente() {
   useEffect(() => {
     guardarAmbiente("estudo");
   }, []);
+  // A primeira vez aqui, o tutorial começa sozinho.
+  useTourAutomatico("estudo");
 
   // Toast e "feito" daqui de dentro: os da raiz ficam acima da paleta e sairiam com as cores do Servir Mais.
   return (

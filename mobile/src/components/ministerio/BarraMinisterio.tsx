@@ -35,6 +35,7 @@ export function BarraMinisterio() {
   return (
     <>
       <BarraAmbiente
+        tour="ministerio"
         abas={ABAS}
         atalhos={ATALHOS.map((a) => ({ chave: a.folha, rotulo: a.rotulo, icone: a.icone, onPress: () => setFolha(a.folha) }))}
         vidro={efeitosDe(esquema)}

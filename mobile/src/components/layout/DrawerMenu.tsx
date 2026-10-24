@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { Href } from "expo-router";
 import { router, useSegments } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -26,6 +26,8 @@ import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral, podeGerenciar, podeVerGrupos } from "@/utils/permissoes";
 import { radius, shadow, spacing, motion, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { CamadaTour } from "@/tour/CamadaTour";
+import { alvoTour, passoAnterior, tourAtivo, useAcaoTour } from "@/tour/estado";
 import { irParaAmbiente, ListaAmbientes } from "./Ambientes";
 import { MarcaServirMais } from "./MarcaServirMais";
 
@@ -114,6 +116,9 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
     else setTrocando(false);
   }, [visible]);
 
+  // O tutorial abre a lista para mostrar os ambientes.
+  useAcaoTour("mostrarAmbientes", useCallback(() => setTrocando(true), []));
+
   useEffect(() => {
     if (!montado) return;
     if (visible) {
@@ -161,7 +166,8 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
       transparent
       animationType="none"
       statusBarTranslucent
-      onRequestClose={onClose}
+      // Com o tutorial no menu, o voltar do Android volta um passo dele.
+      onRequestClose={() => (tourAtivo() ? passoAnterior() : onClose())}
     >
       <View style={styles.root}>
         <Animated.View style={[styles.backdrop, backdropStyle]}>
@@ -178,6 +184,8 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
         >
           <View style={styles.topo}>
             <Pressable
+              ref={alvoTour("menu.marca")}
+              collapsable={false}
               onPress={() => setTrocando((t) => !t)}
               style={styles.topoMarca}
               accessibilityRole="button"
@@ -197,13 +205,16 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
           </View>
           {trocando ? (
             <Animated.View entering={FadeInUp.duration(220)} style={styles.ambientes}>
-              <ListaAmbientes
-                atual="servir"
-                onEscolher={(a) => {
-                  onClose();
-                  if (a !== "servir") irParaAmbiente(a);
-                }}
-              />
+              {/* View comum para o tutorial medir (o ref de um Animated.View não é a view). */}
+              <View ref={alvoTour("menu.ambientes")} collapsable={false}>
+                <ListaAmbientes
+                  atual="servir"
+                  onEscolher={(a) => {
+                    onClose();
+                    if (a !== "servir") irParaAmbiente(a);
+                  }}
+                />
+              </View>
             </Animated.View>
           ) : null}
 
@@ -271,6 +282,8 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
             </Pressable>
           ) : null}
         </Animated.View>
+        {/* O Modal fica por cima de tudo: o tutorial tem aqui a camada dos passos do menu. */}
+        <CamadaTour camada="menu" />
       </View>
     </Modal>
   );

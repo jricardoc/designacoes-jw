@@ -1,5 +1,4 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Redirect, router, Stack } from "expo-router";
+import { Redirect, Stack } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
 import { ProvedorCelebracao } from "@/components/celebracao/contextoCelebracao";
@@ -9,7 +8,8 @@ import { paletaMinisterio } from "@/components/ministerio/tema";
 import { ToastProvider } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { PaletaPropria, useTema } from "@/theme/TemaContext";
-import { guardarAmbiente, KEY_TOUR_MINISTERIO } from "@/utils/ambiente";
+import { useTourAutomatico } from "@/tour/estado";
+import { guardarAmbiente } from "@/utils/ambiente";
 import { podeUsarPioneiro } from "@/utils/permissoes";
 
 /**
@@ -31,13 +31,9 @@ function Ambiente() {
 
   useEffect(() => {
     guardarAmbiente("ministerio");
-    // A primeira vez aqui abre o tour das novidades.
-    AsyncStorage.getItem(KEY_TOUR_MINISTERIO)
-      .then((visto) => {
-        if (visto !== "1") router.push("/ministerio/novidades");
-      })
-      .catch(() => {});
   }, []);
+  // A primeira vez aqui, o tutorial do Ministério começa sozinho.
+  useTourAutomatico("ministerio");
 
   // Toast e "feito" daqui de dentro: os da raiz ficam acima da paleta e sairiam com as cores do Servir Mais.
   return (
@@ -64,10 +60,6 @@ function Ambiente() {
             <Stack.Screen name="ajuda" />
             <Stack.Screen name="notificacoes" />
             <Stack.Screen name="notificacoes-config" />
-            <Stack.Screen
-              name="novidades"
-              options={{ animation: "fade_from_bottom", gestureEnabled: false }}
-            />
           </Stack>
           <BarraMinisterio />
         </View>

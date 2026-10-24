@@ -1,11 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SinoNotificacoes } from "@/components/layout/SinoNotificacoes";
 import { radius, spacing, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { alvoTour, useAcaoTour } from "@/tour/estado";
 import { DrawerMenu } from "./DrawerMenu";
 import { MarcaServirMais } from "./MarcaServirMais";
 
@@ -18,11 +19,16 @@ export function AppHeader() {
   const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   const [menuAberto, setMenuAberto] = useState(false);
+  // O tutorial abre e fecha o menu para mostrar a troca de ambiente.
+  useAcaoTour("abrirMenu", useCallback(() => setMenuAberto(true), []));
+  useAcaoTour("fecharMenu", useCallback(() => setMenuAberto(false), []));
 
   return (
     <>
       <View style={[styles.barra, { paddingTop: insets.top + 6 }]}>
         <Pressable
+          ref={alvoTour("servir.menu")}
+          collapsable={false}
           hitSlop={10}
           onPress={() => setMenuAberto(true)}
           style={styles.sanduiche}
@@ -37,7 +43,9 @@ export function AppHeader() {
           <Text style={styles.nome}>Servir Mais</Text>
         </View>
 
-        <SinoNotificacoes onPress={() => router.push("/notificacoes")} />
+        <View ref={alvoTour("servir.sino")} collapsable={false}>
+          <SinoNotificacoes onPress={() => router.push("/notificacoes")} />
+        </View>
       </View>
 
       <DrawerMenu visible={menuAberto} onClose={() => setMenuAberto(false)} />

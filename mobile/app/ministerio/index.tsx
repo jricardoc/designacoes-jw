@@ -30,6 +30,7 @@ import { VisitaSheet } from "@/components/ministerio/VisitaSheet";
 import { conversasComPendentes } from "@/components/ministerio/visitasFila";
 import { Button, EmptyState, Loading } from "@/components/ui";
 import { usePendentes } from "@/territorios/fila";
+import { alvoTour } from "@/tour/estado";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { usePuxar } from "@/utils/usePuxar";
@@ -87,39 +88,42 @@ export default function InicioMinisterio() {
         <TituloTela titulo={`${saudacao()}, ${p.nome}`} subtitulo={dataLonga(new Date())} />
 
         <Animated.View entering={entrada(0)}>
-          <Vidro style={styles.hero}>
-            <Anel tamanho={214} fracao={fracao} pulsando={cron.rodando}>
-              {emAndamento ? (
-                <>
-                  <Text style={styles.relogio} accessibilityLabel={`Cronômetro: ${duracao(Math.floor(segundos / 60))}`}>
-                    {relogio(segundos)}
-                  </Text>
-                  <Text style={styles.anelLegenda}>{cron.rodando ? "contando" : "pausado"}</Text>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.anelValor}>
-                    {horasDecimais(p.minutosMes)}
-                    <Text style={styles.anelUnidade}> h</Text>
-                  </Text>
-                  <Text style={styles.anelLegenda}>
-                    de {p.meta} h em {mesCurto}
-                  </Text>
-                </>
-              )}
-            </Anel>
-            <Text style={styles.heroTexto}>
-              {fracao >= 1 ? `Meta de ${mesCurto} alcançada` : `Faltam ${duracao(metaMin - p.minutosMes)} para a meta de ${mesCurto}`}
-            </Text>
-            <View style={styles.botoes}>
-              {cron.rodando ? (
-                <Button label="Pausar" icon="pause" variant="secondary" onPress={() => acao("pausar")} loading={cron.pendente} style={styles.flex} />
-              ) : (
-                <Button label={emAndamento ? "Continuar" : "Iniciar"} icon="play" onPress={() => acao("iniciar")} loading={cron.pendente} style={styles.flex} />
-              )}
-              {emAndamento ? <Button label="Parar" icon="stop" variant="secondary" onPress={parar} style={styles.flex} /> : null}
-            </View>
-          </Vidro>
+          {/* View comum para o tutorial medir (o ref de um Animated.View não é a view). */}
+          <View ref={alvoTour("ministerio.cronometro")} collapsable={false}>
+            <Vidro style={styles.hero}>
+              <Anel tamanho={214} fracao={fracao} pulsando={cron.rodando}>
+                {emAndamento ? (
+                  <>
+                    <Text style={styles.relogio} accessibilityLabel={`Cronômetro: ${duracao(Math.floor(segundos / 60))}`}>
+                      {relogio(segundos)}
+                    </Text>
+                    <Text style={styles.anelLegenda}>{cron.rodando ? "contando" : "pausado"}</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.anelValor}>
+                      {horasDecimais(p.minutosMes)}
+                      <Text style={styles.anelUnidade}> h</Text>
+                    </Text>
+                    <Text style={styles.anelLegenda}>
+                      de {p.meta} h em {mesCurto}
+                    </Text>
+                  </>
+                )}
+              </Anel>
+              <Text style={styles.heroTexto}>
+                {fracao >= 1 ? `Meta de ${mesCurto} alcançada` : `Faltam ${duracao(metaMin - p.minutosMes)} para a meta de ${mesCurto}`}
+              </Text>
+              <View style={styles.botoes}>
+                {cron.rodando ? (
+                  <Button label="Pausar" icon="pause" variant="secondary" onPress={() => acao("pausar")} loading={cron.pendente} style={styles.flex} />
+                ) : (
+                  <Button label={emAndamento ? "Continuar" : "Iniciar"} icon="play" onPress={() => acao("iniciar")} loading={cron.pendente} style={styles.flex} />
+                )}
+                {emAndamento ? <Button label="Parar" icon="stop" variant="secondary" onPress={parar} style={styles.flex} /> : null}
+              </View>
+            </Vidro>
+          </View>
         </Animated.View>
 
         <Animated.View entering={entrada(1)} style={styles.bloco}>
