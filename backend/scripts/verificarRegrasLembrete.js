@@ -76,7 +76,7 @@ chk(!R.estaVencida(t('2026-07-29', '19:00'), t(QUARTA, '19:00'), GRACA),
 sec('preferencia');
 const vazia = R.normalizarPreferencia({});
 chk(vazia.antecedencias.join() === '1d', 'sem nada informado cai em "1 dia antes" (o comportamento antigo)');
-chk(vazia.tipos.length === 3, 'sem nada informado todos os tipos ficam ligados');
+chk(vazia.tipos.length === R.TIPOS.length, 'sem nada informado todos os tipos ficam ligados');
 chk(R.normalizarPreferencia({ antecedencias: ['1d', '9z'], tipos: ['designacao', 'xpto'] })
     .antecedencias.join() === '1d', 'id de regra inventado e descartado');
 chk(R.normalizarPreferencia({ tipos: ['designacao', 'xpto'] }).tipos.join() === 'designacao',

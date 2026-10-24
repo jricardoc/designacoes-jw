@@ -8,7 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "node scripts/tipos-rotas.js && tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
