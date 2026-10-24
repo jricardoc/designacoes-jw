@@ -359,14 +359,17 @@ export function TituloTela({ titulo, subtitulo, direita }: { titulo: string; sub
   );
 }
 
-/** O topo das telas empilhadas (contato, perfil...): voltar, título e uma ação à direita. */
-export function Topo({ titulo, direita }: { titulo?: string; direita?: ReactNode }) {
+/**
+ * O topo das telas empilhadas (contato, perfil...): voltar, título e uma ação à direita. Sem
+ * pilha (aberta por um push), o voltar vai para o `inicio` do ambiente.
+ */
+export function Topo({ titulo, direita, inicio = "/ministerio" }: { titulo?: string; direita?: ReactNode; inicio?: "/ministerio" | "/estudo" }) {
   const { colors, styles } = useTema(criarEstilos);
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.topo, { paddingTop: insets.top + 6 }]}>
       <Pressable
-        onPress={() => (router.canGoBack() ? router.back() : router.replace("/ministerio"))}
+        onPress={() => (router.canGoBack() ? router.back() : router.replace(inicio))}
         style={({ pressed }) => [styles.botaoRedondo, pressed && styles.pressionado]}
         hitSlop={8}
         accessibilityRole="button"

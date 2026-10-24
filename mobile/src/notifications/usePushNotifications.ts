@@ -68,7 +68,7 @@ async function varrerBandeja() {
 export function usePushNotifications() {
   const [pushToken, setPushToken] = useState<string | null>(null);
   const [telaPendente, setTelaPendente] = useState<
-    { tela: "minhas" | "territorio" | "grupos" | "revisita"; numero?: string; marcacao?: number; grupoId?: number; revisitaId?: number } | null
+    { tela: "minhas" | "territorio" | "grupos" | "revisita" | "estudo"; numero?: string; marcacao?: number; grupoId?: number; revisitaId?: number } | null
   >(null);
   const router = useRouter();
   // Fica falso enquanto o router não montou: na abertura fria o toque na
@@ -106,6 +106,8 @@ export function usePushNotifications() {
       if (data?.screen === "grupos") setTelaPendente({ tela: "grupos", grupoId: data.grupoId });
       // O aviso da visita marcada abre a revisita.
       if (data?.screen === "revisita") setTelaPendente({ tela: "revisita", revisitaId: data.revisitaId });
+      // Os avisos da rotina de estudo e o plano B da leitura abrem o Estudo pessoal.
+      if (data?.screen === "estudo") setTelaPendente({ tela: "estudo" });
     };
 
     // Abertura fria: o toque chega ao nativo antes de haver listener em JS.
@@ -152,6 +154,10 @@ export function usePushNotifications() {
     if (telaPendente.tela === "revisita") {
       router.dismissTo("/ministerio");
       if (telaPendente.revisitaId) router.push({ pathname: "/ministerio/contato", params: { id: String(telaPendente.revisitaId) } });
+      return;
+    }
+    if (telaPendente.tela === "estudo") {
+      router.dismissTo("/estudo");
       return;
     }
     // O de território também tem ambiente próprio: abre no Mapa dele e, com o número, no território.
