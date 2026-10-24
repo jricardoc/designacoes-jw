@@ -84,13 +84,13 @@ export default function InicioMinisterio() {
 
         <Animated.View entering={entrada(0)}>
           <Vidro style={styles.hero}>
-            <Anel tamanho={214} fracao={fracao} pulsando={p.cronometro.rodando}>
+            <Anel tamanho={214} fracao={fracao} pulsando={cron.rodando}>
               {emAndamento ? (
                 <>
                   <Text style={styles.relogio} accessibilityLabel={`Cronômetro: ${duracao(Math.floor(segundos / 60))}`}>
                     {relogio(segundos)}
                   </Text>
-                  <Text style={styles.anelLegenda}>{p.cronometro.rodando ? "contando" : "pausado"}</Text>
+                  <Text style={styles.anelLegenda}>{cron.rodando ? "contando" : "pausado"}</Text>
                 </>
               ) : (
                 <>
@@ -108,7 +108,7 @@ export default function InicioMinisterio() {
               {fracao >= 1 ? `Meta de ${mesCurto} alcançada` : `Faltam ${duracao(metaMin - p.minutosMes)} para a meta de ${mesCurto}`}
             </Text>
             <View style={styles.botoes}>
-              {p.cronometro.rodando ? (
+              {cron.rodando ? (
                 <Button label="Pausar" icon="pause" variant="secondary" onPress={() => acao("pausar")} loading={cron.pendente} style={styles.flex} />
               ) : (
                 <Button label={emAndamento ? "Continuar" : "Iniciar"} icon="play" onPress={() => acao("iniciar")} loading={cron.pendente} style={styles.flex} />

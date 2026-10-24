@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/api/client";
 import { qk } from "@/api/queryKeys";
+import { enfileirar, novaChave } from "@/territorios/fila";
 import type { AssuntoEstudo, EstadoEstudo, PerfilEstudo, RotinaEstudo, SessaoEstudo, TipoAssunto, TipoRotina } from "@/api/types";
 
 /**
@@ -28,13 +29,17 @@ export function usePerfilEstudo() {
 
 /**
  * Marcar e desmarcar trechos lidos (e a joia de um trecho). Muda a tela na hora: o quadrículo
- * não pode esperar a rede para acender.
+ * não pode esperar a rede para acender. Passa pela fila (src/territorios/fila): sem internet,
+ * fica no celular com a hora em que foi marcado e sobe sozinho depois.
  */
 export function useMarcarLeitura() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: { plano: PerfilEstudo["plano"]; itens: string[]; lido?: boolean; nota?: string | null }) =>
-      apiRequest<{ ok: boolean }>("/estudo/leituras", { method: "PUT", body }),
+    mutationFn: async (body: { plano: PerfilEstudo["plano"]; itens: string[]; lido?: boolean; nota?: string | null }) => {
+      const r = await enfileirar({ clientKey: novaChave(), tipo: "leitura", corpo: { ...body, em: Date.now() }, titulo: "Leitura da Bíblia" });
+      if (r.erro) throw new Error(r.erro);
+      return { naFila: !r.enviado };
+    },
     onMutate: async (b) => {
       await qc.cancelQueries({ queryKey: qk.estudo });
       const antes = qc.getQueryData<EstadoEstudo>(qk.estudo);
