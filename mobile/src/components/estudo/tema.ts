@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import type { VidroBarra } from "@/components/layout/BarraAmbiente";
 import { ajusteDaltonico, type Cores, type Esquema } from "@/theme";
 
@@ -115,4 +116,36 @@ export function vidroEstudo(esquema: Esquema): VidroBarra {
   return esquema === "escuro"
     ? { vidro: "rgba(33,22,23,0.82)", vidroBorda: "rgba(229,143,168,0.14)", tint: "dark" }
     : { vidro: "rgba(255,255,255,0.84)", vidroBorda: "rgba(140,47,75,0.10)", tint: "light" };
+}
+
+/**
+ * A letra de livro do ambiente, nos títulos de leitura (a passagem do dia, o assunto do estudo).
+ * Sem fonte nova no app: a serifada do sistema (a do Apple Books no iPhone, a Noto Serif no Android).
+ */
+export const SERIFA = Platform.select({ ios: "Iowan Old Style", default: "serif" });
+
+/**
+ * O cartão da leitura de hoje: o degradê vinho da marca do ambiente, com texto creme e o dourado
+ * do progresso. Contraste conferido: creme no vinho 6,6 (claro) e 12 (escuro); o creme suave, 5,0.
+ */
+export function heroiEstudo(esquema: Esquema) {
+  return esquema === "escuro"
+    ? {
+        fundo: ["#5E1B30", "#4A1526", "#33101B"] as const,
+        texto: "#FBF1EA",
+        suave: "rgba(251,241,234,0.76)",
+        ouro: "#F2C25A",
+        trilho: "rgba(251,241,234,0.18)",
+        vidro: "rgba(251,241,234,0.12)",
+        botaoTexto: "#4A1526",
+      }
+    : {
+        fundo: ["#963A56", "#7E2C45", "#5E1B30"] as const,
+        texto: "#FFF8F2",
+        suave: "rgba(255,248,242,0.82)",
+        ouro: "#F6C453",
+        trilho: "rgba(255,248,242,0.24)",
+        vidro: "rgba(255,248,242,0.14)",
+        botaoTexto: "#7E2C45",
+      };
 }
