@@ -370,6 +370,19 @@ export default function AjustesScreen() {
               )}
             </View>
           ) : null}
+          {/* Só o admin geral: o que quebrou no celular de cada um, para conferir uma versão. */}
+          {ehAdminGeral(usuario) ? (
+            <Pressable style={[styles.linha, styles.divisoria]} onPress={() => router.push("/erros")} accessibilityRole="button">
+              <View style={styles.icone}>
+                <Ionicons name="bug-outline" size={18} color={colors.textSecondary} />
+              </View>
+              <View style={styles.textos}>
+                <Text style={styles.titulo}>Erros do app</Text>
+                <Text style={styles.descricao}>O que quebrou no celular de cada um</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </Pressable>
+          ) : null}
         </View>
       </ScrollView>
     </View>

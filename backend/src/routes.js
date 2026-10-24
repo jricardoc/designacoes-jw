@@ -24,6 +24,7 @@ const TerritorioController = require('./controllers/TerritorioController');
 const PushTokenController = require('./controllers/PushTokenController');
 const TarefasController = require('./controllers/TarefasController');
 const PreferenciaNotificacaoController = require('./controllers/PreferenciaNotificacaoController');
+const ErroAppController = require('./controllers/ErroAppController');
 const requireAdmin = require('./middleware/requireAdmin');
 const { ESCOPOS, requireEscopo, requireMarcarTerritorio } = require('./middleware/escopos');
 // Leitura e livre para qualquer irmao logado; escrita exige o escopo da area
@@ -46,6 +47,16 @@ const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
     message: { error: 'Muitas tentativas de login. Tente novamente mais tarde.' },
+    standardHeaders: true,
+    legacyHeaders: false
+});
+
+// O app manda os erros que ficaram guardados de uma vez; um laco de erros num celular nao pode
+// encher a tabela (o mesmo erro ja soma `vezes`, mas cada envio e uma ida ao banco).
+const errosLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 30,
+    keyGenerator: (req) => String(req.user.id),
     standardHeaders: true,
     legacyHeaders: false
 });
@@ -166,6 +177,13 @@ routes.post('/push/testar', requireAdmin, PushTokenController.testar);
 // rota para mexer na preferencia dos outros, nem para admin.
 routes.get('/push/preferencias', PreferenciaNotificacaoController.show);
 routes.put('/push/preferencias', PreferenciaNotificacaoController.update);
+
+// ==================== ERROS DO APP ====================
+// O que quebrou no celular de quem esta logado (tela que deu erro, excecao do JS). Ver e limpar
+// e do admin geral, em Ajustes.
+routes.post('/erros-app', errosLimiter, ErroAppController.registrar);
+routes.get('/erros-app', requireAdmin, ErroAppController.listar);
+routes.delete('/erros-app', requireAdmin, ErroAppController.limpar);
 
 // ==================== HISTORICO ====================
 routes.get('/historico', HistoricoController.index);

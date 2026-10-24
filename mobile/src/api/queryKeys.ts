@@ -75,4 +75,6 @@ export const qk = {
   // A janela entra na chave: 30 e 90 dias são consultas diferentes, e uma não pode
   // servir de cache para a outra.
   painelTarefas: (janelaDias: number) => ["painel-tarefas", janelaDias] as const,
+  // O que quebrou no app de cada um (admin geral, em Ajustes).
+  errosApp: ["erros-app"] as const,
 };
