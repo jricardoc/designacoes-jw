@@ -86,7 +86,7 @@ async function anotarUsuarios(usuarios) {
             const irmaos = await prisma.irmao.findMany({
                 where: { id: { in: idsVinculados } },
                 select: {
-                    id: true, nome: true, privilegio: true, funcoes: true, ativo: true, pioneiro: true,
+                    id: true, nome: true, privilegio: true, funcoes: true, ativo: true, pioneiro: true, genero: true,
                     // Para o menu mostrar "Grupos" a quem dirige ou ajuda um grupo.
                     gruposQueDirige: { where: { ativo: true }, select: { id: true } },
                     gruposQueAjuda: { where: { ativo: true }, select: { id: true } },
@@ -111,6 +111,7 @@ async function anotarUsuarios(usuarios) {
                     nome: irmao.nome,
                     funcoes: irmao.funcoes,
                     pioneiro: irmao.pioneiro || null,
+                    genero: irmao.genero || null,
                     // O secretario ve todos os grupos (a tela de Grupos aparece no menu dele).
                     secretario: !!secretarioId && irmao.id === secretarioId,
                     gruposQueLidera: [...(irmao.gruposQueDirige || []), ...(irmao.gruposQueAjuda || [])].map(g => g.id),

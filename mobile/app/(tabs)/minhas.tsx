@@ -6,11 +6,11 @@ import { useConfig } from "@/api/hooks/useMisc";
 import { useMinhasDesignacoes } from "@/api/hooks/useMinhasDesignacoes";
 import { useTarefas } from "@/api/hooks/useTarefas";
 import type { Compromisso, Config, TipoCompromisso } from "@/api/types";
-import { GradientHeader, Loading } from "@/components/ui";
+import { Avatar, GradientHeader, Loading } from "@/components/ui";
 import { CompromissoSheet } from "@/components/minhas/CompromissoSheet";
 import { CartaoCronometro } from "@/components/ministerio/CartaoCronometro";
 import { ListaTarefas } from "@/components/tarefas/ListaTarefas";
-import { PrivilegioBadge } from "@/components/PrivilegioBadge";
+import { PioneiroBadge, PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
 import { MESES, radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -428,15 +428,14 @@ export default function InicioScreen() {
                 <Text style={styles.secaoLabel}>Cargos e privilégio</Text>
                 <View style={styles.painel}>
                   <View style={styles.irmaoLinha}>
-                    <View style={[styles.iconeBox, { backgroundColor: colors.infoBg }]}>
-                      <Ionicons name="person" size={15} color={colors.oliveSoft} />
-                    </View>
+                    {usuario ? <Avatar usuario={usuario} tamanho={30} fundo={colors.sand} corTexto={colors.primaryDark} /> : null}
                     <Text style={styles.irmaoNome} numberOfLines={1}>
                       {data.irmao?.nome ?? "—"}
                     </Text>
                     {data.irmao?.privilegio ? (
                       <PrivilegioBadge privilegio={data.irmao.privilegio} size="sm" abreviado />
                     ) : null}
+                    <PioneiroBadge pioneiro={usuario?.irmao?.pioneiro} genero={usuario?.irmao?.genero} size="sm" />
                   </View>
 
                   {funcoes.length > 0 ? (

@@ -1,4 +1,4 @@
-import type { FuncaoId, PrivilegioId } from "@/api/types";
+import type { FuncaoId, GeneroPessoa, PrivilegioId, TipoPioneiro } from "@/api/types";
 
 /**
  * Privilégios de serviço. Espelha frontend/src/utils/privilegios.js e os valores aceitos por
@@ -30,6 +30,10 @@ export function privilegioInfo(id: PrivilegioId | null | undefined) {
 export function privilegioLabel(id: PrivilegioId | null | undefined): string {
   return privilegioInfo(id)?.label ?? "";
 }
+
+/** "Pioneira auxiliar", "Pioneiro regular": o pioneiro do cadastro, no gênero da pessoa. */
+export const rotuloPioneiro = (tipo: TipoPioneiro, genero?: GeneroPessoa | null) =>
+  `${genero === "irma" ? "Pioneira" : "Pioneiro"} ${tipo}`;
 
 /** Functions a brother can be assigned, as shown in the editor. */
 export const FUNCOES: { id: FuncaoId; label: string; color: string }[] = [

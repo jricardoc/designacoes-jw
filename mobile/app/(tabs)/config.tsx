@@ -11,15 +11,31 @@ import {
 } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useIrmaos } from "@/api/hooks/useIrmaos";
-import type { FuncaoId, GeneroPessoa } from "@/api/types";
+import type { FuncaoId, GeneroPessoa, Irmao, TipoPioneiro } from "@/api/types";
 import { EmptyState, GradientHeader, Loading } from "@/components/ui";
-import { PrivilegioBadge } from "@/components/PrivilegioBadge";
+import { PioneiroBadge, PrivilegioBadge } from "@/components/PrivilegioBadge";
 import { useAuth } from "@/context/AuthContext";
 import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { FUNCOES, funcaoColor, funcaoLabel } from "@/utils/funcoes";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+
+/** A primeira fileira de filtros: todos, por gênero, ou os pioneiros (todos ou de um tipo). */
+type Quem = "todos" | GeneroPessoa | "pioneiros" | TipoPioneiro;
+
+const QUEM: { valor: Quem; rotulo: string }[] = [
+  { valor: "todos", rotulo: "Todos" },
+  { valor: "irmao", rotulo: "Irmãos" },
+  { valor: "irma", rotulo: "Irmãs" },
+  { valor: "pioneiros", rotulo: "Pioneiros" },
+  { valor: "regular", rotulo: "Regulares" },
+  { valor: "auxiliar", rotulo: "Auxiliares" },
+];
+
+const mostra = (i: Irmao, quem: Quem) =>
+  quem === "todos" ||
+  (quem === "pioneiros" ? !!i.pioneiro : quem === "irmao" || quem === "irma" ? i.genero === quem : i.pioneiro === quem);
 
 export default function ConfigScreen() {
   // Chamado UMA vez, no topo: o ScrollView abaixo mora dentro de um condicional
@@ -35,18 +51,17 @@ export default function ConfigScreen() {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState<FuncaoId | "todos">("todos");
   // Filtro à parte do de função: com irmãs no cadastro (elas não têm função mecânica), o
-  // filtro por função não alcança metade das pessoas.
-  const [genero, setGenero] = useState<GeneroPessoa | "todos">("todos");
+  // filtro por função não alcança metade das pessoas. Os pioneiros moram aqui também.
+  const [quem, setQuem] = useState<Quem>("todos");
 
   const filtrados = useMemo(
     () =>
       (irmaos ?? []).filter((i) => {
         const okBusca = i.nome.toLowerCase().includes(busca.toLowerCase());
         const okFiltro = filtro === "todos" || i.funcoes.includes(filtro);
-        const okGenero = genero === "todos" || i.genero === genero;
-        return okBusca && okFiltro && okGenero;
+        return okBusca && okFiltro && mostra(i, quem);
       }),
-    [irmaos, busca, filtro, genero],
+    [irmaos, busca, filtro, quem],
   );
 
   // Cadastro de publicadores e do admin geral. As saidas de campo, que dividiam esta tela
@@ -100,18 +115,16 @@ export default function ConfigScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.filtersRow}
             >
-              {(["todos", "irmao", "irma"] as const).map((g) => {
-                const active = genero === g;
-                const label =
-                  g === "todos" ? "Todos" : g === "irmao" ? "Irmãos" : "Irmãs";
+              {QUEM.map((q) => {
+                const active = quem === q.valor;
                 return (
                   <Pressable
-                    key={g}
-                    onPress={() => setGenero(g)}
+                    key={q.valor}
+                    onPress={() => setQuem(q.valor)}
                     style={[styles.filterChip, active && styles.filterChipActive]}
                   >
                     <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
-                      {label}
+                      {q.rotulo}
                     </Text>
                   </Pressable>
                 );
@@ -167,7 +180,7 @@ export default function ConfigScreen() {
                     </Text>
                     <Ionicons name="chevron-forward" size={16} color="#C6BAA0" />
                   </View>
-                  {irmao.grupoCampo || irmao.privilegio || irmao.funcoes.length > 0 ? (
+                  {irmao.grupoCampo || irmao.privilegio || irmao.pioneiro || irmao.funcoes.length > 0 ? (
                     <View style={styles.funcoesRow}>
                       {/* O grupo vem primeiro: com 70 publicadores, e por ele que se confere
                           quem ainda falta preencher e quem cuida da limpeza de cada semana. */}
@@ -177,6 +190,7 @@ export default function ConfigScreen() {
                         </View>
                       ) : null}
                       <PrivilegioBadge privilegio={irmao.privilegio} size="sm" abreviado />
+                      <PioneiroBadge pioneiro={irmao.pioneiro} genero={irmao.genero} size="sm" />
                       {irmao.funcoes.map((f) => (
                         <View
                           key={f}

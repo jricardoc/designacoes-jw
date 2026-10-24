@@ -221,6 +221,7 @@ export interface Usuario {
     nome: string;
     funcoes: FuncaoId[];
     pioneiro?: TipoPioneiro | null;
+    genero?: GeneroPessoa | null;
     /** Os grupos de campo que ele dirige ou ajuda: liberam a tela de Grupos. */
     gruposQueLidera?: number[];
     /** É o secretário: vê todos os grupos e o relatório da congregação. */
@@ -1133,6 +1134,8 @@ export interface MembroGrupo {
   id: number;
   nome: string;
   pioneiro: TipoPioneiro | null;
+  /** Vem desde a etiqueta "Pioneira"; servidor antigo não manda. */
+  genero?: GeneroPessoa | null;
   privilegio: PrivilegioId | null;
   lider: "dirigente" | "ajudante" | null;
   relatorio: RelatorioCampo | null;
