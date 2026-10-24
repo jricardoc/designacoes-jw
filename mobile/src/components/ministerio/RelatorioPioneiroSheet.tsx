@@ -4,6 +4,7 @@ import { useEnviarRelatorioPioneiro } from "@/api/hooks/usePioneiro";
 import type { PainelPioneiro } from "@/api/types";
 import { useCelebracao } from "@/components/celebracao/contextoCelebracao";
 import { Button, Sheet, TextField, useToast } from "@/components/ui";
+import { useAuth } from "@/context/AuthContext";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { Contador } from "./escolhas";
@@ -18,6 +19,7 @@ export function RelatorioPioneiroSheet({ painel, visible, onClose }: { painel: P
   const toast = useToast();
   const { celebrar } = useCelebracao();
   const enviar = useEnviarRelatorioPioneiro();
+  const { usuario } = useAuth();
   const [estudos, setEstudos] = useState(0);
   const [auxiliar, setAuxiliar] = useState(false);
   const [observacao, setObservacao] = useState("");
@@ -25,9 +27,10 @@ export function RelatorioPioneiroSheet({ painel, visible, onClose }: { painel: P
   useEffect(() => {
     if (!visible) return;
     setEstudos(painel.relatorio?.estudos ?? painel.estudos);
-    setAuxiliar(!!painel.relatorio?.pioneiroAuxiliar);
+    // Sem relatório ainda, o auxiliar do cadastro já começa marcado.
+    setAuxiliar(painel.relatorio ? !!painel.relatorio.pioneiroAuxiliar : usuario?.irmao?.pioneiro === "auxiliar");
     setObservacao(painel.relatorio?.observacao ?? "");
-  }, [visible, painel]);
+  }, [visible, painel, usuario?.irmao?.pioneiro]);
 
   const horas = Math.floor(painel.minutosMes / 60);
   const sobra = painel.minutosMes % 60;

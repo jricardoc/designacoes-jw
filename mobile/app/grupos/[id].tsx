@@ -85,10 +85,10 @@ export default function GrupoScreen() {
           <Text style={[styles.etiquetaTexto, { color: colors.primaryDark }]}>{m.lider === "dirigente" ? "Dirigente" : "Ajudante"}</Text>
         </View>
       ) : null}
-      {m.pioneiro === "regular" ? (
+      {m.pioneiro ? (
         <View style={[styles.etiqueta, { backgroundColor: colors.successBg }]}>
           <Ionicons name="leaf" size={11} color={colors.greenDark} />
-          <Text style={[styles.etiquetaTexto, { color: colors.greenDark }]}>Pioneiro regular</Text>
+          <Text style={[styles.etiquetaTexto, { color: colors.greenDark }]}>Pioneiro {m.pioneiro}</Text>
         </View>
       ) : null}
       {m.privilegio ? <PrivilegioBadge privilegio={m.privilegio} size="sm" abreviado /> : null}

@@ -1,6 +1,7 @@
 const prisma = require('../prisma');
 const Divisao = require('../services/DivisaoGruposService');
 const Relatorio = require('../services/RelatorioCampoService');
+const Pioneiro = require('../services/PioneiroService');
 
 const erro = (res, status, mensagem) => res.status(status).json({ error: mensagem });
 const MENSAGENS = { 403: 'Você não tem acesso a este grupo.', 404: 'Grupo não encontrado.' };
@@ -156,7 +157,8 @@ class GruposController {
      *              membros: [{ nomeDocumento, irmaoId?, nomeNovo?, pioneiro }] }], tirarDosGrupos }
      *
      * Tudo numa transacao: grupos (pelo numero), quem esta em cada um, dirigente e ajudante, e o
-     * pioneiro regular de quem esta na lista. Grupo que nao veio fica inativo.
+     * pioneiro regular de quem esta na lista (o auxiliar do cadastro fica). Grupo que nao veio fica
+     * inativo.
      */
     async aplicarDivisao(req, res) {
         try {
@@ -223,14 +225,24 @@ class GruposController {
                 }
                 await tx.grupoCampo.updateMany({ where: { id: { notIn: [...usados] } }, data: { ativo: false } });
 
-                // 3. Quem esta em cada grupo e o pioneiro regular (a lista e a fonte).
+                // 3. Quem esta em cada grupo e quem e pioneiro regular: a lista e a fonte do regular (o
+                // verde). O auxiliar continuo nao sai no PDF: vem do cadastro e fica como esta.
+                const antes = new Map(
+                    (await tx.irmao.findMany({ where: { id: { in: grupos.flatMap((g) => g.membros.map((m) => m.id)) } }, select: { id: true, pioneiro: true } }))
+                        .map((i) => [i.id, i.pioneiro]),
+                );
                 const listados = new Set();
+                const viraramRegulares = [];
                 for (const g of grupos) {
                     for (const m of g.membros) {
                         listados.add(m.id);
-                        await tx.irmao.update({ where: { id: m.id }, data: { grupoId: g.id, pioneiro: m.pioneiro ? 'regular' : null } });
+                        const era = antes.get(m.id) ?? null;
+                        const pioneiro = m.pioneiro ? 'regular' : era === 'regular' ? null : era;
+                        if (pioneiro === 'regular' && era !== 'regular') viraramRegulares.push(m.id);
+                        await tx.irmao.update({ where: { id: m.id }, data: { grupoId: g.id, pioneiro } });
                     }
                 }
+                if (viraramRegulares.length) await Pioneiro.metaDoTipo(tx, viraramRegulares, 'regular');
                 let sairam = 0;
                 if (tirarDosGrupos) {
                     sairam = (await tx.irmao.updateMany({ where: { grupoId: { not: null }, id: { notIn: [...listados] } }, data: { grupoId: null } })).count;

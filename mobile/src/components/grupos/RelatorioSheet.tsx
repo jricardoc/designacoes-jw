@@ -46,12 +46,13 @@ export function RelatorioSheet({ membro: aberto, mes, nomeMes, rotuloGrupo, fech
   // Cada irmão aberto começa do que já foi anotado para ele (ou do zero).
   useEffect(() => {
     const r = membro?.relatorio;
-    setAuxiliar(!!r?.pioneiroAuxiliar);
+    // Sem relatório ainda, o auxiliar do cadastro já começa marcado.
+    setAuxiliar(r ? r.pioneiroAuxiliar : membro?.pioneiro === "auxiliar");
     setParticipou(r ? r.participou : null);
     setHoras(r?.horas != null ? String(r.horas) : "");
     setEstudos(r?.estudos ?? 0);
     setObservacao(r?.observacao ?? "");
-  }, [membro?.id, membro?.relatorio]);
+  }, [membro?.id, membro?.relatorio, membro?.pioneiro]);
 
   if (!membro) return null;
 

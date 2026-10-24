@@ -59,7 +59,7 @@ const ARTIGOS: { icone: Icone; titulo: string; texto: string; palavras: string }
     icone: "lock-closed",
     titulo: "Quem vê os meus planos?",
     texto:
-      "Só os outros pioneiros regulares, e só o seu primeiro nome com o horário e o local. Para esconder, desligue Mostrar meus planos de saída em Perfil e configurações. Contatos, notas e horas nunca são mostrados a ninguém.",
+      "Só os outros pioneiros do cadastro (regulares e auxiliares), e só o seu primeiro nome com o horário e o local. Para esconder, desligue Mostrar meus planos de saída em Perfil e configurações. Contatos, notas e horas nunca são mostrados a ninguém.",
     palavras: "privacidade compartilhar esconder planos quem vê",
   },
   {

@@ -176,8 +176,9 @@ model Irmao {
   // "servoMinisterial", "anciao" ou null (nenhum). Hoje e informativo; a intencao e usar
   // como criterio de designacao no futuro, entao vale guardar mesmo sem regra ligada.
   privilegio            String?
-  // "regular" (pioneiro regular) ou null. Separado do privilegio: um servo ministerial pode
-  // ser pioneiro regular. O auxiliar e de cada mes e fica no proprio relatorio.
+  // "regular" (50 h por mes), "auxiliar" (30 h por mes, o auxiliar continuo) ou null. Separado
+  // do privilegio: um servo ministerial pode ser pioneiro. Quem e auxiliar so num mes marca isso
+  // no proprio relatorio.
   pioneiro              String?
   ativo                 Boolean                @default(true)
   usuario               Usuario?

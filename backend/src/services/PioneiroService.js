@@ -9,12 +9,14 @@ const { relogioDaCongregacao } = require('./RegrasLembrete');
  *
  * Tudo no servidor (trocar ou perder o celular nao perde nada) e cada um so mexe no que e seu:
  * a chave e sempre o irmao do usuario logado, nunca um id de irmao vindo do app. Quem usa:
- * pioneiro regular (cadastro) e o admin geral.
+ * o pioneiro do cadastro (regular ou auxiliar) e o admin geral.
  *
  * As regras puras ficam no topo (testadas em scripts/verificarPioneiros.js).
  */
 
-const META_PADRAO = 50;
+/** A meta do mes pelo tipo de pioneiro do cadastro (o admin que nao e pioneiro fica com a do regular). */
+const metaPadrao = (pioneiro) => (pioneiro === 'auxiliar' ? 30 : 50);
+const ehPioneiro = (pioneiro) => pioneiro === 'regular' || pioneiro === 'auxiliar';
 /** Quanto antes da visita marcada sai o aviso (o agendador acorda de 15 em 15 minutos). */
 const AVISO_ANTES_MIN = 60;
 
@@ -234,14 +236,14 @@ function montarIcs(eventos, { agora = new Date(), nome = 'Ministério' } = {}) {
 // Banco
 // ---------------------------------------------------------------------------
 
-/** O irmao do usuario, se ele pode usar a area (pioneiro regular ou admin geral). */
+/** O irmao do usuario, se ele pode usar a area (pioneiro, regular ou auxiliar, ou admin geral). */
 async function contexto(usuario) {
     if (!usuario || !usuario.irmaoId) {
         return { erro: 403, mensagem: 'Sua conta precisa estar ligada ao seu cadastro de publicador. Fale com um administrador.' };
     }
     const irmao = await prisma.irmao.findUnique({ where: { id: usuario.irmaoId }, select: { id: true, nome: true, pioneiro: true, grupoId: true } });
     if (!irmao) return { erro: 403, mensagem: 'Cadastro não encontrado.' };
-    if (!usuario.isAdmin && irmao.pioneiro !== 'regular') return { erro: 403, mensagem: 'Esta área é dos pioneiros regulares.' };
+    if (!usuario.isAdmin && !ehPioneiro(irmao.pioneiro)) return { erro: 403, mensagem: 'Esta área é dos pioneiros.' };
     return { irmao };
 }
 
@@ -261,8 +263,15 @@ function somarMes(mes, delta) {
 
 const primeiroNome = (nome) => String(nome || '').trim().split(/\s+/)[0];
 
-const perfilDe = (irmaoId) =>
-    prisma.pioneiroPerfil.upsert({ where: { irmaoId }, create: { irmaoId, metaMensal: META_PADRAO }, update: {} });
+const perfilDe = (irmao) =>
+    prisma.pioneiroPerfil.upsert({ where: { irmaoId: irmao.id }, create: { irmaoId: irmao.id, metaMensal: metaPadrao(irmao.pioneiro) }, update: {} });
+
+/**
+ * Trocou o tipo de pioneiro (no cadastro ou pela lista de grupos): a meta volta ao padrao do tipo
+ * novo. Depois cada um ajusta a sua no Perfil.
+ */
+const metaDoTipo = (db, irmaoIds, pioneiro) =>
+    db.pioneiroPerfil.updateMany({ where: { irmaoId: { in: irmaoIds } }, data: { metaMensal: metaPadrao(pioneiro) } });
 
 const estadoDoCronometro = (perfil) => ({
     rodando: !!perfil.cronometroInicio,
@@ -279,7 +288,7 @@ async function painel(usuario, mesPedido) {
     const mes = ehMes(mesPedido) && mesPedido <= hoje.slice(0, 7) ? mesPedido : hoje.slice(0, 7);
     const anoServico = mesesDoAnoDeServico(mes);
     const [perfil, horas, revisitas, relatorio] = await Promise.all([
-        perfilDe(irmao.id),
+        perfilDe(irmao),
         prisma.pioneiroHoras.findMany({
             where: { irmaoId: irmao.id, data: { gte: `${anoServico[0]}-01`, lte: `${anoServico[11]}-31` } },
             orderBy: [{ data: 'desc' }, { id: 'desc' }],
@@ -346,7 +355,7 @@ async function cronometro(usuario, acao, agora = new Date()) {
     const ctx = await contexto(usuario);
     if (ctx.erro) return ctx;
     const irmaoId = ctx.irmao.id;
-    const perfil = await perfilDe(irmaoId);
+    const perfil = await perfilDe(ctx.irmao);
     const segundos = segundosDoCronometro(perfil, agora);
     const mudancas = {
         iniciar: perfil.cronometroInicio ? null : { cronometroInicio: agora },
@@ -364,7 +373,7 @@ async function cronometro(usuario, acao, agora = new Date()) {
             });
         }
     }
-    return { cronometro: estadoDoCronometro(await perfilDe(irmaoId)), registro };
+    return { cronometro: estadoDoCronometro(await perfilDe(ctx.irmao)), registro };
 }
 
 async function lancarHoras(usuario, corpo) {
@@ -387,7 +396,7 @@ async function definirMeta(usuario, valor) {
     if (ctx.erro) return ctx;
     const metaMensal = Math.round(Number(valor));
     if (!Number.isFinite(metaMensal) || metaMensal < 1 || metaMensal > 200) return { erro: 400, mensagem: 'Meta de 1 a 200 horas por mês.' };
-    await perfilDe(ctx.irmao.id);
+    await perfilDe(ctx.irmao);
     await prisma.pioneiroPerfil.update({ where: { irmaoId: ctx.irmao.id }, data: { metaMensal } });
     return { metaMensal };
 }
@@ -487,7 +496,7 @@ async function atualizarPerfil(usuario, corpo) {
         dados.metaMensal = meta;
     }
     if (c.compartilharPlanos !== undefined) dados.compartilharPlanos = c.compartilharPlanos === true;
-    await perfilDe(ctx.irmao.id);
+    await perfilDe(ctx.irmao);
     const perfil = await prisma.pioneiroPerfil.update({ where: { irmaoId: ctx.irmao.id }, data: dados });
     return { metaMensal: perfil.metaMensal, compartilharPlanos: perfil.compartilharPlanos };
 }
@@ -515,7 +524,7 @@ async function agenda(usuario, { de, ate } = {}) {
                 // Sem perfil salvo ainda vale o padrao (compartilhar).
                 OR: [
                     { irmaoId },
-                    { irmao: { pioneiro: 'regular', OR: [{ pioneiroPerfil: { is: null } }, { pioneiroPerfil: { is: { compartilharPlanos: true } } }] } },
+                    { irmao: { pioneiro: { in: ['regular', 'auxiliar'] }, OR: [{ pioneiroPerfil: { is: null } }, { pioneiroPerfil: { is: { compartilharPlanos: true } } }] } },
                 ],
             },
             include: { irmao: { select: { nome: true } } },
@@ -619,7 +628,7 @@ async function progresso(usuario, mesPedido) {
     const ultimos12 = Array.from({ length: 12 }, (_, i) => somarMes(mes, i - 11));
     const desde = ultimos12[0] < anoServico[0] ? ultimos12[0] : anoServico[0];
     const [perfil, horas, relatorios, visitasMes, viagensMes] = await Promise.all([
-        perfilDe(irmaoId),
+        perfilDe(ctx.irmao),
         prisma.pioneiroHoras.findMany({ where: { irmaoId, data: { gte: `${desde}-01`, lte: `${anoServico[11]}-31` } }, select: { data: true, minutos: true } }),
         prisma.relatorioCampo.findMany({ where: { irmaoId, mes: { in: anoServico } }, select: { mes: true } }),
         prisma.revisitaVisita.findMany({
@@ -662,7 +671,7 @@ async function progresso(usuario, mesPedido) {
 async function linkCalendario(usuario, { trocar = false } = {}) {
     const ctx = await contexto(usuario);
     if (ctx.erro) return ctx;
-    const perfil = await perfilDe(ctx.irmao.id);
+    const perfil = await perfilDe(ctx.irmao);
     if (perfil.calendarioToken && !trocar) return { token: perfil.calendarioToken };
     const token = require('crypto').randomBytes(24).toString('hex');
     await prisma.pioneiroPerfil.update({ where: { irmaoId: ctx.irmao.id }, data: { calendarioToken: token } });
@@ -798,6 +807,7 @@ module.exports = {
     progresso,
     linkCalendario,
     calendarioIcs,
+    metaDoTipo,
     _internos: {
         montarIcs,
         textoIcs,
@@ -814,6 +824,6 @@ module.exports = {
         normalizarPlano,
         normalizarViagem,
         inicioDoDia,
-        META_PADRAO,
+        metaPadrao,
     },
 };

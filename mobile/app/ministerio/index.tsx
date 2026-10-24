@@ -61,7 +61,7 @@ export default function InicioMinisterio() {
         <CabecalhoMinisterio />
         <EmptyState
           icon={negado ? "lock-closed-outline" : "cloud-offline-outline"}
-          title={negado ? "Área dos pioneiros regulares" : "Não deu para carregar"}
+          title={negado ? "Área dos pioneiros" : "Não deu para carregar"}
           message={negado ? error.message : "Puxe para tentar de novo."}
         />
       </View>

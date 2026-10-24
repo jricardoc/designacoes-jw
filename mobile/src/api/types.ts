@@ -192,6 +192,9 @@ export interface RespostaTarefas {
   atrasadas: number;
 }
 
+/** O pioneiro do cadastro: regular (50 h por mês) ou auxiliar contínuo (30 h). Quem é auxiliar só num mês marca no relatório. */
+export type TipoPioneiro = "regular" | "auxiliar";
+
 export interface Usuario {
   id: number;
   nickname: string;
@@ -217,8 +220,7 @@ export interface Usuario {
     id: number;
     nome: string;
     funcoes: FuncaoId[];
-    /** "regular" quando é pioneiro regular. */
-    pioneiro?: "regular" | null;
+    pioneiro?: TipoPioneiro | null;
     /** Os grupos de campo que ele dirige ou ajuda: liberam a tela de Grupos. */
     gruposQueLidera?: number[];
     /** É o secretário: vê todos os grupos e o relatório da congregação. */
@@ -316,8 +318,7 @@ export interface Irmao {
   funcoes: FuncaoId[];
   nivelAudioVideo: NivelAudioVideo;
   privilegio?: PrivilegioId | null;
-  /** "regular" quando é pioneiro regular. */
-  pioneiro?: "regular" | null;
+  pioneiro?: TipoPioneiro | null;
   /** Só dígitos, com DDD ("71999998888"). Abre o WhatsApp já com o texto na tela de Confirmações. */
   telefone?: string | null;
   genero?: GeneroPessoa | null;
@@ -1131,7 +1132,7 @@ export interface EstatisticasMembro {
 export interface MembroGrupo {
   id: number;
   nome: string;
-  pioneiro: "regular" | null;
+  pioneiro: TipoPioneiro | null;
   privilegio: PrivilegioId | null;
   lider: "dirigente" | "ajudante" | null;
   relatorio: RelatorioCampo | null;
@@ -1169,7 +1170,7 @@ export interface FichaMembro {
     id: number;
     nome: string;
     privilegio: PrivilegioId | null;
-    pioneiro: "regular" | null;
+    pioneiro: TipoPioneiro | null;
     genero: GeneroPessoa | null;
     telefone: string | null;
     whatsapp: string | null;
@@ -1188,7 +1189,7 @@ export interface FichaMembro {
     mesesNoApp: number;
     comRelatorio: number;
     participou: number;
-    /** Só do pioneiro regular: as horas relatadas no ano de serviço. */
+    /** Só do pioneiro regular: as horas relatadas no ano de serviço (o auxiliar fica de fora). */
     horasAnoServico: number | null;
   };
   zoom: {

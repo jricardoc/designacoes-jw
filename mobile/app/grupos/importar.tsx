@@ -139,7 +139,7 @@ export default function ImportarDivisaoScreen() {
         `${dados.grupos.length} grupos e ${pessoas} pessoas.`,
         novos ? `${novos} ${novos === 1 ? "nome novo vai ser cadastrado" : "nomes novos vão ser cadastrados"}.` : null,
         tirar && dados.saem.length ? `${dados.saem.length} saem dos grupos.` : null,
-        "Os pioneiros regulares passam a ser os marcados em verde no PDF.",
+        "Os pioneiros regulares passam a ser os marcados em verde no PDF. Os auxiliares ficam como estão no cadastro.",
       ]
         .filter(Boolean)
         .join("\n"),
