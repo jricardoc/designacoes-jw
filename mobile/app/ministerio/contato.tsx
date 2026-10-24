@@ -31,6 +31,7 @@ import { VisitaSheet } from "@/components/ministerio/VisitaSheet";
 import { Button, EmptyState, iniciais, Loading, useToast } from "@/components/ui";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { usePendentes } from "@/territorios/fila";
 import { usePuxar } from "@/utils/usePuxar";
 
 /** Um contato: a próxima visita em destaque, como chegar, as notas e a linha do tempo das visitas. */
@@ -46,6 +47,8 @@ export default function ContatoMinisterio() {
   const [menu, setMenu] = useState(false);
   const [editando, setEditando] = useState(false);
   const [tipoVisita, setTipoVisita] = useState<TipoVisita | null>(null);
+  // As visitas guardadas sem internet entram na linha do tempo, marcadas, até subirem.
+  const naFila = usePendentes("visita").filter((v) => Number(v.corpo.revisitaId) === id);
 
   if (isLoading && !r) {
     return (
@@ -71,6 +74,16 @@ export default function ContatoMinisterio() {
   const zap = whatsappDe(r.telefone);
   const tel = digitosDe(r.telefone);
   const registrar = (t?: TipoVisita) => setTipoVisita(t ?? (r.estudo ? "estudo" : "conversa"));
+  const visitas = [
+    ...naFila.map((v) => ({
+      id: v.clientKey,
+      data: String(v.corpo.data ?? v.criadoEm),
+      tipo: (v.corpo.tipo ?? "conversa") as TipoVisita,
+      observacao: (v.corpo.observacao as string | null | undefined) ?? null,
+      naFila: true,
+    })),
+    ...r.visitas.map((v) => ({ ...v, naFila: false })),
+  ];
 
   return (
     <View style={styles.tela}>
@@ -130,12 +143,12 @@ export default function ContatoMinisterio() {
 
         <Animated.View entering={entrada(3)}>
           <Text style={styles.secao}>Linha do tempo</Text>
-          {r.visitas.length ? (
+          {visitas.length ? (
             <View style={styles.linhaTempo}>
-              {r.visitas.map((v, i) => {
+              {visitas.map((v, i) => {
                 const t = TIPO_VISITA[v.tipo] ?? TIPO_VISITA.conversa;
                 const corT = t.cor(colors);
-                const ultimo = i === r.visitas.length - 1;
+                const ultimo = i === visitas.length - 1;
                 return (
                   <View key={v.id} style={styles.marco}>
                     <View style={styles.trilhaCol}>
@@ -150,6 +163,7 @@ export default function ContatoMinisterio() {
                         <Text style={styles.marcoData}>
                           {"  "}
                           {diaCurto(isoDoDia(new Date(v.data)))} · {horaDe(v.data)}
+                          {v.naFila ? " · aguardando sinal" : ""}
                         </Text>
                       </Text>
                       {v.observacao ? <Text style={styles.texto}>{v.observacao}</Text> : null}

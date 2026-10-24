@@ -447,12 +447,21 @@ async function revisita(usuario, id) {
     return r ? { revisita: r } : { erro: 404, mensagem: 'Revisita não encontrada.' };
 }
 
+/** O `clientKey` que o celular gera para o que vai pela fila sem internet (o mesmo formato do territorio). */
+const chaveDoCelular = (valor) => (/^[A-Za-z0-9_-]{8,80}$/.test(String(valor || '')) ? String(valor) : null);
+
 async function criarRevisita(usuario, corpo) {
     const ctx = await contexto(usuario);
     if (ctx.erro) return ctx;
     const { revisita: dados, erro } = normalizarRevisita(corpo);
     if (erro) return { erro: 400, mensagem: erro };
-    return { revisita: await prisma.revisita.create({ data: { ...dados, irmaoId: ctx.irmao.id } }) };
+    // Reenvio da fila (anotado sem internet, e o celular nao soube se chegou): devolve o que ja existe.
+    const clientKey = chaveDoCelular(corpo && corpo.clientKey);
+    if (clientKey) {
+        const ja = await prisma.revisita.findFirst({ where: { clientKey, irmaoId: ctx.irmao.id } });
+        if (ja) return { revisita: ja };
+    }
+    return { revisita: await prisma.revisita.create({ data: { ...dados, clientKey, irmaoId: ctx.irmao.id } }) };
 }
 
 async function atualizarRevisita(usuario, id, corpo) {
@@ -479,13 +488,18 @@ async function registrarVisita(usuario, id, corpo) {
     const r = await prisma.revisita.findFirst({ where: { id, irmaoId: ctx.irmao.id }, select: { id: true } });
     if (!r) return { erro: 404, mensagem: 'Revisita não encontrada.' };
     const c = corpo || {};
+    // Reenvio da fila: a visita ja entrou, e so devolver o contato.
+    const clientKey = chaveDoCelular(c.clientKey);
+    if (clientKey && (await prisma.revisitaVisita.findFirst({ where: { clientKey, revisitaId: id }, select: { id: true } }))) {
+        return revisita(usuario, id);
+    }
     const data = c.data ? new Date(c.data) : new Date();
     if (Number.isNaN(data.getTime()) || data > new Date(Date.now() + 60000)) return { erro: 400, mensagem: 'Data da visita inválida.' };
     const tipo = TIPOS_VISITA.includes(c.tipo) ? c.tipo : 'conversa';
     const { revisita: proxima, erro } = normalizarRevisita({ proximaVisita: c.proximaVisita ?? null }, { parcial: true });
     if (erro) return { erro: 400, mensagem: erro };
     await prisma.$transaction([
-        prisma.revisitaVisita.create({ data: { revisitaId: id, data, tipo, observacao: String(c.observacao || '').trim().slice(0, 1000) || null } }),
+        prisma.revisitaVisita.create({ data: { revisitaId: id, data, tipo, observacao: String(c.observacao || '').trim().slice(0, 1000) || null, clientKey } }),
         prisma.revisita.update({ where: { id }, data: proxima }),
     ]);
     return revisita(usuario, id);

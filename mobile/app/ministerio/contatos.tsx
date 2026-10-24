@@ -30,6 +30,7 @@ import { mapaDisponivel, provedor } from "@/components/territorio/MapaTerritorio
 import { Button, EmptyState, iniciais } from "@/components/ui";
 import { radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { usePendentes } from "@/territorios/fila";
 import { usePuxar } from "@/utils/usePuxar";
 
 type Filtro = "todos" | "estudos" | "marcados" | "semData" | "arquivados";
@@ -68,6 +69,8 @@ export default function ContatosMinisterio() {
   const [selecao, setSelecao] = useState<Set<number> | null>(null);
   const { compartilhar, overlays } = useCompartilharContatos();
   const selecionando = selecao !== null;
+  // Os anotados sem internet: aparecem à parte até subirem (ainda não abrem, não têm ficha).
+  const naFila = usePendentes("revisita");
 
   useEffect(() => {
     if (!selecionando) return;
@@ -182,6 +185,18 @@ export default function ContatosMinisterio() {
               );
             })}
           </ScrollView>
+
+          {naFila.length && filtro !== "arquivados" && !selecao ? (
+            <Vidro style={styles.naFila}>
+              <View style={styles.linha}>
+                <Ionicons name="cloud-upload-outline" size={16} color={colors.textSecondary} />
+                <Text style={styles.naFilaTitulo}>Aguardando sinal</Text>
+              </View>
+              <Text style={styles.detalhe}>
+                {naFila.map((i) => i.titulo).join(", ")}. {naFila.length === 1 ? "Sobe" : "Sobem"} quando a internet voltar e aí abre{naFila.length === 1 ? "" : "m"} aqui.
+              </Text>
+            </Vidro>
+          ) : null}
 
           {lista.length ? (
             <Vidro style={styles.lista}>
@@ -418,6 +433,8 @@ const criarEstilos = (colors: Cores) =>
     filtroTexto: { fontSize: 13.5, fontWeight: "700", color: colors.textSecondary },
     filtroTextoAtivo: { color: colors.background },
     lista: { padding: 0 },
+    naFila: { padding: 14, gap: 2 },
+    naFilaTitulo: { fontSize: 14, fontWeight: "800", color: colors.text },
     item: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
     itemBorda: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
     itemMarcado: { backgroundColor: `${colors.primary}14` },

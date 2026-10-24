@@ -95,6 +95,19 @@ async function rodar(prisma, { enviados = [] } = {}) {
     ok(visitada.revisita.visitas.length === 1 && new Date(visitada.revisita.proximaVisita).toISOString() === proxima && visitada.revisita.lembreteEm === null, 'visita registrada e a proxima marcada');
     ok((await P.painel(uPioneira)).estudos === 1, 'estudo conta no painel');
 
+    console.log('revisitas e visitas anotadas sem internet (a fila reenvia)');
+    const chave = 'chave-revisita-teste-1';
+    const r1 = await P.criarRevisita(uPioneira, { nome: 'Joana Fila', clientKey: chave });
+    const r2 = await P.criarRevisita(uPioneira, { nome: 'Joana Fila', clientKey: chave });
+    ok(r1.revisita.id === r2.revisita.id && (await prisma.revisita.count({ where: { clientKey: chave } })) === 1, 'o mesmo contato reenviado nao vira dois');
+    ok((await P.criarRevisita(uAdmin, { nome: 'Joana Fila', clientKey: chave })).revisita.id !== r1.revisita.id, 'a chave e de cada um: outro pioneiro cria o dele');
+    const v1 = await P.registrarVisita(uPioneira, r1.revisita.id, { clientKey: 'chave-visita-teste-1', tipo: 'nao_em_casa' });
+    const v2 = await P.registrarVisita(uPioneira, r1.revisita.id, { clientKey: 'chave-visita-teste-1', tipo: 'nao_em_casa' });
+    ok(v1.revisita.visitas.length === 1 && v2.revisita.visitas.length === 1, 'a mesma visita reenviada entra uma vez');
+    ok((await P.registrarVisita(uPioneira, r1.revisita.id, { clientKey: 'chave-visita-teste-2' })).revisita.visitas.length === 2, 'outra chave, outra visita');
+    ok((await P.criarRevisita(uPioneira, { nome: 'Sem chave', clientKey: 'x' })).revisita.clientKey === null, 'chave fora do formato: cria como antes, sem chave');
+    await prisma.revisita.deleteMany({ where: { nome: { in: ['Joana Fila', 'Sem chave'] } } });
+
     console.log('aviso da visita');
     enviados.length = 0;
     let aviso = await P.avisarVisitas(new Date());

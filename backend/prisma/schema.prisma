@@ -1034,12 +1034,17 @@ model Revisita {
   // A proxima visita marcada e quando o aviso dela foi mandado (null = ainda nao).
   proximaVisita DateTime?
   lembreteEm    DateTime?
+  // Gerado no celular: o contato anotado sem internet e reenviado pela fila nao vira dois. Indice
+  // comum, e nao UNIQUE (o `db push` da producao recusa UNIQUE em tabela que ja existe): quem
+  // garante e o servico, que procura antes de criar.
+  clientKey     String?
   visitas       RevisitaVisita[]
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
   @@index([irmaoId])
   @@index([proximaVisita])
+  @@index([clientKey])
 }
 
 model RevisitaVisita {
@@ -1050,9 +1055,12 @@ model RevisitaVisita {
   // conversa | estudo | nao_em_casa
   tipo       String   @default("conversa")
   observacao String?
+  // Como o da Revisita: a visita anotada sem internet nao entra duas vezes.
+  clientKey  String?
   createdAt  DateTime @default(now())
 
   @@index([revisitaId])
+  @@index([clientKey])
 }
 
 

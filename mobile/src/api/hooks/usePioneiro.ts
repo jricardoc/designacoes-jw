@@ -90,13 +90,23 @@ export function useRevisita(id: number) {
   });
 }
 
+/** `naFila`: sem internet, ficou no celular e sobe quando o sinal voltar. */
+export type RespostaRevisita = { revisita?: RevisitaDetalhe; naFila?: boolean };
+
+/**
+ * Novo contato vai pela fila (src/territorios/fila): sem internet, fica guardado e sobe sozinho
+ * depois, e a lista mostra ele como "aguardando sinal". Editar, arquivar e apagar pedem rede.
+ */
 export function useSalvarRevisita() {
   const invalidar = useInvalidar();
   return useMutation({
-    mutationFn: ({ id, ...body }: NovaRevisita & { id?: number }) =>
-      id
-        ? apiRequest<{ revisita: RevisitaDetalhe }>(`/pioneiro/revisitas/${id}`, { method: "PUT", body })
-        : apiRequest<{ revisita: RevisitaDetalhe }>("/pioneiro/revisitas", { method: "POST", body }),
+    mutationFn: async ({ id, ...body }: NovaRevisita & { id?: number }): Promise<RespostaRevisita> => {
+      if (id) return apiRequest<{ revisita: RevisitaDetalhe }>(`/pioneiro/revisitas/${id}`, { method: "PUT", body });
+      const clientKey = novaChave();
+      const r = await enfileirar({ clientKey, tipo: "revisita", corpo: { ...body, clientKey }, titulo: body.nome ?? "Contato" });
+      if (r.erro) throw new Error(r.erro);
+      return r.enviado ? (r.resposta as RespostaRevisita) : { naFila: true };
+    },
     onSuccess: invalidar,
   });
 }
@@ -109,11 +119,22 @@ export function useApagarRevisita() {
   });
 }
 
+/** A visita também vai pela fila, com a hora em que foi feita (`data`): sem internet, sobe depois. */
 export function useRegistrarVisita() {
   const invalidar = useInvalidar();
   return useMutation({
-    mutationFn: ({ id, ...body }: { id: number; tipo?: TipoVisita; data?: string; observacao?: string | null; proximaVisita?: string | null }) =>
-      apiRequest<{ revisita: RevisitaDetalhe }>(`/pioneiro/revisitas/${id}/visitas`, { method: "POST", body }),
+    mutationFn: async ({ id, ...body }: { id: number; nome: string; tipo?: TipoVisita; observacao?: string | null; proximaVisita?: string | null }): Promise<RespostaRevisita> => {
+      const clientKey = novaChave();
+      const { nome, ...resto } = body;
+      const r = await enfileirar({
+        clientKey,
+        tipo: "visita",
+        corpo: { ...resto, revisitaId: id, data: new Date().toISOString(), clientKey },
+        titulo: nome,
+      });
+      if (r.erro) throw new Error(r.erro);
+      return r.enviado ? (r.resposta as RespostaRevisita) : { naFila: true };
+    },
     onSuccess: invalidar,
   });
 }
