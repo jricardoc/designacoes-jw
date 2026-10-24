@@ -225,35 +225,41 @@ function Desenho({ tour, passo }: { tour: TourAtivo; passo: Passo }) {
   const W = Math.max(tela.width, area.w) + 200;
   const H = Math.max(tela.height, area.h) + 200;
   const pr = PixelRatio.get();
-  const furoAgora = () => {
-    "worklet";
-    return { x: fx.value, y: fy.value, w: fw.value, h: fh.value };
-  };
+  // Cada estilo lê `fx.value`, `fy.value`... direto, e não por uma função auxiliar: o Reanimated só
+  // refaz o estilo quando muda um valor que ele acha no próprio estilo (não procura dentro de outras
+  // funções). Por uma auxiliar, as faixas ficavam paradas no alvo do passo anterior.
   const estiloCima = useAnimatedStyle(() => {
-    const { cima } = faixasDoVeu(furoAgora(), W, H, pr);
+    const { cima } = faixasDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, W, H, pr);
     return { opacity: surgir.value, transform: [{ translateY: cima.translateY }] };
   });
   const estiloBaixo = useAnimatedStyle(() => {
-    const { baixo } = faixasDoVeu(furoAgora(), W, H, pr);
+    const { baixo } = faixasDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, W, H, pr);
     return { opacity: surgir.value, transform: [{ translateY: baixo.translateY }] };
   });
   const estiloEsquerda = useAnimatedStyle(() => {
-    const { esquerda: e } = faixasDoVeu(furoAgora(), W, H, pr);
+    const { esquerda: e } = faixasDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, W, H, pr);
     return { opacity: surgir.value, transform: [{ translateX: e.translateX }, { translateY: e.translateY }, { scaleY: e.scaleY }] };
   });
   const estiloDireita = useAnimatedStyle(() => {
-    const { direita: d } = faixasDoVeu(furoAgora(), W, H, pr);
+    const { direita: d } = faixasDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, W, H, pr);
     return { opacity: surgir.value, transform: [{ translateX: d.translateX }, { translateY: d.translateY }, { scaleY: d.scaleY }] };
   });
-  const cantoNo = (direita: boolean, baixo: boolean) => {
-    "worklet";
-    const c = cantoDoVeu(furoAgora(), fr.value, direita, baixo, pr, R0);
+  const cantoSE = useAnimatedStyle(() => {
+    const c = cantoDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, fr.value, false, false, pr, R0);
     return { opacity: surgir.value, transform: [{ translateX: c.translateX }, { translateY: c.translateY }, { scale: c.scale }] };
-  };
-  const cantoSE = useAnimatedStyle(() => cantoNo(false, false));
-  const cantoSD = useAnimatedStyle(() => cantoNo(true, false));
-  const cantoIE = useAnimatedStyle(() => cantoNo(false, true));
-  const cantoID = useAnimatedStyle(() => cantoNo(true, true));
+  });
+  const cantoSD = useAnimatedStyle(() => {
+    const c = cantoDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, fr.value, true, false, pr, R0);
+    return { opacity: surgir.value, transform: [{ translateX: c.translateX }, { translateY: c.translateY }, { scale: c.scale }] };
+  });
+  const cantoIE = useAnimatedStyle(() => {
+    const c = cantoDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, fr.value, false, true, pr, R0);
+    return { opacity: surgir.value, transform: [{ translateX: c.translateX }, { translateY: c.translateY }, { scale: c.scale }] };
+  });
+  const cantoID = useAnimatedStyle(() => {
+    const c = cantoDoVeu({ x: fx.value, y: fy.value, w: fw.value, h: fh.value }, fr.value, true, true, pr, R0);
+    return { opacity: surgir.value, transform: [{ translateX: c.translateX }, { translateY: c.translateY }, { scale: c.scale }] };
+  });
   // O anel em volta do recorte é pequeno: ele pode acompanhar pelo tamanho. Some quando o recorte fecha.
   const estiloAnel = useAnimatedStyle(() => ({
     left: fx.value - 2,
