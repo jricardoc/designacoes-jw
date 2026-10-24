@@ -17,6 +17,7 @@ import { MESES, radius, shadow, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
 import { funcaoColor, funcaoLabel } from "@/utils/funcoes";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { alvoTour } from "@/tour/estado";
 import { usePuxar } from "@/utils/usePuxar";
 
 interface VisualTipo {
@@ -372,6 +373,8 @@ export default function InicioScreen() {
                     const rascunho = c.origem?.status === "rascunho";
                     return (
                       <Pressable
+                        ref={alvoTour("servir.proximo")}
+                        collapsable={false}
                         onPress={() => setDetalhe(c)}
                         accessibilityRole="button"
                         accessibilityLabel={`Ver detalhes de ${c.titulo}`}

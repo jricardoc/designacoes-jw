@@ -40,6 +40,7 @@ export function BarraTerritorio() {
   return (
     <>
       <BarraAmbiente
+        tour="territorio"
         abas={ABAS.filter((a) => !a.pode || a.pode(usuario))}
         atalhos={campo ? ATALHOS.map((a) => ({ chave: a.acao, rotulo: a.rotulo, icone: a.icone, onPress: () => setAcao(a.acao) })) : []}
         vidro={vidroTerritorio(esquema)}

@@ -12,6 +12,7 @@ import { Avatar, Button, useToast } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import { radius, type Cores } from "@/theme";
 import { useTema, type TemaPreferido } from "@/theme/TemaContext";
+import { iniciarTour } from "@/tour/estado";
 
 const TEMAS: { valor: TemaPreferido; rotulo: string; icone: Icone }[] = [
   { valor: "claro", rotulo: "Claro", icone: "sunny-outline" },
@@ -112,7 +113,16 @@ export default function PerfilMinisterio() {
 
         <Vidro style={styles.lista}>
           <Linha icone="help-buoy-outline" rotulo="Centro de Ajuda" onPress={() => router.push("/ministerio/ajuda")} />
-          <Linha icone="sparkles-outline" rotulo="Novidades" onPress={() => router.push("/ministerio/novidades")} />
+          <Linha
+            icone="school-outline"
+            rotulo="Tutorial do Ministério"
+            onPress={() => {
+              // Volta às abas e começa por lá (o tutorial mostra a barra e o topo delas).
+              router.back();
+              setTimeout(() => iniciarTour("ministerio", usuario), 450);
+            }}
+          />
+          <Linha icone="sparkles-outline" rotulo="O que há de novo" onPress={() => router.push("/novidades")} />
           <Linha icone="swap-horizontal" rotulo="Ir para o Servir Mais" onPress={() => irParaAmbiente("servir")} />
         </Vidro>
       </ScrollView>

@@ -23,6 +23,7 @@ import { ehAdminGeral } from "@/utils/permissoes";
 import { radius, shadow, spacing, type Cores } from "@/theme";
 import { useTema, type TemaPreferido } from "@/theme/TemaContext";
 import { useBarraFlutuante } from "@/components/layout/contextoRolagem";
+import { esquecerTours, iniciarTour } from "@/tour/estado";
 
 /**
  * Ajustes do APP — aparência, atalhos, o nome da congregação e o Zoom dos convites.
@@ -309,6 +310,39 @@ export default function AjustesScreen() {
             <View style={styles.textos}>
               <Text style={styles.titulo}>Central de notificações</Text>
               <Text style={styles.descricao}>Os avisos que já chegaram</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+        </View>
+
+        {/* Ajuda: o tutorial (de novo) e as novidades. */}
+        <Text style={styles.secao}>Ajuda</Text>
+        <View style={styles.card}>
+          <Pressable
+            style={styles.linha}
+            onPress={async () => {
+              // Cada ambiente volta a mostrar o dele na próxima entrada; o do Servir Mais começa agora.
+              await esquecerTours(usuario?.id ?? null);
+              iniciarTour("servir", usuario);
+            }}
+            accessibilityRole="button"
+          >
+            <View style={styles.icone}>
+              <Ionicons name="school-outline" size={18} color={colors.textSecondary} />
+            </View>
+            <View style={styles.textos}>
+              <Text style={styles.titulo}>Tutorial do app</Text>
+              <Text style={styles.descricao}>Mostra de novo o que cada parte faz, em todos os ambientes</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+          <Pressable style={[styles.linha, styles.divisoria]} onPress={() => router.push("/novidades")} accessibilityRole="button">
+            <View style={styles.icone}>
+              <Ionicons name="sparkles-outline" size={18} color={colors.textSecondary} />
+            </View>
+            <View style={styles.textos}>
+              <Text style={styles.titulo}>O que há de novo</Text>
+              <Text style={styles.descricao}>Tudo o que entrou no app, ambiente por ambiente</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </Pressable>

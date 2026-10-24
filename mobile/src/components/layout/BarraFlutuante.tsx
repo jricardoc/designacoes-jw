@@ -29,6 +29,7 @@ import { Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import type { Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { alvoTour } from "@/tour/estado";
 import { podeGerenciar } from "@/utils/permissoes";
 
 /**
@@ -226,6 +227,8 @@ export function BarraFlutuante() {
                 <Fragment key={aba.chave}>
                   {i === MEIO ? <View style={{ width: VAO }} /> : null}
                   <Pressable
+                    ref={alvoTour(`servir.aba.${aba.chave}`)}
+                    collapsable={false}
                     onPress={() => ir(aba)}
                     style={styles.aba}
                     accessibilityRole="button"
@@ -252,6 +255,8 @@ export function BarraFlutuante() {
           </BlurView>
           {/* Fora da pílula: ela recorta o que passa da borda (o overflow que o blur precisa). */}
           <Pressable
+            ref={alvoTour("servir.mais")}
+            collapsable={false}
             onPress={() => setAberto((a) => !a)}
             style={({ pressed }) => [styles.mais, { left: MEIO * LARGURA_ABA + (VAO - MAIS) / 2 }, pressed && styles.maisApertado]}
             accessibilityRole="button"

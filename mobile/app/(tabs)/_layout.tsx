@@ -7,6 +7,7 @@ import { NavegacaoPorGesto } from "@/components/layout/NavegacaoPorGesto";
 import { ProvedorRolagem } from "@/components/layout/contextoRolagem";
 import { BarraGlobalProvider } from "@/components/layout/contextoBarra";
 import { useTema } from "@/theme/TemaContext";
+import { useTourAutomatico } from "@/tour/estado";
 import { guardarAmbiente } from "@/utils/ambiente";
 
 export default function LayoutDoMenu() {
@@ -16,6 +17,8 @@ export default function LayoutDoMenu() {
   // Daqui só sai o lembrete de que é aqui que o app abre da próxima vez — também ao voltar do
   // Território aberto pelo menu, que fica por cima daqui.
   useFocusEffect(useCallback(() => guardarAmbiente("servir"), []));
+  // A primeira vez aqui, o tutorial começa sozinho (é ele que ensina a trocar de ambiente).
+  useTourAutomatico("servir");
 
   // A pasta continua "(tabs)" de propósito: o nome entre parênteses não entra na
   // URL, então trocar a tab bar pelo menu lateral não mexeu em nenhuma rota.
