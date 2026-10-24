@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   Easing,
@@ -24,7 +24,7 @@ import type { Ambiente } from "@/utils/ambiente";
 const CURVA = Easing.bezier(...motion.curvaSuave);
 
 /** O degradê e o desenho de cada ambiente, tirados da marca dele. O Servir Mais é o "S+". */
-const VISUAL: Record<Ambiente, { fundo: [string, string, string]; icone?: Icone }> = {
+export const VISUAL: Record<Ambiente, { fundo: [string, string, string]; icone?: Icone }> = {
   servir: { fundo: ["#7C895F", "#5E6A46", "#404930"] },
   ministerio: { fundo: ["#1B9271", "#086A53", "#04402F"], icone: "leaf" },
   territorio: { fundo: ["#3381E6", "#1F5BB0", "#123A73"], icone: "map" },
@@ -35,14 +35,27 @@ const VISUAL: Record<Ambiente, { fundo: [string, string, string]; icone?: Icone 
  * Splash animada da abertura, a do ambiente em que o app vai abrir — recria a tela de
  * splash do design: fundo no degradê do ambiente, a marca dele, anel/glow pulsando,
  * nome, tagline e dots. Toca uma vez na abertura e some chamando onDone.
+ *
+ * Com `fica`, já começa pronta e não sai: é o fundo do bloqueio por biometria, que põe os
+ * botões dele (`children`) no lugar dos dots.
  */
-export function SplashAnimated({ ambiente, onDone }: { ambiente: Ambiente; onDone: () => void }) {
+export function SplashAnimated({
+  ambiente,
+  onDone,
+  fica = false,
+  children,
+}: {
+  ambiente: Ambiente;
+  onDone?: () => void;
+  fica?: boolean;
+  children?: ReactNode;
+}) {
   const { data: publica } = useConfigPublica();
   const { fundo, icone } = VISUAL[ambiente];
   const { nome, tag } = AMBIENTES.find((a) => a.chave === ambiente) ?? AMBIENTES[0];
   const fade = useSharedValue(1); // opacidade do container (fade-out no fim)
-  const logo = useSharedValue(0); // entrada do "S"
-  const plus = useSharedValue(0); // pop do "+"
+  const logo = useSharedValue(fica ? 1 : 0); // entrada do "S"
+  const plus = useSharedValue(fica ? 1 : 0); // pop do "+"
   const ring = useSharedValue(0);
   const glow = useSharedValue(0);
   const d0 = useSharedValue(0);
@@ -50,12 +63,13 @@ export function SplashAnimated({ ambiente, onDone }: { ambiente: Ambiente; onDon
   const d2 = useSharedValue(0);
 
   useEffect(() => {
+    ring.value = withRepeat(withTiming(1, { duration: 1700, easing: Easing.out(Easing.cubic) }), -1, false);
+    glow.value = withRepeat(withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.ease) }), -1, true);
+    if (fica) return;
     // Sem `Easing.back`: ele ultrapassa o tamanho final e volta, e o "+" com back(3)
     // dava um estalo bem mais forte que o resto da abertura do app.
     logo.value = withTiming(1, { duration: 620, easing: CURVA });
     plus.value = withDelay(180, withTiming(1, { duration: 520, easing: CURVA }));
-    ring.value = withRepeat(withTiming(1, { duration: 1700, easing: Easing.out(Easing.cubic) }), -1, false);
-    glow.value = withRepeat(withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.ease) }), -1, true);
     const bounce = (sv: typeof d0, delay: number) => {
       sv.value = withDelay(
         delay,
@@ -68,7 +82,7 @@ export function SplashAnimated({ ambiente, onDone }: { ambiente: Ambiente; onDon
 
     const t = setTimeout(() => {
       fade.value = withTiming(0, { duration: 460, easing: Easing.in(Easing.ease) }, (fin) => {
-        if (fin) runOnJS(onDone)();
+        if (fin && onDone) runOnJS(onDone)();
       });
     }, 2450);
     return () => clearTimeout(t);
@@ -120,30 +134,36 @@ export function SplashAnimated({ ambiente, onDone }: { ambiente: Ambiente; onDon
         )}
       </View>
 
-      <Animated.Text entering={FadeInDown.delay(320).duration(520)} style={styles.word}>
+      <Animated.Text entering={fica ? undefined : FadeInDown.delay(320).duration(520)} style={styles.word}>
         {nome}
       </Animated.Text>
-      <Animated.Text entering={FadeIn.delay(520).duration(520)} style={styles.tag}>
+      <Animated.Text entering={fica ? undefined : FadeIn.delay(520).duration(520)} style={styles.tag}>
         {tag}
       </Animated.Text>
 
-      <View style={styles.dots}>
-        <Animated.View style={[styles.dotEl, d0Style]} />
-        <Animated.View style={[styles.dotEl, d1Style]} />
-        <Animated.View style={[styles.dotEl, d2Style]} />
-      </View>
+      {fica ? (
+        children
+      ) : (
+        <>
+          <View style={styles.dots}>
+            <Animated.View style={[styles.dotEl, d0Style]} />
+            <Animated.View style={[styles.dotEl, d1Style]} />
+            <Animated.View style={[styles.dotEl, d2Style]} />
+          </View>
 
-      {/* Só aparece se a resposta chegar a tempo: a splash não espera a rede. */}
-      {publica?.congregacao ? (
-        <Animated.Text entering={FadeIn.delay(950).duration(620)} style={styles.footer}>
-          {publica.congregacao}
-        </Animated.Text>
-      ) : null}
+          {/* Só aparece se a resposta chegar a tempo: a splash não espera a rede. */}
+          {publica?.congregacao ? (
+            <Animated.Text entering={FadeIn.delay(950).duration(620)} style={styles.footer}>
+              {publica.congregacao}
+            </Animated.Text>
+          ) : null}
+        </>
+      )}
     </Animated.View>
   );
 }
 
-const CREAM = "#FBF7EF";
+export const CREAM = "#FBF7EF";
 
 const styles = StyleSheet.create({
   root: { alignItems: "center", justifyContent: "center", zIndex: 999 },
