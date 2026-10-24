@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, AppState, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { CREAM, SplashAnimated, VISUAL } from "@/components/SplashAnimated";
 import { useAuth } from "@/context/AuthContext";
-import { radius, type Cores } from "@/theme";
-import { useTema } from "@/theme/TemaContext";
+import { radius } from "@/theme";
+import { lerAmbiente, type Ambiente } from "@/utils/ambiente";
 import { biometriaAtiva, confirmarDono, desbloqueadoHa, nomeDaBiometria, registrarDesbloqueio } from "@/utils/biometria";
 
 /** Fora do app por menos que isto (ir ao WhatsApp compartilhar e voltar) não pede de novo. */
@@ -19,11 +20,14 @@ const TOLERANCIA_MS = 2 * 60_000;
  * É bloqueio de TELA: a sessão continua a mesma por baixo. Serve para quem pega o celular
  * desbloqueado não abrir o app de cara — não substitui a senha da conta.
  *
+ * A tela é a splash do ambiente em que a pessoa está, parada, com o desbloqueio embaixo: a
+ * abertura continua com a cara do ambiente enquanto o Face ID pede.
+ *
  * Montar UMA vez, na área logada.
  */
 export function BloqueioBiometria() {
-  const { colors, styles } = useTema(criarEstilos);
   const { logout } = useAuth();
+  const [ambiente, setAmbiente] = useState<Ambiente>("servir");
   const [ativa, setAtiva] = useState(false);
   const [nome, setNome] = useState<string | null>(null);
   const [bloqueado, setBloqueado] = useState(false);
@@ -48,8 +52,9 @@ export function BloqueioBiometria() {
   // Ao abrir o app (sessão já existente): pede, a menos que tenha acabado de logar.
   useEffect(() => {
     (async () => {
-      const n = await nomeDaBiometria();
+      const [n, amb] = await Promise.all([nomeDaBiometria(), lerAmbiente()]);
       setNome(n);
+      setAmbiente(amb);
       const ligada = !!n && (await biometriaAtiva());
       setAtiva(ligada);
       if (ligada && desbloqueadoHa() > TOLERANCIA_MS) {
@@ -62,8 +67,10 @@ export function BloqueioBiometria() {
   // A chave pode ser ligada/desligada na Conta com o app aberto: relê ao voltar ao app.
   useEffect(() => {
     const sub = AppState.addEventListener("change", async (estado) => {
-      const ligada = await biometriaAtiva().catch(() => false);
+      // Cada ambiente se guarda ao entrar, então o guardado é o da vez.
+      const [ligada, amb] = await Promise.all([biometriaAtiva().catch(() => false), lerAmbiente()]);
       setAtiva(ligada);
+      setAmbiente(amb);
       if (!ligada) {
         setCoberto(false);
         return;
@@ -86,67 +93,57 @@ export function BloqueioBiometria() {
   }, [pedir]);
 
   if (!ativa || (!bloqueado && !coberto)) return null;
+  // O botão é creme com o tom do meio do degradê do ambiente.
+  const cor = VISUAL[ambiente].fundo[1];
+  const artigo = nome === "digital" || nome === "biometria" ? "a" : "o";
 
   return (
     <Modal visible animationType="fade" statusBarTranslucent onRequestClose={() => {}}>
-      <View style={styles.tela}>
-        <View style={styles.cadeado}>
-          <Ionicons name="lock-closed" size={34} color={colors.textOnPrimary} />
-        </View>
+      <SplashAnimated ambiente={ambiente} fica>
         {bloqueado ? (
-          <>
-            <Text style={styles.titulo}>App bloqueado</Text>
-            <Text style={styles.texto}>Use o {nome ?? "Face ID"} para continuar.</Text>
-            <Pressable style={styles.botao} onPress={pedir} disabled={pedindo}>
+          <View style={styles.acoes}>
+            <View style={styles.aviso}>
+              <Ionicons name="lock-closed" size={15} color={CREAM} />
+              <Text style={styles.texto}>
+                Use {artigo} {nome ?? "Face ID"} para desbloquear.
+              </Text>
+            </View>
+            <Pressable style={styles.botao} onPress={pedir} disabled={pedindo} accessibilityRole="button">
               {pedindo ? (
-                <ActivityIndicator color={colors.textOnPrimary} />
+                <ActivityIndicator color={cor} />
               ) : (
                 <>
-                  <Ionicons
-                    name={nome && /digital|Touch/.test(nome) ? "finger-print" : "scan-outline"}
-                    size={22}
-                    color={colors.textOnPrimary}
-                  />
-                  <Text style={styles.botaoTexto}>Desbloquear</Text>
+                  <Ionicons name={nome && /digital|Touch/.test(nome) ? "finger-print" : "scan-outline"} size={22} color={cor} />
+                  <Text style={[styles.botaoTexto, { color: cor }]}>Desbloquear</Text>
                 </>
               )}
             </Pressable>
-            <Pressable onPress={logout} hitSlop={8}>
+            <Pressable onPress={logout} hitSlop={8} accessibilityRole="button">
               <Text style={styles.senha}>Entrar com a senha</Text>
             </Pressable>
-          </>
+          </View>
         ) : null}
-      </View>
+      </SplashAnimated>
     </Modal>
   );
 }
 
-const criarEstilos = (colors: Cores) =>
-  StyleSheet.create({
-    tela: { flex: 1, alignItems: "center", justifyContent: "center", gap: 14, padding: 32, backgroundColor: colors.background },
-    cadeado: {
-      width: 72,
-      height: 72,
-      borderRadius: 22,
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: colors.primary,
-      marginBottom: 6,
-    },
-    titulo: { fontSize: 22, fontWeight: "800", color: colors.text },
-    texto: { fontSize: 15, color: colors.textSecondary, textAlign: "center" },
-    botao: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      gap: 10,
-      minWidth: 220,
-      minHeight: 56,
-      paddingHorizontal: 24,
-      borderRadius: radius.lg,
-      backgroundColor: colors.primary,
-      marginTop: 8,
-    },
-    botaoTexto: { fontSize: 17, fontWeight: "800", color: colors.textOnPrimary },
-    senha: { fontSize: 14.5, fontWeight: "700", color: colors.primaryDark, marginTop: 6 },
-  });
+const styles = StyleSheet.create({
+  // Embaixo, no lugar dos dots; o meio da tela é o da splash.
+  acoes: { position: "absolute", bottom: 48, left: 32, right: 32, alignItems: "center", gap: 10 },
+  aviso: { flexDirection: "row", alignItems: "center", gap: 7 },
+  texto: { fontSize: 14.5, fontWeight: "600", color: CREAM },
+  botao: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    minWidth: 220,
+    minHeight: 56,
+    paddingHorizontal: 24,
+    borderRadius: radius.lg,
+    backgroundColor: CREAM,
+  },
+  botaoTexto: { fontSize: 17, fontWeight: "800" },
+  senha: { fontSize: 14.5, fontWeight: "700", color: CREAM, paddingVertical: 4 },
+});
