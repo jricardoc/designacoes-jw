@@ -88,7 +88,6 @@ export function encerrarTour() {
 export function cancelarTour() {
   if (!atual) return;
   atual = null;
-  acoes.fecharMenu?.();
   avisar();
 }
 
@@ -119,21 +118,6 @@ export function alvoTour(id: string) {
 }
 
 export const alvoDoTour = (id: string) => alvos.get(id);
-
-type AcaoTour = "abrirMenu" | "fecharMenu" | "mostrarAmbientes";
-const acoes: Partial<Record<AcaoTour, () => void>> = {};
-
-/** O que o tutorial pede a uma tela (abrir o menu lateral, mostrar os ambientes nele). */
-export function useAcaoTour(nome: AcaoTour, fn: () => void) {
-  useEffect(() => {
-    acoes[nome] = fn;
-    return () => {
-      if (acoes[nome] === fn) delete acoes[nome];
-    };
-  }, [nome, fn]);
-}
-
-export const executarAcaoTour = (nome: AcaoTour) => acoes[nome]?.();
 
 // --- O que cada um já viu ------------------------------------------------------------------
 

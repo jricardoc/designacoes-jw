@@ -67,8 +67,8 @@ export const AMBIENTES: { chave: Ambiente; nome: string; tag: string; Marca: Com
 export function irParaAmbiente(a: Ambiente) {
   guardarAmbiente(a);
   // `dismissTo`: o ambiente novo toma o lugar do antigo, e o voltar do Android sai do app em
-  // vez de passear de um para o outro. Se ele já está embaixo (o Servir Mais, quando o
-  // Território foi aberto pelo menu), volta para ele em vez de montar um segundo.
+  // vez de passear de um para o outro. Se ele já está embaixo, volta para ele em vez de
+  // montar um segundo.
   router.dismissTo(HREF_AMBIENTE[a]);
 }
 
@@ -131,7 +131,7 @@ export function CabecalhoAmbiente({ atual, sobreOMapa }: { atual: "territorio" |
   );
 }
 
-/** A troca de ambiente no Ministério, no Território e no Estudo (no Servir Mais ela abre no topo do menu lateral). */
+/** A troca de ambiente, pela marca no topo de cada um (no Servir Mais, a da barra de cima). */
 export function TrocarAmbienteSheet({ visible, onClose, atual }: { visible: boolean; onClose: () => void; atual: Ambiente }) {
   const { colors, styles } = useTema(criarEstilos);
   const { usuario } = useAuth();
