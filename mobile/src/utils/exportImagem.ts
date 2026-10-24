@@ -35,10 +35,12 @@ export async function exportarImagem(
   }
 
   if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(shareUri, {
+    // Sem aguardar: no iPhone a promessa nunca resolve quando se escolhe um app e se cancela lá
+    // dentro (expo-sharing 14), e quem chamou ficaria preso no "gerando" até reabrir a tela.
+    Sharing.shareAsync(shareUri, {
       mimeType: "image/png",
       dialogTitle: fileName,
       UTI: "public.png",
-    });
+    }).catch(() => {});
   }
 }

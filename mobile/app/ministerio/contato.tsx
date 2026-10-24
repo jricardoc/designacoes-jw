@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRevisita } from "@/api/hooks/usePioneiro";
 import type { TipoVisita } from "@/api/types";
 import { useAcoesContato } from "@/components/ministerio/acoesContato";
+import { useCompartilharContatos } from "@/components/ministerio/CompartilharContatos";
 import { diaCurto, isoDoDia } from "@/components/ministerio/escolhas";
 import {
   BotaoIcone,
@@ -41,6 +42,7 @@ export default function ContatoMinisterio() {
   const { data: r, isLoading, refetch } = useRevisita(id);
   const puxar = usePuxar(refetch);
   const acoesDe = useAcoesContato();
+  const { compartilhar, overlays } = useCompartilharContatos();
   const [menu, setMenu] = useState(false);
   const [editando, setEditando] = useState(false);
   const [tipoVisita, setTipoVisita] = useState<TipoVisita | null>(null);
@@ -166,10 +168,16 @@ export default function ContatoMinisterio() {
         visible={menu}
         onClose={() => setMenu(false)}
         titulo={r.nome}
-        acoes={acoesDe(r, { registrar: () => registrar(), editar: () => setEditando(true), aposApagar: () => router.back() })}
+        acoes={acoesDe(r, {
+          registrar: () => registrar(),
+          editar: () => setEditando(true),
+          compartilhar: () => compartilhar([{ ...r, ultimaVisita: r.visitas[0]?.data ?? null }]),
+          aposApagar: () => router.back(),
+        })}
       />
       <VisitaSheet revisitaId={tipoVisita ? r.id : null} nome={r.nome} tipo={tipoVisita ?? undefined} onClose={() => setTipoVisita(null)} />
       <RevisitaSheet visible={editando} revisita={r} onClose={() => setEditando(false)} />
+      {overlays}
     </View>
   );
 }

@@ -7,7 +7,7 @@ import { digitosDe, linkComoChegar, whatsappDe, type Acao } from "./kit";
 
 type Contato = Pick<Revisita, "id" | "nome" | "endereco" | "lat" | "lng" | "telefone" | "ativa">;
 
-/** As ações de um contato (o toque longo na lista e o "⋯" do detalhe): visita, rota, contato, editar, arquivar, apagar. */
+/** As ações de um contato (o toque longo na lista e o "⋯" do detalhe): visita, rota, contato, compartilhar, editar, arquivar, apagar. */
 export function useAcoesContato() {
   const toast = useToast();
   const { feito } = useCelebracao();
@@ -16,7 +16,7 @@ export function useAcoesContato() {
   const abrir = (url: string) => Linking.openURL(url).catch(() => toast.show("Não consegui abrir", "error"));
   const erro = (e: unknown) => toast.show(e instanceof Error ? e.message : "Não deu", "error");
 
-  return (r: Contato, f: { registrar: () => void; editar: () => void; aposApagar?: () => void }): Acao[] => {
+  return (r: Contato, f: { registrar: () => void; editar: () => void; compartilhar: () => void; aposApagar?: () => void }): Acao[] => {
     const rota = linkComoChegar(r);
     const zap = whatsappDe(r.telefone);
     const tel = digitosDe(r.telefone);
@@ -26,6 +26,7 @@ export function useAcoesContato() {
     if (zap) acoes.push({ rotulo: "WhatsApp", icone: "logo-whatsapp", onPress: () => abrir(zap) });
     if (tel) acoes.push({ rotulo: "Ligar", icone: "call", onPress: () => abrir(`tel:${tel}`) });
     acoes.push(
+      { rotulo: "Compartilhar", icone: "share-social-outline", onPress: f.compartilhar },
       { rotulo: "Editar", icone: "create-outline", onPress: f.editar },
       {
         rotulo: r.ativa ? "Arquivar" : "Trazer de volta",
