@@ -2,6 +2,7 @@
 
 const prisma = require('../prisma');
 const { relogioDaCongregacao } = require('./RegrasLembrete');
+const { instanteDoCelular } = require('../utils/datas');
 
 /**
  * A area de pioneiros: o proprio pioneiro registra as horas (cronometro ou a mao), acompanha a
@@ -350,15 +351,21 @@ async function painel(usuario, mesPedido) {
  * O cronometro: iniciar, pausar, parar (vira horas de hoje) ou descartar. A troca so vale se
  * ninguem mexeu no meio (dois toques ou dois aparelhos): sem isso, "parar" duas vezes lancaria
  * as horas duas vezes.
+ *
+ * Sem internet, o celular guarda a acao e manda depois com `em`, a hora em que ela foi feita:
+ * e essa hora que conta. Reenviar a mesma acao nao muda nada (iniciar rodando, pausar parado).
  */
-async function cronometro(usuario, acao, agora = new Date()) {
+async function cronometro(usuario, acao, agora = new Date(), em) {
+    const quando = instanteDoCelular(em, agora);
+    if (quando.erro) return { erro: 400, mensagem: quando.erro };
+    const { instante } = quando;
     const ctx = await contexto(usuario);
     if (ctx.erro) return ctx;
     const irmaoId = ctx.irmao.id;
     const perfil = await perfilDe(ctx.irmao);
-    const segundos = segundosDoCronometro(perfil, agora);
+    const segundos = segundosDoCronometro(perfil, instante);
     const mudancas = {
-        iniciar: perfil.cronometroInicio ? null : { cronometroInicio: agora },
+        iniciar: perfil.cronometroInicio ? null : { cronometroInicio: instante },
         pausar: perfil.cronometroInicio ? { cronometroInicio: null, cronometroSeg: segundos } : null,
         parar: { cronometroInicio: null, cronometroSeg: 0 },
         descartar: { cronometroInicio: null, cronometroSeg: 0 },
@@ -369,7 +376,7 @@ async function cronometro(usuario, acao, agora = new Date()) {
         const { count } = await prisma.pioneiroPerfil.updateMany({ where: { irmaoId, updatedAt: perfil.updatedAt }, data: mudancas[acao] });
         if (count === 1 && acao === 'parar' && segundos >= 60) {
             registro = await prisma.pioneiroHoras.create({
-                data: { irmaoId, data: hojeISO(agora), minutos: Math.round(segundos / 60), origem: 'cronometro' },
+                data: { irmaoId, data: hojeISO(instante), minutos: Math.round(segundos / 60), origem: 'cronometro' },
             });
         }
     }

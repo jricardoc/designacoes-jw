@@ -89,6 +89,15 @@ const linhasIcs = ics.split('\r\n');
 eq([linhasIcs[0], linhasIcs.includes('DTSTART:20261024T123000Z'), linhasIcs.includes('LOCATION:Praça\\, 10\\; fundos'), ics.endsWith('END:VCALENDAR\r\n')], ['BEGIN:VCALENDAR', true, true, true], 'evento em UTC, texto escapado, linhas com CRLF');
 eq([linhasIcs.every((l) => Array.from(l).length <= 75), linhasIcs.some((l) => l.startsWith(' x')), ics.includes('🙂')], [true, true, true], 'linha longa dobrada, sem partir o emoji');
 
+console.log('cronometro e leitura guardados sem internet');
+const { instanteDoCelular } = require('../src/utils/datas');
+const meioDia = new Date('2026-10-24T12:00:00Z');
+eq(instanteDoCelular(undefined, meioDia).instante === meioDia, true, 'sem `em`: agora');
+eq(instanteDoCelular(meioDia.getTime() - 3600000, meioDia).instante.toISOString(), '2026-10-24T11:00:00.000Z', '`em` em ms: a hora da acao');
+eq(instanteDoCelular('2026-10-24T11:00:00Z', meioDia).instante.toISOString(), '2026-10-24T11:00:00.000Z', '`em` em ISO');
+eq(instanteDoCelular(meioDia.getTime() + 600000, meioDia).instante === meioDia, true, 'relogio do celular adiantado vira agora');
+eq([!!instanteDoCelular(meioDia.getTime() - 15 * 86400000, meioDia).erro, !!instanteDoCelular('xpto', meioDia).erro], [true, true], 'mais de 14 dias atras, ou lixo: erro');
+
 if (falhas > 0) {
     console.log(`\n${falhas} falha(s).`);
     process.exit(1);

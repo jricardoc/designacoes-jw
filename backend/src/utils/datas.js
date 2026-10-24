@@ -45,4 +45,17 @@ function nomeDoDia(data) {
     return NOMES_DIAS[data.getDay()];
 }
 
-module.exports = { resolverDataDeQuadro, formatarDiaMes, chaveISO, inicioDeHoje, nomeDoDia, NOMES_DIAS };
+/**
+ * O instante de algo que o celular guardou na fila sem internet e mandou depois (`em`, em ms ou
+ * ISO). Sem `em`, e agora. Relogio do celular adiantado vira agora, e mais de 14 dias atras e
+ * recusado.
+ */
+function instanteDoCelular(em, agora = new Date()) {
+    if (em === undefined || em === null) return { instante: agora };
+    const t = new Date(typeof em === 'number' ? em : String(em));
+    if (Number.isNaN(t.getTime())) return { erro: 'Horário inválido.' };
+    if (agora - t > 14 * 86400000) return { erro: 'Guardado no celular há mais de 14 dias.' };
+    return { instante: t > agora ? agora : t };
+}
+
+module.exports = { resolverDataDeQuadro, formatarDiaMes, chaveISO, inicioDeHoje, nomeDoDia, NOMES_DIAS, instanteDoCelular };

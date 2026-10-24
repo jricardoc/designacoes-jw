@@ -2,6 +2,7 @@
 
 const prisma = require('../prisma');
 const { relogioDaCongregacao } = require('./RegrasLembrete');
+const { instanteDoCelular } = require('../utils/datas');
 
 /**
  * O estudo pessoal: o programa de leitura da Biblia, os trechos lidos, a lista do que estudar,
@@ -224,7 +225,10 @@ async function marcarLeituras(usuario, corpo) {
         await prisma.leituraFeita.deleteMany({ where: { usuarioId, plano: c.plano, item: { in: itens } } });
         return { ok: true };
     }
-    const dia = hojeISO();
+    // Marcado sem internet, chega depois com `em`: conta o dia em que foi lido.
+    const quando = instanteDoCelular(c.em);
+    if (quando.erro) return { erro: 400, mensagem: quando.erro };
+    const dia = hojeISO(quando.instante);
     if (c.nota !== undefined) {
         if (itens.length !== 1) return { erro: 400, mensagem: 'A anotação é de um trecho só.' };
         const nota = texto(c.nota, 1000);
