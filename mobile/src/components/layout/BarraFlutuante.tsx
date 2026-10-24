@@ -12,6 +12,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ABAS, chaveDaRotaAtual, type Aba } from "./abas";
+import { LequeAtalhos, useLeque, type AtalhoAmbiente } from "./BarraAmbiente";
 import { useBarraCompacta } from "./contextoRolagem";
 import {
   ALTURA_DA_BARRA,
@@ -19,19 +20,25 @@ import {
   LARGURA_DA_ABA,
   recuoDaBarra,
 } from "./geometriaBarra";
+import type { Usuario } from "@/api/types";
+import { NovaEscalaModal } from "@/components/dirigentes/NovaEscalaModal";
 import { RegistrarCampoSheet } from "@/components/grupos/RegistrarCampoSheet";
+import type { Icone } from "@/components/ministerio/kit";
+import { NovoQuadroModal } from "@/components/quadros/NovoQuadroModal";
 import { Avatar } from "@/components/ui";
 import { useAuth } from "@/context/AuthContext";
 import type { Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
+import { podeGerenciar } from "@/utils/permissoes";
 
 /**
  * A barra flutuante de vidro fosco: quatro destinos, só ícones, e o "+" no meio.
  *
  * Convive com o menu lateral em vez de substituí-lo. O menu continua sendo o mapa inteiro do
  * app (Território, Carrinho, Confirmações, Publicadores, Ajustes); esta barra é o atalho para
- * os quatro lugares em que o irmão entra todo dia, sem abrir menu nenhum. O "+" é "Registrar o
- * campo": o relatório do mês, que antes só o dirigente anotava.
+ * os quatro lugares em que o irmão entra todo dia, sem abrir menu nenhum. O "+" abre o leque, como
+ * nos outros ambientes: criar os quadros e importar a reunião (de quem cuida disso) e enviar o
+ * relatório do mês, que é de todos.
  *
  * NÃO usa `@react-navigation/bottom-tabs`. O app é um Stack do expo-router — a pasta se chama
  * "(tabs)" por herança, e o próprio layout registra isso: trocar de navegador mudaria o
@@ -53,6 +60,16 @@ const MEIO = ABAS.length / 2;
 /** A mola do indicador ao trocar de aba, e a do "pop" do ícone. */
 const MOLA_INDICADOR = { mass: 0.8, damping: 15, stiffness: 140 };
 const MOLA_ICONE = { mass: 0.4, damping: 9, stiffness: 220 };
+
+type Acao = "quadro" | "escala" | "reuniao" | "campo";
+
+/** O leque do "+", de cima para baixo. Cada um vê o que pode fazer; o relatório é de todos. */
+const ATALHOS: { acao: Acao; rotulo: string; icone: Icone; pode?: (u: Usuario | null | undefined) => boolean }[] = [
+  { acao: "quadro", rotulo: "Novo quadro de designações", icone: "document-text", pode: (u) => podeGerenciar(u, "designacoes") },
+  { acao: "escala", rotulo: "Novo quadro de dirigentes", icone: "compass", pode: (u) => podeGerenciar(u, "dirigentes") },
+  { acao: "reuniao", rotulo: "Importar reunião", icone: "cloud-upload", pode: (u) => podeGerenciar(u, "reunioes") },
+  { acao: "campo", rotulo: "Enviar relatório", icone: "paper-plane" },
+];
 
 /** O ícone que cresce um tico ao ficar ativo. `children` troca o ícone (a foto da Conta). */
 function IconeComPop({
@@ -100,12 +117,27 @@ export function BarraFlutuante() {
    * jeito, por cima da barra de navegação do sistema.
    */
   const recuoInferior = recuoDaBarra(insets.bottom);
-  const [campo, setCampo] = useState(false);
+  const [folha, setFolha] = useState<Acao | null>(null);
+  const { aberto, setAberto, giroDoMais } = useLeque();
+  const atalhos: AtalhoAmbiente[] = ATALHOS.filter((a) => !a.pode || a.pode(usuario)).map((a) => ({
+    chave: a.acao,
+    rotulo: a.rotulo,
+    icone: a.icone,
+    onPress: () =>
+      // A importação mora na Reunião (é lá que o envio aparece e que se revisam as
+      // indisponibilidades): vai até ela, que já abre pedindo o PDF.
+      a.acao === "reuniao" ? router.replace({ pathname: "/(tabs)/reuniao", params: { importar: "1" } }) : setFolha(a.acao),
+  }));
+  const tem = (acao: Acao) => atalhos.some((a) => a.chave === acao);
+  const fechar = () => setFolha(null);
 
   const escuro = esquema === "escuro";
 
   const atual = chaveDaRotaAtual(segments as string[]);
   const indiceAtivo = ABAS.findIndex((a) => a.chave === atual);
+
+  // Trocou de tela por fora da barra (o gesto de arrastar, uma notificação): o leque fecha.
+  useEffect(() => setAberto(false), [atual, setAberto]);
 
   /**
    * A posição do indicador, em índice de aba.
@@ -146,6 +178,7 @@ export function BarraFlutuante() {
   }));
 
   const ir = (aba: Aba) => {
+    setAberto(false);
     if (aba.chave === atual) return; // já está nela: navegar só remontaria a tela
     // `replace`, e não `push`: as quatro são irmãs dentro de (tabs), como as abas eram. Empilhar
     // faria o voltar do Android refazer todo o passeio em vez de sair do app.
@@ -153,87 +186,95 @@ export function BarraFlutuante() {
   };
 
   return (
-    // `box-none`: o container ocupa a largura toda, mas só a pílula recebe toque. Sem isso ele
-    // engoliria os toques na faixa inteira acima do rodapé.
-    <View pointerEvents="box-none" style={[styles.raiz, { bottom: recuoInferior }]}>
-      <Animated.View style={[styles.sombra, estiloDaPilula]}>
-        <BlurView
-          intensity={escuro ? 40 : 60}
-          tint={escuro ? "dark" : "light"}
-          // Sem isto o Android ignora o desfoque e sobra um retângulo translúcido.
-          experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
-          style={[
-            styles.pilula,
-            {
-              width: ABAS.length * LARGURA_ABA + VAO,
-              // O véu por cima do blur. O desfoque sozinho fica lavado; é a dupla que lê
-              // como vidro.
-              backgroundColor: escuro ? "rgba(20,20,22,0.55)" : "rgba(255,255,255,0.60)",
-              borderColor: escuro ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)",
-            },
-          ]}
-        >
-          {/* UM indicador que desliza, e não quatro fundos que acendem e apagam. É esta
-              decisão que dá o caráter da barra. */}
-          <Animated.View
-            pointerEvents="none"
+    <>
+      <LequeAtalhos atalhos={atalhos} aberto={aberto} fechar={() => setAberto(false)} bottom={recuoInferior + ALTURA + 20} />
+      {/* `box-none`: o container ocupa a largura toda, mas só a pílula recebe toque. Sem isso ele
+          engoliria os toques na faixa inteira acima do rodapé. */}
+      <View pointerEvents="box-none" style={[styles.raiz, { bottom: recuoInferior }]}>
+        <Animated.View style={[styles.sombra, estiloDaPilula]}>
+          <BlurView
+            intensity={escuro ? 40 : 60}
+            tint={escuro ? "dark" : "light"}
+            // Sem isto o Android ignora o desfoque e sobra um retângulo translúcido.
+            experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
             style={[
-              styles.indicador,
-              // A cor da marca a ~13%: vem do tema, então o modo daltônico acompanha.
-              { backgroundColor: `${colors.primary}22` },
-              estiloDoIndicador,
+              styles.pilula,
+              {
+                width: ABAS.length * LARGURA_ABA + VAO,
+                // O véu por cima do blur. O desfoque sozinho fica lavado; é a dupla que lê
+                // como vidro.
+                backgroundColor: escuro ? "rgba(20,20,22,0.55)" : "rgba(255,255,255,0.60)",
+                borderColor: escuro ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)",
+              },
             ]}
-          />
-
-          {ABAS.map((aba, i) => {
-            const ativo = aba.chave === atual;
-            return (
-              <Fragment key={aba.chave}>
-                {i === MEIO ? <View style={{ width: VAO }} /> : null}
-                <Pressable
-                  onPress={() => ir(aba)}
-                  style={styles.aba}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: ativo }}
-                  accessibilityLabel={aba.rotulo}
-                >
-                  <IconeComPop
-                    nome={ativo ? aba.iconeAtivo : aba.icone}
-                    tamanho={aba.tamanho ?? 24}
-                    cor={ativo ? colors.primary : colors.textMuted}
-                    ativo={ativo}
-                  >
-                    {/* Com foto de perfil, a Conta mostra a foto; o anel faz o papel da cor de "ativo". */}
-                    {aba.chave === "conta" && usuario?.fotoEm ? (
-                      <View style={[styles.foto, { borderColor: ativo ? colors.primary : "transparent" }]}>
-                        <Avatar usuario={usuario} tamanho={26} fundo={colors.sand} corTexto={colors.primaryDark} />
-                      </View>
-                    ) : undefined}
-                  </IconeComPop>
-                </Pressable>
-              </Fragment>
-            );
-          })}
-        </BlurView>
-        {/* Fora da pílula: ela recorta o que passa da borda (o overflow que o blur precisa). */}
-        <Pressable
-          onPress={() => setCampo(true)}
-          style={({ pressed }) => [styles.mais, { left: MEIO * LARGURA_ABA + (VAO - MAIS) / 2 }, pressed && styles.maisApertado]}
-          accessibilityRole="button"
-          accessibilityLabel="Registrar o campo"
-        >
-          <LinearGradient
-            colors={colors.primaryGradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.maisFundo, { borderColor: escuro ? "rgba(20,20,22,0.9)" : "#FFFFFF" }]}
           >
-            <Ionicons name="add" size={30} color={colors.textOnPrimary} />
-          </LinearGradient>
-        </Pressable>
-      </Animated.View>
-      <RegistrarCampoSheet visible={campo} onClose={() => setCampo(false)} />
-    </View>
+            {/* UM indicador que desliza, e não quatro fundos que acendem e apagam. É esta
+                decisão que dá o caráter da barra. */}
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.indicador,
+                // A cor da marca a ~13%: vem do tema, então o modo daltônico acompanha.
+                { backgroundColor: `${colors.primary}22` },
+                estiloDoIndicador,
+              ]}
+            />
+
+            {ABAS.map((aba, i) => {
+              const ativo = aba.chave === atual;
+              return (
+                <Fragment key={aba.chave}>
+                  {i === MEIO ? <View style={{ width: VAO }} /> : null}
+                  <Pressable
+                    onPress={() => ir(aba)}
+                    style={styles.aba}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: ativo }}
+                    accessibilityLabel={aba.rotulo}
+                  >
+                    <IconeComPop
+                      nome={ativo ? aba.iconeAtivo : aba.icone}
+                      tamanho={aba.tamanho ?? 24}
+                      cor={ativo ? colors.primary : colors.textMuted}
+                      ativo={ativo}
+                    >
+                      {/* Com foto de perfil, a Conta mostra a foto; o anel faz o papel da cor de "ativo". */}
+                      {aba.chave === "conta" && usuario?.fotoEm ? (
+                        <View style={[styles.foto, { borderColor: ativo ? colors.primary : "transparent" }]}>
+                          <Avatar usuario={usuario} tamanho={26} fundo={colors.sand} corTexto={colors.primaryDark} />
+                        </View>
+                      ) : undefined}
+                    </IconeComPop>
+                  </Pressable>
+                </Fragment>
+              );
+            })}
+          </BlurView>
+          {/* Fora da pílula: ela recorta o que passa da borda (o overflow que o blur precisa). */}
+          <Pressable
+            onPress={() => setAberto((a) => !a)}
+            style={({ pressed }) => [styles.mais, { left: MEIO * LARGURA_ABA + (VAO - MAIS) / 2 }, pressed && styles.maisApertado]}
+            accessibilityRole="button"
+            accessibilityLabel={aberto ? "Fechar atalhos" : `Atalhos: ${atalhos.map((a) => a.rotulo).join(", ")}`}
+            accessibilityState={{ expanded: aberto }}
+          >
+            <LinearGradient
+              colors={colors.primaryGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.maisFundo, { borderColor: escuro ? "rgba(20,20,22,0.9)" : "#FFFFFF" }]}
+            >
+              <Animated.View style={giroDoMais}>
+                <Ionicons name="add" size={30} color={colors.textOnPrimary} />
+              </Animated.View>
+            </LinearGradient>
+          </Pressable>
+        </Animated.View>
+        {tem("quadro") ? <NovoQuadroModal visible={folha === "quadro"} onClose={fechar} /> : null}
+        {tem("escala") ? <NovaEscalaModal visible={folha === "escala"} onClose={fechar} /> : null}
+        <RegistrarCampoSheet visible={folha === "campo"} onClose={fechar} />
+      </View>
+    </>
   );
 }
 

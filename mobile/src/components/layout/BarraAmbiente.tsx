@@ -70,7 +70,7 @@ export function BarraAmbiente({
   const indice = abas.findIndex((a) => a.chave === atual);
   const visivel = indice >= 0 && !teclado;
   const [largura, setLargura] = useState(0);
-  const [aberto, setAberto] = useState(false);
+  const { aberto, setAberto, giroDoMais } = useLeque();
 
   const vao = atalhos.length ? VAO : 0;
   // O "+" fica depois da metade das abas (com três, depois da segunda).
@@ -78,7 +78,6 @@ export function BarraAmbiente({
   const cada = largura ? (largura - vao) / abas.length : 0;
   const x = useSharedValue(0);
   const oculta = useSharedValue(0);
-  const giro = useSharedValue(0);
 
   useEffect(() => {
     if (indice < 0 || !cada) return;
@@ -88,21 +87,10 @@ export function BarraAmbiente({
   useEffect(() => {
     oculta.value = withTiming(visivel ? 0 : 1, { duration: 260 });
     if (!visivel) setAberto(false);
-  }, [visivel, oculta]);
-
-  useEffect(() => {
-    giro.value = withTiming(aberto ? 1 : 0, { duration: LEVE, easing: EASE });
-    if (!aberto) return;
-    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      setAberto(false);
-      return true;
-    });
-    return () => sub.remove();
-  }, [aberto, giro]);
+  }, [visivel, oculta, setAberto]);
 
   const estiloBarra = useAnimatedStyle(() => ({ transform: [{ translateY: oculta.value * (ALTURA + 70) }], opacity: 1 - oculta.value }));
   const estiloIndicador = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  const estiloMais = useAnimatedStyle(() => ({ transform: [{ rotate: `${giro.value * 135}deg` }] }));
 
   const ir = (i: number) => {
     setAberto(false);
@@ -110,37 +98,11 @@ export function BarraAmbiente({
     // `replace`: as abas são irmãs. Empilhar faria o voltar refazer o passeio.
     router.replace(abas[i].href);
   };
-  const escolher = (a: AtalhoAmbiente) => {
-    setAberto(false);
-    a.onPress();
-  };
   const base = insets.bottom + 10;
 
   return (
     <>
-      {aberto ? (
-        <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(160)} style={[StyleSheet.absoluteFill, { backgroundColor: colors.backdrop }]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={() => setAberto(false)} accessibilityLabel="Fechar atalhos" />
-        </Animated.View>
-      ) : null}
-      {aberto ? (
-        <View pointerEvents="box-none" style={[styles.atalhos, { bottom: base + ALTURA + 22 }]}>
-          {atalhos.map((a, i) => (
-            <Animated.View
-              key={a.chave}
-              entering={entrada(atalhos.length - 1 - i)}
-              exiting={FadeOutDown.duration(140)}
-            >
-              <Pressable onPress={() => escolher(a)} style={({ pressed }) => [styles.atalho, pressed && styles.pressionado]} accessibilityRole="button">
-                <Text style={styles.atalhoTexto}>{a.rotulo}</Text>
-                <View style={styles.atalhoIcone}>
-                  <Ionicons name={a.icone} size={20} color={colors.textOnPrimary} />
-                </View>
-              </Pressable>
-            </Animated.View>
-          ))}
-        </View>
-      ) : null}
+      <LequeAtalhos atalhos={atalhos} aberto={aberto} fechar={() => setAberto(false)} bottom={base + ALTURA + 22} />
 
       <Animated.View pointerEvents={visivel ? "box-none" : "none"} style={[styles.raiz, { bottom: base }, estiloBarra]}>
         <View style={styles.sombra} onLayout={(ev) => setLargura(ev.nativeEvent.layout.width)}>
@@ -183,13 +145,79 @@ export function BarraAmbiente({
             accessibilityState={{ expanded: aberto }}
           >
             <LinearGradient colors={colors.primaryGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.maisCirculo}>
-              <Animated.View style={estiloMais}>
+              <Animated.View style={giroDoMais}>
                 <Ionicons name="add" size={32} color={colors.textOnPrimary} />
               </Animated.View>
             </LinearGradient>
           </Pressable>
         ) : null}
       </Animated.View>
+    </>
+  );
+}
+
+/** O estado do "+" com leque: aberto ou não, o giro que o vira em "×" e o voltar do Android, que fecha. */
+export function useLeque() {
+  const [aberto, setAberto] = useState(false);
+  const giro = useSharedValue(0);
+
+  useEffect(() => {
+    giro.value = withTiming(aberto ? 1 : 0, { duration: LEVE, easing: EASE });
+    if (!aberto) return;
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      setAberto(false);
+      return true;
+    });
+    return () => sub.remove();
+  }, [aberto, giro]);
+
+  const giroDoMais = useAnimatedStyle(() => ({ transform: [{ rotate: `${giro.value * 135}deg` }] }));
+  return { aberto, setAberto, giroDoMais };
+}
+
+/** O leque aberto: o véu sobre a tela e os atalhos subindo acima da barra (`bottom`). */
+export function LequeAtalhos({
+  atalhos,
+  aberto,
+  fechar,
+  bottom,
+}: {
+  atalhos: AtalhoAmbiente[];
+  aberto: boolean;
+  fechar: () => void;
+  bottom: number;
+}) {
+  const { colors, styles } = useTema(criarEstilos);
+  if (!aberto) return null;
+
+  return (
+    <>
+      <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(160)} style={[StyleSheet.absoluteFill, { backgroundColor: colors.backdrop }]}>
+        <Pressable style={StyleSheet.absoluteFill} onPress={fechar} accessibilityLabel="Fechar atalhos" />
+      </Animated.View>
+      <View pointerEvents="box-none" style={[styles.atalhos, { bottom }]}>
+        {atalhos.map((a, i) => (
+          <Animated.View
+            key={a.chave}
+            entering={entrada(atalhos.length - 1 - i)}
+            exiting={FadeOutDown.duration(140)}
+          >
+            <Pressable
+              onPress={() => {
+                fechar();
+                a.onPress();
+              }}
+              style={({ pressed }) => [styles.atalho, pressed && styles.pressionado]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.atalhoTexto}>{a.rotulo}</Text>
+              <View style={styles.atalhoIcone}>
+                <Ionicons name={a.icone} size={20} color={colors.textOnPrimary} />
+              </View>
+            </Pressable>
+          </Animated.View>
+        ))}
+      </View>
     </>
   );
 }

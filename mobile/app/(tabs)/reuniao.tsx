@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as DocumentPicker from "expo-document-picker";
-import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -89,11 +90,14 @@ export default function ReuniaoScreen() {
 
   const [preview, setPreview] = useState<IndisponibilidadePreview | null>(null);
   const [sheetVisible, setSheetVisible] = useState(false);
+  // Vinda do "Importar reunião" do "+": a tela abre já pedindo o PDF (uma vez só).
+  const veioDoMais = useLocalSearchParams<{ importar?: string }>().importar;
+  const importarAoAbrir = useRef(!!veioDoMais);
 
   const semanaAtual = useMemo(() => encontrarSemanaAtual(reunioes), [reunioes]);
   const { emTela, ocultos } = useMemo(() => separarMeses(reunioes), [reunioes]);
 
-  const handleImport = async () => {
+  const handleImport = useCallback(async () => {
     try {
       const res = await DocumentPicker.getDocumentAsync({
         type: "application/pdf",
@@ -133,7 +137,14 @@ export default function ReuniaoScreen() {
         "error",
       );
     }
-  };
+  }, [importar, toast]);
+
+  useEffect(() => {
+    if (!importarAoAbrir.current || !podeEditar) return;
+    importarAoAbrir.current = false;
+    // No iPhone o seletor de arquivo não abre enquanto a tela ainda está entrando.
+    setTimeout(handleImport, Platform.OS === "ios" ? 400 : 0);
+  }, [podeEditar, handleImport]);
 
   return (
     <View style={styles.flex}>

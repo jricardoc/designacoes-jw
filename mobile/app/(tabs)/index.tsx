@@ -110,12 +110,7 @@ export default function DesignacoesScreen() {
       )}
 
       {podeEditar ? (
-        <NovoQuadroModal
-          visible={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onCreated={(q) => router.push(`/quadro/${q.id}`)}
-          existentes={quadros ?? []}
-        />
+        <NovoQuadroModal visible={modalOpen} onClose={() => setModalOpen(false)} />
       ) : null}
     </View>
   );
