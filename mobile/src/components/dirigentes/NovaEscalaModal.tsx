@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   Dimensions,
@@ -9,8 +10,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { useCriarDirigenteQuadro } from "@/api/hooks/useDirigentes";
-import type { QuadroDirigenteResumo, RegrasEscala } from "@/api/types";
+import { useCriarDirigenteQuadro, useDirigentesQuadros } from "@/api/hooks/useDirigentes";
+import type { RegrasEscala } from "@/api/types";
 import { Sheet, useToast } from "@/components/ui";
 import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -23,17 +24,12 @@ import {
 
 const BODY_MAX = Math.round(Dimensions.get("window").height * 0.52);
 
-interface Props {
-  visible: boolean;
-  onClose: () => void;
-  onCreated: (q: QuadroDirigenteResumo) => void;
-  existentes: { mes: number; ano: number }[];
-}
-
-export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Props) {
+/** Criar a escala do mês, da tela de Dirigentes ou do "+" do Servir Mais. Criada, abre a escala. */
+export function NovaEscalaModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const criar = useCriarDirigenteQuadro();
+  const { data: existentes = [] } = useDirigentesQuadros();
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
@@ -55,7 +51,7 @@ export function NovaEscalaModal({ visible, onClose, onCreated, existentes }: Pro
         regras: auto ? regras : null,
       });
       toast.show("Escala criada com sucesso!");
-      onCreated(novo);
+      router.push(`/escala/${novo.id}`);
       onClose();
     } catch (err) {
       toast.show(err instanceof Error ? err.message : "Erro ao criar escala", "error");

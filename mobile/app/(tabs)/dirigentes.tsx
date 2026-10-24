@@ -102,12 +102,7 @@ export default function DirigentesScreen() {
       )}
 
       {podeEditar ? (
-        <NovaEscalaModal
-          visible={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onCreated={(q) => router.push(`/escala/${q.id}`)}
-          existentes={quadros ?? []}
-        />
+        <NovaEscalaModal visible={modalOpen} onClose={() => setModalOpen(false)} />
       ) : null}
     </View>
   );

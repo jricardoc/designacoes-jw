@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useState } from "react";
 import {
   Dimensions,
@@ -9,8 +10,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { useCriarQuadro } from "@/api/hooks/useQuadros";
-import type { QuadroResumo, RegrasAutoPreenchimento } from "@/api/types";
+import { useCriarQuadro, useQuadros } from "@/api/hooks/useQuadros";
+import type { RegrasAutoPreenchimento } from "@/api/types";
 import { Sheet, useToast } from "@/components/ui";
 import { MESES, radius, type Cores } from "@/theme";
 import { useTema } from "@/theme/TemaContext";
@@ -22,17 +23,12 @@ const REGRAS_INFO: { key: keyof RegrasAutoPreenchimento; label: string; desc: st
   { key: "regraAudioVideo", label: "Regra Áudio e Vídeo", desc: "1 experiente + 1 treinando" },
 ];
 
-interface Props {
-  visible: boolean;
-  onClose: () => void;
-  onCreated: (q: QuadroResumo) => void;
-  existentes: { mes: number; ano: number }[];
-}
-
-export function NovoQuadroModal({ visible, onClose, onCreated, existentes }: Props) {
+/** Criar o quadro do mês, da tela de Designações ou do "+" do Servir Mais. Criado, abre o quadro. */
+export function NovoQuadroModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
   const { colors, styles } = useTema(criarEstilos);
   const toast = useToast();
   const criar = useCriarQuadro();
+  const { data: existentes = [] } = useQuadros();
   const now = new Date();
   const [mes, setMes] = useState(now.getMonth() + 1);
   const [ano, setAno] = useState(now.getFullYear());
@@ -54,7 +50,7 @@ export function NovoQuadroModal({ visible, onClose, onCreated, existentes }: Pro
         regras: auto ? regras : null,
       });
       toast.show("Quadro criado com sucesso!");
-      onCreated(novo);
+      router.push(`/quadro/${novo.id}`);
       onClose();
     } catch (err) {
       toast.show(err instanceof Error ? err.message : "Erro ao criar quadro", "error");
