@@ -61,10 +61,6 @@ interface ItemMenu {
 const ITENS: ItemMenu[] = [
   // Saiu da barra para o "+" de "Registrar o campo" ficar no meio dela.
   { chave: "dirigentes", rotulo: "Dirigentes", icone: "flag-outline", href: "/(tabs)/dirigentes" },
-  // É outro ambiente (mapas e saídas), mas continua aqui: quem só quer olhar um mapa vai direto.
-  { chave: "territorio", rotulo: "Território", icone: "map-outline", href: "/territorio" },
-  // Outro ambiente, de todos: a leitura da Bíblia e o estudo pessoal.
-  { chave: "estudo", rotulo: "Estudo pessoal", icone: "book-outline", href: "/estudo" },
   { chave: "carrinho", rotulo: "Carrinho", icone: "book-outline", href: "/(tabs)/carrinho" },
   // Falar com quem tem parte de estudante e anotar quem confirmou: área própria.
   {
@@ -103,8 +99,8 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
   const segments = useSegments();
 
   const largura = Math.min(316, width * 0.84);
-  // O topo (a marca) troca de ambiente: o Território (de todos) e o Ministério (do pioneiro)
-  // são "apps" à parte.
+  // O topo (a marca) troca de ambiente: o Território e o Estudo pessoal (de todos) e o
+  // Ministério (do pioneiro) são "apps" à parte, e por isso não entram na lista abaixo.
   const [trocando, setTrocando] = useState(false);
   // O Modal some junto com `visible`, então a animação de saída só existe se o
   // desmonte esperar ela terminar.
@@ -146,16 +142,6 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
     // StackRouter só reaproveita a rota do topo), e o voltar do Android refaria
     // todo o passeio pelo menu em vez de sair do app.
     router.replace(href);
-  };
-
-  const ir = (item: ItemMenu) => {
-    // O Território e o Estudo abrem POR CIMA do Servir Mais: o voltar traz de volta para cá.
-    if (item.chave === "territorio" || item.chave === "estudo") {
-      onClose();
-      router.push(item.chave === "territorio" ? "/territorio" : "/estudo");
-      return;
-    }
-    irPara(item.chave, item.href);
   };
 
   if (!montado) return null;
@@ -237,7 +223,7 @@ export function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
               return (
                 <Pressable
                   key={item.chave}
-                  onPress={() => ir(item)}
+                  onPress={() => irPara(item.chave, item.href)}
                   style={[styles.item, ativo && styles.itemAtivo]}
                   accessibilityRole="button"
                   accessibilityState={{ selected: ativo }}
