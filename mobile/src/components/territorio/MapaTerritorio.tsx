@@ -35,7 +35,7 @@ export interface FundoMapa {
 }
 
 export interface MapaTerritorioRef {
-  /** Enquadra todos os polígonos de novo, ou só estes pontos. */
+  /** Enquadra de novo os polígonos e os pinos, ou só estes pontos. */
   enquadrar: (pontos?: Ponto[]) => void;
   focar: (lat: number, lng: number) => void;
   /** Foto do mapa como está na tela (com quadras e pinos), num arquivo; null se não deu. */
@@ -124,16 +124,22 @@ export const MapaTerritorio = forwardRef<MapaTerritorioRef, MapaTerritorioProps>
   }, [assinatura]);
 
   const emCoordenadas = (pontos: Ponto[]) => pontos.map(([latitude, longitude]) => ({ latitude, longitude }));
+  // Os pinos entram no enquadramento: ponto marcado longe do desenho (o GPS de outro lugar, o
+  // território errado na folha) aparece na tela, em vez de ficar escondido fora dela.
   const todos = useMemo(
-    () => emCoordenadas(limite?.pontos.length ? limite.pontos : areas.flatMap((a) => a.pontos)),
-    [areas, limite],
+    () =>
+      emCoordenadas(
+        limite?.pontos.length ? limite.pontos : [...areas.flatMap((a) => a.pontos), ...pinos.map((p): Ponto => [p.lat, p.lng])],
+      ),
+    [areas, limite, pinos],
   );
 
   const enquadrar = (pontos?: Ponto[]) => {
     const alvo = pontos?.length ? emCoordenadas(pontos) : todos;
     if (alvo.length === 0) return;
     mapa.current?.fitToCoordinates(alvo, {
-      edgePadding: { top: 48, right: 36, bottom: 48, left: 36 },
+      // À direita, a folga dos botões do mapa (42 + 10): o pino da ponta não fica embaixo deles.
+      edgePadding: { top: 48, right: 60, bottom: 48, left: 36 },
       animated: true,
     });
   };
